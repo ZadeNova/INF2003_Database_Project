@@ -144,7 +144,7 @@ or changed, reason) that becomes a table in the report, so every change to the r
 |---|---|
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
-| Product images | Every product: a generated SVG tile drawn at render time (category icon, colour from the product id, short name), no stored files (D10, proposed). A featured set of 30 to 50 products: real openly licensed photos, licences recorded, stored in MongoDB GridFS (D11, D12) |
+| Product images | Every product: an icon card (the category's icon from the existing sprite, extended to cover all 73 categories, plus the product name), drawn at render time with no stored file (D10). Featured set: the best seller in each of the top 15 categories gets an openly licensed stock photo matching its generated name, labelled as illustrative; source files and a manifest (file, product, source URL, author, licence) are committed, and the importer loads them into MongoDB GridFS (D11, D12). The same rule extends to the top 3 per category (45 photos) if time allows |
 | Catalogue size | Products ordered at least twice (about 13.4k) are active and browsable; the rest (about 19.5k, sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
@@ -384,8 +384,8 @@ From the profile: remove the 303 payment-mismatch orders, keep the latest review
 a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
 uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
 dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), orders without items or
-payments removed under the same cleaning rule as the payment mismatches (D9), real photos for a featured set of 30 to
-50 products (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
+payments removed under the same cleaning rule as the payment mismatches (D9), icon cards for every product (D10), illustrative stock
+photos for the best seller in each of the top 15 categories (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
 
 **Open:**
 
@@ -393,7 +393,6 @@ payments removed under the same cleaning rule as the payment mismatches (D9), re
 |---|---|---|
 | D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
-| D10 | Images for every product | Generated SVG tile at render time: category icon, colour from the product id, short name; no stored files |
 
 ## 16. Risks
 
