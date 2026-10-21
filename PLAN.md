@@ -164,6 +164,7 @@ and counted. The full rule list is in `docs/plans/olist-import.md`.
 | Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to 30 October 2026, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
 | Customers | One user per `customer_unique_id`, bulk-inserted with unusable passwords |
 | Reviews | The latest review per order is kept (by answer time); reviews of orders never delivered are kept as history (R3); single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
+| Freight and refunds | Each product's shipping fee is the median freight of its order lines; each imported cancelled order gets a refund row so refunds equal cancelled totals (`checkout` decisions b and c) |
 | Order status | Olist's eight statuses map to ours: created → placed; approved, processing, invoiced → paid; shipped → shipped; delivered → delivered; canceled, unavailable → cancelled |
 | Quantity | Repeated (order, product, seller) lines collapse into one line with a quantity |
 | Sellers | The 3,095 Olist sellers become approved seller accounts with unusable passwords |
@@ -394,9 +395,9 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | ready |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
-| `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | planning |
+| `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | ready |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
-| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | planning |
+| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | not started |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | not started |
 | `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
@@ -430,7 +431,11 @@ a workstream changes state, and keep each plan file as short as its contract all
   templates for the top 15 categories.
 - **Roles and orders:** customer, seller and operator in Tier 1 with row-level security in Tier 2 (D14 to D16); one
   checkout with one order per seller and payments on the checkout (D17); "seller" as the single term (D18); a custom user
-  model with a role field (R7); cancellation with refund.
+  model with a role field (R7); cancellation with refund. `accounts`: one role per account, an audit log filled by
+  triggers with the actor passed by `SET LOCAL`, a `rejected` seller status, operators created only by `seed_demo` or a
+  command with the password from `.env`. `checkout`: one-step place and pay (orders start as `paid`), shipping fee from
+  each product's median historical freight, refunds equal cancelled totals (imported cancellations get refund rows),
+  whole-order cancellation as on Shopee.
 - **Added scope:** faceted search and schema evolution; Bayesian rating; demand forecast; delivery-delay analysis; 3NF
   justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and
   code-quality gates in `ci` (E4, E5). Tier 2: full-text search (E1), replication and failover (E6), backup and restore

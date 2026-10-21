@@ -1,6 +1,6 @@
 # checkout: Cart across sellers, split checkout, simulated payment, order lifecycle, cancellation
 
-status: draft
+status: approved
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 2.5 to 3 days
 · phase 2A (2 to 4 November) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
 
@@ -46,14 +46,14 @@ role and scoping negatives; SQL-injection negatives on every raw-SQL path.
 4. Submitting the same checkout twice (resend the form) creates one checkout.
 5. The concurrency test passes ten times in a row; the full suite passes in Docker.
 
-## Decisions (for the plan owner)
+## Decisions (all approved 21 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|
 | a | One-step "Place order and pay": checkout, orders and payments in a single transaction; new orders start as `paid` | No unpaid orders to expire or clean up; the deferred payment check runs on every checkout. `placed` remains for imported history |
 | b | Shipping fee from each product's median historical freight (computed at import) | Realistic, consistent with Olist's per-line freight, no invented rate. Needs one column added in `olist-import` |
 | c | Refund invariant: refunds equal cancelled orders' totals. `olist-import` adds a refund row for each imported cancelled order that has payments, flagged as imported | Keeps the books balanced for every checkout, old and new, so the invariant can be a hard constraint |
-| d | Cancellation cancels a whole order, not single lines | Keeps the lifecycle and refund rules simple |
+| d | Cancellation cancels a whole order (one seller's order), not single lines | As on Shopee, where a shop order is cancelled as a whole before shipping; per-item handling there is a post-delivery return, which is out of scope |
 
 ## Review notes
 

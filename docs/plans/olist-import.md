@@ -39,6 +39,8 @@ writes the generated dataset section of `docs/DATA_MODEL.md`.
 | 13 | Shift every timestamp by 426 weeks and treat it as Singapore local time | ends 30 October 2026 |
 | 14 | Currency: convert each line's price and freight to SGD at the stored rate and round half-up to the cent; the checkout total is the sum of its lines; split each checkout's payments in proportion to their original values, rounded, with the remainder on the largest payment, so payments equal the total exactly | |
 | 15 | Active = a seller-product in at least two distinct orders, counted after cleaning (D13); featured = the best seller in each of the top 15 categories (D11) | about 13.6k active |
+| 16 | Freight per product: the median freight of its order lines, in SGD (the shipping fee for new orders; `checkout` decision b) | every product |
+| 17 | Refunds: one refund row (amount = the order total, flagged imported) for each cancelled order whose checkout has payments, so refunds equal cancelled totals (`checkout` decision c) | every cancelled order |
 
 **PostgreSQL schema (fresh migrations; ids are bigint identities, Olist ids kept as source columns)**
 
@@ -48,11 +50,12 @@ writes the generated dataset section of `docs/DATA_MODEL.md`.
 | customer profile | One per user; `olist_customer_unique_id` unique; zip prefix, city, state (no foreign key to geolocation: some prefixes are missing there) |
 | seller | One per user; status `pending`, `approved`, `suspended` (`CHECK`); Olist seller id unique; zip prefix, city, state |
 | category | Slug unique; English and Portuguese names; icon; `hand_translated` flag |
-| product | Seller and category foreign keys; `UNIQUE (id, seller_id)`; Olist product id (unique per seller); name; price `numeric(12,2) CHECK > 0`; stock `CHECK >= 0`; lead time; weight and size (nullable: 2 products lack them); `active`, `featured`; `has_generated_content` |
+| product | Seller and category foreign keys; `UNIQUE (id, seller_id)`; Olist product id (unique per seller); name; price `numeric(12,2) CHECK > 0`; freight `numeric(12,2) CHECK >= 0`; stock `CHECK >= 0`; lead time; weight and size (nullable: 2 products lack them); `active`, `featured`; `has_generated_content` |
 | checkout | Customer; placed time; total; idempotency key (unique, nullable); Olist order id (unique, nullable) |
 | order | Checkout and seller; `UNIQUE (checkout_id, seller_id)` and `UNIQUE (id, seller_id)`; status (`CHECK`); items, freight and total; placed, approved, shipped, delivered and estimated dates |
 | order line | Composite foreign keys `(order_id, seller_id)` → order and `(product_id, seller_id)` → product, so a line's product always belongs to its order's seller and an order has one seller, enforced by the database; quantity `CHECK > 0`; unit price; freight |
 | payment | Checkout; sequence; method (`CHECK`); instalments `CHECK >= 1`; amount `CHECK >= 0` |
+| refund | Order (unique) and checkout; amount; reason; time; `imported` flag. Created here for imported cancellations; `checkout` adds app cancellations |
 | geolocation | Zip prefix primary key; latitude, longitude, city, state |
 
 Product **names** live in PostgreSQL (order history, cart and seller pages need them); descriptions and attributes live in
