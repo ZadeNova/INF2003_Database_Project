@@ -1,5 +1,9 @@
 # Preserve downloaded raw CSV bytes and their recorded SHA-256 checksums.
-data/raw/*.csv -text
+data/raw/**/*.csv -text
+# Derived data files are checksummed too (the clean Olist files are the benchmark's identical input).
+data/derived/**/*.csv -text
+data/derived/**/*.ndjson -text
+data/derived/**/*.json -text
 # Linux container startup scripts require LF shebangs on Windows checkouts.
 src/docker/*.sh text eol=lf
 # Every shell script runs under bash (Linux, macOS, WSL); keep LF endings on Windows checkouts too.

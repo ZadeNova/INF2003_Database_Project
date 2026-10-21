@@ -1,0 +1,14 @@
+Brazilian E-Commerce Public Dataset by Olist
+
+Source:  https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+Owner:   Olist (olist.com)
+Licence: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+         https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Files:   data/raw/olist/ (the nine CSVs, unmodified; SHA-256 checksums in data/raw/olist/checksums.txt)
+
+Use in this project: non-commercial university coursework (INF2003 Database Systems, team 82).
+
+Changes: the raw files are kept exactly as downloaded. Data derived from them (cleaned, adapted and generated files under
+data/derived/olist/) is produced by the scripts in this repository, labelled as derived or generated, and shared under
+the same licence (CC BY-NC-SA 4.0), as the ShareAlike term requires.
