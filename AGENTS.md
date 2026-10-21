@@ -101,13 +101,14 @@ CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, a
 
 ## Running and testing (current baseline)
 
-Docker Desktop with Compose 2.20 or later, from the repository root:
+Docker Desktop (or Docker Engine) with Compose 2.20 or later, from the repository root:
 
 ```
-python src/tools/init_env.py                                    # fresh clone only; writes src/.env
+python src/tools/init_env.py                                    # writes .env, or adds keys a newer version needs
 docker compose up --build                                       # app at http://127.0.0.1:8000/
-docker compose run --rm web pytest -q -p no:cacheprovider /app/tests
+docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
 ```
 
-The image copies `src/` at build time and mounts only `tests/`: run `docker compose build web` after changing app code.
-MongoDB, the benchmark and CI commands are added here when they land.
+Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
+database; `web` holds only the runtime role. The image copies `src/` at build time and `migrate` mounts `tests/`: run
+`docker compose build migrate` after changing app code. The benchmark and CI commands are added here when they land.

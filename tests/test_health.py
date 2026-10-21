@@ -7,6 +7,7 @@ from django.core.management.base import CommandError
 from django.db import OperationalError
 from django.test import override_settings
 from django.urls import reverse
+from pymongo.errors import ServerSelectionTimeoutError
 
 
 @pytest.mark.django_db
@@ -42,13 +43,21 @@ def test_health_validates_host(client):
 def test_database_readiness_command():
     output = StringIO()
     call_command("check_database", stdout=output)
-    assert output.getvalue().strip() == '{"database": "ok", "migrations": "applied"}'
+    assert output.getvalue().strip() == '{"postgresql": "ok", "mongodb": "ok", "migrations": "applied"}'
 
 
 def test_database_failure_is_sanitized():
     with patch("config.management.commands.check_database.connection.cursor",
                side_effect=OperationalError("private connection details")):
         with pytest.raises(CommandError, match=r"^Database unavailable\.$"):
+            call_command("check_database")
+
+
+@pytest.mark.django_db
+def test_mongodb_failure_is_sanitized():
+    with patch("config.management.commands.check_database.mongo.client",
+               side_effect=ServerSelectionTimeoutError("private connection details")):
+        with pytest.raises(CommandError, match=r"^MongoDB unavailable\.$"):
             call_command("check_database")
 
 

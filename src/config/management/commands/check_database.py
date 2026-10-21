@@ -2,10 +2,13 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, connection
 from django.db.migrations.executor import MigrationExecutor
+from pymongo.errors import PyMongoError
+
+from config import mongo
 
 
 class Command(BaseCommand):
-    help = "Check PostgreSQL connectivity and pending migrations without exposing connection details."
+    help = "Check PostgreSQL and MongoDB connectivity and pending migrations without exposing connection details."
 
     def handle(self, *args, **options):
         try:
@@ -17,4 +20,11 @@ class Command(BaseCommand):
                 raise CommandError("Database migrations are pending.")
         except DatabaseError:
             raise CommandError("Database unavailable.") from None
-        self.stdout.write('{"database": "ok", "migrations": "applied"}')
+        try:
+            with mongo.client() as client:
+                hello = client[mongo.database_name()].command("hello")
+        except (PyMongoError, ValueError):
+            raise CommandError("MongoDB unavailable.") from None
+        if hello.get("setName") != mongo.REPLICA_SET or not hello.get("isWritablePrimary"):
+            raise CommandError("MongoDB is not a writable primary of the expected replica set.")
+        self.stdout.write('{"postgresql": "ok", "mongodb": "ok", "migrations": "applied"}')

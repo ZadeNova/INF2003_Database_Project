@@ -1,3 +1,106 @@
-name: mercer-foundation
-include:
-  - src/compose.yaml
+name: mercer
+x-app-environment: &app-environment
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Run python src/tools/init_env.py first}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+  DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+  POSTGRES_DB: ${POSTGRES_DB:?Run python src/tools/init_env.py first}
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  MONGO_HOST: mongo
+  MONGO_PORT: "27017"
+  MONGO_DB: ${MONGO_DB:?Run python src/tools/init_env.py first}
+  MONGO_APP_USER: ${MONGO_APP_USER:?Run python src/tools/init_env.py first}
+  MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Run python src/tools/init_env.py first}
+services:
+  db:
+    # PostgreSQL 18 (18.6 when pinned). Images from 18 on keep the data directory under /var/lib/postgresql.
+    image: postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Run python src/tools/init_env.py first}
+      APP_DB_NAME: ${POSTGRES_DB:?Run python src/tools/init_env.py first}
+      APP_OWNER_USER: ${POSTGRES_OWNER_USER:?Run python src/tools/init_env.py first}
+      APP_OWNER_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?Run python src/tools/init_env.py first}
+      APP_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
+      APP_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./src/docker/10-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  mongo:
+    # MongoDB 9.0, the latest stable release when pinned. Linux kernels 6.19 to 7.0.13 stop it from starting
+    # (MongoDB SERVER-121912); see the README.
+    image: mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8
+    entrypoint: ["bash", "/docker/mongo-start.sh"]
+    environment:
+      MONGO_ROOT_USER: ${MONGO_ROOT_USER:?Run python src/tools/init_env.py first}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Run python src/tools/init_env.py first}
+      MONGO_APP_USER: ${MONGO_APP_USER:?Run python src/tools/init_env.py first}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Run python src/tools/init_env.py first}
+      MONGO_DB: ${MONGO_DB:?Run python src/tools/init_env.py first}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_keyfile:/keyfile
+      - ./src/docker/mongo-start.sh:/docker/mongo-start.sh:ro,z
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
+    healthcheck:
+      # Healthy once the replica set answers and the application user exists.
+      test: ["CMD-SHELL", "mongosh --quiet -u \"$$MONGO_ROOT_USER\" -p \"$$MONGO_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'quit(rs.status().ok === 1 && db.getSiblingDB(\"admin\").getUser(process.env.MONGO_APP_USER) ? 0 : 1)'"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+  web:
+    build: src
+    image: mercer-app
+    environment:
+      <<: *app-environment
+      POSTGRES_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
+      POSTGRES_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+  # Runs as the owner role: migrations, and (with another command) the importer and pytest.
+  migrate:
+    build: src
+    image: mercer-app
+    environment:
+      <<: *app-environment
+      POSTGRES_USER: ${POSTGRES_OWNER_USER:?Run python src/tools/init_env.py first}
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?Run python src/tools/init_env.py first}
+      # Only the role tests use these, to prove what the runtime role may not do.
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
+      POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./tests:/app/tests:ro,z
+      - ./data:/app/data:ro,z
+    restart: "no"
+volumes:
+  postgres_data:
+  mongo_data:
+  mongo_keyfile:
