@@ -1,0 +1,141 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="42Factors storefront">
+    <meta name="color-scheme" content="light dark">
+    <title>{% block title %}42Factors{% endblock %}</title>
+    {# Applied before first paint so a stored choice does not flash the other theme. #}
+    <script>
+        (function () {
+            document.documentElement.classList.add("js");
+            try {
+                var stored = localStorage.getItem("northstar-theme");
+                if (stored === "dark" || stored === "light") {
+                    document.documentElement.setAttribute("data-theme", stored);
+                }
+            } catch (error) {
+                /* Private mode or blocked storage: fall back to the system preference. */
+            }
+        }());
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@700&text=67&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div class="utility-bar">
+        <span>Payments are simulated. No card is ever charged.</span>
+        <span class="utility-bar__aside">Singapore / SGD</span>
+    </div>
+
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="{% url 'catalogue:product_list' %}" aria-label="42Factors home">
+                <span class="brand__mark" aria-hidden="true">67</span>
+                <span class="brand__name">42Factors</span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                <span class="menu-toggle__label">Menu</span>
+                <span class="menu-toggle__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            </button>
+
+            <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation">
+                <a href="{% url 'catalogue:product_list' %}"{% if request.resolver_match.view_name == 'catalogue:product_list' %} aria-current="page"{% endif %}>Shop</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'orders:list' %}"{% if request.resolver_match.namespace == 'orders' %} aria-current="page"{% endif %}>Orders</a>
+                {% endif %}
+            </nav>
+
+            <div class="site-header__meta">
+                {% if perms.catalogue.toggle_product_active %}
+                <a class="nav-pill nav-pill--quiet" href="{% url 'catalogue:manage_list' %}"{% if request.resolver_match.view_name == 'catalogue:manage_list' %} aria-current="page"{% endif %}>Manage products</a>
+                {% endif %}
+                {% if perms.reporting.view_analytics %}
+                <a class="nav-pill" href="{% url 'reporting:dashboard' %}"{% if request.resolver_match.namespace == 'reporting' %} aria-current="page"{% endif %}>Analytics</a>
+                {% endif %}
+                {% if user.is_authenticated %}
+                {% with cart_count=user.cart.items.count %}
+                <a class="nav-pill" href="{% url 'cart:detail' %}"{% if request.resolver_match.namespace == 'cart' %} aria-current="page"{% endif %}>
+                    {% include "_icon.html" with name="cart" only %}
+                    Cart
+                    {% if cart_count %}<span class="count-badge">{{ cart_count }}</span><span class="visually-hidden">items in cart</span>{% endif %}
+                </a>
+                {% endwith %}
+                {% endif %}
+                <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch between light and dark theme">
+                    {% include "_icon.html" with name="moon" extra="theme-toggle__to-dark" only %}
+                    {% include "_icon.html" with name="sun" extra="theme-toggle__to-light" only %}
+                </button>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'accounts:logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-pill nav-pill--quiet">{% include "_icon.html" with name="sign-out" size="sm" only %} Log out</button>
+                </form>
+                {% else %}
+                <a class="nav-pill" href="{% url 'accounts:login' %}">Log in</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message message--{{ message.level_tag }}" role="{% if message.level_tag == 'error' %}alert{% else %}status{% endif %}">
+                <span class="message__icon" aria-hidden="true">{% if message.level_tag == 'error' %}!{% else %}✓{% endif %}</span>
+                <div><p>{{ message }}{% if "cart-added" in message.extra_tags %} <a class="message__link" href="{% url 'cart:detail' %}">View cart</a>{% endif %}</p></div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer__inner site-footer__inner--columns">
+            <div>
+                <p class="site-footer__brand">42Factors</p>
+                <p class="site-footer__copy">A calm foundation for a useful storefront.</p>
+                <p class="site-footer__meta">Payments are simulated. No card is ever charged.</p>
+            </div>
+            <div>
+                <p class="site-footer__heading">Shop</p>
+                <ul class="site-footer__links">
+                    <li><a href="{% url 'catalogue:product_list' %}">All products</a></li>
+                    {% if user.is_authenticated %}
+                    <li><a href="{% url 'cart:detail' %}">Your cart</a></li>
+                    <li><a href="{% url 'orders:list' %}">Order history</a></li>
+                    {% else %}
+                    <li><a href="{% url 'accounts:login' %}">Log in</a></li>
+                    <li><a href="{% url 'accounts:register' %}">Create an account</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div>
+                <p class="site-footer__heading">Project evidence</p>
+                <ul class="site-footer__links">
+                    <li><a href="{% url 'foundation-preview' %}#overview">Foundation preview</a></li>
+                    <li><a href="{% url 'foundation-preview' %}#patterns">Patterns</a></li>
+                    <li><a href="{% url 'foundation-preview' %}#states">States</a></li>
+                    <li><a href="{% url 'statistics-preview' %}">Statistics preview</a></li>
+                    <li><a href="{% url 'health' %}">System status</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+    <script src="{% static 'js/site.js' %}" defer></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

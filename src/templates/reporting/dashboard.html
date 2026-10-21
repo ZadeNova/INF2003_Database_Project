@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics — 42Factors{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> Operator workspace</p>
+            <h1 class="page__title">Sales and inventory analytics</h1>
+            <p class="page__lead">A clear read on what sold, what is moving quickly and where a stock check deserves attention.</p>
+        </div>
+    </div>
+
+    {% include "reporting/_panel.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}" defer></script>
+<script src="{% static 'js/analytics.js' %}" defer></script>
+{% endblock %}

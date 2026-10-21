@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Products — 42Factors{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> Catalogue</p>
+            <h1 class="page__title">Products</h1>
+            <p class="page__lead">Every shoe comes in US sizes 7 to 11.5. Stock counts are indicative and are checked again when you place an order.</p>
+        </div>
+        {% if shoes %}
+        <p class="page__meta">Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of {{ paginator.count }}</p>
+        {% endif %}
+    </div>
+
+    {% if shoes %}
+    <div class="product-grid">
+        {% for shoe in shoes %}
+        {% include "catalogue/_product_card.html" %}
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+    <nav class="pager" aria-label="Product pages">
+        {% if page_obj.has_previous %}
+        <a class="button button--compact button--outline-neutral" href="?page={{ page_obj.previous_page_number }}">{% include "_icon.html" with name="caret-left" size="sm" only %} Previous</a>
+        {% else %}
+        <span class="button button--compact button--disabled" aria-disabled="true">{% include "_icon.html" with name="caret-left" size="sm" only %} Previous</span>
+        {% endif %}
+        <p class="pager__status">Page <strong>{{ page_obj.number }}</strong> of {{ paginator.num_pages }}</p>
+        {% if page_obj.has_next %}
+        <a class="button button--compact button--outline-neutral" href="?page={{ page_obj.next_page_number }}">Next {% include "_icon.html" with name="caret-right" size="sm" only %}</a>
+        {% else %}
+        <span class="button button--compact button--disabled" aria-disabled="true">Next {% include "_icon.html" with name="caret-right" size="sm" only %}</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty">
+        <span class="empty__icon" aria-hidden="true">{% include "_icon.html" with name="storefront" only %}</span>
+        <h2>No products available yet</h2>
+        <p>The catalogue is empty for this namespace. Once products are seeded or imported they appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{% static 'vendor/model-viewer/model-viewer.min.js' %}"></script>
+{% endblock %}

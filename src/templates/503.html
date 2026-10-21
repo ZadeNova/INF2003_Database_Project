@@ -1,0 +1,46 @@
+{% load static %}<!doctype html>
+{# Standalone on purpose: rendering the shared base template touches the user and session, which need the database. #}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Temporarily unavailable · 42Factors</title>
+    <script>
+        (function () {
+            document.documentElement.classList.add("js");
+            try {
+                var stored = localStorage.getItem("northstar-theme");
+                if (stored === "dark" || stored === "light") {
+                    document.documentElement.setAttribute("data-theme", stored);
+                }
+            } catch (error) {
+                /* Private mode or blocked storage: fall back to the system preference. */
+            }
+        }());
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+    <main id="main-content">
+        <section class="error-page" aria-labelledby="error-title">
+            <div class="error-page__card">
+                <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> 503 · temporarily unavailable</p>
+                <h1 id="error-title">We can't reach our data right now.</h1>
+                <p>This is temporary. Please wait a few seconds and try again.</p>
+                <div class="message message--error" role="alert">
+                    <span class="message__icon" aria-hidden="true">!</span>
+                    <div>
+                        <strong>If you were placing an order,</strong>
+                        <p>check your order history before trying again, so you do not order twice.</p>
+                    </div>
+                </div>
+                <a class="button button--dark" href="/">Try again</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
