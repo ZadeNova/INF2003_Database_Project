@@ -1,6 +1,6 @@
 """JSON log formatter with a deliberately small, safe field list (docs/SECURITY.md; review finding SEC-001).
 
-One JSON object per line on standard output, which container runtimes and CloudWatch Logs both collect.
+One JSON object per line on standard output, which Docker collects.
 Exceptions are reduced to their class name and a short list of stack frames (file, line, function). The
 exception message, the source lines, local variables, request bodies, cookies and headers are never
 included, because messages routinely echo user input or database detail (for example a duplicate key value).

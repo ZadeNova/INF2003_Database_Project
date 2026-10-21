@@ -45,7 +45,7 @@
         });
     }
 
-    var THEME_KEY = "northstar-theme";
+    var THEME_KEY = "mercer-theme";
     var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     var activeTheme = function () {

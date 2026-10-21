@@ -104,7 +104,7 @@ docker compose run --rm web python manage.py refresh_analytics --as-of 2026-01-0
 otherwise the fallback in `src/catalogue/management/commands/seed_demo.py`. Imported customers have unusable passwords:
 to shop, register at `/register/`. The import refuses a namespace that already holds demo products, so use a fresh
 database (`docker compose down --volumes`). Other commands, run as `docker compose run --rm web python manage.py <command>`:
-`snapshot_inventory`, `load_customer_segments` and `check_database`.
+`snapshot_inventory` and `check_database`.
 
 `analytics/profile_dataset.py` profiles `data/raw/` with pandas (`pip install -r analytics/requirements.txt` in a
 separate environment) and writes a Markdown report into `data/`, which the documentation check does not allow in the
