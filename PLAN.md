@@ -52,9 +52,10 @@ is needed.
 
 | Data | Store | Why |
 |---|---|---|
-| Users and roles, sellers (with approval status), products (each owned by one seller, with name, price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
+| Users and roles, sellers (with approval status), products (each owned by one seller, with name, price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), refunds, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
 | Inventory snapshots, analytics runs, daily sales | PostgreSQL | Rebuilt on the new schema in `dashboard` (queries ported from the old baseline) |
 | Product specification document (category-specific attributes, generated description, rating summary, latest five reviews), keyed by product id; category attribute templates | MongoDB | Shape varies by category |
+| Activity events (product views and searches), expiring after 30 days | MongoDB time-series collection with a TTL index | Write-heavy, append-only, time-ordered |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
 
 **Cross-store reads are explicit and small:** attribute search runs in MongoDB and returns one page of product ids, then
@@ -81,13 +82,14 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | T1b | **Three roles and accounts**: customer, seller, operator; seller registration and approval; operator console (approve or suspend sellers, take down products and reviews, category attribute templates, audit log) | Role-based access; seller status workflow enforced by a constraint and a transition trigger; sellers scoped to their own rows in every query |
 | T2 | **Catalogue and seller shop pages**: generated English names and descriptions, product images (D10 to D12), an active catalogue of products ordered at least twice (D13), specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
 | T2b | **Seller product CRUD**: sellers create, edit and deactivate their own products (price, stock) in PostgreSQL, edit specifications in MongoDB and upload a photo to GridFS; the operator can take products down; deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
-| T3 | **Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle** (the seller marks shipped, the operator marks delivered) | `FOR UPDATE`, idempotency constraint, payment rows on the checkout, deferred constraint trigger (payments equal the checkout total), status-transition trigger |
+| T3 | **Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle** (the seller marks shipped, the operator marks delivered), **cancellation before shipping** (stock returned and a refund row recorded in one transaction) | `FOR UPDATE`, idempotency constraint, a compensating transaction for cancellation, payment rows on the checkout, deferred constraint trigger (payments equal the checkout total), status-transition trigger |
 | T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_item_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
 | T5 | **Wishlist with restock alert** | Many-to-many table, trigger |
 | T6 | **Stock-planning dashboard** on Olist, with a **moving-average demand forecast** | Materialized view, CTEs, window functions; the same queries as aggregation pipelines in the harness |
 | T6b | **Delivery delay against review score**: dashboard panel (sellers at risk of poor reviews) and a report section | Cross-store analysis: delay from PostgreSQL, score from MongoDB; the report's main implications finding |
+| T6c | **Activity events** in MongoDB (M1): recently viewed for customers, trending now on the home page, views-to-purchases conversion for sellers | Time-series collection, TTL index, `$setWindowFields` ranking; the only write-heavy MongoDB workload; a second cross-store query |
 | T7 | **Benchmark harness** (section 7, B1 to B6), with per-request database timing and a `docker stats` sampler | The rigorous comparison, including isolation anomalies (module theory) |
-| T8 | **CI**: GitHub Actions running the suite against real PostgreSQL and MongoDB | "Well tested"; correctness gate for the benchmark |
+| T8 | **CI**: GitHub Actions running the suite against real PostgreSQL and MongoDB, **Playwright end-to-end tests of the demo story** (E4), `ruff` lint and format, a coverage threshold and `pip-audit` (E5) | "Well tested"; correctness gate for the benchmark |
 | T9 | **Report, slides, video, user manual** | 50% of the marks |
 
 ### Tier 2: earned at the 8 November checkpoint
@@ -97,7 +99,9 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | **Redis**: cache-aside on dashboard and reviews, rate limiting on login and review posting; cache-on against cache-off measurement | tbd | Key-value NoSQL; counts towards the rubric directly |
 | **Observability**: `grafana/otel-lgtm` (OpenTelemetry collector, Tempo, Grafana in one container), OpenTelemetry instrumentation for Django, psycopg and PyMongo, one committed dashboard (section 8) | Erfan | Query spans per request, PostgreSQL against MongoDB latency; telemetry overhead measured |
 | **Row-level security for sellers** (database-enforced isolation under Tier 1's app-level scoping) and a seller-scoped dashboard | tbd | Multi-tenant isolation |
-| **Durability benchmark**: `synchronous_commit` against MongoDB write concern | tbd | Write/durability axis promised in the proposal |
+| **Durability, replication and failover**: a 3-member MongoDB replica set and a PostgreSQL streaming replica; `synchronous_commit` against write concern `majority`; kill the primary on camera and show failover (E6); a timed backup and restore drill with `pg_dump`/`pg_restore` and `mongodump`/`mongorestore` (E7) | tbd | Write/durability axis promised in the proposal; replication is core module theory |
+| **Full-text search** on review text: PostgreSQL `tsvector` with a GIN index against a MongoDB text index, benchmark B7 (E1) | tbd | The same feature on both engines, measured |
+| **Product Q&A**: customers ask, sellers answer; answers embedded in the question document (M2) | tbd | MongoDB embedding |
 | **Scale-up generator runs** to 1M+ rows (promoted to Tier 1 if the 8 November numbers show no clear difference) | tbd | Scale axis |
 | Seller replies to reviews | tbd | |
 | Showcase names and descriptions for the demo subset, written by an LLM and labelled as generated | tbd | Cosmetic |
@@ -105,7 +109,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 ### Tier 3: stretch, probably never
 
 MongoDB change streams, vector search (pgvector against MongoDB `$vectorSearch`), product variants, category tree, K-means (degenerate on Olist:
-about 3% of customers reorder), browsing history with TTL indexes, geospatial queries on the geolocation table (MongoDB
+about 3% of customers reorder), geospatial queries on the geolocation table (MongoDB
 `2dsphere` against PostGIS), CPU and memory dashboard panels (need cAdvisor or exporters), full raw-SQL conversion.
 
 **Cut rule.** At the 8 November checkpoint, a Tier 2 item that cannot be demoed that day is dropped. Tier 3 is not
@@ -205,6 +209,14 @@ delete updates the review, the rating summary and the embedded subset in one Mon
 **Wishlist.** `wishlist_item` (customer, product, added_at), composite key. A trigger on stock going from zero to positive
 records a restock alert shown to the customer.
 
+**Cancellation.** A customer can cancel an order until the seller ships it. One transaction returns the stock, records a
+`refund` row against the checkout and sets the status; the status trigger rejects a cancel after `shipped`. The
+checkout's payments minus refunds still reconcile with its live orders.
+
+**Activity events (M1).** Product views and searches go to a MongoDB time-series collection with a TTL index (30 days).
+They drive recently viewed (per customer), trending now (views in the last 24 hours ranked with `$setWindowFields`) and a
+views-to-purchases conversion figure on the seller page (views from MongoDB, purchases from PostgreSQL).
+
 **Dashboard.** The stock-planning analytics (coverage, replenishment flags, category performance), rebuilt on the new
 schema with the old baseline's queries as the starting point, with a materialized view and window functions, plus "products with poor reviews" from a MongoDB pipeline.
 
@@ -220,6 +232,7 @@ schema with the old baseline's queries as the starting point, with a materialize
 | B4 | Indexing: before and after for B1 and B2, told as one slow → index → fast story with plans | B-tree, composite, partial, GIN | Compound, multikey, partial |
 | B5 | Storage footprint for the same data | Table and index sizes | Storage and index sizes |
 | B6 | Isolation anomalies: a lost update under concurrency | Lost update under READ COMMITTED, prevented by `FOR UPDATE` and by SERIALIZABLE with retry | Write conflict and transaction retry |
+| B7 (Tier 2) | Full-text search on review text (E1) | `tsvector` with a GIN index | Text index |
 
 B3 compares **equivalent minimal operations**, not the app's full checkout (which carries idempotency and cart logic
 that a minimal function would not). The app checkout is demoed, not raced.
@@ -286,7 +299,7 @@ limited-privilege users on both databases, replica set in Compose.
 | Presentation | 25% | Fixed order: background, relational, NoSQL with comparison, performance. All five present, names on screen |
 | Final report | 25% | 10 pages, Calibri 12; methods, results, implications; changes since the proposal |
 | Proposal | 10% | Done |
-| Extra credit | n/a | Triggers (including audit), deferred constraints, materialized view, window functions, pipelines, `$facet`, transactions, analytics (Bayesian rating, forecast, delay analysis), observability, Redis |
+| Extra credit | n/a | Triggers (including audit), deferred constraints, materialized view, window functions, pipelines, `$facet`, transactions, analytics (Bayesian rating, forecast, delay analysis), time-series collection and TTL, end-to-end tests, observability, Redis, replication and failover, full-text search |
 
 Performance analysis is optional in the brief, but the "rigorous comparison" (presentation part iii) and the analysis in
 the top band of both the presentation and report rubrics are graded; the benchmark is how we deliver both.
@@ -357,10 +370,10 @@ Agents check every task against this table (AGENTS.md, Phase check): a workstrea
 |---|---|---|---|---|
 | **0 Setup** | 21 to 25 Oct | `foundation` (Erfan) | `accounts`, `checkout`; review of the `foundation` and `olist-import` plans (done 21 Oct) | Repo runs on Linux and Windows with both databases; professors' written approval |
 | **1 Data** | 26 Oct to 1 Nov | `olist-import` (Chee Long; Erfan optionally on the cleaning script), `accounts` | `catalogue`, `wishlist`, `dashboard` | The shop runs on Olist data in both databases; the three roles can log in |
-| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `benchmark`, `ci`, `observability`, `deliverables` outline | **8 Nov checkpoint:** buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
-| **3A Complete** | 9 to 11 Nov | `reviews` (Chee Long); `ci` (Erfan); surviving Tier 2 in parallel (likely `observability`, Erfan) | Tier 2 plans if earned | Every Tier 1 feature works end to end; CI green on `main` |
+| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `activity`, `benchmark`, `ci`, `observability`; `deliverables`: report outline with a page budget and the scripted demo story | **8 Nov checkpoint** (book a 15-minute check-in with the professors to show the demo): buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
+| **3A Complete** | 9 to 11 Nov | `reviews`, `activity` (Chee Long); `ci` (Erfan); surviving Tier 2 in parallel (likely `observability`, Erfan) | Tier 2 plans if earned | Every Tier 1 feature works end to end; CI green on `main` |
 | **3B Benchmark** | 12 to 15 Nov | `benchmark`: harness, the clean Olist files loaded into the `bench` databases, workloads B1 to B6 with golden outputs, query plans, `docker stats` sampling, per-request timing, the new local HTTP load script | none | **First full benchmark run by 15 Nov** on the designated machine, every correctness check passing; each owner drafts their report section |
-| **4 Freeze** | 16 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs (at least 5 per workload) and the report's results tables; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
+| **4 Freeze** | 16 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs (at least 5 per workload) and the report's results tables; the theory map appendix; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
 | **5 Ship** | 23 to 29 Nov | Video (all five, names on screen, under 10 minutes), slides, packaging | none | Zip checked by the packager; submitted 28 Nov, a day early (deadline 29 Nov, 23:30) |
 
 ## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, deleted at close-out)
@@ -373,17 +386,20 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | not started |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
-| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers) | `olist-import`, `accounts` | 1 | not started |
+| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | not started |
+| `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | not started |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | not started |
 | `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | not started |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol | `catalogue`, `reviews`, `dashboard` | 1 | not started |
-| `ci` | CI and correctness gates, built in phase 3 once the features are in | `foundation` | 1 | not started |
-| `deliverables` | Report, slides, video, user manual, packaging | all | 1 | not started |
+| `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); built in phase 3 once the features are in | `foundation` | 1 | not started |
+| `deliverables` | Report (outline with a page budget in phase 2; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging | all | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
-| `durability` | Durability benchmark and scale-up runs | `benchmark` | 2 | not started |
+| `durability` | Durability benchmark, replication and failover (E6), backup and restore drill (E7), scale-up runs | `benchmark` | 2 | not started |
+| `search` | Full-text search on review text, benchmark B7 (E1) | `reviews` | 2 | not started |
+| `qa` | Product Q&A (M2) | `catalogue` | 2 | not started |
 
 Status is one of: not started, planning, ready (plan approved, waiting for implementation), in progress, review, done. This column is the only progress index; update it when
 a workstream changes state, and keep each plan file to about one page.
@@ -405,7 +421,11 @@ row-level security kept in Tier 2 (D14), operator and seller scope as in section
 per seller and payments on the checkout (D17), "seller" as the single term (D18). From the plan review (21 October): owner and runtime
 PostgreSQL roles with pytest as the owner (R1); remove all 576 payment mismatches (R2); keep reviews of undelivered
 orders as history (R3); delete the old load harness (R4); drop the 20 orders after August 2018 (R5); bigint ids with Olist
-ids as source columns (R6); a custom user model with a role field (R7); CI built in phase 3, orders without items or
+ids as source columns (R6); a custom user model with a role field (R7); CI built in phase 3. Scope review (21 October): cancellation with
+refund (Tier 1); activity events in a MongoDB time-series collection (M1, Tier 1); Playwright end-to-end tests and code-
+quality gates in `ci` (E4, E5, Tier 1); full-text search (E1), replication and failover (E6), backup and restore drill
+(E7) and product Q&A (M2) in Tier 2; a professor check-in at the 8 November checkpoint, a scripted demo story, a report
+outline with a page budget and a theory map appendix. No further scope additions, orders without items or
 payments removed under the same cleaning rule as the payment mismatches (D9), icon cards for every product (D10), illustrative stock
 photos for the best seller in each of the top 15 categories (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
 
