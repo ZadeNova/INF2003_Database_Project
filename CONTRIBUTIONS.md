@@ -16,4 +16,5 @@ section 12; write what you did, not what you were assigned.
 | Member | Work | Evidence |
 |---|---|---|
 | Erfan | `foundation`: repository conversion, roles, MongoDB in Compose, docs check | `docs/plans/foundation.md`, pull request |
-| Others | Not yet recorded | |
+| All members | Ran the README set-up (`foundation` exit check 6), as confirmed by Erfan | `docs/plans/foundation.md` |
+| Others | Further work not yet recorded | |

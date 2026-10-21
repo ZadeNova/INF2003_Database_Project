@@ -20,4 +20,4 @@ One line per workstream, added at close-out.
 
 | Workstream | Agent | What it did | Reviewer |
 |---|---|---|---|
-| foundation | Claude Code (Sonnet 5.5) | Removed AWS and K-means code; two PostgreSQL roles; MongoDB replica set in Compose; docs consolidation and `scripts/check_docs.py`; packager | pending (fresh session) |
+| foundation | Claude Code (Sonnet 5.5) | Removed AWS and K-means code; two PostgreSQL roles; MongoDB replica set in Compose; docs consolidation and `scripts/check_docs.py`; packager | Claude Code (fresh session): Windows exit-check run, see `docs/plans/foundation.md` |

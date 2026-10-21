@@ -15,7 +15,8 @@ contributors and coding agents in [AGENTS.md](AGENTS.md), and what is graded in 
 
 ## Requirements
 
-- Docker Desktop (Windows, macOS) or Docker Engine (Linux) with Compose 2.20 or later, using Linux containers.
+- Docker Desktop (Windows, macOS) or Docker Engine (Linux) with Compose 2.20 or later, using Linux containers. Start
+  Docker Desktop first and wait until it reports the engine is running.
 - Python 3.8 or later on the host, only for `src/tools/init_env.py` and the documentation check. The application runs in
   Docker. On Linux and macOS the command may be `python3`.
 - Git. Free ports 8000 (the app) and 27017 (MongoDB, bound to 127.0.0.1); change `APP_PORT` or `MONGO_PORT` in `.env`.
@@ -122,6 +123,9 @@ every operating system.
 - **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
   8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
   Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.
+- **Docker "cannot find the file specified" (`dockerDesktopLinuxEngine`) on Windows:** Docker Desktop is not running.
+- **Git Bash on Windows turns `/app/...` into a Windows path:** run the commands in PowerShell, or set
+  `MSYS_NO_PATHCONV=1` first.
 - **A variable "is missing a value"** from Compose: run `python src/tools/init_env.py`.
 - **Port already in use:** change `APP_PORT` or `MONGO_PORT` in `.env`.
 - **Roles or database images changed after you pulled:** `docker compose down --volumes`, then start again.

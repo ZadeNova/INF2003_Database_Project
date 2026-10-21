@@ -1,6 +1,6 @@
 # foundation: Repo conversion, AWS removal, roles, MongoDB, docs consolidation
 
-status: in-progress
+status: done
 owner and implementer: Erfan · estimate: 1.5 to 2 days · phase 0 (21 to 25 October)
 
 ## Contract
@@ -42,7 +42,7 @@ beyond the connection and health check (`catalogue`).
    `/health/` returns 200 and `check_database` reports PostgreSQL and MongoDB.
 2. The full test suite passes inside Docker.
 3. `git grep -I -i -w -E "boto3|botocore|secretsmanager|terraform|fargate|ec2|AWS_[A-Z_]+" -- ':!data' ':!PLAN.md' ':!docs/plans'`
-   finds nothing.
+   finds nothing (`-I` skips binaries such as the `.glb` models).
 4. A commit adding a broken link to README.md is blocked by the hook.
 5. `python scripts/package_submission.py --check-only` passes on a dummy zip with the four required files.
 6. Every member can run step 1 from the README alone.
@@ -80,4 +80,17 @@ in the hook, `init_env.py` adding missing keys, the PostgreSQL 18 data path, and
   `.env` at the repository root next to the one `compose.yaml` (foundation-i, foundation-j in `docs/DECISIONS.md`).
 - **The professors' approval** was confirmed by Erfan; no written reference is kept (`docs/AI_USE.md`).
 - Exit check 6 (every member runs step 1 from the README alone) needs the members; not tested.
+
+Windows exit-check run (Claude Code, fresh session, Windows 11 with Docker Desktop, a fresh clone of `main`). All
+checks pass: CSV bytes and checksums unchanged and LF endings on scripts and the hook; `init_env.py` idempotent; the hook
+blocks a broken README link and allows a valid one; every service healthy with MongoDB 9.0.4 `PRIMARY` on `rs0`;
+`/health/` 200 and `check_database` reports both engines; the runtime role is refused `CREATE`, `DROP`, `ALTER` and
+`TRUNCATE` but reads and writes rows, and the MongoDB app user is refused outside `mercer` and `test_mercer`; the full
+suite passes in `migrate` (the run prints the counts; the four skips are the staged-index tests, which need `.git`);
+`check_docs.py` and the packager pass. This closes the "not yet with 9.0 or on Windows" gap above. Exit check 6: Erfan
+confirmed that every member ran step 1 from the README.
+
+Follow-ups from that run (none blocks): add `data/raw/**/checksums.txt text eol=lf` to `.gitattributes` (it checks out as
+CRLF under `core.autocrlf=true`); have `init_env.py` write `.env` with LF (it writes CRLF on Windows, which Compose
+accepts); the README now says Docker Desktop must be running and warns about Git Bash rewriting `/app` paths.
 
