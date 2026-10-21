@@ -1,6 +1,6 @@
 # foundation: Repo conversion, AWS removal, roles, MongoDB, docs consolidation
 
-status: approved
+status: in-progress
 owner and implementer: Erfan · estimate: 1.5 to 2 days · phase 0 (21 to 25 October)
 
 ## Contract
@@ -65,3 +65,18 @@ beyond the connection and health check (`catalogue`).
 the role layout (g), the MongoDB keyfile, start-up order and test database, which configuration survives, exit checks 3
 and 4 (grep scope, vendored `.md` files), the README rewrite, the K-means file list, Windows line endings and Python name
 in the hook, `init_env.py` adding missing keys, the PostgreSQL 18 data path, and the generated-section convention.
+
+22 October 2026 (implementation, Claude Code). Points where the plan was unclear or wrong, to fix before the next use:
+
+- **MongoDB 9.0 does not start on Linux kernels 6.19 to 7.0.13** (MongoDB SERVER-121912); 8.0 and 8.3 are affected too, only
+  7.0 starts. Docker Engine shares the host kernel, so the pinned `mongo:9.0` fails on such a machine (it is this
+  machine's kernel, 7.0.0). Windows and macOS with Docker Desktop are not affected. Pinned 9.0 as decision f asks; the
+  README troubleshooting explains it. Exit check 1 was run on Linux with a throwaway `mongo:7.0` override outside the
+  repository, and **not yet with 9.0 or on Windows**.
+- **Exit check 3** as written finds `src/static/models/new-balance-997.glb` (the bytes `ec2` occur in the binary). Add
+  `-I` to the `git grep`; text files are clean.
+- **Where pytest runs and where `.env` lives were unspecified.** Done: pytest in the `migrate` service (owner role), and
+  `.env` at the repository root next to the one `compose.yaml` (foundation-i, foundation-j in `docs/DECISIONS.md`).
+- **The professors' written approval** (phase 0 exit check, `docs/AI_USE.md`) is still to be added by Erfan.
+- Exit check 6 (every member runs step 1 from the README alone) needs the members; not tested.
+
