@@ -19,22 +19,23 @@ workloads. Scope is tiered: Tier 1 is the A-grade core, Tier 2 (Redis, observabi
 
 ## 2. What we are building
 
-**For buyers (Shopee-style, lean):** browse products from many sellers, read specifications and reviews, add products
-from any seller to one cart, check out once, pay with a simulated method, track the order, review each item once it is
-delivered, wishlist sold-out products and get a restock alert.
+Three roles, as on Shopee (D14 to D18; "seller" is the one word used everywhere):
 
-**For the store operator:** the stock-planning dashboard (which products run out before they can be restocked, which
-categories sell best, which products get poor reviews), product CRUD (including restocking, which fires
-the wishlist restock alert), advance order status for the demo, all orders and sellers.
+| Role | Can do |
+|---|---|
+| **Customer** | Browse, search and filter products from many sellers; one cart across sellers; check out once and pay with a simulated method; track each order; review each item once it is delivered; wishlist sold-out products and get a restock alert |
+| **Seller** | Apply to sell (pending until the operator approves); create, edit and deactivate their own products (price, stock, specifications, photo), where restocking fires the wishlist alert; see their own orders and mark them shipped; see their own sales and reviews; a public shop page |
+| **Operator** (platform admin) | Approve or suspend sellers; take down products or reviews that break the rules; manage categories and their attribute templates (the schema-evolution demo); the platform dashboard (stock planning, category performance, sellers at risk of poor reviews); the audit log; mark orders delivered, acting as the courier for the demo |
 
-**For sellers:** a public, read-only shop page in Tier 1 (products, rating, sales). Seller login is Tier 2.
+A cart with products from three sellers becomes **one checkout with three orders**, one per seller, as on Shopee. The
+checkout holds the payment; each seller ships their own order.
 
 **Out of scope:** real payment gateways, shipping integrations, chat, vouchers, a second full backend.
 
 ## 3. Architecture: polyglot persistence plus a benchmark harness
 
 ```
-Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, carts,
+Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, carts, checkouts,
                                     |                  orders, payments, wishlist, inventory, analytics
                                     +-> MongoDB         product specifications (flexible attributes), reviews
                                                         (single-node replica set, needed for transactions)
@@ -51,7 +52,7 @@ is needed.
 
 | Data | Store | Why |
 |---|---|---|
-| Users, sellers, products (each owned by one seller, with price and stock), carts, orders, order lines, payments, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
+| Users and roles, sellers (with approval status), products (each owned by one seller, with price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
 | Inventory snapshots, analytics runs, daily sales | PostgreSQL | Existing baseline, ported to Olist |
 | Product specification document (category-specific attributes, generated name and description), keyed by product id | MongoDB | Shape varies by category |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
@@ -77,9 +78,10 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | # | Item | Database content shown |
 |---|---|---|
 | T1 | **Olist import** replacing the shoe data, with documented cleaning rules (`olist-import`) | Real data, about 100k orders; FK integrity at import; ER diagram with the normalisation (3NF) justified, and the deliberate denormalisation in MongoDB explained (module theory) |
+| T1b | **Three roles and accounts**: customer, seller, operator; seller registration and approval; operator console (approve or suspend sellers, take down products and reviews, category attribute templates, audit log) | Role-based access; seller status workflow enforced by a constraint and a transition trigger; sellers scoped to their own rows in every query |
 | T2 | **Catalogue and seller shop pages**: generated English names and descriptions, product images (D10 to D12), an active catalogue of products ordered at least twice (D13), specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
-| T2b | **Operator CRUD**: create and edit products (price, stock) in PostgreSQL, edit specifications in MongoDB, deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
-| T3 | **Cart, checkout, simulated payment, order lifecycle** | `FOR UPDATE`, idempotency constraint, payment rows, deferred constraint trigger (payments equal order total), status-transition trigger |
+| T2b | **Seller product CRUD**: sellers create, edit and deactivate their own products (price, stock) in PostgreSQL, edit specifications in MongoDB and upload a photo to GridFS; the operator can take products down; deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
+| T3 | **Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle** (the seller marks shipped, the operator marks delivered) | `FOR UPDATE`, idempotency constraint, payment rows on the checkout, deferred constraint trigger (payments equal the checkout total), status-transition trigger |
 | T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_item_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
 | T5 | **Wishlist with restock alert** | Many-to-many table, trigger |
 | T6 | **Stock-planning dashboard** on Olist, with a **moving-average demand forecast** | Materialized view, CTEs, window functions; the same queries as aggregation pipelines in the harness |
@@ -94,10 +96,10 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 |---|---|---|
 | **Redis**: cache-aside on dashboard and reviews, rate limiting on login and review posting; cache-on against cache-off measurement | tbd | Key-value NoSQL; counts towards the rubric directly |
 | **Observability**: `grafana/otel-lgtm` (OpenTelemetry collector, Tempo, Grafana in one container), OpenTelemetry instrumentation for Django, psycopg and PyMongo, one committed dashboard (section 8) | Erfan | Query spans per request, PostgreSQL against MongoDB latency; telemetry overhead measured |
-| **Seller login** with a seller-scoped dashboard and PostgreSQL row-level security | tbd | Multi-tenant isolation |
+| **Row-level security for sellers** (database-enforced isolation under Tier 1's app-level scoping) and a seller-scoped dashboard | tbd | Multi-tenant isolation |
 | **Durability benchmark**: `synchronous_commit` against MongoDB write concern | tbd | Write/durability axis promised in the proposal |
 | **Scale-up generator runs** to 1M+ rows (promoted to Tier 1 if the 8 November numbers show no clear difference) | tbd | Scale axis |
-| Review moderation by the operator; seller replies | tbd | |
+| Seller replies to reviews | tbd | |
 | Showcase names and descriptions for the demo subset, written by an LLM and labelled as generated | tbd | Cosmetic |
 
 ### Tier 3: stretch, probably never
@@ -157,13 +159,16 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Reviews | The latest review per order is kept; single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
 | Order status | Olist's eight statuses map to ours: created → placed; approved, processing, invoiced → paid; shipped → shipped; delivered → delivered; canceled, unavailable → cancelled |
 | Quantity | Repeated (order, product, seller) lines collapse into one line with a quantity |
+| Sellers | The 3,095 Olist sellers become approved seller accounts with unusable passwords |
+| Multi-seller orders | The 1.3% of Olist orders spanning several sellers split into one order per seller; the Olist order becomes the checkout and keeps its payments unchanged (D17) |
 | Broken orders | Removed (cleaning rules, D9): payments not equal to price plus freight (303), no order lines (775), no payment (1) |
 | Geolocation | One centre point per zip prefix (about 19k of the 1M rows; 26% are exact duplicates), used for seller-to-customer distance in the delay analysis (T6b) |
 
 **Import experience:** the importer prints progress per table, and the user manual states the expected import time and
 memory on a typical laptop, so a long import never looks like a hang.
 
-**Group accounts:** `seed_demo` creates usable logins (one customer per member, one operator; one seller in Tier 2).
+**Group accounts:** `seed_demo` creates usable logins (one customer per member, one operator, and one seller tied to a real
+high-volume Olist seller so the seller pages show real products and sales).
 Passwords are generated into the git-ignored `.env` by `init_env.py`. The hard-coded fallback password in
 `seed_demo.py` is removed.
 
@@ -173,13 +178,21 @@ load byte-identical data. Generated data is not committed; the generator and an 
 
 ## 6. Features in detail (Tier 1)
 
-**Order lifecycle.** `placed → paid → shipped → delivered`, plus `cancelled`. A trigger rejects invalid transitions. An
-operator button advances status so the demo can buy, deliver and review on camera.
+**Checkout and orders.** One checkout per cart; it creates one order per seller. Each order moves
+`placed → paid → shipped → delivered`, plus `cancelled`, and a trigger rejects invalid transitions. The seller marks their
+own order shipped; the operator marks it delivered (acting as the courier), so the demo can buy, ship, deliver and review
+on camera.
 
 **Simulated payment.** A Pay button with a method picker: credit card, boleto, voucher, debit (Olist's own types). The app
 writes a `payment` row with status `paid`. **No card numbers are stored, even fake ones**; if card fields are shown for
-realism they are format-checked in the browser and discarded (at most the last four digits are kept). An order may have
-several payments; a deferred constraint trigger checks at commit that they equal the order total (subject to the profile).
+realism they are format-checked in the browser and discarded (at most the last four digits are kept). Payments belong to
+the checkout; a checkout may have several, and a deferred constraint trigger checks at commit that they equal the checkout
+total (the sum of its orders).
+
+**Seller scoping and uploads.** Sellers only ever read or change their own products and orders: every seller query filters
+by the logged-in seller, with tests that one seller cannot reach another's rows (row-level security adds a database check
+in Tier 2). Product photos: JPEG, PNG or WebP only (never SVG), at most 2 MB, re-encoded with Pillow to drop metadata,
+then stored in GridFS; the old photo is removed when replaced.
 
 **Per-item reviews.** One review per order line, enforced by a MongoDB unique index on `order_item_id`. Only the buyer of
 that line, only when its order is `delivered` (checked in PostgreSQL). Customers can edit or delete their own review.
@@ -256,7 +269,7 @@ support and schema flexibility.
 | Two interchangeable back ends switched by a setting | Polyglot persistence plus a benchmark harness | Duplicating transactional data in MongoDB served no application purpose; every promised comparison still runs on identical data and workloads |
 | Stock and checkout on both engines in the app | Checkout in PostgreSQL; the last-unit race on both engines in the harness | Same comparison, without a second checkout to maintain |
 | Reviews linked to the products in their order | One review per order line (Shopee model) | Correct product ratings for multi-product orders |
-| Merchants as stretch | Sellers as data and read-only shop pages in Tier 1; seller login in Tier 2 | Matches the proposal's stretch status |
+| Merchants as stretch | Sellers are a full role in Tier 1 (register, manage their own products, ship their own orders); row-level security in Tier 2 | Makes CRUD on both databases natural to demo; matches how Shopee works |
 | MongoDB change stream | Dropped (Tier 3) | No Tier 1 feature needs asynchronous processing; the rating summary is kept correct inside a MongoDB transaction instead |
 | (not in proposal) | Redis, observability (Tier 2) | Added scope, earned at the checkpoint |
 
@@ -324,14 +337,14 @@ and the report. The proposal does not mention the reuse.
 
 | Member | Role | Tier 1 work |
 |---|---|---|
-| **Chee Long** | Main developer | `olist-import` (with Erfan in week 1); checkout, payments, order lifecycle; dashboard port |
-| **Erfan** | Second main developer | `foundation`; `olist-import` pairing; benchmark harness and generator; CI; Tier 2 observability |
+| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `dashboard`, `benchmark`, `ci` |
+| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; Tier 2 `observability` |
 | **Joash** | Supporting developer, QA | MongoDB: specifications, reviews, pipelines (his proposal role), reviewed by Erfan |
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
 | **Syahfariz** | Supporting developer, QA | Test plan and correctness gates, clean-machine run of the user manual, slides and video |
 
 After `foundation`, Chee Long has agreed to implement most of Tier 1 (about 70 to 80%). Each other member still owns the
-human gates of at least one workstream and presents it. Chee Long and Erfan carry most of the development; the supporting members' work is smaller but recorded in
+human gates of at least one workstream and presents it. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
 `CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work as it finishes; one editor assembles
 it (to decide).
 
@@ -355,8 +368,9 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | planning |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | not started |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo, shop pages, product tiles and featured photos in GridFS, operator CRUD with audit trigger, `DESIGN.md` rewrite | `olist-import` | 1 | not started |
-| `checkout` | Cart, checkout, simulated payment, order lifecycle | `olist-import` | 1 | not started |
+| `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | not started |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
+| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers) | `olist-import`, `accounts` | 1 | not started |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | not started |
 | `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | not started |
@@ -365,7 +379,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `deliverables` | Report, slides, video, user manual, packaging | all | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
-| `seller-rls` | Seller login and row-level security | `checkout` | 2 | not started |
+| `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
 | `durability` | Durability benchmark and scale-up runs | `benchmark` | 2 | not started |
 
 Status is one of: not started, planning, in progress, review, done. This column is the only progress index; update it when
@@ -383,7 +397,9 @@ forecast, delivery-delay analysis, 3NF justification, isolation benchmark (B6), 
 From the profile: remove the 303 payment-mismatch orders, keep the latest review per order, collapse repeated lines into
 a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
 uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
-dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), orders without items or
+dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), three roles in Tier 1 with
+row-level security kept in Tier 2 (D14), operator and seller scope as in section 2 (D15, D16), one checkout with one order
+per seller and payments on the checkout (D17), "seller" as the single term (D18), orders without items or
 payments removed under the same cleaning rule as the payment mismatches (D9), icon cards for every product (D10), illustrative stock
 photos for the best seller in each of the top 15 categories (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
 

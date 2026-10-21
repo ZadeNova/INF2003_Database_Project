@@ -27,7 +27,7 @@ Each value lives in exactly one store. Nothing is copied between them, so no syn
 
 | Data | Store |
 |---|---|
-| Users, sellers, products (each owned by one seller, with price and stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
+| Users and roles (customer, seller, operator), sellers, products (each owned by one seller, with price and stock), carts, checkouts (hold the payments; one order per seller), orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
 | Product specification documents (category-specific attributes, rating summary, latest five reviews) | MongoDB (latest stable, pinned by digest), single-node replica set |
 | Reviews, one per order line | MongoDB |
 | Product photos (featured stock photos; every other product shows an icon card) | MongoDB GridFS |
@@ -53,7 +53,10 @@ returns price and stock with `WHERE id = ANY(%s)`. A review write checks the ord
 10. **Benchmarks:** use the separate `bench` database in each engine, identical data files and Docker limits, and check
     the golden outputs first. A timing counts only if its correctness check passed. Telemetry and caches stay off during
     timed runs.
-11. **Tiers are binding.** Tier 1 items are demoed, measured or shown with a query plan, and written up. Do not start a
+11. **Sellers are scoped to their own rows.** Every seller query filters by the logged-in seller, and a test proves one
+    seller cannot read or change another's products or orders.
+12. **Uploads:** JPEG, PNG or WebP only, never SVG; at most 2 MB; re-encoded with Pillow before storing in GridFS.
+13. **Tiers are binding.** Tier 1 items are demoed, measured or shown with a query plan, and written up. Do not start a
     Tier 2 or Tier 3 item before PLAN.md says it is earned.
 
 ## How we work
