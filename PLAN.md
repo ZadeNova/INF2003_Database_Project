@@ -396,12 +396,12 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | review |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | ready |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | planning |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |
-| `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | not started |
-| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | not started |
-| `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
-| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | not started |
+| `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | planning |
+| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | planning |
+| `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | planning |
+| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | planning |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol | `catalogue`, `reviews`, `dashboard` | 1 | not started |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); built in phase 3 once the features are in | `foundation` | 1 | not started |
 | `deliverables` | Report (outline with a page budget in phase 2; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging | all | 1 | not started |
