@@ -334,7 +334,7 @@ it (to decide).
 
 | ID | Sub-plan | Depends on | Tier | Status |
 |---|---|---|---|---|
-| SP-01 | Repo conversion and AWS removal | none | 1 | not started |
+| SP-01 | Repo conversion and AWS removal | none | 1 | planning |
 | SP-02 | **Olist profile, schema, import, adaptations, users** (first to execute) | SP-01 | 1 | not started |
 | SP-03 | Catalogue, specifications in MongoDB, shop pages, images, operator CRUD | SP-02 | 1 | not started |
 | SP-04 | Cart, checkout, simulated payment, order lifecycle | SP-02 | 1 | not started |
