@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import Client, override_settings
+from django.test import Client
 from django.urls import reverse
 
 from catalogue.models import Product, ShoeModel
@@ -370,21 +370,10 @@ def test_seed_demo_refuses_to_promote_an_existing_customer(monkeypatch):
     assert customer.check_password("customer-pass")
 
 
-def test_seed_demo_requires_password_outside_local(monkeypatch):
+def test_seed_demo_uses_the_fallback_password_when_none_is_given(monkeypatch):
     monkeypatch.delenv("DEMO_OPERATOR_PASSWORD", raising=False)
 
-    with override_settings(LOCAL=False), pytest.raises(CommandError):
-        call_command("seed_demo")
-
-    assert Product.objects.count() == 0
-    assert not get_user_model().objects.filter(username="demo-operator").exists()
-
-
-def test_seed_demo_allows_fallback_password_in_local(monkeypatch):
-    monkeypatch.delenv("DEMO_OPERATOR_PASSWORD", raising=False)
-
-    with override_settings(LOCAL=True):
-        call_command("seed_demo")
+    call_command("seed_demo")
 
     operator = get_user_model().objects.get(username="demo-operator")
     assert operator.check_password("Str0ngDemoOperator!2026")
@@ -393,9 +382,8 @@ def test_seed_demo_allows_fallback_password_in_local(monkeypatch):
 def test_seed_demo_creates_every_shoe_in_every_size(monkeypatch):
     monkeypatch.delenv("DEMO_OPERATOR_PASSWORD", raising=False)
 
-    with override_settings(LOCAL=True):
-        call_command("seed_demo")
-        call_command("seed_demo")
+    call_command("seed_demo")
+    call_command("seed_demo")
 
     assert ShoeModel.objects.filter(namespace=settings.DEMO_NAMESPACE).count() == len(SHOES) == 20
     skus = Product.objects.filter(namespace=settings.DEMO_NAMESPACE, shoe_model__isnull=False)

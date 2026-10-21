@@ -15,7 +15,7 @@ from django.urls import reverse
 from config.jsonlog import JsonFormatter
 
 pytestmark = pytest.mark.django_db
-LOGGERS = ("northstar", "django.request", "django.security")
+LOGGERS = ("mercer", "django.request", "django.security")
 
 
 class Captured:
@@ -31,7 +31,7 @@ class Captured:
         return [record for record in found if logger is None or record["logger"] == logger]
 
     def request_lines(self):
-        return self.records("northstar.request")
+        return self.records("mercer.request")
 
 
 @pytest.fixture
@@ -151,7 +151,7 @@ def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a
     assert response.status_code == 503
     (line,) = logs.request_lines()
     assert (line["status"], line["level"], line["exception"], line["user_id"]) == (503, "ERROR", "OperationalError", None)
-    (warning,) = logs.records("northstar.errors")
+    (warning,) = logs.records("mercer.errors")
     assert warning["request_id"] == line["request_id"] == response["X-Request-ID"]
     assert "OperationalError" in warning["message"] and "db-secret-host" not in logs.raw
 
@@ -202,7 +202,7 @@ def test_the_formatter_replaces_the_message_of_every_django_security_logger():
         assert payload["logger"] == name and payload["message"] == "Django security rejection"
         assert "SENTINEL-HOST" not in json.dumps(payload)
 
-    other = logging.LogRecord("northstar.errors", logging.WARNING, __file__, 1, "kept %s", ("as written",), None)
+    other = logging.LogRecord("mercer.errors", logging.WARNING, __file__, 1, "kept %s", ("as written",), None)
     assert json.loads(JsonFormatter().format(other))["message"] == "kept as written"
 
 
@@ -214,13 +214,13 @@ def test_the_formatter_tolerates_values_that_are_not_json_serialisable():
 
 
 def test_logging_is_configured_for_json_on_standard_output():
-    handlers = logging.getLogger("northstar").handlers
+    handlers = logging.getLogger("mercer").handlers
     assert handlers and isinstance(handlers[0].formatter, JsonFormatter)
-    assert logging.getLogger("northstar.request").getEffectiveLevel() == logging.INFO
+    assert logging.getLogger("mercer.request").getEffectiveLevel() == logging.INFO
     assert settings.LOGGING["loggers"]["django.request"]["propagate"] is False
 
 
-@override_settings(ALLOWED_HOSTS=["shop.example"], SECURE_SSL_REDIRECT=True)
+@override_settings(ALLOWED_HOSTS=["shop.example"])
 def test_rejected_host_keeps_request_id_in_response_and_security_event(logs):
     response = Client().get("/login/", HTTP_HOST="rejected.example", HTTP_X_REQUEST_ID="review-request-123")
     assert response.status_code == 400

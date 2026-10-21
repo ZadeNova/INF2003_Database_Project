@@ -1,11 +1,8 @@
-"""Environment-driven configuration. Compose is local-only; production is fail-closed."""
+"""Environment-driven configuration. One local setup: plain HTTP on 127.0.0.1, secrets from the git-ignored .env."""
 import os
-import ipaddress
 import re
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
-
-from config.secrets import APP_FIELDS, load_environment
 
 ENVIRON = os.environ
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,32 +19,13 @@ def boolean(name, default=False):
         raise ImproperlyConfigured(f"{name} must be true or false")
     return value == "true"
 
-ENVIRONMENT = ENVIRON.get("DJANGO_ENV", "production")
-if ENVIRONMENT not in {"local", "production"}:
-    raise ImproperlyConfigured("DJANGO_ENV must be local or production")
-LOCAL = ENVIRONMENT == "local"
 DEBUG = boolean("DJANGO_DEBUG")
-if DEBUG and not LOCAL:
-    raise ImproperlyConfigured("DEBUG is forbidden outside local development")
-try:
-    ENVIRON = load_environment(APP_FIELDS)
-except ValueError as error:
-    raise ImproperlyConfigured(str(error)) from None
 SECRET_KEY = required("DJANGO_SECRET_KEY")
 if len(SECRET_KEY) < 50:
     raise ImproperlyConfigured("DJANGO_SECRET_KEY must contain at least 50 characters")
-RELEASE_ID = ENVIRON.get("APP_RELEASE_ID", "local" if LOCAL else "")
+RELEASE_ID = ENVIRON.get("APP_RELEASE_ID", "local")
 if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", RELEASE_ID):
     raise ImproperlyConfigured("APP_RELEASE_ID must be a nonsecret release identifier")
-HEALTH_PROBE_HOST = ENVIRON.get("DJANGO_HEALTH_PROBE_HOST", "")
-if HEALTH_PROBE_HOST:
-    try:
-        address, port = HEALTH_PROBE_HOST.split(":")
-        ip = ipaddress.IPv4Address(address)
-        if str(ip) != address or not ip.is_private or ip.is_unspecified or ip.is_multicast or port != "8000":
-            raise ValueError()
-    except ValueError:
-        raise ImproperlyConfigured("DJANGO_HEALTH_PROBE_HOST must be one private IPv4 address:8000") from None
 ALLOWED_HOSTS = [v.strip() for v in required("DJANGO_ALLOWED_HOSTS").split(",") if v.strip()]
 if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Explicit allowed hosts are required")
@@ -62,8 +40,6 @@ MIDDLEWARE = [
     # After DatabaseUnavailableMiddleware so its process_exception sees an exception first (they run in
     # reverse order) and can record the class before the 503 is produced.
     "config.middleware.RequestLoggingMiddleware",
-    # Correlate Host/security rejections as well as normal requests; the exact probe stays DB-independent.
-    "config.middleware.HealthProbeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -113,27 +89,13 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = not LOCAL
-CSRF_COOKIE_SECURE = not LOCAL
-SECURE_SSL_REDIRECT = not LOCAL
-# Short by default: a browser that has seen HSTS refuses HTTP and certificate-warning bypasses for this long.
-HSTS_SECONDS = ENVIRON.get("DJANGO_HSTS_SECONDS", "3600")
-if not (HSTS_SECONDS.isascii() and HSTS_SECONDS.isdigit()):
-    raise ImproperlyConfigured("DJANGO_HSTS_SECONDS must be a non-negative whole number")
-SECURE_HSTS_SECONDS = 0 if LOCAL else int(HSTS_SECONDS)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
-# Enable only behind a proxy that strips/replaces the forwarded header.
-if boolean("DJANGO_TRUST_PROXY"):
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_REDIRECT_EXEMPT = [r"^health/$"]
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/products/"
 LOGOUT_REDIRECT_URL = "/products/"
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 DEMO_NAMESPACE = "synthetic/shoes/revision-a/demo/v1"
 
-# One JSON line per event on standard output (collected by Docker and CloudWatch). Only our own request and
+# One JSON line per event on standard output (collected by Docker). Only our own request and
 # error loggers, Django's 5xx error records and Django's security warnings are routed here; the formatter
 # never emits exception messages. Gunicorn's access log stays disabled.
 LOGGING = {
@@ -142,7 +104,7 @@ LOGGING = {
     "formatters": {"json": {"()": "config.jsonlog.JsonFormatter"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "stream": "ext://sys.stdout", "formatter": "json"}},
     "loggers": {
-        "northstar": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "mercer": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },

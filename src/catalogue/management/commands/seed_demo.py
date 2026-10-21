@@ -26,10 +26,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         operator_password = os.environ.get("DEMO_OPERATOR_PASSWORD")
-        if not operator_password and not settings.LOCAL:
-            raise CommandError(
-                "DEMO_OPERATOR_PASSWORD must be set outside local environments; refusing to seed."
-            )
 
         rng = random.Random(options["seed"])
         created = 0

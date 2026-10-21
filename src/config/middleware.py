@@ -10,27 +10,12 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils.functional import empty
 
-logger = logging.getLogger("northstar.errors")
-request_logger = logging.getLogger("northstar.request")
+logger = logging.getLogger("mercer.errors")
+request_logger = logging.getLogger("mercer.request")
 
 RETRY_AFTER_SECONDS = "5"
 # An incoming X-Request-ID is reused only if it is short and plain, so it cannot carry log-injection text.
 SAFE_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{8,64}")
-
-
-class HealthProbeMiddleware:
-    """Exact internal ALB probe exception; ordinary requests keep explicit Host validation."""
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if (settings.HEALTH_PROBE_HOST and request.META.get("HTTP_HOST") == settings.HEALTH_PROBE_HOST
-                and request.path_info == "/health/" and request.method in {"GET", "HEAD"}):
-            from config.views import health_response
-            return health_response()
-        request.get_host()
-        return self.get_response(request)
 
 
 class RequestLoggingMiddleware:
