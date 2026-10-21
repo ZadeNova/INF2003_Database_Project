@@ -111,7 +111,8 @@ started before the first full benchmark run exists (target 13 November).
 
 ## 5. Data: Olist, adapted
 
-**Source:** Brazilian E-Commerce Public Dataset by Olist, CC BY-NC-SA 4.0. All nine tables are imported. Attribution and
+**Source:** Brazilian E-Commerce Public Dataset by Olist, CC BY-NC-SA 4.0. All nine tables are used (geolocation reduced to one point per zip prefix). Olist is
+the only dataset; the ECB reference rates used for currency conversion are cited as a supporting source. Attribution and
 the licence notice go in `docs/licenses/` and the report; derived data is shared under the same licence.
 
 **Committed to the repository, so a marker needs no Kaggle account:** the raw CSVs in `data/raw/olist/` with SHA-256
@@ -129,10 +130,10 @@ reproduces it, and its output becomes the report's dataset section. What it sett
 | Items per order | 90% of orders have one line; the same product repeats as separate lines in 6.9% of (order, product) pairs | Repeats collapse into one line with a quantity |
 | Do payments sum to the order total (price plus freight)? | 99.7% of orders match; 303 do not | The 303 are removed (cleaning rule); the deferred payment check then holds |
 | Duplicate `review_id`s; empty review text | 814 duplicate ids, 547 orders with several reviews; 41% of reviews have text (about 2.8M characters) | Keep the latest review per order; translate all text once |
-| Products without a category or translation | 610 without a category; 2 of 73 categories without an English name | D5 |
+| Products without a category or translation | 610 without a category; 2 of 73 categories without an English name | The two translated by hand; the 610 go into an "Uncategorised" category |
 | Names, descriptions, images | None in the data (only their lengths) | Generated, as planned |
 | Category concentration | Top 15 categories cover 79% of order lines | Rich attribute templates for the top 15 |
-| Date coverage | September 2016 to October 2018; the last full month is August 2018 | D7 |
+| Date coverage | September 2016 to October 2018; the last full month is August 2018 | All dates shift by a fixed 426 weeks (below) |
 
 **Cleaning rules.** The raw files are never edited. The importer applies each rule and prints a ledger (rule, rows removed
 or changed, reason) that becomes a table in the report, so every change to the real data is visible and counted.
@@ -141,7 +142,7 @@ or changed, reason) that becomes a table in the report, so every change to the r
 
 | Field | Treatment |
 |---|---|
-| Category names | Olist's own English translation table |
+| Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
 | Product images | One openly licensed image or icon per category (73), licences recorded |
 | List price | Derived from real order prices (median per product or listing) |
@@ -149,13 +150,13 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Category-specific attributes | Rich templates for the top 15 categories, a generic template for the rest; stored in MongoDB (and as EAV and JSONB copies for the benchmark) |
 | Review text | All comments machine-translated offline once with a local model; original Portuguese kept; English labelled as machine-translated |
 | Currency | Converted to SGD at **one fixed rate**: the European Central Bank reference rates (EUR/BRL and EUR/SGD cross rate) on the day `olist-import` executes. Lines rounded to the cent; order totals computed from the rounded lines. Raw BRL kept in the raw files |
-| Dates | Kept as 2016 to 2018 with the as-of date pinned to 31 August 2018, or shifted by a fixed whole number of weeks (D7) |
+| Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to 30 October 2026, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
 | Customers | One user per `customer_unique_id`, bulk-inserted with unusable passwords |
 | Reviews | The latest review per order is kept; single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
 | Order status | Olist's eight statuses map to ours: created → placed; approved, processing, invoiced → paid; shipped → shipped; delivered → delivered; canceled, unavailable → cancelled |
 | Quantity | Repeated (order, product, seller) lines collapse into one line with a quantity |
 | Payment mismatches | Orders whose payments do not equal price plus freight are removed (cleaning rule) |
-| Geolocation | D6 |
+| Geolocation | One centre point per zip prefix (about 19k of the 1M rows; 26% are exact duplicates), used for seller-to-customer distance in the delay analysis (T6b) |
 
 **Import experience:** the importer prints progress per table, and the user manual states the expected import time and
 memory on a typical laptop, so a long import never looks like a hang.
@@ -378,19 +379,17 @@ in section 12; images pinned by digest (D4, decision foundation-d); MongoDB cont
 foundation-c). Added 21 October after the rubric review: faceted search and schema evolution, Bayesian rating, demand
 forecast, delivery-delay analysis, 3NF justification, isolation benchmark (B6), audit trigger, latest stable versions.
 From the profile: remove the 303 payment-mismatch orders, keep the latest review per order, collapse repeated lines into
-a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs.
+a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
+uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
+dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset).
 
 **Open:**
 
 | ID | Question | Recommendation |
 |---|---|---|
-| D1 | Product or listing as the unit of price and stock | Listing (product × seller): multi-seller products carry 12.8% of order lines |
+| D1 | Product or listing as the unit of price and stock | Listing (product × seller), as on Amazon (one product page, several sellers): multi-seller products carry 12.8% of order lines |
 | D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
-| D5 | 2 untranslated categories; 610 products without a category | Translate the two by hand; put the 610 in an "Uncategorised" category |
-| D6 | Geolocation (1M rows, 26% exact duplicates, 19,015 zip prefixes) | Import one centre point per zip prefix; use it for seller-to-customer distance in the delay analysis |
-| D7 | Dates | Shift every date by one fixed offset of 426 weeks (2016–2018 becomes November 2024 to 30 October 2026, weekdays kept), so demo orders continue the timeline |
-| D8 | A second dataset ("more dataset is preferred") | Olist's marketing funnel dataset (leads and closed deals, joined by `seller_id`); verify its licence first |
 | D9 | 775 orders without items and 1 without a payment | Remove under the same cleaning rule as the payment mismatches |
 
 ## 16. Risks
