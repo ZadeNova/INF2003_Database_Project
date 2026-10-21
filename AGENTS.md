@@ -10,15 +10,15 @@ the pages.
 | File | Use it for |
 |---|---|
 | [RUBRICS.md](RUBRICS.md) | What is graded. The target is an A, so every change should help a rubric line |
-| [PLAN.md](PLAN.md) | Scope, tiers, architecture, benchmark protocol, sub-plans, timeline. It wins over this file on scope |
+| [PLAN.md](PLAN.md) | Scope, tiers, architecture, benchmark protocol, workstreams, timeline. It wins over this file on scope |
 | [DESIGN.md](DESIGN.md) | Visual language; `src/static/css/site.css` is its single implementation |
-| `docs/plans/SP-xx.md` | The one working file for the sub-plan in flight: contract, decisions, review notes. Deleted at close-out (planned) |
+| `docs/plans/<workstream>.md` | The one working file for the workstream in flight: contract, decisions, review notes. Deleted at close-out (planned) |
 | `docs/DECISIONS.md` | Why choices were made (planned). Add an entry for every non-obvious decision |
 
 ## Current state
 
 The code in `src/` is still the earlier shoe-shop baseline (Django, PostgreSQL, HTMX, AWS-oriented configuration). It is
-being converted: SP-01 removes the AWS parts, SP-02 replaces the shoe data with Olist. Do not extend shoe code. If a
+being converted: `foundation` removes the AWS parts, `olist-import` replaces the shoe data with Olist. Do not extend shoe code. If a
 file contradicts PLAN.md, PLAN.md describes the target and the file is waiting to be converted or deleted.
 
 ## Architecture and ownership
@@ -27,8 +27,8 @@ Each value lives in exactly one store. Nothing is copied between them, so no syn
 
 | Data | Store |
 |---|---|
-| Users, sellers, products, listings (price, stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL 17 |
-| Product specification documents (category-specific attributes, rating summary, latest five reviews) | MongoDB 8, single-node replica set |
+| Users, sellers, products, listings (price, stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
+| Product specification documents (category-specific attributes, rating summary, latest five reviews) | MongoDB (latest stable, pinned by digest), single-node replica set |
 | Reviews, one per order line | MongoDB |
 | Cache and rate limits (Tier 2 only) | Redis; never source of truth |
 
@@ -57,9 +57,9 @@ returns price and stock with `WHERE id = ANY(%s)`. A review write checks the ord
 
 ## How we work
 
-- **Contract before code.** Each sub-plan in PLAN.md section 14 gets one file in `docs/plans/` (scope, interfaces,
+- **Contract before code.** Each workstream in PLAN.md section 14 gets one file, `docs/plans/<workstream>.md` (scope, interfaces,
   tables or collections, tests, exit check) that the owner approves before implementation starts. See Workflow below.
-- **Branch per workstream.** No direct pushes to `main`. Open a pull request, link the sub-plan, and describe what the
+- **Branch per workstream,** named `<workstream>/<topic>`. No direct pushes to `main`. Open a pull request, link the plan, and describe what the
   change does in words the author can defend in the video.
 - **Commits made with AI assistance carry a `Co-Authored-By` trailer.** Keep subjects in the `type: summary` style
   already used in the history.
@@ -75,7 +75,7 @@ the implementation, record problems and tradeoffs, fix, close out.
 **A plan exists:** check it against the current code first (it may be stale), then implement, review, record, fix,
 close out.
 
-- **Plan file.** One file per sub-plan at `docs/plans/SP-xx.md` with a `status:` line (draft, approved, in-progress,
+- **Plan file.** One file per workstream at `docs/plans/<workstream>.md` with a `status:` line (draft, approved, in-progress,
   done) and three sections: Contract, Decisions, Review notes. Do not create separate tradeoff, implementation or review
   files.
 - **Reviews run in a fresh session**, not the one that wrote the work. Where possible use the other agent (Codex
@@ -85,7 +85,7 @@ close out.
 - **One fix round.** Findings still open after it go into a follow-up item, not an endless loop.
 - **Keep plan files to about one page.** Only plans in flight exist; progress is tracked in the status column of PLAN.md
   section 14, not in a separate index.
-- **Human gates (about 15 minutes per sub-plan).** The owner (1) reads the Contract and Decisions and approves the plan,
+- **Human gates (about 15 minutes per workstream).** The owner (1) reads the Contract and Decisions and approves the plan,
   (2) runs the demo path and checks the tests passed, and (3) can explain the change in two sentences before approving.
   Agent output is a proposal, not a finished review: do not approve work you could not explain on video.
 - **Skip the planning half** for small changes (typos, copy, one-line fixes).
@@ -95,7 +95,7 @@ close out.
 **Close-out (the last step of every implementation, before merge):**
 1. Update the docs the change touched, using the docs map below.
 2. Move lasting decisions from the plan file into `docs/DECISIONS.md`; record review findings in the pull request.
-3. Add one line to `docs/AI_USE.md`: sub-plan, agent used, what it did, who reviewed.
+3. Add one line to `docs/AI_USE.md`: workstream, agent used, what it did, who reviewed.
 4. Delete the plan file (git history keeps it).
 5. Run `scripts/check_docs.py` and fix what it reports.
 
@@ -115,7 +115,7 @@ without an entry in `docs/DECISIONS.md`.
 | docs/DECISIONS.md | Decisions and tradeoffs; the source for the report's discussion |
 | docs/AI_USE.md | AI-use declaration and the per-pull-request log |
 | CONTRIBUTIONS.md | Contribution record for peer review |
-| docs/plans/SP-xx.md | Temporary; only plans in flight |
+| docs/plans/<workstream>.md | Temporary; only plans in flight |
 
 **Docs map: what to update for which change**
 
@@ -133,7 +133,7 @@ without an entry in `docs/DECISIONS.md`.
 **Never write by hand:** test counts, row counts, timings or benchmark tables. Generate them or link to the source
 (`benchmarks/results/`, the schema script), so they cannot drift.
 
-**Check (planned in SP-01):** `scripts/check_docs.py`, run by a git pre-commit hook in `.githooks/` (enable once with
+**Check (planned in `foundation`):** `scripts/check_docs.py`, run by a git pre-commit hook in `.githooks/` (enable once with
 `git config core.hooksPath .githooks`) and by CI as a backstop. It fails on broken relative links, backticked file paths
 that do not exist, `.md` files not in the list above, generated docs that are out of date, `status: done` plan files,
 and README commands that name a missing script or Compose service. It cannot detect a paragraph that is wrong while its
