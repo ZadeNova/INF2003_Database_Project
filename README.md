@@ -110,6 +110,13 @@ database (`docker compose down --volumes`). Other commands, run as `docker compo
 separate environment) and writes a Markdown report into `data/`, which the documentation check does not allow in the
 repository: delete it after reading. `olist-import` replaces the profiler with one for Olist.
 
+## Editor set-up (optional)
+
+Docker is the supported runtime. For VS Code and Pylance to resolve imports, create a local environment once with
+`python -m venv .venv` and `pip install -r src/requirements.txt` inside it, then pick `.venv` as the interpreter (VS Code
+lists it automatically). `.vscode/settings.json` uses the `python` on your path and adds `src/` for project imports on
+every operating system.
+
 ## Troubleshooting
 
 - **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB

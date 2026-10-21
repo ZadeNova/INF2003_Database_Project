@@ -1,215 +1,149 @@
 #!/usr/bin/env python3
-"""Build Group_<id>_INF2003_Project.zip from a commit, then check it the way Appendix A of the brief asks.
+"""Build and check the INF2003 submission zip (RUBRICS.md, Final submission): one zip holding the final report PDF,
+the slides (.pptx), the presentation video (.mp4) and the source code zip.
 
-  python scripts/package_submission.py --group 82                  # package HEAD, write ../Group_82_INF2003_Project.zip
-  python scripts/package_submission.py --group 82 --add report.pdf --add architecture.png:evidence/architecture.png
-  python scripts/package_submission.py --group 82 --ref WORKTREE --out /tmp/x.zip   # dry run of uncommitted files
-  python scripts/package_submission.py --check-only Group_82_INF2003_Project.zip
+  python scripts/package_submission.py --report report.pdf --slides slides.pptx --video demo.mp4
+  python scripts/package_submission.py --report report.pdf --slides slides.pptx --video demo.mp4 --ref main --out ../Team82.zip
+  python scripts/package_submission.py --check-only Team82.zip
 
-Only files committed at the chosen ref go in (git archive semantics), so state files, tfvars and .env files that git
-ignores can never be packaged. Files that are not in git yet (the report PDF, the diagram) are added with --add
-SRC[:PATH-IN-ZIP]. AGENTS.md and CLAUDE.md are left out by default (instructions for coding agents, not part of the
-deliverable); change EXCLUDE below if you disagree.
-
-Exit status 1 when a check FAILS; WARN lines need a human look. Standard library only; no network, no AWS.
+Building packs the committed files at --ref (git archive, so ignored files such as .env can never be included) into a
+source zip, then puts it beside the three deliverables in the outer zip and checks the result. Exit status 1 when a
+check FAILS; WARN lines need a human look. Standard library only; no network.
 """
 import argparse
 import io
-import posixpath
 import re
 import subprocess
 import sys
-import tarfile
 import zipfile
 from pathlib import Path
 
-EXCLUDE = {"docs/EVIDENCE_WRITER.md"}   # AGENTS.md and CLAUDE.md are kept: the README links to them and the AI-use declaration refers to them
-REQUIRED = ["README.md", "project_manifest.yaml", "report.pdf", "src", "data/DATA_DICTIONARY.md", "analytics/README.md",
-            "evidence", "tests", "TEAM_CONTRIBUTIONS.md", "AI_USE_DECLARATION.md", "video_link.txt",
-            "evidence/architecture.png", "evidence/test-functional.md", "evidence/test-security.md",
-            "evidence/test-data-ai.md", "evidence/test-resilience.md", "evidence/monitoring.md",
-            "evidence/threat-control-map.md", "data/README.md"]
-TEXT = {".md", ".yaml", ".yml", ".txt", ".py", ".sh", ".tf", ".json", ".csv", ".toml", ".cfg", ".ini", ".html", ".example"}
-PATH_IN_TEXT = re.compile(r"(?<![\w./-])((?:evidence|data|analytics|src|tests|docs)/[A-Za-z0-9_./-]*[A-Za-z0-9_])")
-LINK = re.compile(r"\]\((?!https?:|mailto:|#)([^)#\s]+)")
-SECRET_RULES = [
-    ("AWS access key", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
-    ("AWS secret key", re.compile(r"aws_secret_access_key\s*[=:]\s*['\"]?[A-Za-z0-9/+]{40}\b")),
-    ("GitHub or Slack token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|xox[abprs]-[A-Za-z0-9-]{10,})")),
+REQUIRED = {".pdf": "final report", ".pptx": "presentation slides", ".mp4": "presentation video",
+            ".zip": "source code zip"}
+SOURCE_REQUIRED = ["README.md", "compose.yaml", "src"]
+LIMIT_BYTES = 2 * 1024 ** 3       # the brief allows a GitHub link instead above 2 GB
+TEXT = {".md", ".yaml", ".yml", ".txt", ".py", ".sh", ".json", ".toml", ".cfg", ".ini", ".html", ".css", ".js", ".example"}
+SECRET_FILES = re.compile(r"(^|/)\.env($|\.(?!example$))|\.pem$|\.key$|\.p12$|\.pfx$|\.tfstate")
+SECRET_TEXT = [
     ("private key", re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY")),
-    ("12-digit account id", re.compile(r"(?<![\w.\-])\d{12}(?![\w\-])")),
-    ("email address", re.compile(r"[\w.+-]+@(?!example\.|amazonaws\.com|sns\.)[\w-]+\.[a-z]{2,}", re.I)),
-    ("public IPv4 address", re.compile(r"(?<![\w.])(?!(?:10|127|0)\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|2(?:2[4-9]|[3-5]\d)\.)"
-                                      r"(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\w.]*\w)")),
+    ("cloud access key id", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
+    ("GitHub or Slack token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|xox[abprs]-[A-Za-z0-9-]{10,})")),
 ]
-# Hits that were looked at and are not leaks. Each entry: (rule label, regex on the matched text or "" for any,
-# regex on the whole line or "" for any, reason). Anything not listed here is reported as a WARN for a human to read.
-ALLOWED = [
-    ("12-digit account id", r"^(123456789012|999999999999|(\d)\2{11})$", "", "AWS documentation's example id, or a repeated-digit placeholder used in test fixtures"),
-    ("12-digit account id", "", r"github\.com/", "a GitHub Actions job number inside a URL"),
-    ("email address", r"@db\.example$|@example\.", "", "a test-only address on a reserved example domain"),
-    ("email address", r"@packages\.debian", "", "a Debian package maintainer string inside a security-scan report"),
-    ("email address", "", r"https?://", "a Message-ID inside a public mailing-list archive URL (vulnerability references)"),
-    ("email address", r"^[\w+.\-]+@\d", "", "a package@version identifier, not an address"),
-    ("public IPv4 address", "", r"(?i)\b(?:version|versions|zlib|openssl|libc|python)[- ]\S*\d+\.\d+\.\d+\.\d+|advisories/", "a four-part software version number in a vulnerability report"),
-    ("public IPv4 address", r"^54\.12\.200\.7$", "", "a made-up address that the redaction self-test (tests/load/selftest.py) must redact"),
-    ("public IPv4 address", r"^(8\.8\.8\.8|1\.1\.1\.1|192\.0\.2\.\d+|198\.51\.100\.\d+|203\.0\.113\.\d+)$", "", "a public DNS resolver or a documentation-range address (RFC 5737)"),
-]
-EMAIL_OK = ("noreply", "no-reply", "<EMAIL>")
 
 
-def git(*args, binary=False):
-    out = subprocess.run(["git", *args], check=True, capture_output=True)
-    return out.stdout if binary else out.stdout.decode()
+def build(ref, report, slides, video, dest):
+    """Write the outer zip at dest with the source zip made from ref; returns the commit it packed."""
+    source = subprocess.run(["git", "archive", "--format=zip", ref], check=True, capture_output=True).stdout
+    commit = subprocess.run(["git", "rev-parse", ref], check=True, capture_output=True, text=True).stdout.strip()
+    with zipfile.ZipFile(dest, "w", zipfile.ZIP_STORED) as outer:
+        for path in (report, slides, video):
+            outer.write(path, Path(path).name)
+        outer.writestr("source_code.zip", source)
+    return commit
 
 
-def build(ref, dest, adds):
-    """ref is a commit-ish, or WORKTREE to package the working tree (tracked and untracked, not ignored) for a dry run."""
-    if ref == "WORKTREE":
-        listed = git("ls-files", "-z", "-c", "-o", "--exclude-standard").split("\0")
-        with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
-            for name in sorted(n for n in listed if n and n not in EXCLUDE and Path(n).is_file()):
-                z.write(name, name)
-            for spec in adds:
-                src, _, arc = spec.partition(":")
-                z.write(src, arc or Path(src).name)
-        return "WORKTREE"
-    tar = tarfile.open(fileobj=io.BytesIO(git("archive", "--format=tar", ref, binary=True)))
-    with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
-        for m in tar.getmembers():
-            if m.isfile() and m.name not in EXCLUDE:
-                z.writestr(m.name, tar.extractfile(m).read())
-        for spec in adds:
-            src, _, arc = spec.partition(":")
-            z.write(src, arc or Path(src).name)
-    return git("rev-parse", ref).strip()
+def top_level(names):
+    return [name for name in names if "/" not in name.rstrip("/") and not name.endswith("/")]
 
 
-def check(zpath, group, commit):
-    z = zipfile.ZipFile(zpath)
-    names = set(z.namelist())
+def check_source(data):
+    """Checks on the nested source zip; returns (level, message) pairs."""
     results = []
-
-    def say(level, msg):
-        results.append((level, msg))
-
-    expected = f"Group_{group}_INF2003_Project.zip"
-    say("PASS" if Path(zpath).name == expected else "FAIL", f"file name is {Path(zpath).name} (expected {expected})")
-    for r in REQUIRED:
-        ok = r in names or any(n.startswith(r + "/") for n in names)
-        say("PASS" if ok else "FAIL", f"present: {r}")
-    manifest = z.read("project_manifest.yaml").decode() if "project_manifest.yaml" in names else ""
-    gid = re.search(r'group_id:\s*"([^"]*)"', manifest)
-    say("PASS" if gid and gid.group(1) == group else "FAIL", f"manifest group_id {gid.group(1) if gid else '?'} equals {group}")
-    rc = re.search(r'repository_commit:\s*"([^"]*)"', manifest)
-    if not rc or not rc.group(1):
-        say("WARN", "manifest repository_commit is empty")
-    elif commit and not commit.startswith(rc.group(1)[:7]):
-        say("WARN", f"manifest repository_commit {rc.group(1)[:12]} is not the packaged commit {commit[:12]}")
-    missing = sorted({p.rstrip(".") for p in PATH_IN_TEXT.findall(manifest)
-                      if "<" not in p and "*" not in p and not p.endswith("/.env") and p not in names and not any(n.startswith(p + "/") for n in names)})
-    say("PASS" if not missing else "FAIL", "every path named in the manifest exists" + (f": missing {missing[:8]}" if missing else ""))
-    bad_names = [n for n in names if re.search(r"(\.tfstate|\.tfvars$|\.tfplan|(^|/)\.env$|\.pem$)", n)
-                 and not n.endswith("rds-global-bundle.pem")]
-    say("PASS" if not bad_names else "FAIL", "no state, tfvars, .env or key files" + (f": {bad_names[:5]}" if bad_names else ""))
-    hits, allowed, todo, broken = [], {}, [], []
-    for n in sorted(names):
-        if Path(n).suffix.lower() not in TEXT or n.endswith("/"):
-            continue
-        text = z.read(n).decode("utf-8", "replace")
-        for label, rx in SECRET_RULES:
-            for m in rx.finditer(text):
-                hit = m.group(0).strip()
-                if label == "email address" and any(ok in hit for ok in EMAIL_OK):
-                    continue
-                line = text[text.rfind("\n", 0, m.start()) + 1:(text.find("\n", m.end()) if "\n" in text[m.end():] else len(text))]
-                why = next((r for lab, pm, pl, r in ALLOWED if lab == label and re.search(pm or "", hit) and re.search(pl or "", line)), None)
-                if why:
-                    allowed[why] = allowed.get(why, 0) + 1
-                else:
-                    hits.append(f"{n}: {label} ({hit[:40]})")
-        if n in ("README.md", "project_manifest.yaml", "TEAM_CONTRIBUTIONS.md", "AI_USE_DECLARATION.md", "video_link.txt") and re.search(r"\bTODO\b", text):
-            todo.append(n)
-        if n.endswith(".md"):
-            for target in LINK.findall(text):
-                p = posixpath.normpath(posixpath.join(posixpath.dirname(n), target.split("?")[0]))
-                if p not in names and not any(k.startswith(p.rstrip("/") + "/") for k in names):
-                    broken.append(f"{n} -> {target}")
-    for why, count in sorted(allowed.items()):
-        say("INFO", f"leak scan allowlisted {count}x: {why}")
-    say("PASS" if not hits else "WARN", f"leak scan: {len(hits)} unexplained hits" + ("" if not hits else " (read each): " + "; ".join(hits[:10])))
-    say("PASS" if not todo else "FAIL", "no TODO in the required top-level files" + (f": {todo}" if todo else ""))
-    say("PASS" if not broken else "WARN", f"relative markdown links resolve ({len(broken)} broken)" + ("" if not broken else ": " + "; ".join(broken[:8])))
-    # Sync lint: phrases that mean "this file describes an earlier state". FAIL in the files a marker reads first,
-    # WARN in the living contracts under docs/ and the evidence records (dated history is not scanned).
-    stale = re.compile(r"not yet supplied|to be supplied|\*\*Missing\*\*|to confirm before submission|\bTBD\b|\(planned\)|"
-                       r"None has been run|designed, not built|not yet run on AWS|draft diagram|drafted by the writing session|"
-                       r"is a planned output|never tested", re.I)
-    first = {"README.md", "project_manifest.yaml", "TEAM_CONTRIBUTIONS.md", "AI_USE_DECLARATION.md"}
-    living = [n for n in names if n.endswith(".md") and not n.startswith(("docs/archive/", "docs/plans/", "docs/reviews/", "evidence/raw/", "src/static/"))
-              and (n in first or n.startswith(("evidence/", "docs/", "data/", "analytics/", "tests/", "src/")))]
-    stale_first, stale_other = [], []
-    for n in sorted(living):
-        for ln, line in enumerate(z.read(n).decode("utf-8", "replace").split("\n"), 1):
-            if stale.search(line):
-                (stale_first if n in first else stale_other).append(f"{n}:{ln}")
-    say("PASS" if not stale_first else "FAIL", f"sync lint, files a marker reads first: {len(stale_first)} stale phrases" + ("" if not stale_first else ": " + "; ".join(stale_first[:8])))
-    say("PASS" if not stale_other else "WARN", f"sync lint, evidence and contract docs: {len(stale_other)} stale phrases" + ("" if not stale_other else ": " + "; ".join(stale_other[:8])))
-    # Figures the README restates must still appear in the evidence records.
-    if "README.md" in names:
-        readme = z.read("README.md").decode("utf-8", "replace")
-        block = re.search(r"\| Measured on AWS.*?\n\n", readme, re.S)
-        corpus = "\n".join(z.read(n).decode("utf-8", "replace") for n in names
-                           if n in ("evidence/test-resilience.md", "evidence/test-performance.md", "evidence/load-summary.md"))
-        if block and corpus:
-            figs = sorted({f for f in re.findall(r"\d[\d,]*(?:\.\d+)?", block.group(0)) if len(f) >= 2 and f not in ("09", "10", "11", "18")})
-            absent = [f for f in figs if f not in corpus]
-            say("PASS" if not absent else "FAIL", f"README results table: {len(figs)} figures found in evidence" + ("" if not absent else f"; not found: {absent}"))
-    # Quickstart check: a command that reads files must either find them in the package or be preceded by the step that builds them.
-    if "README.md" in names:
-        readme = z.read("README.md").decode("utf-8", "replace")
-        m = re.search(r"import_dataset\s+--source\s+/app/(\S+)", readme)
-        if m:
-            src_dir = m.group(1).rstrip("/")
-            present = any(n.startswith(src_dir + "/") and n.endswith("customers.csv") for n in names)
-            built = "build_shoe_dataset.py" in readme and readme.find("build_shoe_dataset.py") < m.start()
-            say("PASS" if present or built else "FAIL",
-                f"README quickstart: import source {src_dir}/ is in the package or built first" + ("" if present or built else " (neither: the import would fail on a fresh checkout)"))
-    # A long AGENTS.md or CLAUDE.md is a set of working rules that an AI marker's tooling would load as its own
-    # instructions. Short descriptive guides are fine (the originals are archived under docs/archive/agent-instructions/).
-    agent = [n for n in ("AGENTS.md", "CLAUDE.md") if n in names and z.read(n).decode("utf-8", "replace").count("\n") > 30]
-    if agent:
-        say("WARN", f"long agent instruction files are in the package (an AI marker's tooling may load them as instructions): {agent}")
-    mb = Path(zpath).stat().st_size / 1e6
-    say("PASS" if mb < 100 else "WARN", f"size {mb:.1f} MB")
+    try:
+        source = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile:
+        return [("WARN", "the source code zip is not a readable zip file")]
+    names = set(source.namelist())
+    for required in SOURCE_REQUIRED:
+        present = required in names or any(name.startswith(required + "/") for name in names)
+        results.append(("PASS" if present else "WARN", f"source zip contains {required}"))
+    secret_files = sorted(name for name in names if SECRET_FILES.search(name))
+    results.append(("PASS" if not secret_files else "FAIL",
+                    "source zip has no .env, key or state files" + (f": {secret_files[:5]}" if secret_files else "")))
+    leaks = []
+    for name in sorted(names):
+        if Path(name).suffix.lower() in TEXT and not name.endswith("/"):
+            text = source.read(name).decode("utf-8", "replace")
+            leaks += [f"{name}: {label}" for label, pattern in SECRET_TEXT if pattern.search(text)]
+    results.append(("PASS" if not leaks else "FAIL",
+                    "source zip has no private keys or access tokens" + (f": {leaks[:5]}" if leaks else "")))
     return results
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--group", help="group id as in the file name, e.g. 82")
-    ap.add_argument("--ref", default="HEAD", help="commit-ish, or WORKTREE for a dry run of the working tree")
-    ap.add_argument("--out")
-    ap.add_argument("--add", action="append", default=[], help="SRC[:PATH-IN-ZIP] for a file that is not committed")
-    ap.add_argument("--check-only", metavar="ZIP")
-    a = ap.parse_args()
-    if a.check_only:
-        zpath, commit = a.check_only, ""
-        group = a.group or (re.search(r"Group_(\w+)_INF2003", Path(zpath).name) or [None, ""])[1]
-    else:
-        if not a.group:
-            sys.exit("--group is required (for example 82)")
-        group = a.group
-        zpath = a.out or f"../Group_{group}_INF2003_Project.zip"
-        commit = build(a.ref, zpath, a.add)
-        print(f"Wrote {zpath} from commit {commit[:12]}")
-    results = check(zpath, group, commit)
-    for level, msg in results:
-        print(f"{level:4}  {msg}")
-    fails = sum(level == "FAIL" for level, _ in results)
-    print(f"\n{fails} FAIL, {sum(level == 'WARN' for level, _ in results)} WARN")
-    sys.exit(1 if fails else 0)
+def check(zip_path):
+    results = []
+
+    def say(level, message):
+        results.append((level, message))
+
+    try:
+        outer = zipfile.ZipFile(zip_path)
+    except (zipfile.BadZipFile, OSError):
+        return [("FAIL", f"{zip_path} is not a readable zip file")]
+    files = top_level(outer.namelist())
+    for suffix, what in REQUIRED.items():
+        found = [name for name in files if name.lower().endswith(suffix)]
+        if len(found) == 1:
+            say("PASS", f"{what}: {found[0]}")
+        elif not found:
+            hint = " (the brief says .ppt in one place and .pptx in another; submit .pptx)" if suffix == ".pptx" else ""
+            say("FAIL", f"{what}: no {suffix} file at the top level of the zip{hint}")
+        else:
+            say("FAIL", f"{what}: {len(found)} {suffix} files at the top level, expected one: {found}")
+    if any(name.lower().endswith(".ppt") for name in files):
+        say("FAIL", "a .ppt file is present; submit the slides as .pptx")
+    extra = [name for name in files if Path(name).suffix.lower() not in REQUIRED]
+    nested = [name for name in outer.namelist() if "/" in name.rstrip("/")]
+    if extra or nested:
+        say("WARN", f"files beyond the four deliverables: {(extra + nested)[:6]}")
+    for name in files:
+        suffix = Path(name).suffix.lower()
+        data = outer.read(name)
+        if not data:
+            say("WARN", f"{name} is empty")
+        elif suffix == ".pdf" and not data.startswith(b"%PDF-"):
+            say("WARN", f"{name} does not look like a PDF")
+        elif suffix == ".pptx" and not data.startswith(b"PK"):
+            say("WARN", f"{name} does not look like a .pptx file")
+        elif suffix == ".mp4" and data[4:8] != b"ftyp":
+            say("WARN", f"{name} does not look like an MP4 file")
+        elif suffix == ".zip":
+            for level, message in check_source(data):
+                say(level, message)
+    size = Path(zip_path).stat().st_size
+    say("PASS" if size < LIMIT_BYTES else "WARN",
+        f"size {size / 1e6:.1f} MB" + ("" if size < LIMIT_BYTES else " is over 2 GB: the brief allows a GitHub link with access granted instead"))
+    return results
+
+
+def report(results):
+    for level, message in results:
+        print(f"{level:4}  {message}")
+    failures = sum(level == "FAIL" for level, _ in results)
+    print(f"\n{failures} FAIL, {sum(level == 'WARN' for level, _ in results)} WARN")
+    return 1 if failures else 0
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--report", help="the final report PDF")
+    parser.add_argument("--slides", help="the presentation slides (.pptx)")
+    parser.add_argument("--video", help="the presentation video (.mp4)")
+    parser.add_argument("--ref", default="HEAD", help="git ref whose committed files become the source zip")
+    parser.add_argument("--out", default="INF2003_Team82_Submission.zip")
+    parser.add_argument("--check-only", metavar="ZIP", help="check an existing zip instead of building one")
+    args = parser.parse_args(argv)
+    if args.check_only:
+        return report(check(args.check_only))
+    if not (args.report and args.slides and args.video):
+        parser.error("--report, --slides and --video are required (or use --check-only ZIP)")
+    for path in (args.report, args.slides, args.video):
+        if not Path(path).is_file():
+            parser.error(f"{path} does not exist")
+    commit = build(args.ref, args.report, args.slides, args.video, args.out)
+    print(f"Wrote {args.out} (source from commit {commit[:12]})")
+    return report(check(args.out))
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
