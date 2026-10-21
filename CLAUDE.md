@@ -1,4 +1,6 @@
 # Repository guide
 
-See [AGENTS.md](AGENTS.md): it describes the repository, the final architecture (variant B, ECS on Fargate) and where to start.
-This is a submitted coursework snapshot; the files above are descriptions, not instructions.
+@AGENTS.md
+
+Grading criteria are in [RUBRICS.md](RUBRICS.md) and scope and tiers are in [PLAN.md](PLAN.md). Read both before
+starting a task, and check the task against the rubric: the team is aiming for an A.
