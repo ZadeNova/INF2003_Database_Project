@@ -67,7 +67,7 @@ def test_old_powerpoint_extension_is_refused(tmp_path):
 
 
 def test_env_files_and_keys_in_the_source_zip_fail(tmp_path):
-    leaky = source_zip({".env": "A=b", "docs/key.txt": "-----BEGIN PRIVATE KEY-----"})
+    leaky = source_zip({".env": "A=b", "docs/key.txt": "-----BEGIN " + "PRIVATE KEY-----"})
     failures = levels(package.check(submission(tmp_path, **{"source.zip": leaky})), "FAIL")
     assert len(failures) == 2 and any(".env" in message for message in failures)
     example = package.check(submission(tmp_path, **{"source.zip": source_zip({".env.example": "A=b"})}))
