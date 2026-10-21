@@ -37,10 +37,11 @@ beyond the connection and health check (`catalogue`).
   adds missing keys without changing existing ones. `check_docs.py` has a unit test per rule.
 
 **Exit check (the reviewer runs all of these)**
-1. Fresh clone on Linux and on Windows: `python src/tools/init_env.py`, `git config core.hooksPath .githooks`,
-   `docker compose up --build`; `/health/` returns 200 and `check_database` reports PostgreSQL and MongoDB.
+1. Fresh clone on Windows with Docker Desktop (and on Linux with a kernel outside 6.19 to 7.0.13, which MongoDB 9.0
+   refuses): `python src/tools/init_env.py`, `git config core.hooksPath .githooks`, `docker compose up --build`;
+   `/health/` returns 200 and `check_database` reports PostgreSQL and MongoDB.
 2. The full test suite passes inside Docker.
-3. `git grep -i -w -E "boto3|botocore|secretsmanager|terraform|fargate|ec2|AWS_[A-Z_]+" -- ':!data' ':!PLAN.md' ':!docs/plans'`
+3. `git grep -I -i -w -E "boto3|botocore|secretsmanager|terraform|fargate|ec2|AWS_[A-Z_]+" -- ':!data' ':!PLAN.md' ':!docs/plans'`
    finds nothing.
 4. A commit adding a broken link to README.md is blocked by the hook.
 5. `python scripts/package_submission.py --check-only` passes on a dummy zip with the four required files.
@@ -70,13 +71,13 @@ in the hook, `init_env.py` adding missing keys, the PostgreSQL 18 data path, and
 
 - **MongoDB 9.0 does not start on Linux kernels 6.19 to 7.0.13** (MongoDB SERVER-121912); 8.0 and 8.3 are affected too, only
   7.0 starts. Docker Engine shares the host kernel, so the pinned `mongo:9.0` fails on such a machine (it is this
-  machine's kernel, 7.0.0). Windows and macOS with Docker Desktop are not affected. Pinned 9.0 as decision f asks; the
+  machine's kernel, 7.0.0). Windows and macOS with Docker Desktop are not affected. Kept 9.0 as decision f asks (foundation-m); the
   README troubleshooting explains it. Exit check 1 was run on Linux with a throwaway `mongo:7.0` override outside the
   repository, and **not yet with 9.0 or on Windows**.
 - **Exit check 3** as written finds `src/static/models/new-balance-997.glb` (the bytes `ec2` occur in the binary). Add
   `-I` to the `git grep`; text files are clean.
 - **Where pytest runs and where `.env` lives were unspecified.** Done: pytest in the `migrate` service (owner role), and
   `.env` at the repository root next to the one `compose.yaml` (foundation-i, foundation-j in `docs/DECISIONS.md`).
-- **The professors' written approval** (phase 0 exit check, `docs/AI_USE.md`) is still to be added by Erfan.
+- **The professors' approval** was confirmed by Erfan; no written reference is kept (`docs/AI_USE.md`).
 - Exit check 6 (every member runs step 1 from the README alone) needs the members; not tested.
 

@@ -6,8 +6,7 @@ Mercer's codebase builds on a project the same team made for an earlier module: 
 accounts, cart and orders code and the request logging. The shoe-shop and AWS parts are removed
 by `foundation` and `olist-import`; the rest is converted to the marketplace described in [PLAN.md](../PLAN.md).
 
-**Written approval from the INF2003 professors:** not yet on file. Erfan to add the reference and date here, and cite
-it in the report, before the phase 0 exit check passes.
+**Approval from the INF2003 professors:** confirmed with them by Erfan; no written reference is recorded here.
 
 ## How AI is used
 

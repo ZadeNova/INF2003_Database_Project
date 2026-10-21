@@ -47,7 +47,7 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 4. **No card numbers stored, even fake ones;** at most the last four digits.
 5. **Limited privileges:** the PostgreSQL runtime role (used by `web`) has no DDL, DROP or TRUNCATE, while the owner role
    runs migrations, the import and tests; the MongoDB app user has `readWrite` on
-   the app database only. Secrets come only from the git-ignored `.env`.
+   the app database and its `test_` database only. Secrets come only from the git-ignored `.env`.
 6. **Sellers see only their own rows:** every seller query filters by the logged-in seller, with a test proving one
    seller cannot reach another's products or orders.
 7. **Uploads:** JPEG, PNG or WebP only (never SVG), at most 2 MB, re-encoded with Pillow before GridFS.
