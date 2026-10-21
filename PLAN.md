@@ -366,8 +366,8 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 
 | Workstream | Scope | Depends on | Tier | Status |
 |---|---|---|---|---|
-| `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | planning |
-| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | planning (plan approved) |
+| `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | ready |
+| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | not started |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers) | `olist-import`, `accounts` | 1 | not started |
@@ -382,7 +382,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
 | `durability` | Durability benchmark and scale-up runs | `benchmark` | 2 | not started |
 
-Status is one of: not started, planning, in progress, review, done. This column is the only progress index; update it when
+Status is one of: not started, planning, ready (plan approved, waiting for implementation), in progress, review, done. This column is the only progress index; update it when
 a workstream changes state, and keep each plan file to about one page.
 
 ## 15. Decisions
