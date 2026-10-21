@@ -68,7 +68,16 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 - **Branch per workstream,** named `<workstream>/<topic>`; no direct pushes to `main`. The pull request links the plan
   and explains the change in words the author can defend in the video.
 - **Reviews run in a fresh session,** ideally the other agent (Codex reviews Claude Code and the reverse), and mean
-  running the tests and the plan's exit check, not only reading the diff. One fix round; leftovers become follow-ups.
+  running things, not only reading the diff. One fix round; leftovers become follow-ups. Run what the change warrants:
+
+  | Change | Review runs |
+  |---|---|
+  | Small: docs, copy, typos, a one-line fix | `scripts/check_docs.py`, plus the touched module's tests if code changed |
+  | Medium: inside one workstream, no schema, raw SQL, money, roles, uploads or concurrency | The touched test modules and their neighbours |
+  | Workstream merge, or any change to schema, migrations, raw SQL, money, roles, uploads or concurrency | The full suite in Docker and the plan's exit checks |
+
+  Fix rounds rerun only the affected tests; the full suite runs once more before merging. Until CI exists (phase 3),
+  the full suite before a workstream merge is the only safety net, so it is never skipped there.
 - **Human gate (about 15 minutes):** the owner approves the plan, runs the demo path, checks the tests passed, and can
   explain the change in two sentences. Do not approve work you could not explain on video.
 - **Commits** use the `type: summary` style, and AI-assisted ones carry a `Co-Authored-By` trailer.
@@ -107,6 +116,7 @@ Docker Desktop (or Docker Engine) with Compose 2.20 or later, from the repositor
 python src/tools/init_env.py                                    # writes .env, or adds keys a newer version needs
 docker compose up --build                                       # app at http://127.0.0.1:8000/
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
+docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_settings.py   # one module
 ```
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
