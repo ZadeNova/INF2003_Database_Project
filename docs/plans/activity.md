@@ -1,6 +1,6 @@
 # activity: Activity events in a MongoDB time-series collection (M1)
 
-status: draft
+status: approved
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 1 to 1.5 days · phase 3A (9 to 13
 November) · depends on: `catalogue` (product pages, search), `checkout` (purchases for conversion)
 
@@ -35,7 +35,7 @@ conversion equals views and units counted directly on a small fixture; anonymous
 3. `explain("executionStats")` of the trending pipeline uses the time-series bucket index; noted for the report.
 4. The full test suite passes in Docker.
 
-## Decisions (for the plan owner)
+## Decisions (all approved 21 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|

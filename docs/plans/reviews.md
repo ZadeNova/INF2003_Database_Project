@@ -1,6 +1,6 @@
 # reviews: Per-item reviews, rating summaries in one transaction, Bayesian ranking, take-downs
 
-status: draft
+status: approved
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: about 2
 days · phase 3A (9 to 13 November) · depends on: `catalogue`, `checkout`, `accounts`
 
@@ -37,7 +37,7 @@ Bayesian score matches a hand calculation; injection negatives on review paramet
 4. "Top rated" sorting puts a product with many good reviews above one with a single five-star review.
 5. The full test suite passes in Docker.
 
-## Decisions (for the plan owner)
+## Decisions (all approved 21 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|

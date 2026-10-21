@@ -1,6 +1,6 @@
 # dashboard: Stock planning, demand forecast, category performance, delivery delay against review score
 
-status: draft
+status: approved
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 2 to 3 days · phase 3A (9 to 13
 November) · depends on: `olist-import`, `checkout`, `accounts` (operator console)
 
@@ -9,6 +9,8 @@ with zip prefix, geolocation); MongoDB `reviews` with score, order line and sell
 queries (git history before `olist-import`) are the starting point, not code to copy.
 
 ## Contract
+
+**Before starting:** ask the plan owner (Erfan) to re-confirm decision a, the as-of date.
 
 **Goal.** The operator sees, for the whole platform, which products will run out before they can be restocked, which
 categories perform best, and which sellers are at risk of poor reviews because they deliver late.
@@ -41,11 +43,11 @@ marked so it can be skipped locally).
 3. `EXPLAIN (ANALYZE, BUFFERS)` of the stock-planning query uses the view's index; the plan goes into the report notes.
 4. The full test suite passes in Docker.
 
-## Decisions (for the plan owner)
+## Decisions (all approved 21 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|
-| a | Pin the dashboard's as-of date to the end of the imported data (30 October 2026) | Recording happens in late November; a "last 28 days" window would otherwise cover a month with almost no data |
+| a | Pin the dashboard's as-of date to the end of the imported data (30 October 2026). **The implementer re-confirms this with the plan owner before starting** (requested 21 October) | Recording happens in late November; a "last 28 days" window would otherwise cover a month with almost no data |
 | b | Refresh through a `SECURITY DEFINER` function | Keeps the runtime role free of ownership rights; a DBMS feature worth naming |
 | c | Cross-store join in Python on order line id, not by copying scores into PostgreSQL | Keeps "each value in one store"; the join cost is measured for the report |
 

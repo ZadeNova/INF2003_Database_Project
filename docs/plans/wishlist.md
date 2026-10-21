@@ -1,6 +1,6 @@
 # wishlist: Wishlist and restock alerts
 
-status: draft
+status: approved
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: about 1 day · phase 3A (9 to 13
 November) · depends on: `olist-import`, `catalogue` (product pages), `checkout` (cancellation restocks)
 
@@ -32,7 +32,7 @@ alerts; the trigger fires for a raw `UPDATE` in `psql`, not only through the app
    alerts page lists it.
 2. The trigger and partial index appear in `docs/DATA_MODEL.md`; the full test suite passes in Docker.
 
-## Decisions (for the plan owner)
+## Decisions (all approved 21 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|

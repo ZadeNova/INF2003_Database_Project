@@ -396,12 +396,12 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | review |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | ready |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | planning |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | ready |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |
-| `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | planning |
-| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | planning |
-| `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | planning |
-| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | planning |
+| `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
+| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | ready |
+| `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | ready |
+| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | ready |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol | `catalogue`, `reviews`, `dashboard` | 1 | not started |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); built in phase 3 once the features are in | `foundation` | 1 | not started |
 | `deliverables` | Report (outline with a page budget in phase 2; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging | all | 1 | not started |
@@ -436,6 +436,11 @@ a workstream changes state, and keep each plan file as short as its contract all
   command with the password from `.env`. `checkout`: one-step place and pay (orders start as `paid`), shipping fee from
   each product's median historical freight, refunds equal cancelled totals (imported cancellations get refund rows),
   whole-order cancellation as on Shopee.
+- **Phase 2 and 3 plans** (approved 21 October): `catalogue` (MongoDB narrows and counts facets, PostgreSQL filters
+  price, sorts and paginates; `pg_trgm` name search; PostgreSQL-first cross-store writes with a repair check; take-down
+  flag), `wishlist` (partial unique index on unseen alerts; in-app only), `dashboard` (as-of 30 October 2026, to
+  re-confirm before implementation; `SECURITY DEFINER` refresh; cross-store join in Python), `reviews` (Bayesian constants
+  fixed at import; running sum; take-downs in `audit_log`), `activity` (seeded synthetic events; `w: 1` writes).
 - **Added scope:** faceted search and schema evolution; Bayesian rating; demand forecast; delivery-delay analysis; 3NF
   justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and
   code-quality gates in `ci` (E4, E5). Tier 2: full-text search (E1), replication and failover (E6), backup and restore
