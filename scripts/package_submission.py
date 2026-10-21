@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Build Group_<id>_INF2006_Project.zip from a commit, then check it the way Appendix A of the brief asks.
+"""Build Group_<id>_INF2003_Project.zip from a commit, then check it the way Appendix A of the brief asks.
 
-  python scripts/package_submission.py --group G021                  # package HEAD, write ../Group_G021_INF2006_Project.zip
-  python scripts/package_submission.py --group G021 --add report.pdf --add architecture.png:evidence/architecture.png
-  python scripts/package_submission.py --group G021 --ref WORKTREE --out /tmp/x.zip   # dry run of uncommitted files
-  python scripts/package_submission.py --check-only Group_G021_INF2006_Project.zip
+  python scripts/package_submission.py --group 82                  # package HEAD, write ../Group_82_INF2003_Project.zip
+  python scripts/package_submission.py --group 82 --add report.pdf --add architecture.png:evidence/architecture.png
+  python scripts/package_submission.py --group 82 --ref WORKTREE --out /tmp/x.zip   # dry run of uncommitted files
+  python scripts/package_submission.py --check-only Group_82_INF2003_Project.zip
 
 Only files committed at the chosen ref go in (git archive semantics), so state files, tfvars and .env files that git
 ignores can never be packaged. Files that are not in git yet (the report PDF, the diagram) are added with --add
@@ -93,7 +93,7 @@ def check(zpath, group, commit):
     def say(level, msg):
         results.append((level, msg))
 
-    expected = f"Group_{group}_INF2006_Project.zip"
+    expected = f"Group_{group}_INF2003_Project.zip"
     say("PASS" if Path(zpath).name == expected else "FAIL", f"file name is {Path(zpath).name} (expected {expected})")
     for r in REQUIRED:
         ok = r in names or any(n.startswith(r + "/") for n in names)
@@ -187,7 +187,7 @@ def check(zpath, group, commit):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--group", help="group id as in the file name, e.g. G021")
+    ap.add_argument("--group", help="group id as in the file name, e.g. 82")
     ap.add_argument("--ref", default="HEAD", help="commit-ish, or WORKTREE for a dry run of the working tree")
     ap.add_argument("--out")
     ap.add_argument("--add", action="append", default=[], help="SRC[:PATH-IN-ZIP] for a file that is not committed")
@@ -195,12 +195,12 @@ def main():
     a = ap.parse_args()
     if a.check_only:
         zpath, commit = a.check_only, ""
-        group = a.group or (re.search(r"Group_(\w+)_INF2006", Path(zpath).name) or [None, ""])[1]
+        group = a.group or (re.search(r"Group_(\w+)_INF2003", Path(zpath).name) or [None, ""])[1]
     else:
         if not a.group:
-            sys.exit("--group is required (for example G021)")
+            sys.exit("--group is required (for example 82)")
         group = a.group
-        zpath = a.out or f"../Group_{group}_INF2006_Project.zip"
+        zpath = a.out or f"../Group_{group}_INF2003_Project.zip"
         commit = build(a.ref, zpath, a.add)
         print(f"Wrote {zpath} from commit {commit[:12]}")
     results = check(zpath, group, commit)

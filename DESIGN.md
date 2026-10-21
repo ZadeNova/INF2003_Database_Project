@@ -291,7 +291,7 @@ Sharp, square edges are mandatory across every component. The magazine aesthetic
 ## As built in this project
 
 The sections above are the design system as supplied. This section records where
-the 42Factors implementation deviates from it, so this file describes the
+the Mercer implementation deviates from it, so this file describes the
 delivered system rather than an intention. Implementation lives in
 `src/static/css/site.css`, whose `:root` block carries the reasoning inline.
 

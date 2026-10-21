@@ -38,14 +38,14 @@ and environment-variable syntax. Keep virtual environments and outputs outside t
 checkout. Use Python 3.13 with the pinned requirements:
 
 ```sh
-python3.13 -m venv "$HOME/.venvs/inf2006-ml"
-python3.13 -m venv "$HOME/.venvs/inf2006-web"
-export ML_PY="$HOME/.venvs/inf2006-ml/bin/python"
-export WEB_PY="$HOME/.venvs/inf2006-web/bin/python"
+python3.13 -m venv "$HOME/.venvs/mercer-ml"
+python3.13 -m venv "$HOME/.venvs/mercer-web"
+export ML_PY="$HOME/.venvs/mercer-ml/bin/python"
+export WEB_PY="$HOME/.venvs/mercer-web/bin/python"
 "$ML_PY" -m pip install -r analytics/requirements.txt
 "$WEB_PY" -m pip install -r src/requirements.txt
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
-install -d -m 700 "$HOME/inf2006-ml-output"
+install -d -m 700 "$HOME/mercer-ml-output"
 ```
 
 Configure `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER` and
@@ -82,7 +82,7 @@ runs and deliberately select a UUID; there is no latest-run or newest-file defau
 set -eu
 "$WEB_PY" src/manage.py shell -c 'from reporting.models import AnalyticsRun; print(list(AnalyticsRun.objects.filter(status="completed").order_by("cutoff").values("id", "cutoff", "inventory__namespace", "inventory__version", "summary_version")))'
 export RUN_ID='<the selected completed run UUID>'
-export BATCH_FILE="$HOME/inf2006-ml-output/$RUN_ID.json"
+export BATCH_FILE="$HOME/mercer-ml-output/$RUN_ID.json"
 "$ML_PY" analytics/segment_customers.py --run-id "$RUN_ID" --output "$BATCH_FILE"
 "$ML_PY" -c 'import json,os; p=json.load(open(os.environ["BATCH_FILE"])); print(json.dumps({k:v for k,v in p.items() if k not in ("rows", "segment_profiles")}, indent=2))'
 "$WEB_PY" src/manage.py load_customer_segments --run-id "$RUN_ID" --input "$BATCH_FILE"
@@ -260,24 +260,24 @@ owns review rounds and limitations. No further full-source import was run during
 manual acceptance decision was pending; the user has now supplied that decision.
 
 Base `3deed85024e841bd9dccc99c1860ca379d5012bc`, branch `CL/Analytics`.
-Isolated Compose project `inf2006-dataset-review`, freshly created PostgreSQL volume;
+Isolated Compose project `mercer-dataset-review`, freshly created PostgreSQL volume;
 no shared database modified. Pinned Python 3.13/PostgreSQL 17 images. Host profiling
 used Python 3.13.7/pandas 2.3.2 and was also reproduced in a disposable Compose
 container with the pinned analytics dependencies:
 
 ```powershell
-docker compose -p inf2006-dataset-review build web
-docker compose -p inf2006-dataset-review up --wait --wait-timeout 90 db
-docker compose -p inf2006-dataset-review run --rm --no-deps migrate
-docker compose -p inf2006-dataset-review run --rm --no-deps --user 0 --volume "${PWD}:/work" --workdir /work web sh -c 'python -m venv /tmp/profile-env && /tmp/profile-env/bin/pip install -r analytics/requirements.txt && /tmp/profile-env/bin/python analytics/profile_dataset.py --source data/raw'
-docker compose -p inf2006-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
+docker compose -p mercer-dataset-review build web
+docker compose -p mercer-dataset-review up --wait --wait-timeout 90 db
+docker compose -p mercer-dataset-review run --rm --no-deps migrate
+docker compose -p mercer-dataset-review run --rm --no-deps --user 0 --volume "${PWD}:/work" --workdir /work web sh -c 'python -m venv /tmp/profile-env && /tmp/profile-env/bin/pip install -r analytics/requirements.txt && /tmp/profile-env/bin/python analytics/profile_dataset.py --source data/raw'
+docker compose -p mercer-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
 # Same command again: every row unchanged
-docker compose -p inf2006-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
-docker compose -p inf2006-dataset-review run --rm --no-deps web pytest -q -p no:cacheprovider /app/tests/test_import.py
-docker compose -p inf2006-dataset-review run --rm --no-deps web pytest -q -p no:cacheprovider /app/tests
-docker compose -p inf2006-dataset-review run --rm --no-deps web python manage.py check
-docker compose -p inf2006-dataset-review run --rm --no-deps web python manage.py makemigrations --check --dry-run
-docker compose -p inf2006-dataset-review up --build -d --wait --wait-timeout 90 web
+docker compose -p mercer-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
+docker compose -p mercer-dataset-review run --rm --no-deps web pytest -q -p no:cacheprovider /app/tests/test_import.py
+docker compose -p mercer-dataset-review run --rm --no-deps web pytest -q -p no:cacheprovider /app/tests
+docker compose -p mercer-dataset-review run --rm --no-deps web python manage.py check
+docker compose -p mercer-dataset-review run --rm --no-deps web python manage.py makemigrations --check --dry-run
+docker compose -p mercer-dataset-review up --build -d --wait --wait-timeout 90 web
 git diff --check
 ```
 
@@ -298,7 +298,7 @@ Counts and the complete sealed 1,200-product inventory matched. Replay reported
 created=0 and unchanged=20,000 users/profiles, 1,200 products, 100,000 orders,
 237,537 items, one version and 1,200 snapshots.
 
-Real HTTP spot-checks used `docker compose -p inf2006-dataset-review exec -T web python manage.py shell`
+Real HTTP spot-checks used `docker compose -p mercer-dataset-review exec -T web python manage.py shell`
 with urllib/cookies against Gunicorn. `GET /products/` returned 200 and all 12 expected
 imported products on page one. A random password was deliberately set for imported
 customer `C000001` only in scratch; a CSRF-protected `POST /login/` succeeded;
@@ -317,7 +317,7 @@ set scratch customer's password hash. All six raw checksums remained unchanged.
 Repeated host/Compose profile Markdown SHA-256:
 `9bfb9c8168f112581ce87bba7ec1057eb7ec301dd1ae3967729475f89e2a9835`.
 
-Cleanup succeeded with `docker compose -p inf2006-dataset-review down --volumes --remove-orphans`:
+Cleanup succeeded with `docker compose -p mercer-dataset-review down --volumes --remove-orphans`:
 only the task-created scratch containers, network and database volume were removed.
 
 AI assistance: OpenAI Codex implemented the profiler/importer, tests/docs and ran local

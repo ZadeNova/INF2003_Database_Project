@@ -1,4 +1,4 @@
-# INF2003 plan: 42Factors, a lean marketplace on PostgreSQL and MongoDB
+# INF2003 plan: Mercer, a lean marketplace on PostgreSQL and MongoDB
 
 Draft v3.1, 21 October 2026. Team 82. Status: **for the team to edit**. Nothing here is implemented yet.
 Final submission: **Sunday 29 November 2026, 23:30**. The proposal (4 October) was marked "a solid plan and a clear scope".
@@ -48,7 +48,7 @@ is needed.
 | Data | Store | Why |
 |---|---|---|
 | Users, sellers, products, listings (price, stock), carts, orders, order lines, payments, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
-| Inventory snapshots, analytics runs, daily sales | PostgreSQL | INF2006 baseline, ported to Olist |
+| Inventory snapshots, analytics runs, daily sales | PostgreSQL | Existing baseline, ported to Olist |
 | Product specification document (category-specific attributes, generated name and description), keyed by product id | MongoDB | Shape varies by category |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
 
@@ -63,7 +63,7 @@ CRUD stays on the Django ORM. Parameterised queries only, everywhere.
 so cross-engine results compare exactly.
 
 **Limited-privilege users on both databases:** the PostgreSQL application role cannot run DDL, DROP or TRUNCATE (the
-INF2006 owner/application split); the MongoDB application user has `readWrite` on the application database only, and
+existing owner/application split); the MongoDB application user has `readWrite` on the application database only, and
 the root user is used only at initialisation. SQL-injection negative tests cover the raw-SQL paths.
 
 ## 4. Tiers
@@ -115,7 +115,7 @@ artefacts that are slow or heavy to rebuild: the machine-translated reviews and 
 attributes, stock and lead times. The scripts that produced them are committed too, so they can be regenerated but never
 have to be.
 
-**Profile first.** Before the import schema is locked, `analytics/profile_olist.py` (modelled on INF2006's
+**Profile first.** Before the import schema is locked, `analytics/profile_olist.py` (modelled on the existing
 `profile_dataset.py`) reports row counts, nulls, duplicates and the distributions below. Its output becomes the report's
 dataset section. Open questions it settles:
 
@@ -149,7 +149,7 @@ dataset section. Open questions it settles:
 memory on a typical laptop, so a long import never looks like a hang.
 
 **Group accounts:** `seed_demo` creates usable logins (one customer per member, one operator; one seller in Tier 2).
-Passwords are generated into the git-ignored `.env` by `init_env.py`. The INF2006 hard-coded fallback password in
+Passwords are generated into the git-ignored `.env` by `init_env.py`. The hard-coded fallback password in
 `seed_demo.py` is removed.
 
 **Scale-up generator** (Python, same codebase as the importer): resamples real Olist rows with a seed, keeps foreign keys
@@ -177,7 +177,7 @@ delete updates the review, the rating summary and the embedded subset in one Mon
 **Wishlist.** `wishlist_item` (customer, product, added_at), composite key. A trigger on stock going from zero to positive
 records a restock alert shown to the customer.
 
-**Dashboard.** The INF2006 stock-planning analytics (coverage, replenishment flags, category performance) repointed to
+**Dashboard.** The existing stock-planning analytics (coverage, replenishment flags, category performance) repointed to
 Olist, with a materialized view and window functions, plus "products with poor reviews" from a MongoDB pipeline.
 
 ## 7. Benchmark protocol
@@ -279,7 +279,7 @@ Fresh repo from the commands already given (no history, private). Then:
 | `scripts/package_submission.py` | Adapt to the INF2003 zip |
 | Compose | One root file, renamed; add `mongo` as a single-node replica set with a `readWrite`-only application user; pin images by digest |
 | `.vscode/settings.json` | Cross-platform |
-| `DESIGN.md` | Rewrite for 42Factors (VoiceBox-derived); `site.css` is its single implementation |
+| `DESIGN.md` | Rewrite for Mercer (VoiceBox-derived); `site.css` is its single implementation |
 | `AGENTS.md`, `CLAUDE.md` | Rewrite for INF2003 (below) |
 
 **AGENTS.md** (canonical for Codex and Claude Code; CLAUDE.md points to it): the architecture and ownership table; rules
@@ -291,15 +291,15 @@ benchmark.
 **Repo layout:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `DESIGN.md`, `compose.yaml`, `src/`, `tests/`, `analytics/`,
 `data/`, `benchmarks/` (harness, generator, `results/`), `.github/workflows/ci.yml`, `CONTRIBUTIONS.md` (one page,
 updated at each checkpoint, for fair peer review), and `docs/` with `SETUP.md` (user manual), `SCHEMA.md` (ER diagram),
-`MONGO.md`, `BENCHMARKS.md`, `DECISIONS.md`, `AI_USE.md` (including the INF2006 reuse disclosure), `plans/`, `licenses/`.
+`MONGO.md`, `BENCHMARKS.md`, `DECISIONS.md`, `AI_USE.md` (including the disclosure that the codebase builds on our earlier module project), `plans/`, `licenses/`.
 
-**Tests.** Most INF2006 tests assume the shoe data. SP-02 deletes the shoe-specific tests and writes new ones for the
+**Tests.** Most existing tests assume the shoe data. SP-02 deletes the shoe-specific tests and writes new ones for the
 Olist import and schema; every later sub-plan brings its own tests. Tests that check behaviour independent of the
 dataset (security negatives, idempotent checkout, database unavailability) are ported rather than deleted. CI runs
 against a small committed fixture subset of Olist, not the full dataset.
 
-**Professors' approval of the INF2006 reuse:** get it in writing and cite it in `docs/AI_USE.md` and the report. The
-proposal does not mention the reuse.
+**Professors' approval of building on our earlier module project:** keep it in writing and cite it in `docs/AI_USE.md`
+and the report. The proposal does not mention the reuse.
 
 ## 12. Team and work split (proposal; edit freely)
 
@@ -367,7 +367,7 @@ in section 12.
 
 | Risk | Mitigation |
 |---|---|
-| The import (SP-02) slips and blocks everything | First plan; two people; simplify INF2006 machinery instead of porting all of it |
+| The import (SP-02) slips and blocks everything | First plan; two people; simplify the existing machinery instead of porting all of it |
 | Unfair comparison | Equivalent minimal operations, identical data files and limits, golden outputs, plans captured |
 | No clear difference at about 100k rows | Driver-level timing; the scale-up generator promotes to Tier 1 at the checkpoint |
 | Generated fields weaken "real-world data" | Every generated field labelled; real orders, sellers, reviews and payments dominate |

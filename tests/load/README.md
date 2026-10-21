@@ -2,7 +2,7 @@
 
 > Final architecture: variant B (ECS on Fargate), ADR-018. Variant A (EC2) = evaluated alternative.
 
-Measures the 42Factors shop on variant A (EC2 + Auto Scaling group) and variant B (ECS on Fargate) with the same workload, so the two can be compared fairly, and produces the scale-out and replacement evidence. Plan, decisions, thresholds and weights: [docs/plans/load-harness.md](../../docs/plans/load-harness.md). Results go in [evidence/test-performance.md](../../evidence/test-performance.md).
+Measures the Mercer shop on variant A (EC2 + Auto Scaling group) and variant B (ECS on Fargate) with the same workload, so the two can be compared fairly, and produces the scale-out and replacement evidence. Plan, decisions, thresholds and weights: [docs/plans/load-harness.md](../../docs/plans/load-harness.md). Results go in [evidence/test-performance.md](../../evidence/test-performance.md).
 
 Results are reported as **capacity per unit of compute** and as a **multiple of the assumed SME peak** (about 15 concurrent visitors, 0.4 dynamic pages/s). They are never a claim about how much traffic the shop needs.
 
@@ -30,7 +30,7 @@ All commands below run from this folder (`tests/load/`).
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt            # Python 3.12 (the generator) or 3.14 (the laptop)
-cp .env.example .env                       # then edit: LOADTEST_PASSWORD, LOAD_BASE_URL (and LOAD_DOMAIN if the domain is not fourtytwofactors.me)
+cp .env.example .env                       # then edit: LOADTEST_PASSWORD, LOAD_BASE_URL (and LOAD_DOMAIN if the domain is not mercer.me)
 set -a; . ./.env; set +a
 ```
 

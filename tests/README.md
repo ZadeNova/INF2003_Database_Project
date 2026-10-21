@@ -37,14 +37,14 @@ files from the working tree, so untracked real local secrets are not copied. The
 must be new. From the repository root (PowerShell), choose a fresh scratch directory:
 
 ```powershell
-$runtimeScratch = Join-Path $env:TEMP ('inf2006-runtime-' + [guid]::NewGuid())
+$runtimeScratch = Join-Path $env:TEMP ('mercer-runtime-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $runtimeScratch | Out-Null
 python tests/verify_runtime_image.py make-context "$runtimeScratch/context"
-docker build -t inf2006-runtime-sentinel "$runtimeScratch/context"
-docker run --rm --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" inf2006-runtime-sentinel python /checks/verify_runtime_image.py audit-image
-docker build -t inf2006-runtime-final src
-docker run --rm --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" inf2006-runtime-final python /checks/verify_runtime_image.py audit-image
-docker image inspect inf2006-runtime-final --format '{{.Id}} {{json .RepoDigests}} {{json .Config.User}} {{json .Config.ExposedPorts}} {{json .Config.Cmd}}'
+docker build -t mercer-runtime-sentinel "$runtimeScratch/context"
+docker run --rm --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" mercer-runtime-sentinel python /checks/verify_runtime_image.py audit-image
+docker build -t mercer-runtime-final src
+docker run --rm --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" mercer-runtime-final python /checks/verify_runtime_image.py audit-image
+docker image inspect mercer-runtime-final --format '{{.Id}} {{json .RepoDigests}} {{json .Config.User}} {{json .Config.ExposedPorts}} {{json .Config.Cmd}}'
 ```
 
 Expected metadata: UID/GID `10001:10001`, port `8000/tcp`, the Dockerfile's Gunicorn command.
@@ -60,15 +60,15 @@ server container. The one-day self-signed certificate has only `DNS:localhost`:
 
 ```powershell
 New-Item -ItemType Directory -Path "$runtimeScratch/tls" | Out-Null
-docker run -d --name inf2006-runtime-tls-db -e POSTGRES_PASSWORD=disposable-tls-only --entrypoint bash postgres:17-bookworm@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0 -c 'set -e
+docker run -d --name mercer-runtime-tls-db -e POSTGRES_PASSWORD=disposable-tls-only --entrypoint bash postgres:17-bookworm@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0 -c 'set -e
 openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/server.key -out /tmp/server.crt -days 1 -subj /CN=localhost -addext subjectAltName=DNS:localhost >/dev/null 2>&1
 chown postgres:postgres /tmp/server.key /tmp/server.crt
 chmod 600 /tmp/server.key
 exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/tmp/server.crt -c ssl_key_file=/tmp/server.key'
 # Wait for pg_isready to report ready; copy only the public certificate.
-docker exec inf2006-runtime-tls-db pg_isready -U postgres
-docker cp inf2006-runtime-tls-db:/tmp/server.crt "$runtimeScratch/tls/server.crt"
-docker run --rm --network container:inf2006-runtime-tls-db --mount "type=bind,source=$runtimeScratch/tls,target=/tls,readonly" --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" -e PYTHONPATH=/app inf2006-runtime-final python /checks/verify_runtime_image.py tls /tls/server.crt
+docker exec mercer-runtime-tls-db pg_isready -U postgres
+docker cp mercer-runtime-tls-db:/tmp/server.crt "$runtimeScratch/tls/server.crt"
+docker run --rm --network container:mercer-runtime-tls-db --mount "type=bind,source=$runtimeScratch/tls,target=/tls,readonly" --mount "type=bind,source=${PWD}/tests/verify_runtime_image.py,target=/checks/verify_runtime_image.py,readonly" -e PYTHONPATH=/app mercer-runtime-final python /checks/verify_runtime_image.py tls /tls/server.crt
 ```
 
 The helper uses fake secret retrieval with the real shared production connection policy. It

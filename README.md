@@ -1,10 +1,10 @@
-# 42Factors: a small online shoe shop with a sales and inventory dashboard, deployed and measured on AWS
+# Mercer: a small online shoe shop with a sales and inventory dashboard, deployed and measured on AWS
 
-INF2006 Cloud Computing & Big Data · Group 21 (G021) · Submission: Sunday 11 October 2026, 23:59 Singapore time
+INF2003 Database Systems · Team 82 · Submission: Sunday 29 November 2026, 23:30 Singapore time
 
 ## Problem
 
-A small online shoe shop has two users with different problems. **Customers** need to register, browse sized products, keep a cart and place a simulated order that is never duplicated or oversold. The **store operator** needs an understandable view of sales trends and of which sizes need replenishing. 42Factors is that shop (Django, PostgreSQL, HTMX) running on synthetic data on AWS, with its scaling and recovery measured. Payments are simulated and no personal data is used.
+A small online shoe shop has two users with different problems. **Customers** need to register, browse sized products, keep a cart and place a simulated order that is never duplicated or oversold. The **store operator** needs an understandable view of sales trends and of which sizes need replenishing. Mercer is that shop (Django, PostgreSQL, HTMX) running on synthetic data on AWS, with its scaling and recovery measured. Payments are simulated and no personal data is used.
 
 ## Status
 
@@ -133,4 +133,4 @@ evidence/       test records, diagram, raw/ command output
 docs/           contracts, decision records (docs/decisions/), review logs, plans
 ```
 
-New to the project? [docs/GUIDE.md](docs/GUIDE.md) explains where each claim is evidenced and what every script does. [AGENTS.md](AGENTS.md) is a short repository guide (the original agent instruction files are archived in [docs/archive/agent-instructions/](docs/archive/agent-instructions/)); requirements and dates are in [PROJECT_SCOPE_INF2006.md](PROJECT_SCOPE_INF2006.md); status is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
+New to the project? [docs/GUIDE.md](docs/GUIDE.md) explains where each claim is evidenced and what every script does. [AGENTS.md](AGENTS.md) is a short repository guide (the original agent instruction files are archived in [docs/archive/agent-instructions/](docs/archive/agent-instructions/)); requirements and dates are in [RUBRICS.md](RUBRICS.md) and [PLAN.md](PLAN.md); status is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).

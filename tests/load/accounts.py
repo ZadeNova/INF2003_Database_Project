@@ -34,7 +34,7 @@ class Shop:
     def __init__(self, origin):
         self.origin = origin
         self.http = requests.Session()
-        self.http.headers["User-Agent"] = f"42factors-loadtest/{common.HARNESS_VERSION} (setup)"
+        self.http.headers["User-Agent"] = f"mercer-loadtest/{common.HARNESS_VERSION} (setup)"
 
     def get(self, path):
         return self.http.get(self.origin + path, timeout=30, allow_redirects=False)

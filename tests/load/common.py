@@ -12,7 +12,7 @@ HARNESS_VERSION = "1.0.0"
 
 # The harness only ever talks to our own hosts (docs/plans/load-harness.md, section 1): the two shop hostnames under our
 # domain. Another account with another domain sets LOAD_DOMAIN (the same value as `domain_name` in base/terraform.tfvars).
-DOMAIN = os.environ.get("LOAD_DOMAIN", "fourtytwofactors.me").strip().lower()
+DOMAIN = os.environ.get("LOAD_DOMAIN", "mercer.me").strip().lower()
 if not re.fullmatch(r"[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+", DOMAIN):
     raise SystemExit(f"LOAD_DOMAIN {DOMAIN!r} is not a plain domain name")
 HOSTS_BY_VARIANT = {"ec2": f"shop-ec2.{DOMAIN}", "fargate": f"shop-fargate.{DOMAIN}"}

@@ -31,10 +31,10 @@ def iso(t):
 # --- unit checks --------------------------------------------------------------------------------------------
 
 def test_allow_list():
-    assert common.check_base_url("https://shop-ec2.fourtytwofactors.me/") == "https://shop-ec2.fourtytwofactors.me"
+    assert common.check_base_url("https://shop-ec2.mercer.me/") == "https://shop-ec2.mercer.me"
     assert common.check_base_url("http://127.0.0.1:8000") == "http://127.0.0.1:8000"
-    for bad in ("https://example.com", "http://shop-ec2.fourtytwofactors.me", "https://fonts.googleapis.com",
-                "https://shop-ec2.fourtytwofactors.me.evil.com"):
+    for bad in ("https://example.com", "http://shop-ec2.mercer.me", "https://fonts.googleapis.com",
+                "https://shop-ec2.mercer.me.evil.com"):
         try:
             common.check_base_url(bad)
         except ValueError:
@@ -320,23 +320,23 @@ def test_aws_capture_export_and_kill():
         return
     import aws_capture
     outputs = dict(target_group_arn="arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/tg-app/abc123",
-                   asg_name="inf2006-grp21-ec2-asg", web_acl_name="inf2006-grp21-ec2-waf", hostname="shop-ec2.fourtytwofactors.me",
+                   asg_name="mercer-team82-ec2-asg", web_acl_name="mercer-team82-ec2-waf", hostname="shop-ec2.mercer.me",
                    image_digest="sha256:dead")
     at = datetime.fromtimestamp(T0 + 250, timezone.utc)
     clients = stubbed_clients()
     clients.stub("elbv2").add_response("describe_target_groups", {"TargetGroups": [{"LoadBalancerArns": [
-        "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/inf2006-grp21-ec2-alb/f00"]}]})
+        "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/mercer-team82-ec2-alb/f00"]}]})
     clients.stub("rds").add_response("describe_db_instances", {"DBInstances": [dict(
-        DBInstanceIdentifier="inf2006-grp21-db", DBInstanceClass="db.t4g.small", EngineVersion="17.4", MultiAZ=False)]})
-    queries = aws_capture.metric_queries("ec2", outputs, "app/inf2006-grp21-ec2-alb/f00", "targetgroup/tg-app/abc123", "inf2006-grp21-db")
+        DBInstanceIdentifier="mercer-team82-db", DBInstanceClass="db.t4g.small", EngineVersion="17.4", MultiAZ=False)]})
+    queries = aws_capture.metric_queries("ec2", outputs, "app/mercer-team82-ec2-alb/f00", "targetgroup/tg-app/abc123", "mercer-team82-db")
     assert len({q[0] for q in queries}) == len(queries)
     cw = clients.stub("cloudwatch")
     cw.add_response("get_metric_data", {"MetricDataResults": [dict(Id=f"m{i}", Label=q[0], Timestamps=[at], Values=[12.5], StatusCode="Complete")
                                                               for i, q in enumerate(queries)]})
-    cw.add_response("describe_alarms", {"MetricAlarms": [{"AlarmName": "TargetTracking-inf2006-grp21-ec2-asg-AlarmHigh-1"}]})
+    cw.add_response("describe_alarms", {"MetricAlarms": [{"AlarmName": "TargetTracking-mercer-team82-ec2-asg-AlarmHigh-1"}]})
     cw.add_response("describe_alarms", {"MetricAlarms": []})
     cw.add_response("describe_alarm_history", {"AlarmHistoryItems": [dict(
-        AlarmName="TargetTracking-inf2006-grp21-ec2-asg-AlarmHigh-1", Timestamp=at, HistoryItemType="StateUpdate",
+        AlarmName="TargetTracking-mercer-team82-ec2-asg-AlarmHigh-1", Timestamp=at, HistoryItemType="StateUpdate",
         HistorySummary="Alarm updated from OK to ALARM by arn:aws:iam::123456789012:role/LabRole")]})
     clients.stub("autoscaling").add_response("describe_scaling_activities", {"Activities": [
         dict(ActivityId="a1", AutoScalingGroupName="x", Description="Launching a new EC2 instance: i-9", Cause="c", StartTime=at,
@@ -348,7 +348,7 @@ def test_aws_capture_export_and_kill():
         HealthCheckType="ELB", CreatedTime=at, LaunchTemplate=dict(LaunchTemplateId="lt-1", Version="3"), Instances=[])]})
     clients.stub("ec2").add_response("describe_launch_template_versions", {"LaunchTemplateVersions": [
         dict(LaunchTemplateData=dict(InstanceType="c5.large"))]})
-    clients.stub("wafv2").add_response("list_web_acls", {"WebACLs": [dict(Name="inf2006-grp21-ec2-waf", Id="id-1", ARN="arn:aws:wafv2:us-east-1:123456789012:regional/webacl/n/id-1", LockToken="tok")]})
+    clients.stub("wafv2").add_response("list_web_acls", {"WebACLs": [dict(Name="mercer-team82-ec2-waf", Id="id-1", ARN="arn:aws:wafv2:us-east-1:123456789012:regional/webacl/n/id-1", LockToken="tok")]})
     clients.stub("wafv2").add_response("get_web_acl", {"WebACL": dict(
         Name="n", Id="i", ARN="arn:aws:wafv2:us-east-1:123456789012:regional/webacl/n/id-1", DefaultAction={"Allow": {}}, VisibilityConfig=dict(
             SampledRequestsEnabled=True, CloudWatchMetricsEnabled=True, MetricName="m"),
@@ -433,15 +433,15 @@ def test_aws_capture_export_fargate():
         return
     import aws_capture
     outputs = dict(target_group_arn="arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/tg-f/abc123",
-                   cluster_name="inf2006-grp21-fargate", service_name="inf2006-grp21-fargate-app",
-                   web_acl_name="inf2006-grp21-fargate-waf", hostname="shop-fargate.fourtytwofactors.me")
+                   cluster_name="mercer-team82-fargate", service_name="mercer-team82-fargate-app",
+                   web_acl_name="mercer-team82-fargate-waf", hostname="shop-fargate.mercer.me")
     at = datetime.fromtimestamp(T0 + 250, timezone.utc)
     clients = stubbed_clients()
     clients.stub("elbv2").add_response("describe_target_groups", {"TargetGroups": [{"LoadBalancerArns": [
-        "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/inf2006-grp21-fargate-alb/f00"]}]})
+        "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/mercer-team82-fargate-alb/f00"]}]})
     clients.stub("rds").add_response("describe_db_instances", {"DBInstances": [dict(
-        DBInstanceIdentifier="inf2006-grp21-db", DBInstanceClass="db.t4g.small", EngineVersion="17.4", MultiAZ=False)]})
-    queries = aws_capture.metric_queries("fargate", outputs, "app/x/f00", "targetgroup/tg-f/abc123", "inf2006-grp21-db")
+        DBInstanceIdentifier="mercer-team82-db", DBInstanceClass="db.t4g.small", EngineVersion="17.4", MultiAZ=False)]})
+    queries = aws_capture.metric_queries("fargate", outputs, "app/x/f00", "targetgroup/tg-f/abc123", "mercer-team82-db")
     cw = clients.stub("cloudwatch")
     cw.add_response("get_metric_data", {"MetricDataResults": [dict(Id=f"m{i}", Label=q[0], Timestamps=[at], Values=[1.0], StatusCode="Complete")
                                                               for i, q in enumerate(queries)]})
@@ -458,7 +458,7 @@ def test_aws_capture_export_fargate():
         ServiceNamespace="ecs", ResourceId="service/c/s", ScalableDimension="ecs:service:DesiredCount", MinCapacity=1, MaxCapacity=2,
         RoleARN="arn:aws:iam::123456789012:role/r", CreationTime=at)]})
     arn = "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/n/id-1"
-    clients.stub("wafv2").add_response("list_web_acls", {"WebACLs": [dict(Name="inf2006-grp21-fargate-waf", Id="id-1", ARN=arn, LockToken="tok")]})
+    clients.stub("wafv2").add_response("list_web_acls", {"WebACLs": [dict(Name="mercer-team82-fargate-waf", Id="id-1", ARN=arn, LockToken="tok")]})
     clients.stub("wafv2").add_response("get_web_acl", {"WebACL": dict(
         Name="n", Id="i", ARN=arn, DefaultAction={"Allow": {}}, VisibilityConfig=dict(
             SampledRequestsEnabled=True, CloudWatchMetricsEnabled=True, MetricName="m"),

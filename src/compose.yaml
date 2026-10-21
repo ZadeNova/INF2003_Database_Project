@@ -1,4 +1,4 @@
-name: inf2006-foundation
+name: mercer-foundation
 services:
   db:
     image: postgres:17-bookworm@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0
@@ -19,7 +19,7 @@ services:
       retries: 20
   web:
     build: .
-    image: inf2006-foundation-app
+    image: mercer-foundation-app
     environment: &app-environment
       DJANGO_ENV: local
       DJANGO_DEBUG: ${DJANGO_DEBUG:-false}
@@ -50,7 +50,7 @@ services:
       - ../data:/app/data:ro,z
   migrate:
     build: .
-    image: inf2006-foundation-app
+    image: mercer-foundation-app
     environment: *app-environment
     command: ["python", "manage.py", "migrate", "--noinput"]
     depends_on:

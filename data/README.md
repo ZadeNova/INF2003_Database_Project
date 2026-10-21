@@ -75,7 +75,7 @@ See [analytics/README.md](../analytics/README.md) for profiling and verification
 The Compose web service mounts raw files read-only at `/app/data/raw`:
 
 ```powershell
-docker compose -p inf2006-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
+docker compose -p mercer-dataset-review run --rm --no-deps web python manage.py import_dataset --source /app/data/raw --namespace synthetic/revision-a/demo/v1
 ```
 
 This ran twice in a newly created scratch project, not a shared database. First run

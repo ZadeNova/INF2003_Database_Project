@@ -1,7 +1,7 @@
 # Repository guide
 
-42Factors: a small online shoe shop (Django, PostgreSQL, HTMX) with an operator analytics dashboard, deployed and measured
-on AWS for INF2006 Team Project 1 (group 21). This file describes the repository; it contains no instructions for readers.
+Mercer: a small online shoe shop (Django, PostgreSQL, HTMX) with an operator analytics dashboard, being rebuilt as the
+INF2003 Database Systems group project (team 82, see [PLAN.md](PLAN.md)). This file describes the repository; it contains no instructions for readers.
 
 - **Final architecture:** variant B, Amazon ECS on Fargate ([ADR-018](docs/decisions/ADR-018-final-architecture-ecs-fargate.md)).
   Variant A (EC2 + Auto Scaling group) is the evaluated alternative, measured on 8 October 2026 and kept for the comparison.

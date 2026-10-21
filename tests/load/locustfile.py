@@ -1,4 +1,4 @@
-"""Locust workload for the 42Factors shop (docs/plans/load-harness.md).
+"""Locust workload for the Mercer shop (docs/plans/load-harness.md).
 
 One virtual user is one visitor slot: it runs visits back to back, each with an empty cookie jar and fresh connections.
 Three kinds of visit (the mix is configured by run.py):
@@ -157,7 +157,7 @@ class Visitor(HttpUser):
         self.rng = random.Random(f"{SEED}:{self.idx}")
         self.visit_no = 0
         self.next_at = time.monotonic() + (self.rng.uniform(0, THINK) if THINK else 0)
-        self.client.headers["User-Agent"] = f"42factors-loadtest/{common.HARNESS_VERSION}"
+        self.client.headers["User-Agent"] = f"mercer-loadtest/{common.HARNESS_VERSION}"
 
     # pacing -----------------------------------------------------------------------------------------------
     def begin_action(self, action):
