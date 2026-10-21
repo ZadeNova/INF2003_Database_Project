@@ -77,7 +77,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | # | Item | Database content shown |
 |---|---|---|
 | T1 | **Olist import** replacing the shoe data, with documented cleaning rules (`olist-import`) | Real data, about 100k orders; FK integrity at import; ER diagram with the normalisation (3NF) justified, and the deliberate denormalisation in MongoDB explained (module theory) |
-| T2 | **Catalogue and seller shop pages**: generated English names and descriptions, one image per category, specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
+| T2 | **Catalogue and seller shop pages**: generated English names and descriptions, product images (D10 to D12), an active catalogue of products ordered at least twice (D13), specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
 | T2b | **Operator CRUD**: create and edit products (price, stock) in PostgreSQL, edit specifications in MongoDB, deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
 | T3 | **Cart, checkout, simulated payment, order lifecycle** | `FOR UPDATE`, idempotency constraint, payment rows, deferred constraint trigger (payments equal order total), status-transition trigger |
 | T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_item_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
@@ -144,7 +144,8 @@ or changed, reason) that becomes a table in the report, so every change to the r
 |---|---|
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
-| Product images | One openly licensed image or icon per category (73), licences recorded |
+| Product images | Every product: a generated SVG tile drawn at render time (category icon, colour from the product id, short name), no stored files (D10, proposed). A featured set of 30 to 50 products: real openly licensed photos, licences recorded, stored in MongoDB GridFS (D11, D12) |
+| Catalogue size | Products ordered at least twice (about 13.4k) are active and browsable; the rest (about 19.5k, sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
 | Stock, lead time | Generated with a fixed seed |
@@ -354,7 +355,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | planning |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | not started |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo, shop pages, images, operator CRUD with audit trigger, `DESIGN.md` rewrite | `olist-import` | 1 | not started |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo, shop pages, product tiles and featured photos in GridFS, operator CRUD with audit trigger, `DESIGN.md` rewrite | `olist-import` | 1 | not started |
 | `checkout` | Cart, checkout, simulated payment, order lifecycle | `olist-import` | 1 | not started |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | not started |
 | `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
@@ -383,7 +384,8 @@ From the profile: remove the 303 payment-mismatch orders, keep the latest review
 a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
 uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
 dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), orders without items or
-payments removed under the same cleaning rule as the payment mismatches (D9).
+payments removed under the same cleaning rule as the payment mismatches (D9), real photos for a featured set of 30 to
+50 products (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
 
 **Open:**
 
@@ -391,6 +393,7 @@ payments removed under the same cleaning rule as the payment mismatches (D9).
 |---|---|---|
 | D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
+| D10 | Images for every product | Generated SVG tile at render time: category icon, colour from the product id, short name; no stored files |
 
 ## 16. Risks
 

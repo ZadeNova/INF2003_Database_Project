@@ -30,6 +30,7 @@ Each value lives in exactly one store. Nothing is copied between them, so no syn
 | Users, sellers, products (each owned by one seller, with price and stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
 | Product specification documents (category-specific attributes, rating summary, latest five reviews) | MongoDB (latest stable, pinned by digest), single-node replica set |
 | Reviews, one per order line | MongoDB |
+| Featured product photos (30 to 50 real photos; every other product uses a generated tile) | MongoDB GridFS |
 | Cache and rate limits (Tier 2 only) | Redis; never source of truth |
 
 Cross-store reads are explicit and small: attribute search runs in MongoDB and returns product ids, then PostgreSQL
