@@ -52,9 +52,9 @@ is needed.
 
 | Data | Store | Why |
 |---|---|---|
-| Users and roles, sellers (with approval status), products (each owned by one seller, with price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
+| Users and roles, sellers (with approval status), products (each owned by one seller, with name, price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
 | Inventory snapshots, analytics runs, daily sales | PostgreSQL | Rebuilt on the new schema in `dashboard` (queries ported from the old baseline) |
-| Product specification document (category-specific attributes, generated name and description), keyed by product id | MongoDB | Shape varies by category |
+| Product specification document (category-specific attributes, generated description, rating summary, latest five reviews), keyed by product id; category attribute templates | MongoDB | Shape varies by category |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
 
 **Cross-store reads are explicit and small:** attribute search runs in MongoDB and returns one page of product ids, then
@@ -130,8 +130,8 @@ reproduces it, and its output becomes the report's dataset section. What it sett
 |---|---|---|
 | Can one `product_id` be sold by several sellers? | Yes: 3.7% of products, carrying 12.8% of order lines | Shopee model (D1): every product belongs to one seller, so shared Olist products are split into one product per seller |
 | Items per order | 90% of orders have one line; the same product repeats as separate lines in 6.9% of (order, product) pairs | Repeats collapse into one line with a quantity |
-| Do payments sum to the order total (price plus freight)? | 99.7% of orders match; 303 do not | The 303 are removed (cleaning rule); the deferred payment check then holds |
-| Duplicate `review_id`s; empty review text | 814 duplicate ids, 547 orders with several reviews; 41% of reviews have text (about 2.8M characters) | Keep the latest review per order; translate all text once |
+| Do payments sum to the order total (price plus freight)? | Compared exactly, 576 orders differ (273 by one cent, 303 by more) | All 576 are removed (R2); the deferred payment check then holds |
+| Duplicate `review_id`s; empty review text | 814 duplicate ids, 547 orders with several reviews; 41% of reviews have text (about 2.8M characters) | Keep the latest review per order (removes 551); Olist review ids are not unique; translate all text once |
 | Products without a category or translation | 610 without a category; 2 of 73 categories without an English name | The two translated by hand; the 610 go into an "Uncategorised" category |
 | Names, descriptions, images | None in the data (only their lengths) | Generated, as planned |
 | Category concentration | Top 15 categories cover 79% of order lines | Rich attribute templates for the top 15 |
@@ -156,12 +156,12 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Currency | Converted to SGD at **one fixed rate**: the European Central Bank reference rates (EUR/BRL and EUR/SGD cross rate) on the day `olist-import` executes. Lines rounded to the cent; order totals computed from the rounded lines. Raw BRL kept in the raw files |
 | Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to 30 October 2026, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
 | Customers | One user per `customer_unique_id`, bulk-inserted with unusable passwords |
-| Reviews | The latest review per order is kept; single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
+| Reviews | The latest review per order is kept (by answer time); reviews of orders never delivered are kept as history (R3); single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
 | Order status | Olist's eight statuses map to ours: created → placed; approved, processing, invoiced → paid; shipped → shipped; delivered → delivered; canceled, unavailable → cancelled |
 | Quantity | Repeated (order, product, seller) lines collapse into one line with a quantity |
 | Sellers | The 3,095 Olist sellers become approved seller accounts with unusable passwords |
 | Multi-seller orders | The 1.3% of Olist orders spanning several sellers split into one order per seller; the Olist order becomes the checkout and keeps its payments unchanged (D17) |
-| Broken orders | Removed (cleaning rules, D9): payments not equal to price plus freight (303), no order lines (775), no payment (1) |
+| Broken orders | Removed (D9, R2, R5): payments not exactly equal to price plus freight (576), no order lines (775), no payment (1), placed after August 2018 (20), delivery date contradicting the status (14), a `not_defined` payment; exact counts in the ledger |
 | Geolocation | One centre point per zip prefix (about 19k of the 1M rows; 26% are exact duplicates), used for seller-to-customer distance in the delay analysis (T6b) |
 
 **Import experience:** the importer prints progress per table, and the user manual states the expected import time and
@@ -195,7 +195,7 @@ in Tier 2). Product photos: JPEG, PNG or WebP only (never SVG), at most 2 MB, re
 then stored in GridFS; the old photo is removed when replaced.
 
 **Per-item reviews.** One review per order line, enforced by a MongoDB unique index on `order_item_id`. Only the buyer of
-that line, only when its order is `delivered` (checked in PostgreSQL). Customers can edit or delete their own review.
+that line, only when its order is `delivered` (checked in PostgreSQL); imported reviews of undelivered orders stay as history. Customers can edit or delete their own review.
 
 **MongoDB data model (embed or reference, recorded in `docs/DATA_MODEL.md`).** The specification document **embeds** the
 rating summary and the latest five reviews (MongoDB's subset pattern), so a product page is one read; **all** reviews
@@ -235,7 +235,8 @@ do not affect each other or the demo data.
 - Identical Docker limits for both engines (for example 2 CPUs and 2 GB each).
 - All final runs on one designated machine; CPU model, cores, RAM, OS and Docker version recorded with every result.
 - 1, 10 and 50 concurrent clients; warm-up; at least 5 runs; p50, p95, throughput, errors, MongoDB retries.
-- Engine comparison timed **at the driver level**; HTTP end-to-end timings reported separately.
+- Engine comparison timed **at the driver level**; HTTP end-to-end timings reported separately, from a new local load
+  script written in `benchmark` (the old AWS harness is deleted in `foundation`).
 - Query plans captured beside timings: `EXPLAIN (ANALYZE, BUFFERS)` and MongoDB `explain("executionStats")`.
 - `docker stats` sampled every second during each run (CPU and memory per container).
 - **Headline results as ratios** (more portable across machines), absolute milliseconds as detail.
@@ -302,9 +303,9 @@ Fresh repo from the commands already given (no history, private). Then:
 | `HealthProbeMiddleware`, `HEALTH_PROBE_HOST`, `DJANGO_TRUST_PROXY` | Delete; keep `/health/` |
 | `DJANGO_ENV` switch | One fail-closed configuration |
 | Request logging, DB-unavailable 503, JSON log | Keep; rename `northstar.*` loggers; becomes the home of per-request DB timing |
-| `src/tools/db_bootstrap.py`, `src/docker/10-local-role.sh` | Keep the owner/application role split (limited privileges, and RLS in Tier 2); drop RDS parts |
+| `src/tools/db_bootstrap.py`, `src/docker/10-local-role.sh` | Replaced by two roles in the PostgreSQL init script: owner (migrate, import, pytest) and runtime (web, data changes only) (foundation-g) |
 | Shoe code and data: `catalogue/shoes.py`, `analytics/build_shoe_dataset.py`, `data/raw/` and `data/derived/`, `src/static/models/` (3D shoes), shoe glyphs, the `CustomerSegment` model and migration | Delete in `olist-import` when the Olist import replaces them (K-means scripts go in `foundation`, decision foundation-b) |
-| `tests/load/` | Keep the Locust harness for HTTP end-to-end runs |
+| `tests/load/` | Delete; `benchmark` writes a new local load script (foundation-h) |
 | `scripts/package_submission.py` | Adapt to the INF2003 zip |
 | Compose | One root file, renamed; add `mongo` as a single-node replica set with a `readWrite`-only application user; latest stable PostgreSQL and MongoDB, pinned by digest |
 | `.vscode/settings.json` | Cross-platform |
@@ -337,8 +338,8 @@ and the report. The proposal does not mention the reuse.
 
 | Member | Role | Tier 1 work |
 |---|---|---|
-| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `dashboard`, `benchmark`, `ci` |
-| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; Tier 2 `observability` |
+| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `dashboard`, `reviews`, `benchmark` |
+| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; `ci` (phase 3); Tier 2 `observability` |
 | **Joash** | Supporting developer, QA | MongoDB: specifications, reviews, pipelines (his proposal role), reviewed by Erfan |
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
 | **Syahfariz** | Supporting developer, QA | Test plan and correctness gates, clean-machine run of the user manual, slides and video |
@@ -354,10 +355,10 @@ Agents check every task against this table (AGENTS.md, Phase check): a workstrea
 
 | Phase | Dates | Build | Write plans | Exit check |
 |---|---|---|---|---|
-| **0 Setup** | 21 to 25 Oct | `foundation`, `ci` (Erfan) | `ci`, `accounts`, `checkout`; Chee Long reviews the `foundation` and `olist-import` plans | Repo runs on Linux and Windows with both databases; CI green; professors' written approval |
+| **0 Setup** | 21 to 25 Oct | `foundation` (Erfan) | `accounts`, `checkout`; review of the `foundation` and `olist-import` plans (done 21 Oct) | Repo runs on Linux and Windows with both databases; professors' written approval |
 | **1 Data** | 26 Oct to 1 Nov | `olist-import` (Chee Long; Erfan optionally on the cleaning script), `accounts` | `catalogue`, `wishlist`, `dashboard` | The shop runs on Olist data in both databases; the three roles can log in |
-| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `benchmark`, `observability`, `deliverables` outline | **8 Nov checkpoint:** buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
-| **3 Complete** | 9 to 15 Nov | `reviews`, `benchmark` (B1 to B6), surviving Tier 2 (likely `observability`) | Tier 2 plans if earned | First full benchmark run by 15 Nov; each owner drafts their report section |
+| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `benchmark`, `ci`, `observability`, `deliverables` outline | **8 Nov checkpoint:** buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
+| **3 Complete** | 9 to 15 Nov | `reviews`; then `benchmark` (B1 to B6 and a new local HTTP load script) and `ci` (Erfan) once the features are in; surviving Tier 2 (likely `observability`) | Tier 2 plans if earned | First full benchmark run by 15 Nov; CI green; each owner drafts their report section |
 | **4 Freeze** | 16 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
 | **5 Ship** | 23 to 29 Nov | Video (all five, names on screen, under 10 minutes), slides, packaging | none | Zip checked by the packager; submitted 28 Nov, a day early (deadline 29 Nov, 23:30) |
 
@@ -376,7 +377,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `wishlist` | Wishlist and restock alerts | `olist-import` | 1 | not started |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `olist-import` | 1 | not started |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol | `catalogue`, `reviews`, `dashboard` | 1 | not started |
-| `ci` | CI and correctness gates | `foundation` | 1 | not started |
+| `ci` | CI and correctness gates, built in phase 3 once the features are in | `foundation` | 1 | not started |
 | `deliverables` | Report, slides, video, user manual, packaging | all | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
@@ -400,7 +401,10 @@ a quantity, map the order statuses, rich templates for the top 15 categories, co
 uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
 dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), three roles in Tier 1 with
 row-level security kept in Tier 2 (D14), operator and seller scope as in section 2 (D15, D16), one checkout with one order
-per seller and payments on the checkout (D17), "seller" as the single term (D18), orders without items or
+per seller and payments on the checkout (D17), "seller" as the single term (D18). From the plan review (21 October): owner and runtime
+PostgreSQL roles with pytest as the owner (R1); remove all 576 payment mismatches (R2); keep reviews of undelivered
+orders as history (R3); delete the old load harness (R4); drop the 20 orders after August 2018 (R5); bigint ids with Olist
+ids as source columns (R6); a custom user model with a role field (R7); CI built in phase 3, orders without items or
 payments removed under the same cleaning rule as the payment mismatches (D9), icon cards for every product (D10), illustrative stock
 photos for the best seller in each of the top 15 categories (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
 
@@ -424,6 +428,7 @@ photos for the best seller in each of the top 15 categories (D11) stored in Grid
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Reuse approval only verbal | Written confirmation, cited |
+| No CI until phase 3 | The review step runs the full test suite in Docker before every merge |
 | Cleaning distorts the real data | Raw files untouched; every rule counted in the import ledger; analyses re-run on the cleaned data |
 
 ## Sources checked

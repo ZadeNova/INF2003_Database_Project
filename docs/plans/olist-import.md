@@ -1,61 +1,130 @@
-# olist-import: Olist profile, cleaning, schema, import, adaptations, accounts
+# olist-import: Olist cleaning, schema, import, adaptations, accounts
 
 status: approved
-plan owner: Erfan · implementer: Chee Long · reviewer: tbd (fresh session, other agent) · estimate: 3 to 4 days ·
-window: 26 October to 1 November · depends on: `foundation`
+plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 4 to 5 days
+· phase 1 (26 October to 1 November) · depends on: `foundation`
 
 ## Contract
 
 **Goal.** One command loads the cleaned, adapted Olist data into PostgreSQL and MongoDB on an empty database in under ten
 minutes on a typical laptop, reproducibly, with a cleaning ledger that accounts for every removed or changed row.
 
-**In scope**
+**Pipeline: three steps, each with committed output**
 
-| Area | Deliverable |
+| Step | Script and where it runs | Output (committed, with `checksums.txt`) |
+|---|---|---|
+| Translate (one-off, start early: 1 to 3 hours) | `scripts/translate_reviews.py`: Argos Translate, pinned package and pt→en model version, in its own environment (never the app image; recent versions pull in PyTorch). Translates distinct texts only (about 36k comments and 11.5k titles); resumable, so a stopped run continues | `data/derived/olist/translations.csv` (text hash, English text) |
+| Clean | `scripts/clean_olist.py` with pinned pandas, in a pinned `tools` container (Compose profile `tools`) so output is identical on every machine. Reads every CSV with `dtype=str` (23,995 customer zip codes start with 0), keeps money as `Decimal`, sorts deterministically, assigns new ids by sorted source keys, writes with `lineterminator="\n"`. Reads `translations.csv`; never translates | `data/derived/olist/clean/` (CSV for PostgreSQL, NDJSON for MongoDB) and `cleaning_ledger.json` |
+| Import | `manage.py import_olist`, run as the **owner** role in the `migrate` service: `COPY` the clean CSVs with their ids in foreign-key order, then `setval` every identity sequence; bulk-insert the NDJSON into MongoDB; create indexes and validators. No cleaning logic; refuses a non-empty database; prints progress per step | The loaded databases |
+
+`analytics/profile_olist.py` reproduces the 21 October profile, including the review score by delivery-delay bucket, and
+writes the generated dataset section of `docs/DATA_MODEL.md`.
+
+**Cleaning rules (expected counts from the profile; the ledger is the source of truth, and rules overlap)**
+
+| # | Rule | Expected |
+|---|---|---|
+| 1 | Remove orders placed after 31 August 2018 (the tail; R5) | 20 |
+| 2 | Remove orders with no lines, or with no payment | 775, 1 |
+| 3 | Remove orders whose payments differ from price plus freight by any amount, compared as exact decimals (R2) | 576 |
+| 4 | Remove orders with a `not_defined` payment | ≤ 3 |
+| 5 | Remove orders whose delivery date contradicts their status (delivered without a date; not delivered with one) | 8, 6 |
+| 6 | Change payments with zero instalments to one | 2 |
+| 7 | Keep the latest review per order: highest `review_answer_timestamp`, then `review_id` (no ties on the timestamp); drop reviews of removed orders. Reviews on orders never delivered are kept as history (R3) | 551 removed by the first part |
+| 8 | Split products shared by several sellers into one product per seller | 32,951 → 34,448 before removals |
+| 9 | Collapse repeated (order, product, seller) lines with an equal unit price into one line with a quantity | 6.9% of pairs |
+| 10 | Split orders spanning several sellers into one order per seller; the Olist order becomes the checkout and keeps its payments | 1.3% of orders |
+| 11 | Map the eight statuses to five (PLAN.md section 5); translate the 2 missing category names by hand; put the 610 uncategorised products in "Uncategorised" | |
+| 12 | Geolocation: one row per zip prefix (median latitude and longitude, most common city and state) | 1M → 19,015 |
+| 13 | Shift every timestamp by 426 weeks and treat it as Singapore local time | ends 30 October 2026 |
+| 14 | Currency: convert each line's price and freight to SGD at the stored rate and round half-up to the cent; the checkout total is the sum of its lines; split each checkout's payments in proportion to their original values, rounded, with the remainder on the largest payment, so payments equal the total exactly | |
+| 15 | Active = a seller-product in at least two distinct orders, counted after cleaning (D13); featured = the best seller in each of the top 15 categories (D11) | about 13.6k active |
+
+**PostgreSQL schema (fresh migrations; ids are bigint identities, Olist ids kept as source columns)**
+
+| Table | Key points |
 |---|---|
-| Raw data | `data/raw/olist/` (9 CSVs) committed with `checksums.txt` (SHA-256); licence and attribution in `docs/licenses/olist.txt` |
-| Profile | `analytics/profile_olist.py` reproduces the 21 October profile; its output is the generated dataset section of `docs/DATA_MODEL.md` |
-| Schema | Fresh migrations (decision a). PostgreSQL tables: users with a role (customer, seller, operator); customer profile; seller (approval status); category (English and Portuguese names, icon); product (owned by one seller; price `numeric(12,2)`, stock, lead time, weight and size, `active`, `featured`, Olist source id); checkout (customer, payments total, idempotency key, Olist order id); order (one per seller per checkout; status; placed, approved, shipped, delivered and estimated dates); order line (product, quantity, unit price, freight); payment (checkout, method, instalments, amount); geolocation (one point per zip prefix). Constraints: every foreign key, `CHECK`s on money, stock, quantity and statuses, `ON DELETE RESTRICT` where history depends on a row |
-| MongoDB | `reviews` (one per order line, Portuguese text, English text, score, dates, `from_order_review` flag, Olist review id; unique index on order line id) and `product_specs` (one per product: generated attributes by category template; `$jsonSchema` validator). Created with their indexes and validators by the importer |
-| Cleaning | `scripts/clean_olist.py` (pandas) reads `data/raw/olist/`, applies every cleaning rule and adaptation, and writes import-ready files to `data/derived/olist/clean/` (CSV for PostgreSQL, NDJSON for MongoDB) plus `cleaning_ledger.json` (rule, rows affected, reason). Deterministic; outputs committed with checksums, so the importer and the benchmark load the same files |
-| Importer | `manage.py import_olist`: `COPY` the clean CSVs into the app tables in foreign-key order, insert the NDJSON into MongoDB in bulk, create indexes and validators. No cleaning logic. Refuses to run on a non-empty database. Prints progress per step |
-| Cleaning and adaptations | Exactly as PLAN.md section 5: broken orders removed (D9); latest review per order; shared products split per seller; repeated lines collapsed into a quantity (only where the unit price is equal); multi-seller orders split into one order per seller under one checkout (D17); statuses mapped; categories translated (D5); geolocation reduced (D6); all dates shifted 426 weeks (D7); BRL to SGD at one stored rate; active = ordered at least twice (D13); featured = best seller in each of the top 15 categories (D11) |
-| Generated data | Seeded script producing names, descriptions, attributes (rich templates for the top 15 categories), stock and lead times, and the review translation; outputs committed under `data/derived/olist/` with checksums, every field labelled as generated |
-| Accounts | One user per `customer_unique_id` and per seller, unusable passwords; `seed_demo` creates usable logins (one customer per member, one operator, one seller tied to a high-volume Olist seller) with passwords from `.env` |
-| Removal | Shoe code, data, 3D models and tests; the old importer (`config/dataset.py`, `import_dataset`); the `reporting` app and its migrations (decision c); the `CustomerSegment` model (foundation-b) |
-| Fixture | `scripts/make_fixture.py` writes a deterministic subset (about 1,000 checkouts with every related row) to `tests/fixtures/olist/` for tests and CI |
-| Docs | ER diagram and 3NF justification in `docs/DATA_MODEL.md`; the cleaning ledger as a generated table there |
+| `accounts.User` | Custom user model with `role` (`customer`, `seller`, `operator`; `CHECK`); `AUTH_USER_MODEL` set before the first migration (R7) |
+| customer profile | One per user; `olist_customer_unique_id` unique; zip prefix, city, state (no foreign key to geolocation: some prefixes are missing there) |
+| seller | One per user; status `pending`, `approved`, `suspended` (`CHECK`); Olist seller id unique; zip prefix, city, state |
+| category | Slug unique; English and Portuguese names; icon; `hand_translated` flag |
+| product | Seller and category foreign keys; `UNIQUE (id, seller_id)`; Olist product id (unique per seller); name; price `numeric(12,2) CHECK > 0`; stock `CHECK >= 0`; lead time; weight and size (nullable: 2 products lack them); `active`, `featured`; `has_generated_content` |
+| checkout | Customer; placed time; total; idempotency key (unique, nullable); Olist order id (unique, nullable) |
+| order | Checkout and seller; `UNIQUE (checkout_id, seller_id)` and `UNIQUE (id, seller_id)`; status (`CHECK`); items, freight and total; placed, approved, shipped, delivered and estimated dates |
+| order line | Composite foreign keys `(order_id, seller_id)` → order and `(product_id, seller_id)` → product, so a line's product always belongs to its order's seller and an order has one seller, enforced by the database; quantity `CHECK > 0`; unit price; freight |
+| payment | Checkout; sequence; method (`CHECK`); instalments `CHECK >= 1`; amount `CHECK >= 0` |
+| geolocation | Zip prefix primary key; latitude, longitude, city, state |
 
-**Out of scope:** catalogue UI, search and photos (`catalogue`); checkout logic (`checkout`); review UI and Bayesian rating
-(`reviews`); dashboard and reporting tables (`dashboard`); benchmark copies of the data (`benchmark`).
+Product **names** live in PostgreSQL (order history, cart and seller pages need them); descriptions and attributes live in
+MongoDB. Imported customers and sellers get unusable passwords written directly (no hashing during import).
 
-**Tests:** constraints reject bad rows (negative price, negative stock, unknown status, orphan line); the importer on the
-fixture produces the expected ledger counts; every checkout's payments equal its orders' total; one seller per order;
-MongoDB rejects a spec document that fails `$jsonSchema` and a second review for the same order line.
+**MongoDB**
+
+| Collection | Contents and rules |
+|---|---|
+| `reviews` | One per order line (multi-line orders get a copy per line, `from_order_review: true`); order line, order, checkout, product, seller and customer ids; score; Portuguese and English title and text (`machine_translated: true`); dates; Olist review id (indexed, **not** unique). Unique index on `order_line_id` |
+| `product_specs` | `_id` = product id; category; generated description; `attributes`; `rating_summary` (count, average, distribution) and `latest_reviews` (five), both computed at import. `$jsonSchema` validates the outer fields only |
+| `category_templates` | One per category: its attribute definitions (rich for the top 15 categories, generic for the rest). The app validates attributes against these, and the schema-evolution demo edits a template, which needs no `collMod` (the app user's `readWrite` does not grant it) |
+
+**Also in scope**
+- **Accounts:** `seed_demo` creates usable logins (one customer per member, one operator, one seller tied to a high-volume
+  Olist seller), passwords from `.env`.
+- **Removal:** shoe code, data, 3D models (with `CREDITS.md`) and tests; `config/dataset.py` and `import_dataset`; the
+  `reporting` app (models including `CustomerSegment`, migrations, commands, templates and tests);
+  `analytics/build_shoe_dataset.py`, `analytics/export_coverage.py` and their tests.
+- **Minimum working after phase 1:** home, product list and product detail render from the new schema; the three demo
+  logins work. Cart, checkout, order and dashboard routes return 404, and their old tests are removed, until `checkout`
+  and `dashboard` rebuild them.
+- **Fixture:** `scripts/make_fixture.py` picks a deterministic raw subset (about 1,000 Olist orders, including at least two
+  of every broken kind, shared products, multi-seller orders and duplicate reviews) into `tests/fixtures/olist/raw/`;
+  tests run cleaning and import on it.
+- **Docs:** `docs/DATA_MODEL.md` gets the ER diagram (Mermaid), the 3NF justification, the MongoDB model (what is embedded,
+  what is referenced, and why), and the generated profile and ledger tables.
+
+**Out of scope:** catalogue UI, search and photos (`catalogue`); checkout logic (`checkout`); review UI and Bayesian
+rating (`reviews`); dashboard (`dashboard`); benchmark copies of the data (`benchmark`).
+
+**Tests:** one per cleaning rule on the fixture; two cleaning runs give identical checksums; rows read = kept + removed
+for every table; constraints reject a negative price or stock, an unknown status, a line whose product belongs to another
+seller, and a second order for the same seller in one checkout; every checkout's payments equal its total; the importer
+refuses a non-empty database; MongoDB rejects a spec missing an outer field and a second review for an order line; the
+runtime role can read the imported data.
 
 **Exit check (the reviewer runs all of these)**
-1. Fresh clone, `docker compose up`, `import_olist` on the full data: finishes in under ten minutes, progress shown.
-2. Rerunning `clean_olist.py` reproduces the committed clean files byte for byte (checksums match). For every raw table:
-   rows read = rows kept + rows removed, per the ledger. Ledger counts match the profile (303, 775,
-   1 broken orders; 814 duplicate review ids).
-3. A query for checkouts whose payments differ from their orders' total returns no rows; no order has two sellers.
-4. The delivery-delay table from PLAN.md (score by delay bucket) reproduces from the imported data.
-5. Full test suite passes in Docker; the fixture import passes in under a minute.
-6. `docs/DATA_MODEL.md` has the ER diagram, the 3NF justification and the generated ledger table.
+1. Fresh clone, `docker compose up`, then `import_olist` on the full data as the owner: under ten minutes, progress shown.
+2. Rerunning `clean_olist.py` reproduces the committed files byte for byte; the ledger shows rows read = kept + removed
+   for every table, and its counts match the table above or the difference is explained in the review notes.
+3. No checkout's payments differ from its total (the query returns no rows).
+4. The delay-bucket table from `profile_olist.py` (raw data) and the same query on the imported data show the same
+   pattern (bucket averages within 0.05).
+5. The full test suite passes in Docker; cleaning plus import of the fixture takes under a minute.
+6. `docs/DATA_MODEL.md` has the ER diagram, the 3NF justification, the MongoDB model and the ledger.
+7. Product list and detail pages render, and the three demo logins work.
 
 ## Decisions (all approved 21 October 2026)
 
-| ID | Proposal | Why |
-|---|---|---|
-| a | Fresh migrations: replace all existing migrations with a new `0001` per app | Nothing is deployed; eleven migrations of shoe-era history would only confuse the ER story |
-| b | Clean in Python before import; the importer only loads clean files | Simpler code; the committed clean files are also the benchmark's identical input |
-| c | Drop the old namespace, fingerprint and inventory-version machinery and the `reporting` app; `dashboard` rebuilds reporting on the new schema | They are built for the old dataset; porting them is the main risk named in PLAN.md section 16 |
-| d | Review translation with Argos Translate (offline, open source, Portuguese to English), run once; output committed | No API cost or key; about 41k short texts is practical on a laptop; reproducible |
-| e | Exchange rate: the ECB EUR/BRL and EUR/SGD reference rates on the implementation day, stored with the date in `data/derived/olist/fx.json` | One fixed, cited rate; imports are reproducible |
-| f | Treat Olist timestamps as Singapore local time after the shift | The shop presents as Singaporean (SGD); avoids a time-zone conversion nobody would see |
-| g | No re-import or replay: reset is `docker compose down -v`, migrate, import | Replay logic is the machinery that made the old importer complex |
-| h | `product_specs` and its `$jsonSchema` are created here, not in `catalogue` | Generated names come from the attributes, so both are produced together |
+| ID | Decision |
+|---|---|
+| a | Fresh migrations, one new `0001` per app |
+| b | Clean in Python before import; the importer only loads committed clean files |
+| c | Drop the old import machinery and the `reporting` app; `dashboard` rebuilds reporting |
+| d | Translate offline with Argos Translate, once, as a separate step |
+| e | ECB rate on the implementation day, stored with its date in `data/derived/olist/fx.json` |
+| f | Olist timestamps become Singapore local time after the shift |
+| g | No re-import: reset with `docker compose down -v`, migrate, import |
+| h | MongoDB collections, validators and indexes are created here |
+| i | Remove all 576 orders whose payments differ from their total (R2) |
+| j | Keep reviews of undelivered orders as history (R3) |
+| k | Drop the 20 orders after August 2018 (R5) |
+| l | Bigint ids; Olist ids as source columns (R6) |
+| m | Custom user model with a `role` field (R7) |
 
 ## Review notes
 
-(empty until review)
+21 October 2026, fresh Claude Code session; findings verified against the data and accepted: exact payment comparison
+(576, of which 273 off by one cent), review selection (551 removed; Olist review ids not unique; tie-break on answer time),
+the currency rounding rule, rules for the remaining data quirks, the tail after August 2018, the active count per
+seller-product, rating summaries computed at import, outer-field-only validation with templates in their own collection,
+the schema details (custom user, bigint ids, composite foreign keys, owner role and `setval`), the minimum working state
+after phase 1, where cleaning runs and how it stays deterministic, translation as a separate resumable step, the raw
+fixture, and the missing tests. Names stay in PostgreSQL and descriptions move to MongoDB, so no value lives in both.

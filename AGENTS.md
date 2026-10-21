@@ -44,14 +44,15 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 2. **Checkout never reads price or stock from MongoDB or Redis.**
 3. **Money is exact:** `numeric(12,2)` in PostgreSQL, `Decimal128` in MongoDB. Never floats.
 4. **No card numbers stored, even fake ones;** at most the last four digits.
-5. **Limited privileges:** the PostgreSQL app role has no DDL, DROP or TRUNCATE; the MongoDB app user has `readWrite` on
+5. **Limited privileges:** the PostgreSQL runtime role (used by `web`) has no DDL, DROP or TRUNCATE, while the owner role
+   runs migrations, the import and tests; the MongoDB app user has `readWrite` on
    the app database only. Secrets come only from the git-ignored `.env`.
 6. **Sellers see only their own rows:** every seller query filters by the logged-in seller, with a test proving one
    seller cannot reach another's products or orders.
 7. **Uploads:** JPEG, PNG or WebP only (never SVG), at most 2 MB, re-encoded with Pillow before GridFS.
 8. **Real databases in tests,** never mocks or SQLite. Each new raw-SQL path gets an injection negative test.
-9. **Generated data is labelled** (names, descriptions, attributes, stock, lead times, translations) and flagged
-   `is_generated`.
+9. **Generated content is labelled** (names, descriptions, attributes, stock, lead times, translations) and flagged in
+   the data (`has_generated_content`, `machine_translated`); rows synthesised by the scale-up generator are `is_generated`.
 10. **Benchmarks** use the separate `bench` databases, identical data files and Docker limits, telemetry and caches off.
     A timing counts only if its correctness check passed.
 11. **Tiers are binding:** no Tier 2 or 3 work before PLAN.md says it is earned.
