@@ -169,7 +169,7 @@ several payments; a deferred constraint trigger checks at commit that they equal
 **Per-item reviews.** One review per order line, enforced by a MongoDB unique index on `order_item_id`. Only the buyer of
 that line, only when its order is `delivered` (checked in PostgreSQL). Customers can edit or delete their own review.
 
-**MongoDB data model (embed or reference, recorded in `docs/MONGO.md`).** The specification document **embeds** the
+**MongoDB data model (embed or reference, recorded in `docs/DATA_MODEL.md`).** The specification document **embeds** the
 rating summary and the latest five reviews (MongoDB's subset pattern), so a product page is one read; **all** reviews
 live in the `reviews` collection, **referenced** by product id, because they are unbounded. A review insert, edit or
 delete updates the review, the rating summary and the embedded subset in one MongoDB transaction.
@@ -280,18 +280,21 @@ Fresh repo from the commands already given (no history, private). Then:
 | Compose | One root file, renamed; add `mongo` as a single-node replica set with a `readWrite`-only application user; pin images by digest |
 | `.vscode/settings.json` | Cross-platform |
 | `DESIGN.md` | Rewrite for Mercer (VoiceBox-derived); `site.css` is its single implementation |
-| `AGENTS.md`, `CLAUDE.md` | Rewrite for INF2003 (below) |
+| `AGENTS.md`, `CLAUDE.md` | Rewritten for INF2003 (done; see below) |
+| Per-folder READMEs (`analytics/`, `src/`, `tests/`, `data/`) and the data dictionaries | Merge what is still true into `README.md` and `docs/DATA_MODEL.md`, delete the rest (fewer documents to keep in sync) |
+| `scripts/check_docs.py`, `.githooks/pre-commit` | New: documentation checks run as a git hook and in CI (see AGENTS.md, Documentation) |
 
-**AGENTS.md** (canonical for Codex and Claude Code; CLAUDE.md points to it): the architecture and ownership table; rules
+**AGENTS.md** (canonical for Codex and Claude Code; CLAUDE.md imports it): the architecture and ownership table; rules
 (parameterised queries only; checkout never reads price or stock from MongoDB or Redis; Redis never holds source-of-truth
-data; real databases in tests, never mocks or SQLite; no card numbers stored); contracts before code; branch per
-workstream, no direct pushes to `main`; every AI-assisted commit carries a `Co-Authored-By` trailer; how to run, test and
-benchmark.
+data; real databases in tests, never mocks or SQLite; no card numbers stored); the workflow (plan, review, implement,
+review, record, fix, close out); the documentation rules and docs map; branch per workstream, no direct pushes to
+`main`; every AI-assisted commit carries a `Co-Authored-By` trailer; how to run, test and benchmark.
 
-**Repo layout:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `DESIGN.md`, `compose.yaml`, `src/`, `tests/`, `analytics/`,
+**Repo layout:** `README.md` (overview and user manual), `AGENTS.md`, `CLAUDE.md`, `RUBRICS.md`, `DESIGN.md`, `compose.yaml`, `src/`, `tests/`, `analytics/`,
 `data/`, `benchmarks/` (harness, generator, `results/`), `.github/workflows/ci.yml`, `CONTRIBUTIONS.md` (one page,
-updated at each checkpoint, for fair peer review), and `docs/` with `SETUP.md` (user manual), `SCHEMA.md` (ER diagram),
-`MONGO.md`, `BENCHMARKS.md`, `DECISIONS.md`, `AI_USE.md` (including the disclosure that the codebase builds on our earlier module project), `plans/`, `licenses/`.
+updated at each checkpoint, for fair peer review), and `docs/` with `DATA_MODEL.md` (PostgreSQL schema with ER diagram, and the MongoDB model),
+`DECISIONS.md`, `AI_USE.md` (including the disclosure that the codebase builds on our earlier module project), `plans/`
+(only plans in flight) and `licenses/`. Benchmark tables are generated from `benchmarks/results/`, not hand-written.
 
 **Tests.** Most existing tests assume the shoe data. SP-02 deletes the shoe-specific tests and writes new ones for the
 Olist import and schema; every later sub-plan brings its own tests. Tests that check behaviour independent of the
@@ -327,7 +330,7 @@ it (to decide).
 | 23 to 28 Nov | Video (all five, names on screen, under 10 minutes); package; submit with a day to spare | Zip checked by the packager |
 | 29 Nov | Deadline 23:30 | |
 
-## 14. Sub-plans (one file each in `docs/plans/`, contract first)
+## 14. Sub-plans (one file each in `docs/plans/`, contract first, deleted at close-out)
 
 | ID | Sub-plan | Depends on | Tier |
 |---|---|---|---|

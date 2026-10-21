@@ -12,7 +12,7 @@ the pages.
 | [RUBRICS.md](RUBRICS.md) | What is graded. The target is an A, so every change should help a rubric line |
 | [PLAN.md](PLAN.md) | Scope, tiers, architecture, benchmark protocol, sub-plans, timeline. It wins over this file on scope |
 | [DESIGN.md](DESIGN.md) | Visual language; `src/static/css/site.css` is its single implementation |
-| `docs/plans/SP-xx-*.md` | The contract for the sub-plan you are working on (planned; written before code) |
+| `docs/plans/SP-xx.md` | The one working file for the sub-plan in flight: contract, decisions, review notes. Deleted at close-out (planned) |
 | `docs/DECISIONS.md` | Why choices were made (planned). Add an entry for every non-obvious decision |
 
 ## Current state
@@ -57,8 +57,8 @@ returns price and stock with `WHERE id = ANY(%s)`. A review write checks the ord
 
 ## How we work
 
-- **Contract before code.** Each sub-plan in PLAN.md section 14 gets a short file in `docs/plans/` (scope, interfaces,
-  tables or collections, tests, exit check) that the owner agrees before implementation starts.
+- **Contract before code.** Each sub-plan in PLAN.md section 14 gets one file in `docs/plans/` (scope, interfaces,
+  tables or collections, tests, exit check) that the owner approves before implementation starts. See Workflow below.
 - **Branch per workstream.** No direct pushes to `main`. Open a pull request, link the sub-plan, and describe what the
   change does in words the author can defend in the video.
 - **Commits made with AI assistance carry a `Co-Authored-By` trailer.** Keep subjects in the `type: summary` style
@@ -67,6 +67,72 @@ returns price and stock with `WHERE id = ANY(%s)`. A review write checks the ord
   `docs/DECISIONS.md`, not only in the code.
 - **Match the surrounding code.** Follow existing naming, comment density and idiom, and DESIGN.md for anything visual.
 - **Do not claim what you did not run.** Report test commands and outcomes as they actually were.
+
+## Workflow
+
+**No plan exists:** plan and discuss, review the plan, the owner settles tradeoffs and approves it, implement, review
+the implementation, record problems and tradeoffs, fix, close out.
+**A plan exists:** check it against the current code first (it may be stale), then implement, review, record, fix,
+close out.
+
+- **Plan file.** One file per sub-plan at `docs/plans/SP-xx.md` with a `status:` line (draft, approved, in-progress,
+  done) and three sections: Contract, Decisions, Review notes. Do not create separate tradeoff, implementation or review
+  files.
+- **Reviews run in a fresh session**, not the one that wrote the work. Where possible use the other agent (Codex
+  reviews Claude Code's work and the reverse).
+- **"Review implementation" means running things:** the test suite, the plan's exit check and the rubric line the work
+  is meant to earn, not only reading the diff.
+- **One fix round.** Findings still open after it go into a follow-up item, not an endless loop.
+- **Skip the planning half** for small changes (typos, copy, one-line fixes).
+- **Sub-agents are optional and cost more tokens overall**, because each starts without your context. Use one only for
+  a large read-only search or review, never for ordinary implementation.
+
+**Close-out (the last step of every implementation, before merge):**
+1. Update the docs the change touched, using the docs map below.
+2. Move lasting decisions from the plan file into `docs/DECISIONS.md`; record review findings in the pull request.
+3. Add one line to `docs/AI_USE.md`: sub-plan, agent used, what it did, who reviewed.
+4. Delete the plan file (git history keeps it).
+5. Run `scripts/check_docs.py` and fix what it reports.
+
+## Documentation
+
+Keep the set of `.md` files small. Each fact has one home; everywhere else links to it. Do not add a new `.md` file
+without an entry in `docs/DECISIONS.md`.
+
+| File | Job |
+|---|---|
+| README.md | Overview and the user manual (setup, configuration, run, test, benchmark) |
+| AGENTS.md, CLAUDE.md | Rules for agents |
+| RUBRICS.md | The brief and rubric (fixed) |
+| PLAN.md | Scope, tiers, status, owners, timeline |
+| DESIGN.md | Visual language |
+| docs/DATA_MODEL.md | PostgreSQL schema and MongoDB model (parts generated from the databases) |
+| docs/DECISIONS.md | Decisions and tradeoffs; the source for the report's discussion |
+| docs/AI_USE.md | AI-use declaration and the per-pull-request log |
+| CONTRIBUTIONS.md | Contribution record for peer review |
+| docs/plans/SP-xx.md | Temporary; only plans in flight |
+
+**Docs map: what to update for which change**
+
+| Change | Update |
+|---|---|
+| Table, column, constraint, trigger, index, collection or validator | `docs/DATA_MODEL.md` (regenerate the generated parts) |
+| Setup, configuration, environment variable, Compose service, port or command | README.md |
+| A decision someone could later question | `docs/DECISIONS.md` |
+| Scope, tier, status, owner or date | PLAN.md |
+| Visual tokens or components | DESIGN.md |
+| A rule or command agents need | AGENTS.md |
+| A merged AI-assisted pull request | `docs/AI_USE.md` |
+| A member's work at a checkpoint | CONTRIBUTIONS.md |
+
+**Never write by hand:** test counts, row counts, timings or benchmark tables. Generate them or link to the source
+(`benchmarks/results/`, the schema script), so they cannot drift.
+
+**Check (planned in SP-01):** `scripts/check_docs.py`, run by a git pre-commit hook in `.githooks/` (enable once with
+`git config core.hooksPath .githooks`) and by CI as a backstop. It fails on broken relative links, backticked file paths
+that do not exist, `.md` files not in the list above, generated docs that are out of date, `status: done` plan files,
+and README commands that name a missing script or Compose service. It cannot detect a paragraph that is wrong while its
+links are fine, so the docs map and the review step still apply. Until it exists, check links and paths by hand.
 
 ## Running and testing (current baseline)
 
