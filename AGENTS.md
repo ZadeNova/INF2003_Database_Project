@@ -78,8 +78,8 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 
   Fix rounds rerun only the affected tests; the full suite runs once more before merging. Until CI exists (phase 3),
   the full suite before a workstream merge is the only safety net, so it is never skipped there.
-- **Human gate (about 15 minutes):** the owner approves the plan, runs the demo path, checks the tests passed, and can
-  explain the change in two sentences. Do not approve work you could not explain on video.
+- **Who reviews:** the implementer asks a teammate to run the review in a fresh Claude Code session (Codex work is
+  reviewed by Claude Code). The plan owner approves plans before implementation; there is no separate human gate.
 - **Commits** use the `type: summary` style, and AI-assisted ones carry a `Co-Authored-By` trailer.
 - **Match the surrounding code;** do not claim results you did not run. Sub-agents only for large read-only searches.
 
@@ -91,7 +91,7 @@ PLAN.md section 14; set the plan file to `status: done` and keep it as the recor
 ## Documentation
 
 Only these `.md` files exist: README.md (overview and user manual), AGENTS.md, CLAUDE.md, RUBRICS.md, PLAN.md, DESIGN.md,
-CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, and one plan per workstream in `docs/plans/` (kept after
+CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, `docs/OVERVIEW.md` (plain-language team guide), and one plan per workstream in `docs/plans/` (kept after
 close-out). A new one needs a
 `docs/DECISIONS.md` entry. Each fact has one home; elsewhere, link to it.
 

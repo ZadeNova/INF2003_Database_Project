@@ -362,8 +362,9 @@ and the report. The proposal does not mention the reuse.
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
 | **Syahfariz** | Supporting developer, QA | Test plan and correctness gates, clean-machine run of the user manual, slides and video |
 
-After `foundation`, Chee Long has agreed to implement most of Tier 1 (about 70 to 80%). Each other member still owns the
-human gates of at least one workstream and presents it. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
+After `foundation`, Chee Long has agreed to implement most of Tier 1 (about 70 to 80%). Reviews run in a fresh Claude
+Code session by a teammate Chee Long asks (no separate human gate, decided 21 October). Every member presents their part
+in the video and writes its report section; `docs/OVERVIEW.md` is the plain-language guide for the team. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
 `CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work as it finishes; one editor assembles
 it (to decide).
 

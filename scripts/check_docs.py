@@ -17,7 +17,7 @@ import sys
 
 ALLOWED_MARKDOWN = {
     "README.md", "AGENTS.md", "CLAUDE.md", "RUBRICS.md", "PLAN.md", "DESIGN.md", "CONTRIBUTIONS.md",
-    "docs/DATA_MODEL.md", "docs/DECISIONS.md", "docs/AI_USE.md",
+    "docs/DATA_MODEL.md", "docs/DECISIONS.md", "docs/AI_USE.md", "docs/OVERVIEW.md",
 }
 ALLOWED_MARKDOWN_PREFIXES = ("docs/plans/", "src/static/vendor/")   # workstream plans (kept after close-out); vendored library notices
 ALLOWED_MARKDOWN |= {"src/static/models/CREDITS.md"}                 # until the 3D models are deleted (olist-import)
