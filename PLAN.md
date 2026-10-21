@@ -274,12 +274,12 @@ Fresh repo from the commands already given (no history, private). Then:
 | `DJANGO_ENV` switch | One fail-closed configuration |
 | Request logging, DB-unavailable 503, JSON log | Keep; rename `northstar.*` loggers; becomes the home of per-request DB timing |
 | `src/tools/db_bootstrap.py`, `src/docker/10-local-role.sh` | Keep the owner/application role split (limited privileges, and RLS in Tier 2); drop RDS parts |
-| Shoe code and data: `catalogue/shoes.py`, `analytics/build_shoe_dataset.py`, `data/raw/` and `data/derived/`, `src/static/models/` (3D shoes), shoe glyphs | Delete in SP-02 when the Olist import replaces them |
+| Shoe code and data: `catalogue/shoes.py`, `analytics/build_shoe_dataset.py`, `data/raw/` and `data/derived/`, `src/static/models/` (3D shoes), shoe glyphs, the `CustomerSegment` model and migration | Delete in SP-02 when the Olist import replaces them (K-means scripts go in SP-01, decision 01-b) |
 | `tests/load/` | Keep the Locust harness for HTTP end-to-end runs |
 | `scripts/package_submission.py` | Adapt to the INF2003 zip |
 | Compose | One root file, renamed; add `mongo` as a single-node replica set with a `readWrite`-only application user; pin images by digest |
 | `.vscode/settings.json` | Cross-platform |
-| `DESIGN.md` | Rewrite for Mercer (VoiceBox-derived); `site.css` is its single implementation |
+| `DESIGN.md` | Strip dead links and AWS text only; the full rewrite for Mercer moves to SP-03 (decision 01-a) |
 | `AGENTS.md`, `CLAUDE.md` | Rewritten for INF2003 (done; see below) |
 | Per-folder READMEs (`analytics/`, `src/`, `tests/`, `data/`) and the data dictionaries | Merge what is still true into `README.md` and `docs/DATA_MODEL.md`, delete the rest (fewer documents to keep in sync) |
 | `scripts/check_docs.py`, `.githooks/pre-commit` | New: documentation checks run as a git hook and in CI (see AGENTS.md, Documentation) |
@@ -336,7 +336,7 @@ it (to decide).
 |---|---|---|---|---|
 | SP-01 | Repo conversion and AWS removal | none | 1 | planning |
 | SP-02 | **Olist profile, schema, import, adaptations, users** (first to execute) | SP-01 | 1 | not started |
-| SP-03 | Catalogue, specifications in MongoDB, shop pages, images, operator CRUD | SP-02 | 1 | not started |
+| SP-03 | Catalogue, specifications in MongoDB, shop pages, images, operator CRUD, `DESIGN.md` rewrite | SP-02 | 1 | not started |
 | SP-04 | Cart, checkout, simulated payment, order lifecycle | SP-02 | 1 | not started |
 | SP-05 | Per-item reviews | SP-03, SP-04 | 1 | not started |
 | SP-06 | Wishlist and restock alerts | SP-02 | 1 | not started |
@@ -358,7 +358,7 @@ a sub-plan changes state, and keep each plan file to about one page.
 order lines; per-item reviews; simulated payments with a method picker; SGD at one ECB cross rate fixed when SP-02
 runs; English throughout; raw SQL only where it shows a construct; product = SKU (or listing, per the profile) with flat
 categories; observability with `grafana/otel-lgtm` in Tier 2 (Erfan); Redis in Tier 2; identical Docker limits; roles as
-in section 12.
+in section 12; images pinned by digest (D4, decision 01-d); MongoDB container and users land in SP-01 (decision 01-c).
 
 **Open:**
 
@@ -367,7 +367,6 @@ in section 12.
 | D1 | Product or listing as the unit of price and stock | Decided by the profile |
 | D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
-| D4 | Pin `postgres`, `mongo` (and Tier 2 images) by digest | Yes, for reproducible benchmarks |
 
 ## 16. Risks
 
