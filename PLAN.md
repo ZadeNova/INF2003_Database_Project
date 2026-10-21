@@ -109,7 +109,7 @@ about 3% of customers reorder), browsing history with TTL indexes, geospatial qu
 `2dsphere` against PostGIS), CPU and memory dashboard panels (need cAdvisor or exporters), full raw-SQL conversion.
 
 **Cut rule.** At the 8 November checkpoint, a Tier 2 item that cannot be demoed that day is dropped. Tier 3 is not
-started before the first full benchmark run exists (target 13 November).
+started before the first full benchmark run exists (target 15 November).
 
 ## 5. Data: Olist, adapted
 
@@ -348,17 +348,18 @@ human gates of at least one workstream and presents it. Chee Long carries most o
 `CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work as it finishes; one editor assembles
 it (to decide).
 
-## 13. Timeline
+## 13. Phases
 
-| Window | Goal | Exit check |
-|---|---|---|
-| 21 to 25 Oct | `foundation`; Olist downloaded and profiled (done 21 Oct); `olist-import` written and started; professors' written approval | Repo runs on Linux and Windows; profile committed; product model decided (done 21 Oct, D1) |
-| 26 Oct to 1 Nov | `olist-import` done; catalogue, specifications and shop pages; MongoDB with replica set | The shop runs on Olist; specifications load from MongoDB |
-| 2 to 8 Nov | Checkout, payments, lifecycle, reviews, wishlist, dashboard; benchmark harness with B1 to B3; **8 Nov checkpoint** | All Tier 1 features demoable; cut rule applied and recorded |
-| 9 to 15 Nov | **First full benchmark run by 13 Nov**; Tier 2 items that survived (Redis, observability); report sections drafted | Results in `benchmarks/results/` |
-| 16 to 22 Nov | **Feature freeze 18 Nov**; final runs; report complete; slides; clean-machine test | Report at 10 pages; manual passes on a clean machine |
-| 23 to 28 Nov | Video (all five, names on screen, under 10 minutes); package; submit with a day to spare | Zip checked by the packager |
-| 29 Nov | Deadline 23:30 | |
+Agents check every task against this table (AGENTS.md, Phase check): a workstream is built only in its phase or later.
+
+| Phase | Dates | Build | Write plans | Exit check |
+|---|---|---|---|---|
+| **0 Setup** | 21 to 25 Oct | `foundation`, `ci` (Erfan) | `ci`, `accounts`, `checkout`; Chee Long reviews the `foundation` and `olist-import` plans | Repo runs on Linux and Windows with both databases; CI green; professors' written approval |
+| **1 Data** | 26 Oct to 1 Nov | `olist-import` (Chee Long; Erfan optionally on the cleaning script), `accounts` | `catalogue`, `wishlist`, `dashboard` | The shop runs on Olist data in both databases; the three roles can log in |
+| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `benchmark`, `observability`, `deliverables` outline | **8 Nov checkpoint:** buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
+| **3 Complete** | 9 to 15 Nov | `reviews`, `benchmark` (B1 to B6), surviving Tier 2 (likely `observability`) | Tier 2 plans if earned | First full benchmark run by 15 Nov; each owner drafts their report section |
+| **4 Freeze** | 16 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
+| **5 Ship** | 23 to 29 Nov | Video (all five, names on screen, under 10 minutes), slides, packaging | none | Zip checked by the packager; submitted 28 Nov, a day early (deadline 29 Nov, 23:30) |
 
 ## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, deleted at close-out)
 
