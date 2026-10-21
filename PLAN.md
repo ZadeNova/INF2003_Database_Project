@@ -115,7 +115,7 @@ about 3% of customers reorder), geospatial queries on the geolocation table (Mon
 `2dsphere` against PostGIS), CPU and memory dashboard panels (need cAdvisor or exporters), full raw-SQL conversion.
 
 **Cut rule.** At the 8 November checkpoint, a Tier 2 item that cannot be demoed that day is dropped. Tier 3 is not
-started before the first full benchmark run exists (target 15 November).
+started before the first full benchmark run exists (target 17 November).
 
 ## 5. Data: Olist, adapted
 
@@ -370,15 +370,21 @@ it (to decide).
 
 Agents check every task against this table (AGENTS.md, Phase check): a workstream is built only in its phase or later.
 
-| Phase | Dates | Build | Write plans | Exit check |
+| Phase | Dates | Build (Chee Long unless noted) | Write plans | Exit check |
 |---|---|---|---|---|
 | **0 Setup** | 21 to 25 Oct | `foundation` (Erfan) | `accounts`, `checkout`; review of the `foundation` and `olist-import` plans (done 21 Oct) | Repo runs on Linux and Windows with both databases; professors' written approval |
-| **1 Data** | 26 Oct to 1 Nov | `olist-import` (Chee Long; Erfan optionally on the cleaning script), `accounts` | `catalogue`, `wishlist`, `dashboard` | The shop runs on Olist data in both databases; the three roles can log in |
-| **2 Core** | 2 to 8 Nov | `checkout`, `catalogue`, `wishlist`, `dashboard` | `reviews`, `activity`, `benchmark`, `ci`, `observability`; `deliverables`: report outline with a page budget and the scripted demo story | **8 Nov checkpoint** (book a 15-minute check-in with the professors to show the demo): buy, ship and deliver work; seller CRUD works; the dashboard shows data; cut rule applied and recorded |
-| **3A Complete** | 9 to 11 Nov | `reviews`, `activity` (Chee Long); `ci` (Erfan); surviving Tier 2 in parallel (likely `observability`, Erfan) | Tier 2 plans if earned | Every Tier 1 feature works end to end; CI green on `main` |
-| **3B Benchmark** | 12 to 15 Nov | `benchmark`: harness, the clean Olist files loaded into the `bench` databases, workloads B1 to B6 with golden outputs, query plans, `docker stats` sampling, per-request timing, the new local HTTP load script | none | **First full benchmark run by 15 Nov** on the designated machine, every correctness check passing; each owner drafts their report section |
-| **4 Freeze** | 16 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs (at least 5 per workload) and the report's results tables; the theory map appendix; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
+| **1A Import** | 26 to 30 Oct | `olist-import` (Erfan optionally on the cleaning script) | `catalogue` | Olist loaded in both databases; the ledger reconciles; product pages render |
+| **1B Accounts** | 31 Oct to 1 Nov | `accounts` | `wishlist`, `dashboard` | The three roles log in; seller approval works |
+| **2A Checkout** | 2 to 4 Nov | `checkout` | `reviews`, `activity` | Buy from three sellers in one checkout, ship, deliver, cancel with refund |
+| **2B Catalogue** | 5 to 8 Nov | `catalogue` | `benchmark`, `ci`, `observability`; `deliverables`: report outline with a page budget and the scripted demo story | **8 Nov checkpoint** (book a 15-minute check-in with the professors to show the demo): buy, ship and deliver work end to end; seller CRUD with photo upload; faceted search; cut rule applied and recorded |
+| **3A Features** | 9 to 13 Nov | `wishlist`, `dashboard`, `reviews`, `activity`; `ci` (Erfan); surviving Tier 2 in parallel (likely `observability`, Erfan) | Tier 2 plans if earned | Every Tier 1 feature works end to end; CI green on `main` |
+| **3B Benchmark** | 14 to 17 Nov | `benchmark`: harness, the clean Olist files loaded into the `bench` databases, workloads B1 to B6 with golden outputs, query plans, `docker stats` sampling, per-request timing, the new local HTTP load script | none | **First full benchmark run by 17 Nov** on the designated machine, every correctness check passing; each owner drafts their report section |
+| **4 Freeze** | 18 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs (at least 5 per workload) and the report's results tables; the theory map appendix; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
 | **5 Ship** | 23 to 29 Nov | Video (all five, names on screen, under 10 minutes), slides, packaging | none | Zip checked by the packager; submitted 28 Nov, a day early (deadline 29 Nov, 23:30) |
+
+The phases run one after another because one developer builds most of Tier 1, and they leave no slack before the
+freeze (decided 21 October: keep all of Tier 1 with Chee Long). If a phase overruns by more than a day, Erfan assigns
+`wishlist` or `activity` to another member, each with its own plan file.
 
 ## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, deleted at close-out)
 
@@ -451,6 +457,7 @@ a workstream changes state, and keep each plan file as short as its contract all
 | Results depend on the machine | One designated machine, hardware recorded, ratios as headline |
 | Telemetry or cache skews timings | Both off during timed runs; overhead measured separately |
 | One main developer: a delay or absence stalls Tier 1 | Plans written one phase ahead; any member can pick up a workstream from its plan file |
+| No slack before the 18 November freeze | A phase more than a day late moves `wishlist` or `activity` to another member (section 13) |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Reuse approval only verbal | Written confirmation, cited |
