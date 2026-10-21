@@ -83,6 +83,11 @@ close out.
 - **"Review implementation" means running things:** the test suite, the plan's exit check and the rubric line the work
   is meant to earn, not only reading the diff.
 - **One fix round.** Findings still open after it go into a follow-up item, not an endless loop.
+- **Keep plan files to about one page.** Only plans in flight exist; progress is tracked in the status column of PLAN.md
+  section 14, not in a separate index.
+- **Human gates (about 15 minutes per sub-plan).** The owner (1) reads the Contract and Decisions and approves the plan,
+  (2) runs the demo path and checks the tests passed, and (3) can explain the change in two sentences before approving.
+  Agent output is a proposal, not a finished review: do not approve work you could not explain on video.
 - **Skip the planning half** for small changes (typos, copy, one-line fixes).
 - **Sub-agents are optional and cost more tokens overall**, because each starts without your context. Use one only for
   a large read-only search or review, never for ordinary implementation.

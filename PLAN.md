@@ -332,22 +332,25 @@ it (to decide).
 
 ## 14. Sub-plans (one file each in `docs/plans/`, contract first, deleted at close-out)
 
-| ID | Sub-plan | Depends on | Tier |
-|---|---|---|---|
-| SP-01 | Repo conversion and AWS removal | none | 1 |
-| SP-02 | **Olist profile, schema, import, adaptations, users** (first to execute) | SP-01 | 1 |
-| SP-03 | Catalogue, specifications in MongoDB, shop pages, images, operator CRUD | SP-02 | 1 |
-| SP-04 | Cart, checkout, simulated payment, order lifecycle | SP-02 | 1 |
-| SP-05 | Per-item reviews | SP-03, SP-04 | 1 |
-| SP-06 | Wishlist and restock alerts | SP-02 | 1 |
-| SP-07 | Stock-planning dashboard on Olist | SP-02 | 1 |
-| SP-08 | Benchmark harness, generator, per-request timing, protocol | SP-03, SP-05, SP-07 | 1 |
-| SP-09 | CI and correctness gates | SP-01 | 1 |
-| SP-10 | Report, slides, video, user manual, packaging | all | 1 |
-| SP-11 | Redis | SP-07 | 2 |
-| SP-12 | Observability (`grafana/otel-lgtm`) | SP-01 | 2 |
-| SP-13 | Seller login and row-level security | SP-04 | 2 |
-| SP-14 | Durability benchmark and scale-up runs | SP-08 | 2 |
+| ID | Sub-plan | Depends on | Tier | Status |
+|---|---|---|---|---|
+| SP-01 | Repo conversion and AWS removal | none | 1 | not started |
+| SP-02 | **Olist profile, schema, import, adaptations, users** (first to execute) | SP-01 | 1 | not started |
+| SP-03 | Catalogue, specifications in MongoDB, shop pages, images, operator CRUD | SP-02 | 1 | not started |
+| SP-04 | Cart, checkout, simulated payment, order lifecycle | SP-02 | 1 | not started |
+| SP-05 | Per-item reviews | SP-03, SP-04 | 1 | not started |
+| SP-06 | Wishlist and restock alerts | SP-02 | 1 | not started |
+| SP-07 | Stock-planning dashboard on Olist | SP-02 | 1 | not started |
+| SP-08 | Benchmark harness, generator, per-request timing, protocol | SP-03, SP-05, SP-07 | 1 | not started |
+| SP-09 | CI and correctness gates | SP-01 | 1 | not started |
+| SP-10 | Report, slides, video, user manual, packaging | all | 1 | not started |
+| SP-11 | Redis | SP-07 | 2 | not started |
+| SP-12 | Observability (`grafana/otel-lgtm`) | SP-01 | 2 | not started |
+| SP-13 | Seller login and row-level security | SP-04 | 2 | not started |
+| SP-14 | Durability benchmark and scale-up runs | SP-08 | 2 | not started |
+
+Status is one of: not started, planning, in progress, review, done. This column is the only progress index; update it when
+a sub-plan changes state, and keep each plan file to about one page.
 
 ## 15. Decisions
 
