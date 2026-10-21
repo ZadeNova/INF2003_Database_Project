@@ -5,7 +5,8 @@ plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · esti
 November) · depends on: `olist-import`, `catalogue` (product pages), `checkout` (cancellation restocks)
 
 **Assumes:** product `stock` in PostgreSQL changes only through seller edits (`catalogue`) and checkout or cancellation
-(`checkout`); the customer role from `accounts`.
+(`checkout`); the customer role from `accounts`, whose audit triggers treat a missing actor as a system change (so a raw `psql`
+restock works); `seed_demo` guarantees the demo seller owns a sold-out product.
 
 ## Contract
 
@@ -19,7 +20,7 @@ back in stock, by a database trigger that no code path can skip.
 | Wishlist | `wishlist_item` (customer, product, added_at) with a composite primary key (the many-to-many table). Add and remove buttons (HTMX) on product cards and detail; a wishlist page showing stock status |
 | Restock alerts | `restock_alert` (customer, product, created_at, seen_at). An `AFTER UPDATE OF stock` trigger on product, when stock goes from 0 to above 0, inserts one alert per wishlisting customer with `INSERT … SELECT … ON CONFLICT DO NOTHING` |
 | No duplicates (decision a) | A partial unique index on `restock_alert (customer, product) WHERE seen_at IS NULL`, so a product restocked twice before the customer looks produces one unseen alert |
-| Display | A header badge with the unseen count; an alerts page; opening it marks alerts seen. Alerts for products that are now inactive, taken down or from a suspended seller are hidden |
+| Display | A header badge with the unseen count; an alerts page; opening it marks alerts seen. Alerts for products outside the `purchasable_product` view are hidden |
 
 **Out of scope:** email or push notifications (decision b); alerts for price drops.
 
@@ -41,4 +42,5 @@ alerts; the trigger fires for a raw `UPDATE` in `psql`, not only through the app
 
 ## Review notes
 
-(empty until review)
+21 October 2026, cross-plan review (fresh session); findings applied: relies on the `NULLIF` actor rule and the demo sold-out product; uses the
+purchasable view.

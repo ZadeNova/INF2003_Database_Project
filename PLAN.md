@@ -37,7 +37,7 @@ checkout holds the payment; each seller ships their own order.
 
 ```
 Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, carts, checkouts,
-                                    |                  orders, payments, wishlist, inventory, analytics
+                                    |                  orders, payments, refunds, wishlist, audit log, analytics
                                     +-> MongoDB         product specifications (flexible attributes), reviews,
                                                         photos (GridFS), activity events (time-series)
                                                         (single-node replica set, needed for transactions)
@@ -55,7 +55,7 @@ is needed.
 | Data | Store | Why |
 |---|---|---|
 | Users and roles, sellers (with approval status), products (each owned by one seller, with name, price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), refunds, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
-| Inventory snapshots, analytics runs, daily sales | PostgreSQL | Rebuilt on the new schema in `dashboard` (queries ported from the old baseline) |
+| Daily product sales (materialized view), audit log | PostgreSQL | `dashboard` and `accounts`; reporting rebuilt on the new schema, queries ported from the old baseline |
 | Product specification document (category-specific attributes, generated description, rating summary, latest five reviews), keyed by product id; category attribute templates | MongoDB | Shape varies by category |
 | Activity events (product views and searches), expiring after 30 days | MongoDB time-series collection with a TTL index | Write-heavy, append-only, time-ordered |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
@@ -153,7 +153,7 @@ and counted. The full rule list is in `docs/plans/olist-import.md`.
 |---|---|
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
-| Product images | Every product: an icon card (the category's icon from the existing sprite, extended to cover all 73 categories, plus the product name), drawn at render time with no stored file (D10). Featured set: the best seller in each of the top 15 categories gets an openly licensed stock photo matching its generated name, labelled as illustrative; source files and a manifest (file, product, source URL, author, licence) are committed, and the importer loads them into MongoDB GridFS (D11, D12). The same rule extends to the top 3 per category (45 photos) if time allows |
+| Product images | Every product: an icon card (the category's icon from the existing sprite, extended to cover all 73 categories, plus the product name), drawn at render time with no stored file (D10). Featured set: the best seller in each of the top 15 categories gets an openly licensed stock photo matching its generated name, labelled as illustrative; source files and a manifest (file, product, source URL, author, licence) are committed, and `load_photos` (`catalogue`) loads them into MongoDB GridFS (D11, D12). The same rule extends to the top 3 per category (45 photos) if time allows |
 | Catalogue size | Seller-products in at least two distinct orders after cleaning (about 13.6k) are active and browsable; the rest (about 20k, mostly sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
@@ -192,7 +192,7 @@ own order shipped; the operator marks it delivered (acting as the courier), so t
 on camera.
 
 **Simulated payment.** A Pay button with a method picker: credit card, boleto, voucher, debit (Olist's own types). The app
-writes a `payment` row with status `paid`. **No card numbers are stored, even fake ones**; if card fields are shown for
+writes a `payment` row (a row means money received; there is no payment status). **No card numbers are stored, even fake ones**; if card fields are shown for
 realism they are format-checked in the browser and discarded (at most the last four digits are kept). Payments belong to
 the checkout; a checkout may have several, and a deferred constraint trigger checks at commit that they equal the checkout
 total (the sum of its orders).
@@ -445,6 +445,11 @@ a workstream changes state, and keep each plan file as short as its contract all
   justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and
   code-quality gates in `ci` (E4, E5). Tier 2: full-text search (E1), replication and failover (E6), backup and restore
   drill (E7), product Q&A (M2). The old load harness is deleted (R4); CI is built in phase 3.
+- **Cross-plan review** (21 October): PostgreSQL filters first and MongoDB counts facets on those ids, "Top rated"
+  sorted in the pipeline (X1); MongoDB 9.0 tests and exit checks run on Windows, where the team works, not on
+  Erfan's affected Linux kernel (X2); products left without order lines are dropped (X3); the importer disables
+  triggers while loading and checks the invariants with queries (X4); `taken_down` and a `purchasable_product` view
+  live in `olist-import`; one idempotent `mongo_setup` command; runtime privileges granted in the first migration.
 - **Deliverables:** a professor check-in at the 8 November checkpoint, a scripted demo story, a report outline with a
   page budget, and a theory map appendix.
 - **No further scope additions.**
@@ -472,6 +477,7 @@ a workstream changes state, and keep each plan file as short as its contract all
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Reuse approval only verbal | Written confirmation, cited |
 | No CI until phase 3 | The review step runs the full test suite in Docker before every merge |
+| MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |
 | Cleaning distorts the real data | Raw files untouched; every rule counted in the import ledger; analyses re-run on the cleaned data |
 
 ## Sources checked

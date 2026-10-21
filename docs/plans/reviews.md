@@ -18,9 +18,10 @@ reviews; products and sellers are ranked fairly even with few reviews.
 |---|---|
 | Write rules | A customer may review an order line only if it is theirs and its order is `delivered` (checked in PostgreSQL first, AGENTS.md cross-store rule); one review per line (unique index); edit and delete their own |
 | One transaction | Insert, edit or delete of a review updates, in one MongoDB multi-document transaction with retry on write conflict: the review, the product's `rating_summary` (count, sum, average, distribution) and its `latest_reviews` subset (five newest) |
-| Bayesian rating (decision a) | Score = (C × m + sum of scores) / (C + n), with m the platform mean and C the median review count per product, both computed at import and stored in a `platform_stats` document. Stored in `rating_summary.bayesian`, updated in the same transaction. Used for "Top rated" sorting in the catalogue and for seller ranking on shop pages. The benchmark computes the same formula in SQL on its copy (B2) |
+| Bayesian rating (decision a) | Score = (C × m + sum of scores) / (C + n), with m the platform mean and C the median review count per product, both computed at import into the `platform_stats` document (`olist-import`, which also fills `rating_summary.sum` and `bayesian`). Each write recomputes `bayesian` in the same transaction with a MongoDB update pipeline (`$set` with the formula), so the pipeline version of the formula lives here. Used for "Top rated" sorting in the catalogue and for seller ranking on shop pages. The benchmark computes the same formula in SQL on its copy (B2) |
 | Display | Product detail shows the summary, a score histogram and paginated reviews. Imported reviews show the English machine translation, labelled, with a toggle to the Portuguese original; reviews of undelivered orders are marked as historical |
-| Take-down | Operator console "Reviews": take a review down with a reason (hidden, excluded from summaries, recomputed in the same transaction) or restore it; the action is logged to `audit_log` from the app, since the trigger cannot see MongoDB |
+| Take-down | Operator console "Reviews": take a review down with a reason (hidden, excluded from summaries, recomputed in the same transaction) or restore it. The action is logged to `audit_log` from the app (row id = the review's id as text), since no trigger can see MongoDB, using `catalogue` decision c's order: PostgreSQL transaction open with the audit row, MongoDB transaction, then the PostgreSQL commit |
+| Seller view | Seller centre "My reviews": a read-only list of reviews on the seller's own products, with a scoping test (PLAN.md section 2) |
 
 **Out of scope:** seller replies and review moderation queues (Tier 2); full-text search on reviews (`search`, Tier 2).
 
@@ -47,4 +48,6 @@ Bayesian score matches a hand calculation; injection negatives on review paramet
 
 ## Review notes
 
-(empty until review)
+21 October 2026, cross-plan review (fresh session); findings applied: `platform_stats`, `sum` and `bayesian` come from the import; the Bayesian
+update is a MongoDB update pipeline; take-down audit write order and text row id; the seller's read-only "My reviews"
+page that PLAN.md section 2 promised.

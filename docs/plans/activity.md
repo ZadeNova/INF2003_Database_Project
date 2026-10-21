@@ -16,7 +16,7 @@ trending now and a views-to-purchases figure for sellers.
 
 | Area | Deliverable |
 |---|---|
-| Collection | `events`: time-series collection (`timeField: ts`, `metaField: meta` with `type` view or search, `product_id`, `category`, `user_id` or anonymous session key), `expireAfterSeconds` = 30 days, a secondary index on `meta.product_id` and `meta.user_id`. Created by a migration-style management command run by the owner |
+| Collection | `events`: time-series collection (`timeField: ts`, `metaField: meta` with `type` view or search, `product_id`, `category`, `user_id` or anonymous session key), `expireAfterSeconds` = 30 days, a secondary index on `meta.product_id` and `meta.user_id`. Created by adding it to `mongo_setup` (`olist-import`) with the app user's `readWrite`; MongoDB has no separate owner |
 | Writing | Product detail writes a view event; search writes a search event with the query text (trimmed, at most 100 characters). Writes use `w: 1`; a failed event write is logged and never breaks the page |
 | Recently viewed | The customer's last 10 distinct products, on the home and product pages (anonymous visitors by session) |
 | Trending now | Views in the last 24 hours per product, ranked with `$setWindowFields` (`$rank`), overall and per category; fills the home page slot `catalogue` left |
@@ -27,7 +27,7 @@ trending now and a views-to-purchases figure for sellers.
 
 **Tests:** a product view and a search each write one event; an event write failure does not change the page; recently
 viewed returns distinct products newest first; trending ranks match a direct count; the TTL option is set to 30 days;
-conversion equals views and units counted directly on a small fixture; anonymous events never carry a user id.
+conversion equals views and units counted directly on a small fixture; anonymous events never carry a user id; a seller's Insights page shows only their own products (scoping, AGENTS.md rule 6).
 
 **Exit check**
 1. Browse five products as the demo customer: recently viewed lists them newest first.
@@ -44,4 +44,5 @@ conversion equals views and units counted directly on a small fixture; anonymous
 
 ## Review notes
 
-(empty until review)
+21 October 2026, cross-plan review (fresh session); findings applied: the collection joins `mongo_setup` (no MongoDB owner exists); a seller
+scoping test for Insights.
