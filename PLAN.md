@@ -24,7 +24,7 @@ from any seller to one cart, check out once, pay with a simulated method, track 
 delivered, wishlist sold-out products and get a restock alert.
 
 **For the store operator:** the stock-planning dashboard (which products run out before they can be restocked, which
-categories sell best, which products get poor reviews), product and listing CRUD (including restocking, which fires
+categories sell best, which products get poor reviews), product CRUD (including restocking, which fires
 the wishlist restock alert), advance order status for the demo, all orders and sellers.
 
 **For sellers:** a public, read-only shop page in Tier 1 (products, rating, sales). Seller login is Tier 2.
@@ -34,7 +34,7 @@ the wishlist restock alert), advance order status for the demo, all orders and s
 ## 3. Architecture: polyglot persistence plus a benchmark harness
 
 ```
-Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, listings, carts,
+Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, carts,
                                     |                  orders, payments, wishlist, inventory, analytics
                                     +-> MongoDB         product specifications (flexible attributes), reviews
                                                         (single-node replica set, needed for transactions)
@@ -51,7 +51,7 @@ is needed.
 
 | Data | Store | Why |
 |---|---|---|
-| Users, sellers, products, listings (price, stock), carts, orders, order lines, payments, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
+| Users, sellers, products (each owned by one seller, with price and stock), carts, orders, order lines, payments, wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
 | Inventory snapshots, analytics runs, daily sales | PostgreSQL | Existing baseline, ported to Olist |
 | Product specification document (category-specific attributes, generated name and description), keyed by product id | MongoDB | Shape varies by category |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
@@ -78,7 +78,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 |---|---|---|
 | T1 | **Olist import** replacing the shoe data, with documented cleaning rules (`olist-import`) | Real data, about 100k orders; FK integrity at import; ER diagram with the normalisation (3NF) justified, and the deliberate denormalisation in MongoDB explained (module theory) |
 | T2 | **Catalogue and seller shop pages**: generated English names and descriptions, one image per category, specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
-| T2b | **Operator CRUD**: create and edit products and listings (price, stock) in PostgreSQL, edit specifications in MongoDB, deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
+| T2b | **Operator CRUD**: create and edit products (price, stock) in PostgreSQL, edit specifications in MongoDB, deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
 | T3 | **Cart, checkout, simulated payment, order lifecycle** | `FOR UPDATE`, idempotency constraint, payment rows, deferred constraint trigger (payments equal order total), status-transition trigger |
 | T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_item_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
 | T5 | **Wishlist with restock alert** | Many-to-many table, trigger |
@@ -126,7 +126,7 @@ reproduces it, and its output becomes the report's dataset section. What it sett
 
 | Question | Answer (profile, 21 Oct) | Consequence |
 |---|---|---|
-| Can one `product_id` be sold by several sellers? | Yes: 3.7% of products, carrying 12.8% of order lines | Price and stock on a **listing** (product × seller), recommended (D1) |
+| Can one `product_id` be sold by several sellers? | Yes: 3.7% of products, carrying 12.8% of order lines | Shopee model (D1): every product belongs to one seller, so shared Olist products are split into one product per seller |
 | Items per order | 90% of orders have one line; the same product repeats as separate lines in 6.9% of (order, product) pairs | Repeats collapse into one line with a quantity |
 | Do payments sum to the order total (price plus freight)? | 99.7% of orders match; 303 do not | The 303 are removed (cleaning rule); the deferred payment check then holds |
 | Duplicate `review_id`s; empty review text | 814 duplicate ids, 547 orders with several reviews; 41% of reviews have text (about 2.8M characters) | Keep the latest review per order; translate all text once |
@@ -145,7 +145,8 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
 | Product images | One openly licensed image or icon per category (73), licences recorded |
-| List price | Derived from real order prices (median per product or listing) |
+| List price | Derived from real order prices (median per seller-owned product) |
+| Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
 | Stock, lead time | Generated with a fixed seed |
 | Category-specific attributes | Rich templates for the top 15 categories, a generic template for the rest; stored in MongoDB (and as EAV and JSONB copies for the benchmark) |
 | Review text | All comments machine-translated offline once with a local model; original Portuguese kept; English labelled as machine-translated |
@@ -155,7 +156,7 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Reviews | The latest review per order is kept; single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
 | Order status | Olist's eight statuses map to ours: created → placed; approved, processing, invoiced → paid; shipped → shipped; delivered → delivered; canceled, unavailable → cancelled |
 | Quantity | Repeated (order, product, seller) lines collapse into one line with a quantity |
-| Payment mismatches | Orders whose payments do not equal price plus freight are removed (cleaning rule) |
+| Broken orders | Removed (cleaning rules, D9): payments not equal to price plus freight (303), no order lines (775), no payment (1) |
 | Geolocation | One centre point per zip prefix (about 19k of the 1M rows; 26% are exact duplicates), used for seller-to-customer distance in the delay analysis (T6b) |
 
 **Import experience:** the importer prints progress per table, and the user manual states the expected import time and
@@ -337,7 +338,7 @@ it (to decide).
 
 | Window | Goal | Exit check |
 |---|---|---|
-| 21 to 25 Oct | `foundation`; Olist downloaded and profiled (done 21 Oct); `olist-import` written and started; professors' written approval | Repo runs on Linux and Windows; profile committed; listing question answered |
+| 21 to 25 Oct | `foundation`; Olist downloaded and profiled (done 21 Oct); `olist-import` written and started; professors' written approval | Repo runs on Linux and Windows; profile committed; product model decided (done 21 Oct, D1) |
 | 26 Oct to 1 Nov | `olist-import` done; catalogue, specifications and shop pages; MongoDB with replica set | The shop runs on Olist; specifications load from MongoDB |
 | 2 to 8 Nov | Checkout, payments, lifecycle, reviews, wishlist, dashboard; benchmark harness with B1 to B3; **8 Nov checkpoint** | All Tier 1 features demoable; cut rule applied and recorded |
 | 9 to 15 Nov | **First full benchmark run by 13 Nov**; Tier 2 items that survived (Redis, observability); report sections drafted | Results in `benchmarks/results/` |
@@ -373,24 +374,23 @@ a workstream changes state, and keep each plan file to about one page.
 
 **Settled:** Olist replaces the shoe data; polyglot persistence plus benchmark harness; lean Shopee model with sellers on
 order lines; per-item reviews; simulated payments with a method picker; SGD at one ECB cross rate fixed when `olist-import`
-runs; English throughout; raw SQL only where it shows a construct; product = SKU (or listing, per the profile) with flat
-categories; observability with `grafana/otel-lgtm` in Tier 2 (Erfan); Redis in Tier 2; identical Docker limits; roles as
+runs; English throughout; raw SQL only where it shows a construct; Shopee product model: each product belongs to one
+seller and carries its own price and stock (D1), with flat categories; observability with `grafana/otel-lgtm` in Tier 2 (Erfan); Redis in Tier 2; identical Docker limits; roles as
 in section 12; images pinned by digest (D4, decision foundation-d); MongoDB container and users land in `foundation` (decision
 foundation-c). Added 21 October after the rubric review: faceted search and schema evolution, Bayesian rating, demand
 forecast, delivery-delay analysis, 3NF justification, isolation benchmark (B6), audit trigger, latest stable versions.
 From the profile: remove the 303 payment-mismatch orders, keep the latest review per order, collapse repeated lines into
 a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
 uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
-dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset).
+dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), orders without items or
+payments removed under the same cleaning rule as the payment mismatches (D9).
 
 **Open:**
 
 | ID | Question | Recommendation |
 |---|---|---|
-| D1 | Product or listing as the unit of price and stock | Listing (product × seller), as on Amazon (one product page, several sellers): multi-seller products carry 12.8% of order lines |
 | D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
-| D9 | 775 orders without items and 1 without a payment | Remove under the same cleaning rule as the payment mismatches |
 
 ## 16. Risks
 

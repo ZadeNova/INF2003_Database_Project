@@ -27,7 +27,7 @@ Each value lives in exactly one store. Nothing is copied between them, so no syn
 
 | Data | Store |
 |---|---|
-| Users, sellers, products, listings (price, stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
+| Users, sellers, products (each owned by one seller, with price and stock), carts, orders, order lines, payments, wishlist, inventory snapshots, analytics | PostgreSQL (latest stable, pinned by digest) |
 | Product specification documents (category-specific attributes, rating summary, latest five reviews) | MongoDB (latest stable, pinned by digest), single-node replica set |
 | Reviews, one per order line | MongoDB |
 | Cache and rate limits (Tier 2 only) | Redis; never source of truth |
