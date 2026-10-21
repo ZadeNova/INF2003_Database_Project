@@ -1,3 +1,0 @@
-pandas>=2.2
-asyncpg>=0.29
-pymongo>=4.8
