@@ -59,7 +59,8 @@ services:
       start_period: 10s
   web:
     build: src
-    image: mercer-app
+    # Named after the project (COMPOSE_PROJECT_NAME) so a second clone does not overwrite this build.
+    image: ${COMPOSE_PROJECT_NAME:-mercer}-app
     environment:
       <<: *app-environment
       POSTGRES_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
@@ -82,7 +83,7 @@ services:
   # Runs as the owner role: migrations, and (with another command) the importer and pytest.
   migrate:
     build: src
-    image: mercer-app
+    image: ${COMPOSE_PROJECT_NAME:-mercer}-app
     environment:
       <<: *app-environment
       POSTGRES_USER: ${POSTGRES_OWNER_USER:?Run python src/tools/init_env.py first}
