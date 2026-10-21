@@ -1,11 +1,12 @@
 # INF2003 plan: Mercer, a lean marketplace on PostgreSQL and MongoDB
 
-Draft v3.2, 21 October 2026. Team 82. Status: **for the team to edit**. Nothing here is implemented yet.
+Draft v4, 21 October 2026. Team 82. Status: **for the team to edit**. Nothing here is implemented yet.
 Final submission: **Sunday 29 November 2026, 23:30**. The proposal (4 October) was marked "a solid plan and a clear scope".
 
-**v3 in one paragraph.** A lean Shopee-style marketplace on the real Olist dataset. PostgreSQL is the system of record;
-MongoDB owns product specifications and reviews; a benchmark harness compares both engines on identical data and
-workloads. Scope is tiered: Tier 1 is the A-grade core, Tier 2 (Redis, observability, merchant login) is earned at the
+**In one paragraph.** A lean Shopee-style marketplace (customers, sellers, an operator) on the real Olist dataset.
+PostgreSQL is the system of record; MongoDB owns product specifications, reviews, photos and activity events; a benchmark
+harness compares both engines on identical data and workloads. Scope is tiered: Tier 1 is the A-grade core; Tier 2
+(Redis, observability, row-level security, replication and failover, full-text search, product Q&A) is earned at the
 8 November checkpoint. The first workstreams are `foundation` (repo conversion) and `olist-import`.
 
 ## 1. Principles
@@ -37,9 +38,10 @@ checkout holds the payment; each seller ships their own order.
 ```
 Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, sellers, products, carts, checkouts,
                                     |                  orders, payments, wishlist, inventory, analytics
-                                    +-> MongoDB         product specifications (flexible attributes), reviews
+                                    +-> MongoDB         product specifications (flexible attributes), reviews,
+                                                        photos (GridFS), activity events (time-series)
                                                         (single-node replica set, needed for transactions)
-benchmarks/ harness -> both engines, loaded with byte-identical generated files
+benchmarks/ harness -> both engines, loaded with the same clean Olist files (and scale-up files)
 Docker Compose: web, db, mongo, migrate   (+ redis, otel-lgtm in Tier 2)
 ```
 
@@ -68,8 +70,8 @@ CRUD stays on the Django ORM. Parameterised queries only, everywhere.
 **Money is exact in both stores:** `numeric(12,2)` in PostgreSQL and `Decimal128` in MongoDB (never the default double),
 so cross-engine results compare exactly.
 
-**Limited-privilege users on both databases:** the PostgreSQL application role cannot run DDL, DROP or TRUNCATE (the
-existing owner/application split); the MongoDB application user has `readWrite` on the application database only, and
+**Limited-privilege users on both databases:** the PostgreSQL runtime role used by the web app cannot run DDL, DROP or
+TRUNCATE, while a separate owner role runs migrations, the import and tests (foundation-g); the MongoDB application user has `readWrite` on the application database only, and
 the root user is used only at initialisation. SQL-injection negative tests cover the raw-SQL paths.
 
 ## 4. Tiers
@@ -83,7 +85,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | T2 | **Catalogue and seller shop pages**: generated English names and descriptions, product images (D10 to D12), an active catalogue of products ordered at least twice (D13), specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
 | T2b | **Seller product CRUD**: sellers create, edit and deactivate their own products (price, stock) in PostgreSQL, edit specifications in MongoDB and upload a photo to GridFS; the operator can take products down; deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
 | T3 | **Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle** (the seller marks shipped, the operator marks delivered), **cancellation before shipping** (stock returned and a refund row recorded in one transaction) | `FOR UPDATE`, idempotency constraint, a compensating transaction for cancellation, payment rows on the checkout, deferred constraint trigger (payments equal the checkout total), status-transition trigger |
-| T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_item_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
+| T4 | **Per-item reviews** in MongoDB; customers can edit or delete their own review | Unique index on `order_line_id`, subset pattern, transaction (review plus rating summary), aggregation pipelines; **Bayesian average rating** for product and seller ranking, the same formula in SQL and in a pipeline (analytics algorithm) |
 | T5 | **Wishlist with restock alert** | Many-to-many table, trigger |
 | T6 | **Stock-planning dashboard** on Olist, with a **moving-average demand forecast** | Materialized view, CTEs, window functions; the same queries as aggregation pipelines in the harness |
 | T6b | **Delivery delay against review score**: dashboard panel (sellers at risk of poor reviews) and a report section | Cross-store analysis: delay from PostgreSQL, score from MongoDB; the report's main implications finding |
@@ -141,8 +143,9 @@ reproduces it, and its output becomes the report's dataset section. What it sett
 | Category concentration | Top 15 categories cover 79% of order lines | Rich attribute templates for the top 15 |
 | Date coverage | September 2016 to October 2018; the last full month is August 2018 | All dates shift by a fixed 426 weeks (below) |
 
-**Cleaning rules.** The raw files are never edited. The importer applies each rule and prints a ledger (rule, rows removed
-or changed, reason) that becomes a table in the report, so every change to the real data is visible and counted.
+**Cleaning rules.** The raw files are never edited. A cleaning script applies each rule before import and writes a ledger
+(rule, rows removed or changed, reason) that becomes a table in the report, so every change to the real data is visible
+and counted. The full rule list is in `docs/plans/olist-import.md`.
 
 **Adaptations (all seeded, all labelled):**
 
@@ -151,13 +154,13 @@ or changed, reason) that becomes a table in the report, so every change to the r
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
 | Product images | Every product: an icon card (the category's icon from the existing sprite, extended to cover all 73 categories, plus the product name), drawn at render time with no stored file (D10). Featured set: the best seller in each of the top 15 categories gets an openly licensed stock photo matching its generated name, labelled as illustrative; source files and a manifest (file, product, source URL, author, licence) are committed, and the importer loads them into MongoDB GridFS (D11, D12). The same rule extends to the top 3 per category (45 photos) if time allows |
-| Catalogue size | Products ordered at least twice (about 13.4k) are active and browsable; the rest (about 19.5k, sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
+| Catalogue size | Seller-products in at least two distinct orders after cleaning (about 13.6k) are active and browsable; the rest (about 20k, mostly sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
 | Stock, lead time | Generated with a fixed seed |
 | Category-specific attributes | Rich templates for the top 15 categories, a generic template for the rest; stored in MongoDB (and as EAV and JSONB copies for the benchmark) |
 | Review text | All comments machine-translated offline once with a local model; original Portuguese kept; English labelled as machine-translated |
-| Currency | Converted to SGD at **one fixed rate**: the European Central Bank reference rates (EUR/BRL and EUR/SGD cross rate) on the day `olist-import` executes. Lines rounded to the cent; order totals computed from the rounded lines. Raw BRL kept in the raw files |
+| Currency | Converted to SGD at **one fixed rate**: the European Central Bank reference rates (EUR/BRL and EUR/SGD cross rate) on the day `olist-import` executes. Lines rounded to the cent; checkout totals computed from the rounded lines; payments split in proportion with the rounding remainder on the largest, so they equal the total exactly. Raw BRL kept in the raw files |
 | Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to 30 October 2026, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
 | Customers | One user per `customer_unique_id`, bulk-inserted with unusable passwords |
 | Reviews | The latest review per order is kept (by answer time); reviews of orders never delivered are kept as history (R3); single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
@@ -198,7 +201,7 @@ by the logged-in seller, with tests that one seller cannot reach another's rows 
 in Tier 2). Product photos: JPEG, PNG or WebP only (never SVG), at most 2 MB, re-encoded with Pillow to drop metadata,
 then stored in GridFS; the old photo is removed when replaced.
 
-**Per-item reviews.** One review per order line, enforced by a MongoDB unique index on `order_item_id`. Only the buyer of
+**Per-item reviews.** One review per order line, enforced by a MongoDB unique index on `order_line_id`. Only the buyer of
 that line, only when its order is `delivered` (checked in PostgreSQL); imported reviews of undelivered orders stay as history. Customers can edit or delete their own review.
 
 **MongoDB data model (embed or reference, recorded in `docs/DATA_MODEL.md`).** The specification document **embeds** the
@@ -286,6 +289,7 @@ support and schema flexibility.
 | Merchants as stretch | Sellers are a full role in Tier 1 (register, manage their own products, ship their own orders); row-level security in Tier 2 | Makes CRUD on both databases natural to demo; matches how Shopee works |
 | MongoDB change stream | Dropped (Tier 3) | No Tier 1 feature needs asynchronous processing; the rating summary is kept correct inside a MongoDB transaction instead |
 | (not in proposal) | Redis, observability (Tier 2) | Added scope, earned at the checkpoint |
+| (not in proposal) | Three roles, cancellation with refund, activity events, end-to-end tests (Tier 1) | Rubric and scope reviews on 21 October |
 
 Kept as promised: Olist, CRUD on both databases, EAV against JSONB with GIN, triggers, views and materialized view
 against aggregation pipelines, last-unit concurrency, indexing, the 1/10/50 protocol with correctness checks,
@@ -304,7 +308,7 @@ limited-privilege users on both databases, replica set in Compose.
 Performance analysis is optional in the brief, but the "rigorous comparison" (presentation part iii) and the analysis in
 the top band of both the presentation and report rubrics are graded; the benchmark is how we deliver both.
 
-## 11. Repository conversion (`foundation`, about 1 to 1.5 days; plan in `docs/plans/foundation.md`)
+## 11. Repository conversion (`foundation`, about 1.5 to 2 days; plan in `docs/plans/foundation.md`)
 
 Fresh repo from the commands already given (no history, private). Then:
 
@@ -314,7 +318,7 @@ Fresh repo from the commands already given (no history, private). Then:
 | `src/certs/`, `POSTGRES_SSLROOTCERT` in `Dockerfile` | Delete |
 | `src/config/database.py` | Keep optional `sslmode`; drop RDS verify-full behaviour; adjust tests |
 | `HealthProbeMiddleware`, `HEALTH_PROBE_HOST`, `DJANGO_TRUST_PROXY` | Delete; keep `/health/` |
-| `DJANGO_ENV` switch | One fail-closed configuration |
+| `DJANGO_ENV` switch | Removed; one configuration with today's local values (HTTP, no HSTS, `DEBUG` off by default) |
 | Request logging, DB-unavailable 503, JSON log | Keep; rename `northstar.*` loggers; becomes the home of per-request DB timing |
 | `src/tools/db_bootstrap.py`, `src/docker/10-local-role.sh` | Replaced by two roles in the PostgreSQL init script: owner (migrate, import, pytest) and runtime (web, data changes only) (foundation-g) |
 | Shoe code and data: `catalogue/shoes.py`, `analytics/build_shoe_dataset.py`, `data/raw/` and `data/derived/`, `src/static/models/` (3D shoes), shoe glyphs, the `CustomerSegment` model and migration | Delete in `olist-import` when the Olist import replaces them (K-means scripts go in `foundation`, decision foundation-b) |
@@ -351,7 +355,7 @@ and the report. The proposal does not mention the reuse.
 
 | Member | Role | Tier 1 work |
 |---|---|---|
-| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `dashboard`, `reviews`, `benchmark` |
+| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `wishlist`, `dashboard`, `reviews`, `activity`, `benchmark` |
 | **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; `ci` (phase 3); Tier 2 `observability` |
 | **Joash** | Supporting developer, QA | MongoDB: specifications, reviews, pipelines (his proposal role), reviewed by Erfan |
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
@@ -402,32 +406,32 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `qa` | Product Q&A (M2) | `catalogue` | 2 | not started |
 
 Status is one of: not started, planning, ready (plan approved, waiting for implementation), in progress, review, done. This column is the only progress index; update it when
-a workstream changes state, and keep each plan file to about one page.
+a workstream changes state, and keep each plan file as short as its contract allows (about one page where possible).
 
 ## 15. Decisions
 
-**Settled:** Olist replaces the shoe data; polyglot persistence plus benchmark harness; lean Shopee model with sellers on
-order lines; per-item reviews; simulated payments with a method picker; SGD at one ECB cross rate fixed when `olist-import`
-runs; English throughout; raw SQL only where it shows a construct; Shopee product model: each product belongs to one
-seller and carries its own price and stock (D1), with flat categories; observability with `grafana/otel-lgtm` in Tier 2 (Erfan); Redis in Tier 2; identical Docker limits; roles as
-in section 12; images pinned by digest (D4, decision foundation-d); MongoDB container and users land in `foundation` (decision
-foundation-c). Added 21 October after the rubric review: faceted search and schema evolution, Bayesian rating, demand
-forecast, delivery-delay analysis, 3NF justification, isolation benchmark (B6), audit trigger, latest stable versions.
-From the profile: remove the 303 payment-mismatch orders, keep the latest review per order, collapse repeated lines into
-a quantity, map the order statuses, rich templates for the top 15 categories, commit the raw CSVs, translate the two missing category names and put
-uncategorised products in "Uncategorised" (D5), one geolocation point per zip prefix used for delivery distance (D6), all
-dates shifted by a fixed 426 weeks (D7), Olist as the only dataset (D8, no second dataset), three roles in Tier 1 with
-row-level security kept in Tier 2 (D14), operator and seller scope as in section 2 (D15, D16), one checkout with one order
-per seller and payments on the checkout (D17), "seller" as the single term (D18). From the plan review (21 October): owner and runtime
-PostgreSQL roles with pytest as the owner (R1); remove all 576 payment mismatches (R2); keep reviews of undelivered
-orders as history (R3); delete the old load harness (R4); drop the 20 orders after August 2018 (R5); bigint ids with Olist
-ids as source columns (R6); a custom user model with a role field (R7); CI built in phase 3. Scope review (21 October): cancellation with
-refund (Tier 1); activity events in a MongoDB time-series collection (M1, Tier 1); Playwright end-to-end tests and code-
-quality gates in `ci` (E4, E5, Tier 1); full-text search (E1), replication and failover (E6), backup and restore drill
-(E7) and product Q&A (M2) in Tier 2; a professor check-in at the 8 November checkpoint, a scripted demo story, a report
-outline with a page budget and a theory map appendix. No further scope additions, orders without items or
-payments removed under the same cleaning rule as the payment mismatches (D9), icon cards for every product (D10), illustrative stock
-photos for the best seller in each of the top 15 categories (D11) stored in GridFS (D12), active catalogue = products ordered at least twice (D13).
+**Settled** (21 October 2026; reasons in the sections above and in the plan files):
+
+- **Architecture:** polyglot persistence plus a benchmark harness; each value in one store; raw SQL only where it shows a
+  construct; English throughout; latest stable PostgreSQL and MongoDB pinned by digest (D4, foundation-d, foundation-f);
+  MongoDB in Compose from `foundation` (foundation-c); owner and runtime PostgreSQL roles, pytest as the owner (R1).
+- **Data:** Olist is the only dataset (D8), ECB rates cited as a supporting source; shared products split per seller
+  (D1); categories (D5); one geolocation point per zip prefix (D6); dates shifted 426 weeks (D7); broken orders removed,
+  including all 576 payment mismatches and the 20 orders after August 2018 (D9, R2, R5); latest review per order, reviews
+  of undelivered orders kept (R3); bigint ids with Olist ids as source columns (R6); cleaning in a script before import.
+- **Catalogue:** icon cards for every product (D10); illustrative stock photos for the best seller in each of the top 15
+  categories (D11) in GridFS (D12); active catalogue = seller-products in at least two orders (D13); rich attribute
+  templates for the top 15 categories.
+- **Roles and orders:** customer, seller and operator in Tier 1 with row-level security in Tier 2 (D14 to D16); one
+  checkout with one order per seller and payments on the checkout (D17); "seller" as the single term (D18); a custom user
+  model with a role field (R7); cancellation with refund.
+- **Added scope:** faceted search and schema evolution; Bayesian rating; demand forecast; delivery-delay analysis; 3NF
+  justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and
+  code-quality gates in `ci` (E4, E5). Tier 2: full-text search (E1), replication and failover (E6), backup and restore
+  drill (E7), product Q&A (M2). The old load harness is deleted (R4); CI is built in phase 3.
+- **Deliverables:** a professor check-in at the 8 November checkpoint, a scripted demo story, a report outline with a
+  page budget, and a theory map appendix.
+- **No further scope additions.**
 
 **Open:**
 
@@ -446,6 +450,7 @@ photos for the best seller in each of the top 15 categories (D11) stored in Grid
 | Generated fields weaken "real-world data" | Every generated field labelled; real orders, sellers, reviews and payments dominate |
 | Results depend on the machine | One designated machine, hardware recorded, ratios as headline |
 | Telemetry or cache skews timings | Both off during timed runs; overhead measured separately |
+| One main developer: a delay or absence stalls Tier 1 | Plans written one phase ahead; any member can pick up a workstream from its plan file |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Reuse approval only verbal | Written confirmation, cited |
