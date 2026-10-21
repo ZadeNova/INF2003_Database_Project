@@ -4,9 +4,13 @@ Rules: broken relative links; backticked repository paths that do not exist; Mar
 list; unpaired generated-section markers or markers naming a missing script; plan files with `status: done`; and
 README commands naming a missing script or Compose service. It catches broken references, not wrong prose.
 
-Usage: python scripts/check_docs.py [repository root]
+Usage: python scripts/check_docs.py [--staged] [repository root]
+
+--staged checks what the next commit would contain (the git index) instead of the files on disk, which is what the
+pre-commit hook needs: a file fixed in the working tree but not staged must not hide a broken link in the commit.
 """
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import posixpath
 import re
 import subprocess
 import sys
@@ -29,15 +33,64 @@ COMPOSE_FLAGS_WITH_VALUE = {"-e", "--env", "-p", "--publish", "-v", "--volume", 
                             "--entrypoint", "--name", "--env-file", "-f", "--file", "--project-name", "--profile"}
 
 
+def git_files(root, *flags):
+    """Paths from `git ls-files`, repository-relative with forward slashes (-z keeps unusual names unquoted)."""
+    result = subprocess.run(["git", "ls-files", "-z", *flags], cwd=root, capture_output=True, encoding="utf-8",
+                            check=True)
+    return [line for line in result.stdout.split("\0") if line]
+
+
 def repository_files(root):
     """Tracked and untracked-but-not-ignored files, as repository-relative POSIX paths."""
     try:
-        result = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root,
-                                capture_output=True, text=True, check=True)
-        return sorted(line for line in result.stdout.splitlines() if (root / line).exists())
+        return sorted(line for line in git_files(root, "--cached", "--others", "--exclude-standard")
+                      if (root / line).exists())
     except (OSError, subprocess.CalledProcessError):
         return sorted(p.relative_to(root).as_posix() for p in root.rglob("*")
                       if p.is_file() and ".git" not in p.parts)
+
+
+class WorkingTree:
+    """The files on disk: tracked, or untracked and not ignored."""
+
+    def __init__(self, root):
+        self.root, self.files = root, repository_files(root)
+
+    def exists(self, path):
+        return (self.root / path).exists()
+
+    def is_file(self, path):
+        return (self.root / path).is_file()
+
+    def read(self, path):
+        return (self.root / path).read_text(encoding="utf-8")
+
+
+class IndexTree:
+    """What the next commit would contain: the git index, whatever the working tree says."""
+
+    def __init__(self, root):
+        self.root, self.files = root, sorted(set(git_files(root, "--cached")))
+        self.names = set(self.files)
+        self.directories = {parent.as_posix() for name in self.files for parent in PurePosixPath(name).parents}
+
+    def exists(self, path):
+        return path in self.names or path in self.directories
+
+    def is_file(self, path):
+        return path in self.names
+
+    def read(self, path):
+        result = subprocess.run(["git", "show", f":{path}"], cwd=self.root, capture_output=True, check=True)
+        return result.stdout.decode("utf-8")
+
+
+def resolve(name, target):
+    """The repository-relative POSIX path that `target`, written in the file `name`, points at; None when it leaves
+    the repository."""
+    joined = target.lstrip("/") if target.startswith("/") else posixpath.join(posixpath.dirname(name), target)
+    path = posixpath.normpath(joined)
+    return None if path == ".." or path.startswith("../") else path
 
 
 def blank(match):
@@ -58,20 +111,20 @@ def line_of(text, index):
     return text.count("\n", 0, index) + 1
 
 
-def check_links(root, name, text):
+def check_links(tree, name, text):
     errors = []
     prose = mask_code(text)
     for match in LINK.finditer(prose):
         target = (match.group(1) or match.group(2)).split("#")[0]
         if not target or re.match(r"[a-z][a-z0-9+.\-]*:", target, re.I) or target.startswith("//"):
             continue
-        base = root if target.startswith("/") else (root / name).parent
-        if not (base / target.lstrip("/")).exists():
+        path = resolve(name, target)
+        if path is None or not tree.exists(path):
             errors.append(f"{name}:{line_of(prose, match.start())}: broken link to {target}")
     return errors
 
 
-def check_paths(root, name, text, top_level):
+def check_paths(tree, name, text, top_level):
     if name == PATH_RULE_SKIPS[0] or name.startswith(PATH_RULE_SKIPS[1]):
         return []
     errors = []
@@ -80,12 +133,12 @@ def check_paths(root, name, text, top_level):
         token = match.group(1).strip()
         if not PATH_TOKEN.fullmatch(token) or token.startswith(("/", "./", "../")) or "..." in token:
             continue        # placeholders (<x>), globs, absolute container paths and routes are not repository paths
-        if token.split("/")[0] in top_level and not (root / token).exists():
+        if token.split("/")[0] in top_level and not tree.exists(resolve("", token) or token):
             errors.append(f"{name}:{line_of(prose, match.start())}: `{token}` does not exist")
     return errors
 
 
-def check_generated_sections(root, name, text):
+def check_generated_sections(tree, name, text):
     errors, open_at = [], None
     for number, line in enumerate(mask_code(text).splitlines(), 1):
         start, end = GENERATED_START.search(line), GENERATED_END.search(line)
@@ -93,7 +146,7 @@ def check_generated_sections(root, name, text):
             if open_at:
                 errors.append(f"{name}:{number}: generated section opened again before line {open_at} was closed")
             open_at = number
-            if not (root / start.group(1)).is_file():
+            if not tree.is_file(start.group(1)):
                 errors.append(f"{name}:{number}: generated by {start.group(1)}, which does not exist")
         elif end:
             if not open_at:
@@ -104,12 +157,11 @@ def check_generated_sections(root, name, text):
     return errors
 
 
-def compose_services(root):
-    path = root / "compose.yaml"
-    if not path.is_file():
+def compose_services(tree):
+    if not tree.is_file("compose.yaml"):
         return set()
     services, inside = set(), False
-    for line in path.read_text().splitlines():
+    for line in tree.read("compose.yaml").splitlines():
         if re.match(r"services:\s*$", line):
             inside = True
         elif inside and re.match(r"\S", line) and not line.startswith("#"):
@@ -119,13 +171,13 @@ def compose_services(root):
     return services
 
 
-def check_readme_commands(root, text):
-    errors, services = [], compose_services(root)
+def check_readme_commands(tree, text):
+    errors, services = [], compose_services(tree)
     for block in re.finditer(r"^(?:```|~~~)[^\n]*\n(.*?)^(?:```|~~~)", text, re.DOTALL | re.MULTILINE):
         for line in block.group(1).splitlines():
             words = line.split("#")[0].split()
             if len(words) >= 2 and words[0] in {"python", "python3", "py"} and not words[1].startswith("-"):
-                if not (root / words[1]).exists():
+                if not tree.exists(resolve("", words[1]) or words[1]):
                     errors.append(f"README.md:{line_of(text, block.start(1))}: command runs {words[1]}, which does not exist")
             if words[:2] == ["docker", "compose"] and ("run" in words or "exec" in words):
                 rest = words[words.index("run") + 1:] if "run" in words else words[words.index("exec") + 1:]
@@ -143,9 +195,10 @@ def check_readme_commands(root, text):
     return errors
 
 
-def check(root):
+def check(root, staged=False):
     root = Path(root).resolve()
-    files = repository_files(root)
+    tree = IndexTree(root) if staged else WorkingTree(root)
+    files = tree.files
     top_level = {path.split("/")[0] for path in files}
     errors = []
     for name in files:
@@ -156,20 +209,22 @@ def check(root):
             continue
         if name.startswith("src/static/"):
             continue        # vendored notices are not ours to check
-        text = (root / name).read_text(encoding="utf-8")
-        errors += check_links(root, name, text)
-        errors += check_paths(root, name, text, top_level)
-        errors += check_generated_sections(root, name, text)
+        text = tree.read(name)
+        errors += check_links(tree, name, text)
+        errors += check_paths(tree, name, text, top_level)
+        errors += check_generated_sections(tree, name, text)
         if name.startswith("docs/plans/") and re.search(r"^status:\s*done\s*$", text, re.MULTILINE):
             errors.append(f"{name}: plan has status: done; delete it at close-out")
         if name == "README.md":
-            errors += check_readme_commands(root, text)
+            errors += check_readme_commands(tree, text)
     return errors
 
 
 def main(argv):
-    root = Path(argv[1]) if len(argv) > 1 else Path(__file__).resolve().parents[1]
-    errors = check(root)
+    staged = "--staged" in argv
+    paths = [arg for arg in argv[1:] if arg != "--staged"]
+    root = Path(paths[0]) if paths else Path(__file__).resolve().parents[1]
+    errors = check(root, staged=staged)
     for error in errors:
         print(error, file=sys.stderr)
     if errors:

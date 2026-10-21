@@ -2,7 +2,7 @@
 # Documentation checks before every commit (AGENTS.md, Documentation). Needs only Python 3 on the host.
 for python in python3 python; do
   if command -v "$python" >/dev/null 2>&1 && "$python" -c 'import sys; sys.exit(sys.version_info < (3, 8))' 2>/dev/null; then
-    exec "$python" scripts/check_docs.py
+    exec "$python" scripts/check_docs.py --staged
   fi
 done
 echo "pre-commit: Python 3 was not found as python3 or python; install it to commit." >&2

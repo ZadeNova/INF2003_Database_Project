@@ -1,6 +1,8 @@
 """Each rule of scripts/check_docs.py catches its case and leaves a clean tree alone."""
 import importlib.util
 from pathlib import Path
+import shutil
+import subprocess
 
 import pytest
 
@@ -105,4 +107,56 @@ def test_readme_commands_name_existing_scripts_and_services(repo):
 def test_main_reports_a_nonzero_status(repo, capsys):
     repo("README.md", "[gone](missing.md)\n")
     assert check_docs.main(["check_docs.py", str(repo.root)]) == 1
+    assert "broken link" in capsys.readouterr().err
+
+
+needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="the staged check reads the git index")
+
+
+def git(repo, *args):
+    subprocess.run(["git", *args], cwd=repo.root, check=True, capture_output=True)
+
+
+@needs_git
+def test_staged_check_reads_the_index_not_the_working_tree(repo):
+    git(repo, "init", "-q")
+    repo("README.md", "[gone](missing.md)\n")
+    git(repo, "add", "-A")
+    repo("README.md", "# fixed on disk only\n")
+
+    assert problems(repo) == []
+    (error,) = check_docs.check(repo.root, staged=True)
+    assert "README.md:1: broken link to missing.md" in error
+
+
+@needs_git
+def test_staged_check_does_not_count_files_that_are_not_staged(repo):
+    git(repo, "init", "-q")
+    git(repo, "add", "-A")
+    repo("src/new.py", "# not staged\n")
+    repo("README.md", "[n](src/new.py) `src/new.py`\n")
+    git(repo, "add", "README.md")
+
+    assert problems(repo) == []
+    errors = check_docs.check(repo.root, staged=True)
+    assert len(errors) == 2 and all("src/new.py" in error for error in errors)
+
+
+@needs_git
+def test_staged_check_resolves_relative_links_and_directories(repo):
+    git(repo, "init", "-q")
+    repo("docs/DECISIONS.md", "[up](../README.md) [dir](../src/) [out](../../etc/passwd)\n")
+    repo("README.md", "# T\n[self](docs/DECISIONS.md#x)\n")
+    git(repo, "add", "-A")
+
+    (error,) = check_docs.check(repo.root, staged=True)
+    assert "broken link to ../../etc/passwd" in error
+
+
+@needs_git
+def test_main_accepts_staged_flag(repo, capsys):
+    git(repo, "init", "-q")
+    repo("README.md", "[gone](missing.md)\n")
+    git(repo, "add", "-A")
+    assert check_docs.main(["check_docs.py", "--staged", str(repo.root)]) == 1
     assert "broken link" in capsys.readouterr().err
