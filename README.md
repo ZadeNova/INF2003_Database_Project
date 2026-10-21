@@ -136,7 +136,7 @@ tests/          pytest suite on the real databases
 analytics/      profiler and shoe-dataset builder (until olist-import)
 data/           Olist and baseline datasets, checksums, licences
 scripts/        check_docs.py (git hook and CI), package_submission.py
-docs/           DATA_MODEL.md, DECISIONS.md, AI_USE.md, licenses/, plans/ (only plans in flight)
+docs/           DATA_MODEL.md, DECISIONS.md, AI_USE.md, licenses/, plans/ (one per workstream)
 ```
 
 Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#documentation).

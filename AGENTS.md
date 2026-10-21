@@ -85,12 +85,14 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 
 **Close-out, before merge:** update the docs the change touched (map below); move lasting decisions into
 `docs/DECISIONS.md`; add one line to `docs/AI_USE.md` (workstream, agent, what it did, reviewer); update the status in
-PLAN.md section 14; delete the plan file; run `scripts/check_docs.py`.
+PLAN.md section 14; set the plan file to `status: done` and keep it as the record (decisions and review notes); run
+`scripts/check_docs.py`.
 
 ## Documentation
 
 Only these `.md` files exist: README.md (overview and user manual), AGENTS.md, CLAUDE.md, RUBRICS.md, PLAN.md, DESIGN.md,
-CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, and plans in flight. A new one needs a
+CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, and one plan per workstream in `docs/plans/` (kept after
+close-out). A new one needs a
 `docs/DECISIONS.md` entry. Each fact has one home; elsewhere, link to it.
 
 | Change | Update |
@@ -105,7 +107,7 @@ CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, a
 
 **Never write by hand:** test counts, row counts, timings or benchmark tables; generate them or link to the source.
 **Check:** `scripts/check_docs.py` runs as a pre-commit hook (`git config core.hooksPath .githooks`, once per clone) and in
-CI. It catches broken links and paths, unlisted `.md` files, unpaired generated-section markers, `status: done` plans and
+CI. It catches broken links and paths, unlisted `.md` files, unpaired generated-section markers, plan files without a valid status line and
 README commands naming a missing script or service, not wrong prose, so the docs map still applies.
 
 ## Running and testing (current baseline)

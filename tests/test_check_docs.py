@@ -87,11 +87,12 @@ def test_generated_section_markers(repo, text, expected):
         assert expected in error
 
 
-def test_plan_with_status_done(repo):
+def test_plan_needs_a_valid_status(repo):
     repo("docs/plans/finished.md", "# done\n\nstatus: done\n")
     repo("docs/plans/going.md", "# going\n\nstatus: in-progress\n")
+    repo("docs/plans/odd.md", "# odd\n\nstatus: shipped\n")
     (error,) = problems(repo)
-    assert error.startswith("docs/plans/finished.md") and "status: done" in error
+    assert error.startswith("docs/plans/odd.md") and "status line" in error
 
 
 def test_readme_commands_name_existing_scripts_and_services(repo):

@@ -1,7 +1,7 @@
 """Documentation checks (AGENTS.md, Documentation). Standard library only, so the pre-commit hook runs it on the host.
 
 Rules: broken relative links; backticked repository paths that do not exist; Markdown files outside the allowed
-list; unpaired generated-section markers or markers naming a missing script; plan files with `status: done`; and
+list; unpaired generated-section markers or markers naming a missing script; plan files without a valid status line; and
 README commands naming a missing script or Compose service. It catches broken references, not wrong prose.
 
 Usage: python scripts/check_docs.py [--staged] [repository root]
@@ -19,7 +19,7 @@ ALLOWED_MARKDOWN = {
     "README.md", "AGENTS.md", "CLAUDE.md", "RUBRICS.md", "PLAN.md", "DESIGN.md", "CONTRIBUTIONS.md",
     "docs/DATA_MODEL.md", "docs/DECISIONS.md", "docs/AI_USE.md",
 }
-ALLOWED_MARKDOWN_PREFIXES = ("docs/plans/", "src/static/vendor/")   # plans in flight; vendored library notices
+ALLOWED_MARKDOWN_PREFIXES = ("docs/plans/", "src/static/vendor/")   # workstream plans (kept after close-out); vendored library notices
 ALLOWED_MARKDOWN |= {"src/static/models/CREDITS.md"}                 # until the 3D models are deleted (olist-import)
 PATH_RULE_SKIPS = ("PLAN.md", "docs/plans/")     # these describe the target, so they name files not yet written
 
@@ -213,8 +213,8 @@ def check(root, staged=False):
         errors += check_links(tree, name, text)
         errors += check_paths(tree, name, text, top_level)
         errors += check_generated_sections(tree, name, text)
-        if name.startswith("docs/plans/") and re.search(r"^status:\s*done\s*$", text, re.MULTILINE):
-            errors.append(f"{name}: plan has status: done; delete it at close-out")
+        if name.startswith("docs/plans/") and not re.search(r"^status:\s*(draft|approved|in-progress|done)\s*$", text, re.MULTILINE):
+            errors.append(f"{name}: plan needs a status line: draft, approved, in-progress or done")
         if name == "README.md":
             errors += check_readme_commands(tree, text)
     return errors

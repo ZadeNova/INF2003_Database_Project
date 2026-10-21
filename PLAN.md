@@ -342,7 +342,7 @@ review, record, fix, close out); the documentation rules and docs map; branch pe
 `data/`, `benchmarks/` (harness, generator, `results/`), `.github/workflows/ci.yml`, `CONTRIBUTIONS.md` (one page,
 updated at each checkpoint, for fair peer review), and `docs/` with `DATA_MODEL.md` (PostgreSQL schema with ER diagram, and the MongoDB model),
 `DECISIONS.md`, `AI_USE.md` (including the disclosure that the codebase builds on our earlier module project), `plans/`
-(only plans in flight) and `licenses/`. Benchmark tables are generated from `benchmarks/results/`, not hand-written.
+(one per workstream, kept after close-out as the record) and `licenses/`. Benchmark tables are generated from `benchmarks/results/`, not hand-written.
 
 **Tests.** Most existing tests assume the shoe data. `olist-import` deletes the shoe-specific tests and writes new ones for the
 Olist import and schema; every later workstream brings its own tests. Tests that check behaviour independent of the
@@ -387,7 +387,7 @@ The phases run one after another because one developer builds most of Tier 1, an
 freeze (decided 21 October: keep all of Tier 1 with Chee Long). If a phase overruns by more than a day, Erfan assigns
 `wishlist` or `activity` to another member, each with its own plan file.
 
-## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, deleted at close-out)
+## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, kept after close-out as the record)
 
 The workstream name is also the branch prefix (`checkout/payment-trigger`) and the label used in chat and the video.
 
