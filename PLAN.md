@@ -53,7 +53,7 @@ is needed.
 | Data | Store | Why |
 |---|---|---|
 | Users and roles, sellers (with approval status), products (each owned by one seller, with price and stock), carts, checkouts, orders (one per seller per checkout), order lines, payments (on the checkout), wishlist | PostgreSQL | Money and stock need ACID, constraints and triggers |
-| Inventory snapshots, analytics runs, daily sales | PostgreSQL | Existing baseline, ported to Olist |
+| Inventory snapshots, analytics runs, daily sales | PostgreSQL | Rebuilt on the new schema in `dashboard` (queries ported from the old baseline) |
 | Product specification document (category-specific attributes, generated name and description), keyed by product id | MongoDB | Shape varies by category |
 | Reviews (one per order line, translated text, rating, seller reply in Tier 2) | MongoDB | Nested, read-heavy, aggregated |
 
@@ -205,8 +205,8 @@ delete updates the review, the rating summary and the embedded subset in one Mon
 **Wishlist.** `wishlist_item` (customer, product, added_at), composite key. A trigger on stock going from zero to positive
 records a restock alert shown to the customer.
 
-**Dashboard.** The existing stock-planning analytics (coverage, replenishment flags, category performance) repointed to
-Olist, with a materialized view and window functions, plus "products with poor reviews" from a MongoDB pipeline.
+**Dashboard.** The stock-planning analytics (coverage, replenishment flags, category performance), rebuilt on the new
+schema with the old baseline's queries as the starting point, with a materialized view and window functions, plus "products with poor reviews" from a MongoDB pipeline.
 
 ## 7. Benchmark protocol
 
@@ -367,7 +367,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | Workstream | Scope | Depends on | Tier | Status |
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | planning |
-| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | planning |
+| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | planning (plan approved) |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | not started |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | not started |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers) | `olist-import`, `accounts` | 1 | not started |
