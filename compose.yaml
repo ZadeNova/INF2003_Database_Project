@@ -98,6 +98,7 @@ services:
         condition: service_healthy
     volumes:
       - ./tests:/app/tests:ro,z
+      - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
     restart: "no"
 volumes:

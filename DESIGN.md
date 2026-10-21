@@ -460,4 +460,4 @@ below the palette in the same block and are built from these values.
   the upstream download after normalising line endings and surrounding
   whitespace. The "As built in this project" section records our adaptations.
   See [licence text and verification details](docs/licenses/voicebox-MIT.txt)
-  and [AI_USE_DECLARATION.md](AI_USE_DECLARATION.md).
+  and [docs/AI_USE.md](docs/AI_USE.md).

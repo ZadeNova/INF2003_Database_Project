@@ -8,3 +8,5 @@ data/derived/**/*.json -text
 src/docker/*.sh text eol=lf
 # Every shell script runs under bash (Linux, macOS, WSL); keep LF endings on Windows checkouts too.
 *.sh text eol=lf
+# Git hooks must keep LF endings on Windows checkouts.
+.githooks/* text eol=lf

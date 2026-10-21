@@ -1,7 +1,19 @@
-# Source and application data dictionary
+# Data model
 
-Actual Analytics Engineering v1.0.0 CSV headers; see [provenance](README.md) and
-the unchanged [publisher dictionary](raw/DATA_DICTIONARY.md). Identities are namespaced.
+**Stub.** `olist-import` replaces this file with the PostgreSQL schema (ER diagram, 3NF argument, constraints,
+triggers, indexes) and the MongoDB model (collections, validators, indexes), regenerating the parts that come from the
+database. Until then it keeps what is still true about the data in the repository, folded in from the earlier data
+dictionaries. The ownership of each value between the stores is in [AGENTS.md](../AGENTS.md).
+
+## Baseline shoe-shop data (removed by `olist-import`)
+
+Source: Analytics Engineering, "Ecommerce Sales & Returns Dataset v1.0.0" (synthetic, CC BY 4.0, downloaded 22 September
+2026), in `data/raw/` with its licence in `data/raw/LICENSE.txt` and checksums in `data/raw/checksums.txt`.
+Order timestamps are UTC with `Z`; naive dates assume Asia/Singapore. Source money is USD; the application keeps the
+numbers and labels them SGD as a simulation convention, with no conversion. Synthetic sales show no demand, seasonality
+or forecast quality.
+
+Actual Analytics Engineering v1.0.0 CSV headers; see the unchanged publisher files in `data/raw/`. Identities are namespaced.
 
 | Source field | Source type | Application treatment |
 |---|---|---|
@@ -41,7 +53,7 @@ the unchanged [publisher dictionary](raw/DATA_DICTIONARY.md). Identities are nam
 The supported-status gate concerns orders, the only imported status. This batch does
 not implement payments or refund accounting.
 
-## Generated fields and transformations
+### Generated fields and transformations
 
 | Application field | Rule / lifecycle |
 |---|---|
@@ -76,7 +88,7 @@ transaction. Historical import never deducts stock. Existing inventory triggers 
 the accepted fingerprint immutable; no migration/additional manifest table is needed.
 
 
-## Derived shoe dataset (`data/derived/shoes/`)
+### Derived shoe dataset (`data/derived/shoes/`)
 
 Built from the unchanged `data/raw/` files by `analytics/build_shoe_dataset.py` (seed 42). Only `checksums.txt` and
 `product_map.csv` are committed; the other derived files (`customers.csv`, `products.csv`, `orders.csv`,
@@ -93,3 +105,12 @@ described above, with product identities, prices and line totals recomputed.
 | `shoe_name` | Display name of that shoe model |
 
 The size of each order line is assigned separately by a seeded weighted choice and is synthetic.
+
+### Source relationships (publisher)
+
+- `orders.customer_id` → `customers.customer_id` (many-to-one)
+- `order_items.order_id` → `orders.order_id` (many-to-one)
+- `order_items.product_id` → `products.product_id` (many-to-one)
+- `payments.order_id` → `orders.order_id` (many-to-one)
+- `refunds.payment_id` → `payments.payment_id` (many-to-one)
+- `refunds.order_id` → `orders.order_id` (many-to-one)

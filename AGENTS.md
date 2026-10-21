@@ -12,7 +12,7 @@ Django with HTMX serves the pages. The target is an A.
 - `docs/plans/<workstream>.md`: the contract for the workstream you are working on.
 - [DESIGN.md](DESIGN.md) for anything visual; `src/static/css/site.css` is its single implementation.
 
-**Current state:** `src/` is still the earlier shoe-shop baseline. `foundation` removes its AWS parts and `olist-import`
+**Current state:** `src/` is still the earlier shoe-shop baseline. `foundation` removed its AWS parts and `olist-import`
 replaces the shoe data. Do not extend shoe code; where a file contradicts PLAN.md, PLAN.md is the target.
 
 ## Phase check (before starting and before merging)
@@ -95,9 +95,9 @@ CONTRIBUTIONS.md, `docs/DATA_MODEL.md`, `docs/DECISIONS.md`, `docs/AI_USE.md`, a
 | A member's work at a phase checkpoint | CONTRIBUTIONS.md |
 
 **Never write by hand:** test counts, row counts, timings or benchmark tables; generate them or link to the source.
-**Check (lands in `foundation`):** `scripts/check_docs.py` runs as a pre-commit hook (`git config core.hooksPath
-.githooks`, once per clone) and in CI. It catches broken links and paths, unlisted `.md` files, stale generated docs and
-`status: done` plans, not wrong prose, so the docs map still applies. Until it lands, check links by hand.
+**Check:** `scripts/check_docs.py` runs as a pre-commit hook (`git config core.hooksPath .githooks`, once per clone) and in
+CI. It catches broken links and paths, unlisted `.md` files, unpaired generated-section markers, `status: done` plans and
+README commands naming a missing script or service, not wrong prose, so the docs map still applies.
 
 ## Running and testing (current baseline)
 
