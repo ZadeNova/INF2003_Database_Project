@@ -66,7 +66,9 @@ and stock with `WHERE id = ANY(%s)`. A review write checks the order line in Pos
 - **One plan file per workstream** (`status:` draft, approved, in-progress, done; sections Contract, Decisions, Review
   notes; about one page). No separate tradeoff or review files.
 - **Branch per workstream,** named `<workstream>/<topic>`; no direct pushes to `main`. The pull request links the plan
-  and explains the change in words the author can defend in the video.
+  and explains the change in words the author can defend in the video. A human team member may override this (for
+  example a docs-only change pushed straight to `main`) by saying so; agents never skip the branch and pull request on
+  their own, and never push without being asked.
 - **Reviews run in a fresh session,** ideally the other agent (Codex reviews Claude Code and the reverse), and mean
   running things, not only reading the diff. One fix round; leftovers become follow-ups. Run what the change warrants:
 
