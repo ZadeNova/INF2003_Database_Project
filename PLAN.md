@@ -1,13 +1,15 @@
 # INF2003 plan: Mercer, a lean marketplace on PostgreSQL and MongoDB
 
-Draft v4, 21 October 2026. Team 82. Status: **for the team to edit**. Nothing here is implemented yet.
+Revision v5, 22 October 2026. Team 82. Accelerated schedule requested by the user; implementation status is in section 14.
 Final submission: **Sunday 29 November 2026, 23:30**. The proposal (4 October) was marked "a solid plan and a clear scope".
+Application and benchmarks B1 to B6: **stretch target Sunday 1 November 2026**; report, slides and video remain on the
+final-submission timeline (section 13).
 
 **In one paragraph.** A lean Shopee-style marketplace (customers, sellers, an operator) on the real Olist dataset.
 PostgreSQL is the system of record; MongoDB owns product specifications, reviews, photos and activity events; a benchmark
 harness compares both engines on identical data and workloads. Scope is tiered: Tier 1 is the A-grade core; Tier 2
 (Redis, observability, row-level security, replication and failover, full-text search, product Q&A) is earned at the
-8 November checkpoint. The first workstreams are `foundation` (repo conversion) and `olist-import`.
+8 November checkpoint and is outside the accelerated sprint. `foundation` is done; `olist-import` is next.
 
 ## 1. Principles
 
@@ -76,7 +78,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 
 ## 4. Tiers
 
-### Tier 1: the A-grade core (done by the 18 November freeze)
+### Tier 1: the A-grade core (application and B1 to B6 target 1 November)
 
 | # | Item | Database content shown |
 |---|---|---|
@@ -93,6 +95,10 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 | T7 | **Benchmark harness** (section 7, B1 to B6), with per-request database timing and a `docker stats` sampler | The rigorous comparison, including isolation anomalies (module theory) |
 | T8 | **CI**: GitHub Actions running the suite against real PostgreSQL and MongoDB, **Playwright end-to-end tests of the demo story** (E4), `ruff` lint and format, a coverage threshold and `pip-audit` (E5) | "Well tested"; correctness gate for the benchmark |
 | T9 | **Report, slides, video, user manual** | 50% of the marks |
+
+The accelerated target covers T1 to T8 in full. T9's report, slides and video can remain pending during the sprint;
+the README setup instructions and data-model documentation stay current with implementation so reviews and fresh
+installs remain reproducible. Final deliverables follow section 13.
 
 ### Tier 2: earned at the 8 November checkpoint
 
@@ -115,7 +121,7 @@ about 3% of customers reorder), geospatial queries on the geolocation table (Mon
 `2dsphere` against PostGIS), CPU and memory dashboard panels (need cAdvisor or exporters), full raw-SQL conversion.
 
 **Cut rule.** At the 8 November checkpoint, a Tier 2 item that cannot be demoed that day is dropped. Tier 3 is not
-started before the first full benchmark run exists (target 17 November).
+started before the first full benchmark run exists (target 1 November).
 
 ## 5. Data: Olist, adapted
 
@@ -225,6 +231,13 @@ views-to-purchases conversion figure on the seller page (views from MongoDB, pur
 schema with the old baseline's queries as the starting point, with a materialized view and window functions, plus "products with poor reviews" from a MongoDB pipeline.
 
 ## 7. Benchmark protocol
+
+**Build alongside the application.** After the `olist-import` exit checks pass and the benchmark plan is approved,
+start the harness, isolated database loaders and correctness fixtures. Add B1 with `catalogue`, B2 with `reviews` and
+`dashboard`, and B3/B6 with `checkout`; add B4/B5 as those workloads become available. A first correctness-complete
+B1 to B6 pass is due by 30 October. Final repeated measurements run on 31 October to 1 November, after integration
+and the application feature freeze. The benchmark is not left entirely to the final weekend; final acceptance still
+requires the dependencies in section 14 and every check below.
 
 **Workloads (each on identical data, each with golden outputs):**
 
@@ -357,36 +370,59 @@ and the report. The proposal does not mention the reuse.
 | Member | Role | Tier 1 work |
 |---|---|---|
 | **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `wishlist`, `dashboard`, `reviews`, `activity`, `benchmark` |
-| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; `ci` (phase 3); Tier 2 `observability` |
+| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; `ci` during the accelerated sprint; Tier 2 `observability` |
 | **Joash** | Supporting developer, QA | MongoDB: specifications, reviews, pipelines (his proposal role), reviewed by Erfan |
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
 | **Syahfariz** | Supporting developer, QA | Test plan and correctness gates, clean-machine run of the user manual, slides and video |
 
-After `foundation`, Chee Long has agreed to implement most of Tier 1 (about 70 to 80%). Reviews run in a fresh Claude
-Code session by a teammate Chee Long asks (no separate human gate, decided 21 October). Every member presents their part
-in the video and writes its report section; `docs/OVERVIEW.md` is the plain-language guide for the team. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
-`CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work as it finishes; one editor assembles
-it (to decide).
+After `foundation`, Chee Long has agreed to implement most of Tier 1 (about 70 to 80%), primarily with AI assistance.
+**Every GPT-authored change, including plans, documentation and tests, is reviewed in a fresh Claude Code session
+before any commit.** The review runs the applicable tests and exit checks from AGENTS.md, records findings and checks
+the fixes. GPT agents leave changes uncommitted for that review and commit only when the user explicitly asks after
+review; there is no automatic commit or push. This is the user's review instruction of 22 October.
+
+Every member presents their part in the video and writes its report section; `docs/OVERVIEW.md` is the plain-language
+guide for the team. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
+`CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work; one editor assembles
+it (to decide). Report, slides and video preparation may follow the accelerated application and benchmark sprint.
 
 ## 13. Phases
 
-Agents check every task against this table (AGENTS.md, Phase check): a workstream is built only in its phase or later.
+**Schedule revision, 22 October 2026.** The stretch target is the complete Tier 1 application plus validated benchmarks
+B1 to B6 by **1 November**. Application feature freeze is **30 October**. **2 to 4 November** is contingency for fixes,
+retests and reruns if needed; it does not change the target or justify silently cutting Tier 1 scope. The report,
+slides and video are outside this accelerated target and remain due with the final submission on **29 November,
+23:30 Singapore time**; the team still aims to submit on 28 November.
+
+Agents use the build windows below for the AGENTS.md phase check. These dates and phase assignments take precedence
+over older calendar dates in the workstream plans and the team overview. Approved contracts, dependency order,
+real-database tests and exit checks remain binding. A workstream may start when its window opens and its dependencies
+are done; unfinished work can continue later, with any missed target recorded. Windows may overlap;
+the benchmark can build its harness after import while final acceptance waits for its feature dependencies.
+Existing effort estimates remain risk estimates, not evidence that the compressed dates are guaranteed.
 
 | Phase | Dates | Build (Chee Long unless noted) | Write plans | Exit check |
 |---|---|---|---|---|
-| **0 Setup** | 21 to 25 Oct | `foundation` (Erfan) | `accounts`, `checkout`; review of the `foundation` and `olist-import` plans (done 21 Oct) | Repo runs on Linux and Windows with both databases; professors' written approval |
-| **1A Import** | 26 to 30 Oct | `olist-import` (Erfan optionally on the cleaning script) | `catalogue` | Olist loaded in both databases; the ledger reconciles; product pages render |
-| **1B Accounts** | 31 Oct to 1 Nov | `accounts` | `wishlist`, `dashboard` | The three roles log in; seller approval works |
-| **2A Checkout** | 2 to 4 Nov | `checkout` | `reviews`, `activity` | Buy from three sellers in one checkout, ship, deliver, cancel with refund |
-| **2B Catalogue** | 5 to 8 Nov | `catalogue` | `benchmark`, `ci`, `observability`; `deliverables`: report outline with a page budget and the scripted demo story | **8 Nov checkpoint** (book a 15-minute check-in with the professors to show the demo): buy, ship and deliver work end to end; seller CRUD with photo upload; faceted search; cut rule applied and recorded |
-| **3A Features** | 9 to 13 Nov | `wishlist`, `dashboard`, `reviews`, `activity`; `ci` (Erfan); surviving Tier 2 in parallel (likely `observability`, Erfan) | Tier 2 plans if earned | Every Tier 1 feature works end to end; CI green on `main` |
-| **3B Benchmark** | 14 to 17 Nov | `benchmark`: harness, the clean Olist files loaded into the `bench` databases, workloads B1 to B6 with golden outputs, query plans, `docker stats` sampling, per-request timing, the new local HTTP load script | none | **First full benchmark run by 17 Nov** on the designated machine, every correctness check passing; each owner drafts their report section |
-| **4 Freeze** | 18 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs (at least 5 per workload) and the report's results tables; the theory map appendix; bug fixes only | none | Report at 10 pages; the manual passes on a clean machine |
-| **5 Ship** | 23 to 29 Nov | Video (all five, names on screen, under 10 minutes), slides, packaging | none | Zip checked by the packager; submitted 28 Nov, a day early (deadline 29 Nov, 23:30) |
+| **0 Setup** | 21 to 22 Oct | `foundation` (Erfan; marked done in section 14) | Existing feature plans approved; prepare `benchmark` and `ci` plans | Repo runs on Linux and Windows with both databases; professors' written approval |
+| **1A Import** | 22 to 24 Oct | `olist-import` (Erfan optionally on the cleaning script) | Approve `benchmark` and `ci` plans by 24 Oct, before their implementation | Olist loaded in both databases; the ledger and money invariants reconcile; product pages and demo logins work; full import exit checks pass |
+| **1B Accounts** | 25 Oct | `accounts`; start `ci` (Erfan) after its plan is approved | none | The three roles log in; seller approval and operator controls work; CI runs the real-database checks available so far |
+| **2A Checkout** | 25 to 26 Oct, after `accounts` | `checkout`; benchmark correctness cases for B3/B6 as checkout lands | none | Buy from three sellers in one checkout, ship, deliver, cancel with refund; stock, payments, permissions and retries pass their tests |
+| **2B Catalogue** | 26 to 27 Oct, after `accounts` | `catalogue`; benchmark B1 cases | none | **27 Oct core-demo checkpoint:** buy, ship and deliver end to end; seller CRUD with photo upload; faceted search and schema evolution; full workstream exit checks pass |
+| **3A Features** | 28 to 29 Oct | `wishlist`, `dashboard`, `reviews`, `activity`; complete `ci` (Erfan), including Playwright demo tests and quality gates | none | Every Tier 1 application feature works end to end; CI green on `main` |
+| **3B Benchmark** | 25 Oct to 1 Nov; final measurements 31 Oct to 1 Nov | Build the harness alongside features after import; load isolated `bench` databases; B1 to B6 with golden outputs, query plans, `docker stats`, per-request timing and the local HTTP load script | none; approved plan required before implementation | First correctness-complete B1 to B6 pass by 30 Oct; by **1 Nov**, required repeated runs at 1/10/50 clients, correctness checks, plans, hardware/configuration and raw outputs saved on the designated machine (section 7) |
+| **4 Freeze** | 30 Oct to 4 Nov | **30 Oct application feature freeze** and full integration review; fresh-install verification; fixes and affected reruns only, with 2 to 4 Nov reserved as contingency | none | Full suite and demo pass; the manual works on a clean machine; Claude Code reviews completed before commits; unresolved failures remain visible |
+| **5 Ship** | 2 to 29 Nov | Report, slides, video (all five, names on screen, under 10 minutes), final user manual and packaging; professor check-in and Tier 2 decision on 8 Nov | `deliverables`: report outline with page budget, scripted presentation and theory map appendix; Tier 2 plans only if earned | Report at 10 pages; final manual passes on a clean machine; zip checked by the packager; target submission 28 Nov (deadline 29 Nov, 23:30) |
 
-The phases run one after another because one developer builds most of Tier 1, and they leave no slack before the
-freeze (decided 21 October: keep all of Tier 1 with Chee Long). If a phase overruns by more than a day, Erfan assigns
-`wishlist` or `activity` to another member, each with its own plan file.
+**Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
+27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
+day, Erfan assigns `wishlist` or `activity` to another member under its approved plan. Do not shorten database tests,
+skip Claude Code review, count incorrect benchmark runs or mark a missed exit check done to preserve the date.
+
+The 1 November target is met only when the full Tier 1 application passes its tests and demo, and B1 to B6 pass
+correctness checks with the measurements required by section 7 saved reproducibly. The 8 November professor check-in
+and Tier 2 cut rule remain; Tier 2 is not part of this sprint and requires its own approved plan if earned. Evidence
+needed later (cleaning ledger, query plans, raw benchmark outputs and decisions) is saved as the work finishes;
+writing the report and preparing slides/video can wait until the application and benchmark sprint is complete.
 
 ## 14. Workstreams (one plan file each in `docs/plans/<name>.md`, contract first, kept after close-out as the record)
 
@@ -403,9 +439,9 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | ready |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | ready |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | ready |
-| `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol | `catalogue`, `reviews`, `dashboard` | 1 | not started |
-| `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); built in phase 3 once the features are in | `foundation` | 1 | not started |
-| `deliverables` | Report (outline with a page budget in phase 2; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging | all | 1 | not started |
+| `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | not started |
+| `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | not started |
+| `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
@@ -445,7 +481,8 @@ a workstream changes state, and keep each plan file as short as its contract all
 - **Added scope:** faceted search and schema evolution; Bayesian rating; demand forecast; delivery-delay analysis; 3NF
   justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and
   code-quality gates in `ci` (E4, E5). Tier 2: full-text search (E1), replication and failover (E6), backup and restore
-  drill (E7), product Q&A (M2). The old load harness is deleted (R4); CI is built in phase 3.
+  drill (E7), product Q&A (M2). The old load harness is deleted (R4); CI now starts during the accelerated sprint
+  (22 October schedule revision, section 13).
 - **Cross-plan review** (21 October): PostgreSQL filters first and MongoDB counts facets on those ids, "Top rated"
   sorted in the pipeline (X1); MongoDB 9.0 tests and exit checks run on Windows, where the team works, not on
   Erfan's affected Linux kernel (X2); products left without order lines are dropped (X3); the importer disables
@@ -454,6 +491,14 @@ a workstream changes state, and keep each plan file as short as its contract all
 - **Deliverables:** a professor check-in at the 8 November checkpoint, a scripted demo story, a report outline with a
   page budget, and a theory map appendix.
 - **No further scope additions.**
+
+**Schedule and review revision (22 October 2026).** The user requested the full Tier 1 application and benchmarks
+B1 to B6 by 1 November, with report, slides and video on the final-submission timeline. Section 13 replaces the
+earlier phase dates, brings CI and benchmark development forward, and preserves all contracts and correctness gates.
+Every GPT-authored change requires fresh Claude Code review before any commit (section 12). The user requested that
+this revision initially remain uncommitted, then explicitly authorised committing and pushing this PLAN.md-only
+revision without Claude Code review as a one-time exception on 22 October. The exception does not cover subsequent
+GPT-authored work; future commits require the review and an explicit user request.
 
 **Open:**
 
@@ -466,18 +511,19 @@ a workstream changes state, and keep each plan file as short as its contract all
 
 | Risk | Mitigation |
 |---|---|
-| The import (`olist-import`) slips and blocks everything | First plan; two people; simplify the existing machinery instead of porting all of it |
+| The import (`olist-import`) slips and blocks everything | Verify the full import by 24 Oct; re-estimate immediately if it slips; Erfan can help with cleaning |
 | Unfair comparison | Equivalent minimal operations, identical data files and limits, golden outputs, plans captured |
 | No clear difference at about 100k rows | Driver-level timing; the scale-up generator promotes to Tier 1 at the checkpoint |
 | Generated fields weaken "real-world data" | Every generated field labelled; real orders, sellers, reviews and payments dominate |
 | Results depend on the machine | One designated machine, hardware recorded, ratios as headline |
 | Telemetry or cache skews timings | Both off during timed runs; overhead measured separately |
-| One main developer: a delay or absence stalls Tier 1 | Plans written one phase ahead; any member can pick up a workstream from its plan file |
-| No slack before the 18 November freeze | A phase more than a day late moves `wishlist` or `activity` to another member (section 13) |
+| One main developer: a delay or absence stalls Tier 1 | Approved feature plans let another member pick up a workstream; approve benchmark/CI plans before their code starts |
+| The 1 November target compresses an already AI-assisted plan | Reassess at the 24/27 Oct checkpoints; freeze application features on 30 Oct; reserve 2 to 4 Nov for contingency; retain full Tier 1 scope and exit checks |
+| Benchmark development or Claude Code review is left until the end | Build workloads alongside features and review each batch before any commit; first correctness-complete B1 to B6 pass by 30 Oct |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Reuse approval only verbal | Written confirmation, cited |
-| No CI until phase 3 | The review step runs the full test suite in Docker before every merge |
+| CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |
 | Cleaning distorts the real data | Raw files untouched; every rule counted in the import ledger; analyses re-run on the cleaned data |
 
