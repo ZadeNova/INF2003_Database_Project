@@ -1,0 +1,15 @@
+<div id="cart-content">
+{% if error %}<p class="message message--error" role="alert">{{ error }}</p>{% endif %}
+{% for group in groups %}<section class="panel checkout-panel">
+<div class="panel__head"><h2 class="panel__title">{{ group.seller.display_name }}</h2></div>
+{% for line in group.lines %}<div class="checkout-line">
+<div><a href="{% url 'catalogue:product_detail' line.product_id %}">{{ line.product.name }}</a><p class="panel__note">S${{ line.product.price }} each · Shipping S${{ line.product.freight }} each</p>
+{% if not line.available %}<p class="panel__note" role="alert">No longer available. Remove this item to continue.</p>{% elif not line.enough_stock %}<p class="panel__note" role="alert">Only {{ line.product.stock }} left. Change the quantity to continue.</p>{% endif %}</div>
+<form method="post" action="{% url 'orders:cart_quantity' line.pk %}" hx-post="{% url 'orders:cart_quantity' line.pk %}" hx-target="#cart-content" hx-swap="outerHTML" class="checkout-quantity">{% csrf_token %}
+<div class="form-field"><label for="quantity-{{ line.pk }}">Quantity</label><input id="quantity-{{ line.pk }}" name="quantity" type="number" min="1" max="999" value="{{ line.quantity }}" required></div><button class="button button--outline-neutral button--compact" type="submit">Update</button></form>
+<div class="checkout-line__end"><strong>S${{ line.total }}</strong><form method="post" action="{% url 'orders:cart_remove' line.pk %}" hx-post="{% url 'orders:cart_remove' line.pk %}" hx-target="#cart-content" hx-swap="outerHTML">{% csrf_token %}<button class="button button--outline-neutral button--compact" type="submit">Remove</button></form></div>
+</div>{% endfor %}
+<dl class="detail-list checkout-totals"><dt>Items</dt><dd>S${{ group.items }}</dd><dt>Shipping</dt><dd>S${{ group.freight }}</dd><dt>Shop total</dt><dd><strong>S${{ group.total }}</strong></dd></dl>
+</section>{% empty %}<section class="panel checkout-panel"><h2 class="panel__title">Your cart is empty</h2><p class="panel__note">Find something you like in the shop.</p><a class="button button--dark" href="{% url 'catalogue:product_list' %}">Browse products</a></section>{% endfor %}
+{% if lines %}<div class="checkout-summary"><strong>Total S${{ total }}</strong>{% if ready %}<a class="button button--dark" href="{% url 'orders:review' %}">Review and pay</a>{% else %}<p class="panel__note">Update the items above before you pay.</p>{% endif %}</div>{% endif %}
+</div>

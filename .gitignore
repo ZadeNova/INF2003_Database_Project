@@ -7,3 +7,6 @@ __pycache__/
 .venv/
 src/staticfiles/
 .cache/
+
+# Local checkout implementation handoff
+PROGRESS-checkout.md

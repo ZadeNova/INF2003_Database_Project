@@ -98,6 +98,8 @@ def test_refund_is_unique_and_cannot_reference_another_checkout(graph):
     other = Checkout.objects.create(customer=customer, placed_at=NOW, total=0)
     with pytest.raises(IntegrityError), transaction.atomic():
         Refund.objects.create(order=order, checkout=other, amount=12, reason="wrong", refunded_at=NOW, imported=True)
+    # A legitimate refund now accompanies a cancellation; checkout owns the deferred refund invariant.
+    Order.objects.filter(pk=order.pk).update(status="cancelled")
     Refund.objects.create(order=order, checkout=checkout, amount=12, reason="example", refunded_at=NOW, imported=True)
     with pytest.raises(IntegrityError), transaction.atomic():
         Refund.objects.create(order=order, checkout=checkout, amount=12, reason="duplicate", refunded_at=NOW, imported=True)
