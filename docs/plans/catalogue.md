@@ -1,6 +1,6 @@
 # catalogue: Shop pages, specifications, faceted search, seller product CRUD, photos, audit, design
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
 · phase 2B (dates in PLAN.md section 13) · depends on: `olist-import`, `accounts`
 

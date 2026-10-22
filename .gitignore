@@ -7,3 +7,6 @@ __pycache__/
 .venv/
 src/staticfiles/
 .cache/
+
+# Local overnight implementation handoff
+PROGRESS-catalogue.md
