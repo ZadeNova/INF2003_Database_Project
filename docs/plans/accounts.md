@@ -83,3 +83,10 @@ or tests changed. Detailed commands and results are in the review chat; AR1 rema
 22 October 2026, fix round (Claude Code): AR1 fixed. The rollback test now adds a transaction-scoped CHECK on
 `accounts_seller` and posts `/sell/apply/`; PostgreSQL rejects the seller insert and neither row remains. No stub
 remains. Registration tests and the full Docker suite were rerun and passed.
+
+22 October 2026, independent Codex fix verification of `c34115a`: **APPROVE; AR1 closed.** The test now exercises
+a real PostgreSQL CHECK violation, matches the named constraint and verifies that neither user nor seller remains;
+the test transaction also rolls back the added constraint. No database call is mocked. Independently reran the
+registration module in Docker and `scripts/check_docs.py`; both passed. No new findings. This fix verification
+reran the affected module only, as required for a fix round; the earlier full review and exit-check results stand.
+Normal workstream close-out and the full-suite gate before merge still apply. This review entry is left uncommitted.
