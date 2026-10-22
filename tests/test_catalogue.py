@@ -184,3 +184,18 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
     assert Seller.objects.get(pk=demo_seller.pk).status == "suspended"
     assert dict(demo_seller.products.exclude(demo_adjustment="").values_list("pk","demo_adjustment")) == labels
     assert get_user_model().objects.count() == users
+
+
+def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(imported):
+    # seed_demo resets the audit context itself, so a caller's actor and reason never leak into its product changes.
+    from django.db import transaction
+    from accounts.audit import set_audit_context
+    from accounts.models import AuditLog
+    operator=get_user_model().objects.create_user(username="ctx-operator",role="operator")
+    before=set(AuditLog.objects.filter(table_name="catalogue_product").values_list("pk",flat=True))
+    with transaction.atomic():
+        set_audit_context(operator.pk,"Caller context that must not leak")
+        call_command("seed_demo",stdout=StringIO())
+    rows=AuditLog.objects.filter(table_name="catalogue_product").exclude(pk__in=before)
+    assert rows.exists()
+    assert set(rows.values_list("actor_id","reason")) == {(None,None)}

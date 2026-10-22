@@ -204,6 +204,39 @@ another role is refused:
 docker compose run --rm migrate python manage.py create_operator <username>
 ```
 
+## Catalogue and seller products
+
+### Catalogue browsing
+
+The shop at `/products/` shows featured picks and categories. Search by name or choose a category, then combine
+price, rating and category options. Newest, price and top-rated ordering keep filters when changing pages.
+Category pages use `/products/category/<slug>/`; public shops use `/products/shops/<id>/`.
+The detail page combines price and stock from PostgreSQL with descriptions, ratings and recent reviews from MongoDB.
+Generated fields remain labelled. Category icon cards cover the imported categories; licensed featured stock photos
+remain the owner-steered follow-up described in [catalogue amendment f](docs/plans/catalogue.md).
+
+
+### Seller products and category options
+
+An approved seller opens **My products** at `/products/mine/` to create, edit or deactivate their own products.
+Choose a category and load its options before filling the product form. Price, stock, shipping fee and days to ship
+are required; uploads accept JPEG, PNG and WebP up to 2 MB and are re-encoded before GridFS storage. Taken-down
+products show the operator's reason and cannot be edited by the seller.
+Operators open **Products** at `/products/operator/` to take down or restore a product with a reason, and
+**Categories** at `/products/operator/categories/` to add a category option. Existing products need no rewrite.
+The audit page shows product price/stock changes and their actors alongside seller decisions.
+
+Seller saves keep the PostgreSQL operation open until MongoDB accepts its fields. A MongoDB error rolls the SQL
+change back. A rare successful MongoDB write followed by an uncertain SQL commit is logged; inspect the stores with:
+
+```bash
+docker compose run --rm migrate python manage.py check_specs
+docker compose run --rm migrate python manage.py check_specs --repair
+```
+
+The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
+mismatches remain reported for restoration from the source; the command does not invent missing product content.
+
 ## Regenerate the data (optional)
 
 The raw files are never edited. The preparation image pins Python by digest and pandas/NumPy/pytest versions, and has
@@ -315,35 +348,3 @@ Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#
 | JOASH | to add | Supporting developer, QA |
 
 Individual contributions: [CONTRIBUTIONS.md](CONTRIBUTIONS.md). AI use: [docs/AI_USE.md](docs/AI_USE.md).
-
-
-### Catalogue browsing
-
-The shop at `/products/` shows featured picks and categories. Search by name or choose a category, then combine
-price, rating and category options. Newest, price and top-rated ordering keep filters when changing pages.
-Category pages use `/products/category/<slug>/`; public shops use `/products/shops/<id>/`.
-The detail page combines price and stock from PostgreSQL with descriptions, ratings and recent reviews from MongoDB.
-Generated fields remain labelled. Category icon cards cover the imported categories; licensed featured stock photos
-remain the owner-steered follow-up described in [catalogue amendment f](docs/plans/catalogue.md).
-
-
-### Seller products and category options
-
-An approved seller opens **My products** at `/products/mine/` to create, edit or deactivate their own products.
-Choose a category and load its options before filling the product form. Price, stock, shipping fee and days to ship
-are required; uploads accept JPEG, PNG and WebP up to 2 MB and are re-encoded before GridFS storage. Taken-down
-products show the operator's reason and cannot be edited by the seller.
-Operators open **Products** at `/products/operator/` to take down or restore a product with a reason, and
-**Categories** at `/products/operator/categories/` to add a category option. Existing products need no rewrite.
-The audit page shows product price/stock changes and their actors alongside seller decisions.
-
-Seller saves keep the PostgreSQL operation open until MongoDB accepts its fields. A MongoDB error rolls the SQL
-change back. A rare successful MongoDB write followed by an uncertain SQL commit is logged; inspect the stores with:
-
-```bash
-docker compose run --rm migrate python manage.py check_specs
-docker compose run --rm migrate python manage.py check_specs --repair
-```
-
-The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
-mismatches remain reported for restoration from the source; the command does not invent missing product content.

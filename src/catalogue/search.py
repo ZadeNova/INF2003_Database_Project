@@ -3,13 +3,16 @@ from decimal import Decimal
 import math
 
 from bson import Decimal128
-from django.db.models import BooleanField
+from django.db.models import BooleanField, FloatField
 from django.db.models.expressions import RawSQL
 from django.core.paginator import Paginator
 
 from .models import Product, PurchasableProduct
 
 PAGE_SIZE = 24
+# The plan bounds a category at about 2k buyable products (the largest has 1,292). A broad name-only search
+# keeps only its closest matches, so it never sends tens of thousands of ids from PostgreSQL to MongoDB.
+MAX_CANDIDATES = 2000
 
 
 def visible_products():
@@ -31,7 +34,10 @@ def candidates(cleaned):
         products = products.filter(RawSQL(
             '("catalogue_product"."name" %% %s OR "catalogue_product"."name" ILIKE %s)',
             [query, "%" + escaped + "%"], output_field=BooleanField()))
-    return products
+        # Closest names first, so a capped candidate list keeps the most relevant products.
+        return products.annotate(name_rank=RawSQL('similarity("catalogue_product"."name", %s)', [query],
+                                                  output_field=FloatField())).order_by("-name_rank", "-id")
+    return products.order_by("-id")
 
 
 def attribute_definitions(database, category_ids):
@@ -73,7 +79,6 @@ def facet_pipeline(ids, cleaned, definitions, page=1):
             "ratings": [{"$group": {"_id": {"$cond": [{"$gt": ["$rating_summary.count", 0]},
                             {"$floor": "$rating_summary.average"}, 0]}, "count": {"$sum": 1}}},
                         {"$sort": {"_id": -1}}],
-            "categories": [{"$group": {"_id": "$category_id", "count": {"$sum": 1}}}],
             "attributes": [{"$project": {"pairs": {"$objectToArray": "$attributes"}}},
                            {"$unwind": "$pairs"},
                            {"$group": {"_id": {"name": "$pairs.k", "value": "$pairs.v"},
@@ -91,7 +96,9 @@ def matching_products(ids):
 
 
 def search_page(database, products, cleaned, definitions, requested):
-    ids = list(products.values_list("pk", flat=True))
+    ids = list(products.values_list("pk", flat=True)[:MAX_CANDIDATES + 1])
+    capped = len(ids) > MAX_CANDIDATES
+    ids = ids[:MAX_CANDIDATES]
     try:
         number = max(1, min(int(requested or 1), 2**31))
     except (ValueError, TypeError):
@@ -111,6 +118,7 @@ def search_page(database, products, cleaned, definitions, requested):
         ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}
         page = Paginator(matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "newest"]),
                          PAGE_SIZE).get_page(requested)
+    facets["capped"] = capped
     return page, facets
 
 

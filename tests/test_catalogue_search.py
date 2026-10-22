@@ -88,6 +88,23 @@ def test_trigram_search_finds_a_typo_and_substrings(imported, mongo_db):
         assert item.pk in {p.pk for p in response.context["page_obj"]}
 
 
+def test_a_broad_name_search_keeps_only_the_closest_candidates(imported, mongo_db, monkeypatch):
+    import catalogue.search as search
+    items = list(visible_products().order_by("id")[:3])
+    names = ("Portable Hose Nozzle", "Portable Hose Nozzle Spare", "Portable Hose Nozzle Kit Deluxe Edition Large")
+    for item, name in zip(items, names):
+        Product.objects.filter(pk=item.pk).update(name=name)
+    uncapped = Client().get("/products/", {"q": "Portable Hose Nozzle"})
+    assert not uncapped.context["capped"] and {i.pk for i in items} <= {p.pk for p in uncapped.context["page_obj"]}
+    # A small cap stands in for 2,000 so the fixture can exceed it; the ranking and query are the real ones.
+    monkeypatch.setattr(search, "MAX_CANDIDATES", 2)
+    response = Client().get("/products/", {"q": "Portable Hose Nozzle"})
+    found = {p.pk for p in response.context["page_obj"]}
+    assert response.status_code == 200 and response.context["capped"] and len(found) == 2
+    assert items[0].pk in found and items[2].pk not in found
+    assert "Showing the closest matches only" in response.content.decode()
+
+
 @pytest.mark.parametrize("parameters", [
     {"q": "'; DROP TABLE catalogue_product; --"},
     {"q": '{"$where":"sleep(1000)"}'},

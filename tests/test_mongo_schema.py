@@ -35,6 +35,15 @@ def test_spec_missing_outer_field_is_rejected(mongo_db,field):
     assert error.value.code == 121
 
 
+def test_photo_lookup_uses_its_index_not_a_collection_scan(mongo_db):
+    from bson import ObjectId
+    call_command("mongo_setup", database=mongo_db.name, stdout=StringIO())
+    photo = ObjectId()
+    mongo_db.product_specs.insert_many([{**spec(), "_id": n, "photo_file_id": photo if n == 7 else None} for n in range(1, 21)])
+    plan = mongo_db.product_specs.find({"photo_file_id": photo}, {"_id": 1}).explain()["queryPlanner"]["winningPlan"]
+    assert "spec_photo_file" in str(plan) and "COLLSCAN" not in str(plan)
+
+
 def test_flexible_attributes_need_no_collmod(mongo_db):
     mongo_db.product_specs.insert_one(spec())
     mongo_db.product_specs.update_one({"_id":1},{"$set":{"attributes.new_field":["new","shape"]}})

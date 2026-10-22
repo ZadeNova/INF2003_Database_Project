@@ -411,10 +411,11 @@ collection-schema changes; array-valued fields use multikey entries, while the i
 
 Sellers write only the specification fields they own (category_id, description, attributes, photo_file_id and the
 existing generated-content flag); edits leave rating_summary and latest_reviews intact. Category templates retain
-the imported text, integer and boolean field shapes, allowed-value lists and an increasing version; adding an
+the imported `string`, `integer` and `boolean` field types, allowed-value lists and an increasing version; adding an
 optional field updates the template document without any validator or PostgreSQL migration.
 The `photos` GridFS bucket stores re-encoded raster bytes in photos.files/photos.chunks. File metadata holds its
-product_id and content_type; product_specs.photo_file_id is the reference. Replacements remove the old file after
+product_id and content_type; product_specs.photo_file_id is the reference, indexed as `spec_photo_file` so the photo
+endpoint resolves a file id to its product without scanning every specification. Replacements remove the old file after
 the new spec and PostgreSQL change are accepted. Public photo reads first check current product visibility.
 New seller-created products/specifications have has_generated_content false. seed_demo explicitly clears actor and
 reason inside its existing transaction, so its labelled adjustments remain system audit entries.
