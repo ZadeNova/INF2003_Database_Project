@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
 from accounts.models import AuditLog, User, Seller
+from accounts.audit import change_seller_status
 from catalogue.models import Product
 from checkout_helpers import customer, product
 from config.olist_import import INVARIANTS, sql_invariants
@@ -203,9 +204,13 @@ def test_ship_deliver_and_cancel_with_stock_refund_and_audit():
     item.refresh_from_db();other.refresh_from_db()
     assert item.stock == 18 and other.status == "cancelled" and other.cancelled_at
     assert (other.refund.amount,other.refund.reason,other.refund.checkout_id) == (Decimal("36"),PAYLOAD,other.checkout_id)
-    audit=AuditLog.objects.get(action="order.cancelled")
+    audit=AuditLog.objects.get(table_name="orders_order",action="order.cancelled")
     assert audit.actor_id == buyer.pk and audit.reason == PAYLOAD
-    assert list(AuditLog.objects.order_by("pk").values_list("action",flat=True)) == ["order.shipped","order.delivered","order.cancelled"]
+    # A real seller transition adds another kind of audit event. Order assertions must remain scoped
+    # when catalogue's product-create and stock-change audit triggers are integrated too.
+    change_seller_status(item.seller_id,"suspend",operator,"Audit isolation check")
+    assert AuditLog.objects.filter(table_name="accounts_seller",action="seller.suspend").exists()
+    assert list(AuditLog.objects.filter(table_name="orders_order").order_by("pk").values_list("action",flat=True)) == ["order.shipped","order.delivered","order.cancelled"]
     with pytest.raises(CheckoutError):
         change_order_status(buyer,other.pk,"cancel")
     assert Refund.objects.count() == 1

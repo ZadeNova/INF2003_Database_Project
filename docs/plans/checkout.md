@@ -94,6 +94,12 @@ Migration drift, the full Docker suite (including the required repeated real-thr
 Git-index/packaging tests and documentation checks passed. The application image lacks Git, so its staged-index
 checks skip there; the separate host run executes them. Raw command logs, browser screenshots and generated full-data
 reconciliation are retained in the isolated worktree's local handoff evidence. No benchmark cases were added.
-The remaining owner confirmations are checkout-i1 through checkout-i9 in [DECISIONS](../DECISIONS.md#checkout-implementation).
+The remaining owner confirmations are checkout-i1 through checkout-i11 in [DECISIONS](../DECISIONS.md#checkout-implementation).
 Integration must retain both workstreams' separate navigation/audit lookup blocks, the cart include in product detail,
 and each appended CSS block. PLAN.md marks checkout review; this plan stays in-progress until independent review.
+
+
+23 October 2026, integration self-check: order-audit test assertions are scoped to orders_order, with a real seller
+status transition proving unrelated audit events can coexist. Affected checkout modules were rerun after this
+assertion-only change; the orchestrator's independent final suite covers the resulting branch. Shared seed/audit-page
+integration decisions are recorded alongside the existing cart and lookup decisions.

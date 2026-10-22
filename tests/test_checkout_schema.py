@@ -25,7 +25,7 @@ def test_every_illegal_transition_is_rejected(old, new):
         Order.objects.filter(pk=order.pk).update(status=new)
     order.refresh_from_db()
     assert order.status == old
-    assert not AuditLog.objects.exists()
+    assert not AuditLog.objects.filter(table_name="orders_order").exists()
 
 
 @pytest.mark.parametrize("old,new", sorted(ALLOWED))
@@ -39,14 +39,14 @@ def test_allowed_transitions_stamp_time_and_audit_actor(old, new):
             Refund.objects.create(order=order, checkout=checkout, amount=12, reason="Order update", refunded_at=timezone.now())
     order.refresh_from_db()
     assert getattr(order, new + "_at") is not None
-    audit = AuditLog.objects.get()
+    audit = AuditLog.objects.get(table_name="orders_order")
     assert (audit.action, audit.actor_id, audit.reason, audit.before["status"], audit.after["status"]) == (
         "order." + new, buyer.pk, "Order update", old, new)
     # A no-op status update does not change a timestamp or add an audit row.
     at = getattr(order, new + "_at")
     Order.objects.filter(pk=order.pk).update(status=new)
     order.refresh_from_db()
-    assert getattr(order, new + "_at") == at and AuditLog.objects.count() == 1
+    assert getattr(order, new + "_at") == at and AuditLog.objects.filter(table_name="orders_order").count() == 1
 
 
 @pytest.mark.parametrize("bad", ["checkout", "order", "payment", "payment-delete", "refund"])
