@@ -1,7 +1,7 @@
 # catalogue: Shop pages, specifications, faceted search, seller product CRUD, photos, audit, design
 
 status: approved
-plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
+plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
 · phase 2B (5 to 8 November) · depends on: `olist-import`, `accounts`
 
 **Assumes:** the `olist-import` schema (product with seller, category, price, freight, stock, `active`, `featured`;
@@ -25,7 +25,7 @@ databases; the operator evolves category attributes live and takes products down
 | Schema evolution demo | Operator page to add an attribute to a category template (name, type, allowed values). Sellers can then fill it, and the facets show it, with no migration and no `collMod`. The report contrasts this with the `ALTER TABLE` the same change needs in PostgreSQL |
 | Seller product CRUD | Seller centre "My products": create, edit (name, price, stock, freight, category, attributes, description), upload or replace a photo (AGENTS.md rule 7; the old GridFS file is deleted once the new one is stored), deactivate. PostgreSQL row and MongoDB spec are written together: PostgreSQL first inside its transaction, then MongoDB; if MongoDB fails, the PostgreSQL transaction rolls back (decision c). Delete is never offered: `ON DELETE RESTRICT` protects products with order history |
 | Operator take-down | Operator console "Products": set the `taken_down` flag and reason (columns and view from `olist-import`), so the product leaves the `purchasable_product` view and disappears from the shop, carts and checkout at once; the seller cannot edit it; the operator can restore it |
-| Audit trigger | `AFTER UPDATE` trigger on product writing to `audit_log` when price, stock, `active` or `taken_down` changes, with before and after as JSONB and the actor from `SET LOCAL` |
+| Audit trigger | `AFTER UPDATE` trigger on product writing to `audit_log` when price, stock, `active` or `taken_down` changes, with before and after as JSONB and the actor from `SET LOCAL`. The trigger function follows the shared audit boundary in `accounts`: `SECURITY DEFINER`, owned by the migration owner, schema-qualified, `search_path` pinned to `public, pg_temp`; the runtime role has no direct write on `audit_log`; actor and reason come from the bound transaction-local settings |
 | Design | Rewrite DESIGN.md for Mercer (foundation-a) and update `site.css` to match: tokens, product card, facet sidebar, seller centre and operator console layouts |
 
 **What a trigram index is.** A trigram is a run of three characters: "hose" becomes `  h`, ` ho`, `hos`, `ose`, `se `.
@@ -72,3 +72,6 @@ label; `photo_file_id`, old-photo deletion and `check_specs` defined.
 process rather than opening one for each product-detail request, while retaining explicit test-database routing
 and controlled outage behaviour; replace the minimum import's generic `package` category icons with the category
 mapping required by DESIGN.md. These remain catalogue work and do not block the Phase 1A data import.
+
+22 October 2026, Phase 1B decision P3 (accepted by Chee Long): the product audit trigger follows the shared
+owner-owned audit boundary defined in `accounts`; no other contract change.

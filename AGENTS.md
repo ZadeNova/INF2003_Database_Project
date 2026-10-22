@@ -18,7 +18,8 @@ approved workstreams rebuild them; PLAN.md section 14 is the progress index.
 
 ## Phase check (before starting and before merging)
 
-1. Find today's phase in PLAN.md section 13. The task's workstream must be in that phase or an earlier one, and its
+1. Find the current phase in PLAN.md section 13: a phase is open once the phase before it is closed (exit check
+   passed, work merged to `main`), whatever the date. The task's workstream must be in an open phase, and its
    dependencies (section 14) must be done. If not, stop and ask instead of building ahead.
 2. A plan file must exist with `status: approved` (except for small changes: typos, copy, one-line fixes).
 3. Before merging, confirm the change does not break the current phase's exit check, and update the workstream's status

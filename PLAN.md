@@ -43,8 +43,10 @@ Browser -> Django (HTMX, Gunicorn) -+-> PostgreSQL     system of record: users, 
                                     +-> MongoDB         product specifications (flexible attributes), reviews,
                                                         photos (GridFS), activity events (time-series)
                                                         (single-node replica set, needed for transactions)
-benchmarks/ harness -> both engines, loaded with the same clean Olist files (and scale-up files)
+benchmarks/ harness -> bench-db and bench-mongo, loaded with the same clean Olist files (scaled runs in Tier 2)
 Docker Compose: web, db, mongo, migrate   (+ redis, otel-lgtm in Tier 2)
+  optional profiles, never part of the running app: tools (profiling, cleaning, generation, pipeline tests),
+  translation (offline review translation), bench (bench-db and bench-mongo, separate credentials and limits)
 ```
 
 **Latest versions.** The brief asks us to explore the latest relational and NoSQL systems, so both engines run the latest
@@ -244,7 +246,7 @@ requires the dependencies in section 14 and every check below.
 | ID | Workload | PostgreSQL | MongoDB |
 |---|---|---|---|
 | B1 | Flexible attributes: filter by category-specific attributes | EAV table **and** JSONB with GIN (three-way) | Documents, multikey index |
-| B2 | Aggregation: dashboard and review aggregates | Materialized view, CTEs, window functions | Aggregation pipeline |
+| B2 | Aggregation: dashboard and review aggregates | Live CTE/window query; materialized-view read and REFRESH reported separately | Live aggregation pipeline |
 | B3 | Last-unit race: 50 buyers, 10 units | Minimal identical operation: transaction, conditional decrement, insert order | Same: transaction, conditional `$inc`, insert order |
 | B4 | Indexing: before and after for B1 and B2, told as one slow → index → fast story with plans | B-tree, composite, partial, GIN | Compound, multikey, partial |
 | B5 | Storage footprint for the same data | Table and index sizes | Storage and index sizes |
@@ -254,23 +256,27 @@ requires the dependencies in section 14 and every check below.
 B3 compares **equivalent minimal operations**, not the app's full checkout (which carries idempotency and cart logic
 that a minimal function would not). The app checkout is demoed, not raced.
 
-**Correctness first.** Both engines must return identical result rows for B1 and B2, and B3 must end with exactly 10
-successes, 40 refusals, stock at 0 and no oversell. These checks run in CI; a timing counts only if its check passed.
+**Correctness first.** B1/B2 match independent reference outputs computed from shared source files, with checksums,
+canonical ordering, fixed decimal scales and exact counts. B3 ends with exactly 10 successes, 40 refusals, stock at 0
+and no oversell. CI runs correctness checks; failed results/invariants contribute no accepted timing.
 
-**Isolation from the app.** The harness uses its own databases (a `bench` database in each engine), never the
-application's. Every run starts from the same loaded state and is **reset to that original state afterwards**, so runs
-do not affect each other or the demo data.
+**Isolation from the app.** The dedicated `bench` Compose profile provides `bench-db` and replica-set `bench-mongo`,
+with separate generated credentials and no app grant changes; [benchmark.md](docs/plans/benchmark.md) owns the setup
+and measurement decisions. Every run starts from verified baseline data and resets afterwards, including failures.
+Tier 1 measures base Olist; generated rows/flags stay in bench databases and scaled runs stay in Tier 2 `durability`.
 
 **Method.**
-- Identical Docker limits for both engines (for example 2 CPUs and 2 GB each).
+- Identical Docker limits: 2 CPUs and 2 GB per engine; cache/client/VM settings are fixed in the benchmark plan.
 - All final runs on one designated machine; CPU model, cores, RAM, OS and Docker version recorded with every result.
-- 1, 10 and 50 concurrent clients; warm-up; at least 5 runs; p50, p95, throughput, errors, MongoDB retries.
+- Timed driver workloads: 1/10/50 clients, one untimed warm-up, five fixed-operation measured runs; report median
+  per-run p50/p95/throughput and ranges, errors and retries. B5 records storage; B6 is a correctness demonstration
+  outside that matrix, recording throughput/retries. Reset/warm-cache and latency accounting live in benchmark.md.
 - Engine comparison timed **at the driver level**; HTTP end-to-end timings reported separately, from a new local load
   script written in `benchmark` (the old AWS harness is deleted in `foundation`).
 - Query plans captured beside timings: `EXPLAIN (ANALYZE, BUFFERS)` and MongoDB `explain("executionStats")`.
 - `docker stats` sampled every second during each run (CPU and memory per container).
 - **Headline results as ratios** (more portable across machines), absolute milliseconds as detail.
-- Telemetry and caches off during timed runs.
+- Telemetry and application caches off (none in Tier 1); database buffers follow the warm-up/reset procedure.
 - Raw output in `benchmarks/results/`, dated, with the commit hash.
 
 **Per-request database timing (Tier 1, no new containers):** Django's `connection.execute_wrapper` and PyMongo's
@@ -369,8 +375,8 @@ and the report. The proposal does not mention the reuse.
 
 | Member | Role | Tier 1 work |
 |---|---|---|
-| **Chee Long** | Main developer | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `wishlist`, `dashboard`, `reviews`, `activity`, `benchmark` |
-| **Erfan** | Planning and setup | PLAN.md and the workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; `ci` during the accelerated sprint; Tier 2 `observability` |
+| **Chee Long** | Main developer and plan owner | Most of Tier 1 after `foundation`: `olist-import`, `accounts`, `checkout`, `catalogue`, `wishlist`, `dashboard`, `reviews`, `activity`, `benchmark`, `ci`; owns the accounts, catalogue, checkout, reviews, benchmark, ci and Phase 1B review plans |
+| **Erfan** | Planning and setup | PLAN.md and other workstream plans; the coding setup (AGENTS.md, workflow, docs check); `foundation`; Tier 2 `observability` |
 | **Joash** | Supporting developer, QA | MongoDB: specifications, reviews, pipelines (his proposal role), reviewed by Erfan |
 | **Jun Keat** | Supporting developer, QA | UI: catalogue, shop pages, cart and pay flow, reviews, wishlist; design standardisation; triggers with Chee Long |
 | **Syahfariz** | Supporting developer, QA | Test plan and correctness gates, clean-machine run of the user manual, slides and video |
@@ -394,23 +400,26 @@ retests and reruns if needed; it does not change the target or justify silently 
 slides and video are outside this accelerated target and remain due with the final submission on **29 November,
 23:30 Singapore time**; the team still aims to submit on 28 November.
 
-Agents use the build windows below for the AGENTS.md phase check. These dates and phase assignments take precedence
-over older calendar dates in the workstream plans and the team overview. Approved contracts, dependency order,
-real-database tests and exit checks remain binding. A workstream may start when its window opens and its dependencies
-are done; unfinished work can continue later, with any missed target recorded. Windows may overlap;
-the benchmark can build its harness after import while final acceptance waits for its feature dependencies.
+**Phases start on completion, not on a date (22 October 2026).** A phase may start as soon as the phase before it is
+closed: its exit check has passed and its work is merged to `main`. It does not wait for its window to open. The dates
+below are targets and deadlines, not start gates; finishing early moves the next phase forward. Agents use this rule
+for the AGENTS.md phase check. These dates and phase assignments take precedence over older calendar dates in the
+workstream plans and the team overview. Approved contracts, dependency order (section 14), real-database tests and
+exit checks remain binding: within a phase, a workstream still waits for its dependencies (for example `checkout`
+after `accounts`). Unfinished work can continue later, with any missed target recorded. Phases may overlap; the
+benchmark can build its harness after import while final acceptance waits for its feature dependencies.
 Existing effort estimates remain risk estimates, not evidence that the compressed dates are guaranteed.
 
 | Phase | Dates | Build (Chee Long unless noted) | Write plans | Exit check |
 |---|---|---|---|---|
 | **0 Setup** | 21 to 22 Oct | `foundation` (Erfan; marked done in section 14) | Existing feature plans approved; prepare `benchmark` and `ci` plans | Repo runs on Linux and Windows with both databases; professors' written approval |
 | **1A Import** | 22 to 24 Oct | `olist-import` (Erfan optionally on the cleaning script) | Approve `benchmark` and `ci` plans by 24 Oct, before their implementation | Olist loaded in both databases; the ledger and money invariants reconcile; product pages and demo logins work; full import exit checks pass |
-| **1B Accounts** | 25 Oct | `accounts`; start `ci` (Erfan) after its plan is approved | none | The three roles log in; seller approval and operator controls work; CI runs the real-database checks available so far |
+| **1B Accounts** | 25 Oct | `accounts`; start `ci` (Chee Long) after its plan is approved | none | The three roles log in; seller approval and operator controls work; CI runs the real-database checks available so far |
 | **2A Checkout** | 25 to 26 Oct, after `accounts` | `checkout`; benchmark correctness cases for B3/B6 as checkout lands | none | Buy from three sellers in one checkout, ship, deliver, cancel with refund; stock, payments, permissions and retries pass their tests |
 | **2B Catalogue** | 26 to 27 Oct, after `accounts` | `catalogue`; benchmark B1 cases | none | **27 Oct core-demo checkpoint:** buy, ship and deliver end to end; seller CRUD with photo upload; faceted search and schema evolution; full workstream exit checks pass |
-| **3A Features** | 28 to 29 Oct | `wishlist`, `dashboard`, `reviews`, `activity`; complete `ci` (Erfan), including Playwright demo tests and quality gates | none | Every Tier 1 application feature works end to end; CI green on `main` |
-| **3B Benchmark** | 25 Oct to 1 Nov; final measurements 31 Oct to 1 Nov | Build the harness alongside features after import; load isolated `bench` databases; B1 to B6 with golden outputs, query plans, `docker stats`, per-request timing and the local HTTP load script | none; approved plan required before implementation | First correctness-complete B1 to B6 pass by 30 Oct; by **1 Nov**, required repeated runs at 1/10/50 clients, correctness checks, plans, hardware/configuration and raw outputs saved on the designated machine (section 7) |
-| **4 Freeze** | 30 Oct to 4 Nov | **30 Oct application feature freeze** and full integration review; fresh-install verification; fixes and affected reruns only, with 2 to 4 Nov reserved as contingency | none | Full suite and demo pass; the manual works on a clean machine; Claude Code reviews completed before commits; unresolved failures remain visible |
+| **3A Features** | 28 to 29 Oct | `wishlist`, `dashboard`, `reviews`, `activity`; complete `ci` (Chee Long), including Playwright demo tests and quality gates | none | Every Tier 1 application feature works end to end; CI green on `main` |
+| **3B Benchmark** | 25 Oct to 1 Nov; final measurements 31 Oct to 1 Nov | Build the harness alongside features after import; load isolated `bench` databases; B1 to B6 with golden outputs, query plans, `docker stats`, per-request timing and the local HTTP load script | none; approved plan required before implementation | First correctness-complete B1 to B6 pass by 30 Oct; by **1 Nov**, applicable repeated runs at 1/10/50 clients and the separate B6 correctness demonstration, with plans, hardware/configuration and raw outputs saved on the designated machine (section 7) |
+| **4 Freeze** | 30 Oct to 4 Nov | **30 Oct application feature freeze** and full integration review; fresh-install verification; fixes and affected reruns only, plus `ci` stage 3 (the deferred `ruff format` gate), with 2 to 4 Nov reserved as contingency | none | Full suite and demo pass; the manual works on a clean machine; Claude Code reviews completed before commits; unresolved failures remain visible |
 | **5 Ship** | 2 to 29 Nov | Report, slides, video (all five, names on screen, under 10 minutes), final user manual and packaging; professor check-in and Tier 2 decision on 8 Nov | `deliverables`: report outline with page budget, scripted presentation and theory map appendix; Tier 2 plans only if earned | Report at 10 pages; final manual passes on a clean machine; zip checked by the packager; target submission 28 Nov (deadline 29 Nov, 23:30) |
 
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
@@ -432,15 +441,15 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | done |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | done |
-| `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | ready |
+| `accounts` | Three roles, seller registration and approval, operator console (approve, reject, suspend or reinstate sellers, audit log) | `olist-import` | 1 | ready |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | ready |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
-| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout` | 1 | ready |
+| `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | ready |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | ready |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | ready |
-| `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | not started |
-| `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | not started |
+| `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
+| `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | ready |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
