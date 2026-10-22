@@ -48,7 +48,7 @@ INVARIANTS = {
     "refund_totals": """SELECT o.id, o.status, o.total, r.amount, r.checkout_id
         FROM orders_order o LEFT JOIN orders_refund r ON r.order_id=o.id
         WHERE (o.status='cancelled' AND EXISTS (SELECT 1 FROM orders_payment p WHERE p.checkout_id=o.checkout_id)
-            AND (r.id IS NULL OR r.amount<>o.total OR r.checkout_id<>o.checkout_id OR NOT r.imported))
+            AND (r.id IS NULL OR r.amount<>o.total OR r.checkout_id<>o.checkout_id))
         OR (r.id IS NOT NULL AND (o.status<>'cancelled' OR r.amount<>o.total OR r.checkout_id<>o.checkout_id))""",
     "profile_roles": """SELECT u.id, u.role FROM accounts_user u
         LEFT JOIN accounts_customerprofile c ON c.user_id=u.id LEFT JOIN accounts_seller s ON s.user_id=u.id
@@ -62,10 +62,15 @@ def fail(name, rows):
     raise CommandError(f"Invariant {name} failed; diagnostic rows: " + json.dumps(rows[:10], default=str, sort_keys=True))
 
 
-def sql_invariants():
+def sql_invariants(*, importing=False):
+    checks = dict(INVARIANTS)
+    if importing:
+        # Provenance is an import-time rule, not an ongoing money invariant: an imported paid
+        # order can later be cancelled by its customer, creating an application refund.
+        checks["imported_refund_provenance"] = "SELECT id FROM orders_refund WHERE NOT imported"
     counts = {}
     with connection.cursor() as cursor:
-        for name, query in INVARIANTS.items():
+        for name, query in checks.items():
             cursor.execute(query)
             rows = cursor.fetchmany(10)
             if rows:

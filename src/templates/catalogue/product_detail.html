@@ -12,6 +12,7 @@
             <p class="product-detail__price">{{ product.display_price }}</p>
             <p>Shipping: S${{ product.freight }}</p>
             <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %}</p>
+            {% include "orders/_add_to_cart.html" %}
             {% if spec %}
             <p>{{ spec.description }}</p>
             <dl>{% for key, value in spec.attributes.items %}<dt>{{ key }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>

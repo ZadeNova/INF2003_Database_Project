@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Review and pay — Mercer{% endblock %}
+{% block content %}<div class="page account-page checkout-page">
+<div class="page__header"><div><p class="eyebrow">Checkout</p><h1 class="page__title">Review and pay</h1><p class="page__meta">Check the items and shipping before placing your order.</p></div><a href="{% url 'orders:cart' %}">Edit cart</a></div>
+{% for group in groups %}<section class="panel checkout-panel"><div class="panel__head"><h2 class="panel__title">{{ group.seller.display_name }}</h2></div>
+{% for line in group.lines %}<div class="checkout-review-line"><div>{{ line.product.name }} <span class="panel__note">× {{ line.quantity }}</span><p class="panel__note">S${{ line.product.price }} each · Shipping S${{ line.freight_total }}</p>{% if not line.available %}<p role="alert">No longer available.</p>{% elif not line.enough_stock %}<p role="alert">Only {{ line.product.stock }} left.</p>{% endif %}</div><strong>S${{ line.total }}</strong></div>{% endfor %}
+<dl class="detail-list checkout-totals"><dt>Items</dt><dd>S${{ group.items }}</dd><dt>Shipping</dt><dd>S${{ group.freight }}</dd><dt>Shop total</dt><dd>S${{ group.total }}</dd></dl></section>{% empty %}<p>Your cart is empty. <a href="{% url 'catalogue:product_list' %}">Browse products</a></p>{% endfor %}
+{% if ready %}<section class="panel checkout-panel"><h2 class="panel__title">Payment</h2><p class="panel__note">Payments are simulated. No card details are needed.</p>
+<form method="post" action="{% url 'orders:review' %}" class="checkout-payment">{% csrf_token %}{{ form.idempotency_key }}{{ form.fingerprint }}
+{% if form.errors %}<div role="alert"><p>Check your payment details.</p>{{ form.non_field_errors }}{{ form.idempotency_key.errors }}{{ form.fingerprint.errors }}</div>{% endif %}
+<div class="form-field"><label for="{{ form.method.id_for_label }}">Payment method</label>{{ form.method }}{{ form.method.errors }}</div>
+<div class="form-field"><label for="{{ form.instalments.id_for_label }}">Instalments</label>{{ form.instalments }}<p class="form-note">{{ form.instalments.help_text }}</p>{{ form.instalments.errors }}</div>
+<div class="checkout-summary"><strong>Total S${{ total }}</strong><button class="button button--dark" type="submit">Place order and pay</button></div></form></section>
+{% elif lines %}<p class="panel__note">Return to your cart to update the unavailable items.</p>{% endif %}
+</div>{% endblock %}

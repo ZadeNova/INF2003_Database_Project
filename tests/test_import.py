@@ -221,3 +221,10 @@ def test_checkout_header_allowance_does_not_allow_missing_imported_fields(source
     with pytest.raises(CommandError, match="Unexpected CSV header: checkouts"):
         call_command("import_olist", source=source, stdout=StringIO())
     assert_empty(mongo_db)
+
+
+def test_import_rejects_a_source_refund_missing_its_imported_label(source,mongo_db):
+    alter_csv(source,"refunds","imported","False")
+    with pytest.raises(CommandError,match="Invariant imported_refund_provenance failed"):
+        call_command("import_olist",source=source,stdout=StringIO())
+    assert_empty(mongo_db)

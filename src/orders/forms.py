@@ -1,0 +1,16 @@
+from django import forms
+from .models import Payment
+
+
+class PaymentForm(forms.Form):
+    idempotency_key = forms.UUIDField(widget=forms.HiddenInput)
+    fingerprint = forms.RegexField(r"^[0-9a-f]{64}$", widget=forms.HiddenInput)
+    method = forms.ChoiceField(choices=Payment.Method.choices, label="Payment method")
+    instalments = forms.IntegerField(min_value=1, max_value=12, initial=1,
+                                    help_text="Credit card: 1 to 12. Other methods: 1.")
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("method") != "credit_card" and cleaned.get("instalments", 1) != 1:
+            self.add_error("instalments", "Choose 1 for this payment method.")
+        return cleaned

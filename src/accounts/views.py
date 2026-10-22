@@ -197,4 +197,13 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
         for entry in entries:
             entry.shop = (shops.get(int(entry.row_id))
                           if entry.table_name == "accounts_seller" and entry.row_id.isdecimal() else None)
+        # checkout order shops: resolve only this page, alongside the existing seller lookup.
+        order_ids = {int(entry.row_id) for entry in entries
+                     if entry.table_name == "orders_order" and entry.row_id.isdecimal()
+                     and 0 < int(entry.row_id) < 2**63}
+        order_shops = {str(order.pk): order.seller
+                       for order in Order.objects.filter(pk__in=order_ids).select_related("seller")}
+        for entry in entries:
+            if entry.table_name == "orders_order":
+                entry.shop = order_shops.get(entry.row_id)
         return context

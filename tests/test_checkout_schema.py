@@ -120,3 +120,27 @@ def test_order_audit_trigger_works_as_runtime_and_cannot_be_tampered_with():
     for name, owner, definer, config, execute in rows:
         assert owner == os.environ["POSTGRES_USER"] and config == ["search_path=public, pg_temp"] and not execute
         assert definer == (name == "audit_order_status")
+
+
+@pytest.mark.parametrize("bad", ["checkout-insert", "order-insert", "order-delete", "payment-insert", "payment-move"])
+def test_deferred_checks_cover_inserts_deletes_and_both_moved_parents(bad):
+    buyer, item = customer(), product()
+    checkout, order = paid_order(buyer, item)
+    other = Checkout.objects.create(customer=buyer, total=0, placed_at=timezone.now())
+    with pytest.raises(IntegrityError), transaction.atomic():
+        set_audit_context()
+        if bad == "checkout-insert":
+            Checkout.objects.create(customer=buyer, total=1, placed_at=timezone.now())
+        elif bad == "order-insert":
+            extra = product("extra")
+            Order.objects.create(checkout=checkout, seller=extra.seller, status="paid", items=1, freight=0, total=1,
+                                 placed_at=timezone.now(), estimated_delivery=timezone.now())
+        elif bad == "order-delete":
+            order.delete()
+        elif bad == "payment-insert":
+            Payment.objects.create(checkout=checkout, sequence=2, method="voucher", instalments=1, amount=1)
+        else:
+            Payment.objects.filter(checkout=checkout).update(checkout=other)
+        assert connection.in_atomic_block
+    assert Checkout.objects.get(pk=checkout.pk).payments.get().amount == 12
+    assert not other.payments.exists()

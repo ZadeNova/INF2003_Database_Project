@@ -60,3 +60,8 @@ def change_seller_status(seller_id, action, actor, reason):
         Seller.objects.filter(pk=seller.pk).update(status=new)
         seller.status = new
     return seller
+
+
+# checkout action labels; seller decisions above retain their existing labels and tones.
+AUDIT_LABELS.update({"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"})
+AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "pending", "order.shipped": "pending"})

@@ -9,6 +9,7 @@ urlpatterns = [
     path("foundation/", foundation_preview, name="foundation-preview"),
     path("", include("accounts.urls")),
     path("products/", include("catalogue.urls")),
+    path("", include("orders.urls")),
     path("foundation/design-notes/", design_notes, name="design-notes"),
     path("foundation/design-notes-unavailable/", design_notes_unavailable, name="design-notes-unavailable"),
     path("foundation/statistics/", statistics_preview, name="statistics-preview"),
