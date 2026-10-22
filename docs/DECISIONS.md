@@ -9,6 +9,21 @@ this file holds the choices behind the code. Add a row when a decision is made, 
 |---|---|---|
 | schedule-gating | A phase starts as soon as the previous phase is closed (exit check passed, work merged to `main`); PLAN.md section 13 dates are targets and deadlines, not start gates. Decided by Chee Long | Phase 1A finished early; waiting for a calendar window would waste sprint time without adding safety. Dependency order, approved plans, reviews and exit checks stay binding |
 
+## ci stage 1 implementation (22 October 2026; reviewed, awaiting hosted runs)
+
+The contract is [ci](plans/ci.md); these are the implementation choices behind stage 1.
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i1 | Two jobs: `databases` (one Compose project for build, migrate, drift, fixture import, seed, suite and pipeline tests) and `host` (docs check, Git-index and packaging tests) | One database job builds the images once, which keeps runner-minutes inside the budget recommendation; the host checks need no Docker and finish quickly in parallel |
+| ci-i2 | The project name is `mercer-ci-<run id>-<attempt>`, set both as `COMPOSE_PROJECT_NAME` and with `-p` on every call; teardown runs `if: always()` against that name only | Overrides compose.yaml's `name: mercer`, gives re-runs their own volumes and image tag, and cannot remove another project's data |
+| ci-i3 | Actions pinned to verified commit SHAs of releases at least two weeks old: checkout v7.0.1 and setup-python v7.0.0, both node24; `persist-credentials: false` | A tag can move and a same-day release has had no time for problems to surface; the job never needs the checkout token |
+| ci-i4 | Generated passwords and the secret key are passed to `::add-mask::` straight after `init_env.py`; other values stay readable | Defence in depth if a tool ever echoes a secret, without masking names such as `mercer` that the logs need |
+| ci-i5 | The host job writes JUnit XML and fails if any test skipped | The Git-index tests skip silently without Git; CI must prove they ran (ci.md CI2) |
+| ci-i6 | Pull-request runs of the same ref cancel older in-progress runs; pushes to `main` never cancel | Saves minutes on repeated pushes to a branch while every `main` revision keeps its own result |
+| ci-i7 | The kernel guard compares major/minor/patch numerically and fails for 6.19.0 through 7.0.13 inclusive | Fails clearly before MongoDB starts (foundation-m) instead of timing out on a container health check |
+| ci-i8 | The `databases` job runs on hosted `ubuntu-22.04`; `host` stays on `ubuntu-24.04` (ci decision b amended by Chee Long) | From image 20261021, ubuntu-24.04 runners use kernel 7.0.0-azure. MongoDB 9.0 refuses every Ubuntu 7.0 kernel because Ubuntu reports 7.0.0 even when the 7.0.14 fix is backported (SERVER-136848), and no MongoDB release fixes SERVER-121912. Ubuntu 22.04 kernels stop at 6.8, so real MongoDB checks stay on hosted runners without pinning an older MongoDB (foundation-f) |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |

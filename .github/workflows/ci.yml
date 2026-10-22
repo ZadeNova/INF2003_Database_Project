@@ -1,0 +1,115 @@
+# CI stage 1 (docs/plans/ci.md): real-database checks on every pull request and push to main.
+# No repository secrets: init_env.py generates throwaway credentials for each run. Never print .env or
+# `docker compose config`. Every Compose call names this run's own project, because compose.yaml hard-codes
+# `name: mercer`, and teardown removes only that project.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  databases:
+    name: Django suite, migrations and pipeline tests (real PostgreSQL and MongoDB)
+    # ubuntu-22.04 (kernel 6.8): from image 20261021, ubuntu-24.04 runners use kernel 7.0.0-azure, which MongoDB 9.0
+    # refuses because Ubuntu reports every 7.0 kernel as 7.0.0 (SERVER-136848). See ci.md decision b.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      COMPOSE_PROJECT_NAME: mercer-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Check the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13)
+        run: |
+          kernel="$(uname -r)"
+          echo "Runner kernel: $kernel"
+          IFS=. read -r major minor patch _ <<< "${kernel%%-*}"
+          patch="${patch%%[!0-9]*}"
+          version=$(( major * 1000000 + minor * 1000 + ${patch:-0} ))
+          if [ "$version" -ge 6019000 ] && [ "$version" -le 7000013 ]; then
+            echo "::error::Kernel $kernel is in 6.19-7.0.13, which MongoDB 9.0 refuses (DECISIONS foundation-m, SERVER-121912). Keep this job on ubuntu-22.04 or use a self-hosted runner (ci.md decision b); do not skip MongoDB."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate throwaway credentials
+        run: |
+          python3 src/tools/init_env.py
+          # Mask the generated secrets in case a tool ever echoes one (names and ports stay readable).
+          grep -E '^[A-Z_]*(PASSWORD|SECRET_KEY)=.' .env | cut -d= -f2- | while IFS= read -r value; do echo "::add-mask::$value"; done
+
+      - name: Build the images
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" build migrate
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile tools build tools
+
+      - name: Start PostgreSQL and MongoDB and wait until healthy
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo
+
+      - name: Migrate as the owner role
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate
+
+      - name: Migration drift check
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py makemigrations --check --dry-run
+
+      - name: Import the committed Olist fixture and seed demo accounts
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py seed_demo
+
+      - name: Full Django suite
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate pytest -q -rs -p no:cacheprovider /app/tests
+
+      - name: Analytics pipeline tests
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
+
+      - name: Database logs on failure (no credentials are logged)
+        if: failure()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo
+
+      - name: Tear down this run's project only
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" --profile tools down --volumes --remove-orphans
+
+  host:
+    name: Documentation check and host Git-index/packaging tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install the pinned test dependencies
+        run: python -m pip install --disable-pip-version-check -r src/requirements.txt
+
+      - name: Documentation check
+        run: python scripts/check_docs.py
+
+      - name: Host Git-index and packaging tests (must not skip)
+        run: |
+          git --version
+          python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$RUNNER_TEMP/pytest" \
+            --junitxml "$RUNNER_TEMP/host.xml" tests/test_check_docs.py tests/test_package_submission.py
+          python - "$RUNNER_TEMP/host.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          suite = ET.parse(sys.argv[1]).getroot().find("testsuite")
+          skipped = int(suite.get("skipped", 0))
+          print(f"host tests: {suite.get('tests')} run, {skipped} skipped")
+          sys.exit(1 if skipped else 0)
+          PY

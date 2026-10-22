@@ -1,6 +1,6 @@
 # ci: Real-database correctness, quality gates and demo-story tests
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · Phases 1B–4 (25 October to 4 November 2026)
 · depends on: `foundation`; extend feature and benchmark checks as their workstreams land
 
@@ -43,7 +43,7 @@ Chee Long accepted these decisions on 22 October 2026; plan approved the same da
 | ID | Accepted decision |
 |---|---|
 | a | GitHub Actions on `pull_request` and pushes to main. Stage 1 jobs required from Phase 1B; Stage 2 jobs added at 3A. Branch protection requires a PR and passing checks, blocks force pushes, and requires no GitHub approvals: fresh Claude Code review is the review gate |
-| b | GitHub-hosted `ubuntu-24.04`, not `latest`; print the kernel and fail clearly for versions 6.19 through 7.0.13 inclusive (DECISIONS foundation-m). Use self-hosted only if MongoDB fails on the hosted runner; never skip real MongoDB checks. For a private repository, confirm the owner account's available included minutes before the first hosted run; budget recommendation below |
+| b | GitHub-hosted runners pinned by name, never `latest`: the `databases` job on `ubuntu-22.04` (kernel 6.8), the `host` job on `ubuntu-24.04` (amended 22 October 2026, below); print the kernel and fail clearly for versions 6.19 through 7.0.13 inclusive (DECISIONS foundation-m). Use self-hosted only if MongoDB fails on the hosted runner; never skip real MongoDB checks. For a private repository, confirm the owner account's available included minutes before the first hosted run; budget recommendation below |
 | c | Measure baseline first; enforce 80% line coverage of `src/` excluding migrations. Report branch coverage without enforcing it. Money, role and concurrency tests remain mandatory regardless of percentage |
 | d | Ruff lint only during the sprint: E, F, I; line length matches existing code. The `ruff format` gate is deferred, not dropped: stage 3 adds it after the 30 October feature freeze and by 4 November, completing PLAN.md T8 |
 | e | pip-audit fails on any advisory with an available fix. Exceptions file records advisory ID, reason, owner and expiry at most two weeks away; do not suppress failures silently |
@@ -107,3 +107,19 @@ whether full-data checks run in CI.
 22 October 2026, fix round: CI1–CI6, a–f/full-data decisions and requested minutes-budget recommendation applied; draft retained.
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
+
+22 October 2026, independent Codex implementation review of `e3c7d2c`: **APPROVE; no CR findings.** Verified the
+Action release SHAs through GitHub's API, PR/main triggers, read-only permissions, pinned runner, timeouts, secret
+masking, project isolation and all stage 1 checks. Extracted kernel-guard boundary checks passed; the host skip guard
+passed the real report and rejected a report with a skipped case. The isolated `mercer-ci-review` reproduction passed
+fresh migrations, drift, fixture import, demo seeding, the full Django suite, pipeline tests and host Git-index/
+packaging tests in a temporary pinned Python environment. Generated secret values were absent from database logs.
+Teardown removed only the review project's containers, network and volumes; the original `mercer` volume metadata
+and running container identities were unchanged. Removed the worktree's generated `.env`. Commands and actual
+results are in the review chat. Hosted PR/main evidence is still required to close stage 1; stages 2 and 3 remain.
+
+22 October 2026, decision b amended by Chee Long: the main run after PR #4 failed the kernel guard on
+`7.0.0-1017-azure`. ubuntu-24.04 image 20261021 moves to that kernel, and MongoDB 9.0 refuses every Ubuntu 7.0 kernel
+because Ubuntu reports them as 7.0.0 (SERVER-136848, open); no MongoDB release fixes SERVER-121912. The `databases`
+job moves to hosted `ubuntu-22.04` (kernel 6.8, which that release cannot exceed); `host` stays on `ubuntu-24.04`.
+Real MongoDB checks still run on hosted runners; self-hosted remains the fallback.

@@ -68,6 +68,33 @@ python scripts/check_docs.py
 The main suite and all database tests remain in Docker. The host command disables the database conftest because these
 checks operate only on temporary documentation trees and submission archives.
 
+### Continuous integration
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every pull request and every push to `main` on
+GitHub-hosted runners (`databases` on `ubuntu-22.04`, `host` on `ubuntu-24.04`), with no repository secrets: each run generates throwaway credentials with
+`init_env.py`. The `databases` job checks the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13), builds the images,
+waits for healthy databases, migrates as the owner, runs the drift check, imports the committed Olist fixture with
+`seed_demo`, then runs the full suite and the pipeline tests; it always removes only its own Compose project. The
+`host` job runs `scripts/check_docs.py` and the host Git-index/packaging tests, and fails if any of them skip.
+
+To reproduce the `databases` job locally, use a separate project name so nothing touches the `mercer` project or its
+volumes. If the main stack is running, first move the host ports, for example `export APP_PORT=8011 MONGO_PORT=27028`. In Git Bash, prefix
+commands that pass container paths with `MSYS_NO_PATHCONV=1`.
+
+```sh
+docker compose -p mercer-ci-local build migrate
+docker compose -p mercer-ci-local up --detach --wait db mongo
+docker compose -p mercer-ci-local run --rm migrate
+docker compose -p mercer-ci-local run --rm migrate python manage.py makemigrations --check --dry-run
+docker compose -p mercer-ci-local run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+docker compose -p mercer-ci-local run --rm migrate python manage.py seed_demo
+docker compose -p mercer-ci-local run --rm migrate pytest -q -rs -p no:cacheprovider /app/tests
+docker compose -p mercer-ci-local --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
+docker compose -p mercer-ci-local --profile tools down --volumes --remove-orphans
+```
+
+The last command deletes only the `mercer-ci-local` project's containers and volumes.
+
 ## Configuration
 
 `src/tools/init_env.py` creates `.env` from [.env.example](.env.example) and, run again later, adds keys a newer version
@@ -249,6 +276,9 @@ every operating system.
 - **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
   8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
   Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.
+  Ubuntu reports every 7.0 kernel as `7.0.0-…` (for example Ubuntu 26.04), so MongoDB refuses it even when the fix is
+  included (MongoDB SERVER-136848); use Docker Desktop or an Ubuntu 22.04/24.04 kernel older than 6.19 there. CI
+  runs its database job on `ubuntu-22.04` for the same reason.
 - **Docker "cannot find the file specified" (`dockerDesktopLinuxEngine`) on Windows:** Docker Desktop is not running.
 - **Git Bash on Windows turns `/app/...` into a Windows path:** run the commands in PowerShell, or set
   `MSYS_NO_PATHCONV=1` first.
