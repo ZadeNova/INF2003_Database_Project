@@ -206,6 +206,13 @@ docker compose run --rm migrate python manage.py create_operator <username>
 
 ## Catalogue and seller products
 
+After pulling catalogue changes into an existing setup, add its MongoDB indexes once (the `migrate` service runs
+Django migrations only; `mongo_setup` is idempotent):
+
+```sh
+docker compose run --rm migrate python manage.py mongo_setup
+```
+
 ### Catalogue browsing
 
 The shop at `/products/` shows featured picks and categories. Search by name or choose a category, then combine
