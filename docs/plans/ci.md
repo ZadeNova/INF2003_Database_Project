@@ -1,6 +1,6 @@
 # ci: Real-database correctness, quality gates and demo-story tests
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · Phases 1B–4 (25 October to 4 November 2026)
 · depends on: `foundation`; extend feature and benchmark checks as their workstreams land
 

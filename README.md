@@ -67,6 +67,33 @@ python scripts/check_docs.py
 The main suite and all database tests remain in Docker. The host command disables the database conftest because these
 checks operate only on temporary documentation trees and submission archives.
 
+### Continuous integration
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every pull request and every push to `main` on
+GitHub-hosted `ubuntu-24.04` runners, with no repository secrets: each run generates throwaway credentials with
+`init_env.py`. The `databases` job checks the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13), builds the images,
+waits for healthy databases, migrates as the owner, runs the drift check, imports the committed Olist fixture with
+`seed_demo`, then runs the full suite and the pipeline tests; it always removes only its own Compose project. The
+`host` job runs `scripts/check_docs.py` and the host Git-index/packaging tests, and fails if any of them skip.
+
+To reproduce the `databases` job locally, use a separate project name so nothing touches the `mercer` project or its
+volumes. If the main stack is running, first move the host ports, for example `export APP_PORT=8011 MONGO_PORT=27028`. In Git Bash, prefix
+commands that pass container paths with `MSYS_NO_PATHCONV=1`.
+
+```sh
+docker compose -p mercer-ci-local build migrate
+docker compose -p mercer-ci-local up --detach --wait db mongo
+docker compose -p mercer-ci-local run --rm migrate
+docker compose -p mercer-ci-local run --rm migrate python manage.py makemigrations --check --dry-run
+docker compose -p mercer-ci-local run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+docker compose -p mercer-ci-local run --rm migrate python manage.py seed_demo
+docker compose -p mercer-ci-local run --rm migrate pytest -q -rs -p no:cacheprovider /app/tests
+docker compose -p mercer-ci-local --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
+docker compose -p mercer-ci-local --profile tools down --volumes --remove-orphans
+```
+
+The last command deletes only the `mercer-ci-local` project's containers and volumes.
+
 ## Configuration
 
 `src/tools/init_env.py` creates `.env` from [.env.example](.env.example) and, run again later, adds keys a newer version

@@ -129,4 +129,10 @@ python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py te
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
 database; `web` holds only the runtime role. The image copies `src/` at build time and `migrate` mounts `tests/`: run
-`docker compose build migrate` after changing app code. The benchmark and CI commands are added here when they land.
+`docker compose build migrate` after changing app code. The benchmark commands are added here when they land.
+
+CI (`.github/workflows/ci.yml`, stage 1 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
+`main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,
+the host Git-index/packaging tests (which must not skip) and `scripts/check_docs.py`. To reproduce a run locally, use
+the README's "Continuous integration" commands; they use their own Compose project (`-p`), never `mercer`, so teardown
+cannot touch your data. Do not print `.env` or `docker compose config` in CI.
