@@ -3,6 +3,32 @@
 Lasting decisions someone could later question, with the reason. Scope, tiers and dates are in [PLAN.md](../PLAN.md);
 this file holds the choices behind the code. Add a row when a decision is made, not when it is rediscovered.
 
+## olist-import implementation (22 October 2026; independent review complete)
+
+The approved scope decisions remain in [the workstream plan](plans/olist-import.md#decisions-all-approved-21-october-2026).
+
+| ID | Decision | Why |
+|---|---|---|
+| olist-i1 | Store the ECB XML, retrieval day and actual reference publication date; use the latest reference available when execution starts | The Singapore execution precedes that day's European fixing. Reproducibility requires an honest, fixed source date rather than inventing or relabelling a rate |
+| olist-i2 | Fixed content seed 82; per-product SHA-256 seeds include both source product and seller; template keys are sorted | Reordering or adding unrelated products does not change an existing product's generated content |
+| olist-i3 | Use the pinned Argos package loader/tokenizer and CTranslate2 backend on whole newline-separated review paragraphs, in a separate offline image | Avoids optional sentence-segmentation/PyTorch dependencies in the application; batches distinct short review texts reproducibly. Model version, SHA-256, beam, numeric mode and thread count are recorded |
+| olist-i4 | Customer profiles keep the latest retained source purchase address, then source customer ID; generated imported usernames never include fabricated personal names | Olist has one customer ID/address per order but a customer_unique_id may repeat |
+| olist-i5 | Source rows contributing to grouping count as kept/transformed; output counts are separate | Source read = kept + removed remains meaningful when products/orders/reviews expand or rows aggregate |
+| olist-i6 | Preserve cancelled-order reviews as history; anchor imported cancellation/refund times to purchase time with an explicit ledger note | Olist supplies no cancellation timestamp. A deterministic, labelled anchor is preferable to an invented event date |
+| olist-i7 | Flush deferred FKs before restoring USER triggers; check all SQL invariants before committing MongoDB; compensate a final PostgreSQL commit failure | PostgreSQL forbids ALTER TABLE while deferred trigger events are pending. Cross-store loading is explicit and cannot claim a distributed atomic commit |
+| olist-i8 | Composite refund (order, checkout) FK and role/profile guard triggers complement the approved ownership FKs | Prevents contradictory profile roles and a refund pointing at another checkout, without implementing later account/payment workflows |
+| olist-i9 | Minimum product pages query the canonical visibility view through an unmanaged ORM ID model | Keeps one definition of visible products and avoids duplicating the conditions or introducing a raw-SQL web path |
+| olist-i10 | Raw-versus-imported delivery analysis counts one review per original checkout | Per-line copies of an order review must not weight multi-line orders more heavily |
+| olist-i11 | Include every available scarce broken fixture case and record shortages in its selection manifest | The real source has only one order with no payment; two examples cannot be selected without inventing data |
+| olist-i12 | Port auth, CSRF, logging, privilege and outage checks; retain idempotency as a customer-scoped database constraint test while old checkout routes are closed | Preserves applicable security coverage without implementing a later workstream. Real refused connections replace database mocks |
+| olist-i13 | Run Git-index documentation checks separately on the host | The minimal application image has no Git; these temporary-tree checks need no database or app credentials |
+| olist-i14 | Seed the dashboard product from non-cancelled imported sales in the final imported 28-day window | Stock 1 with a 30-day lead time is guaranteed to flag only if demand is positive; selecting an arbitrary historical product would not ensure the later demo works |
+| olist-i15 | Preserve the source profile's actual adjacent-bucket ordering, including its small longest-delay uptick | The exit check requires the same pattern within tolerance, not an invented strictly declining trend. The source profile and imported comparison retain the evidence |
+| olist-i16 | Commit MongoDB import batches separately, retaining one PostgreSQL transaction and ID-scoped compensation | The first full-data run exceeded MongoDB's transaction lifetime. Bounded transactions respect its limits; the fixture's malformed-input/reference tests also verify cleanup after earlier batches commit |
+| olist-i17 | Keep execution logs, timings, test summaries and review status outside the derived data tree; retain command-produced JSON as local review evidence | Execution evidence changes between runs and is not a deterministic dataset input or output. The independent review identified that the ad hoc report and its ignored generator did not belong in the data manifests |
+| olist-i18 | Runtime may read Django migration history but may not modify it or use its identity sequence | Broad application-table grants must not allow web to fabricate or erase the owner's migration record |
+| olist-i19 | Demo relisting labels use distinct retained imported orders, alongside current visibility and existing labels | Cleaning rule 15 gives the original visibility threshold. An earlier seeder may already have set active, so the current flag alone cannot repair a missing relisting label; later application orders must not change this historical decision |
+
 ## foundation (21 October 2026)
 
 | ID | Decision | Why |

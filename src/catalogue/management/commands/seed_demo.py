@@ -1,81 +1,89 @@
-"""Deterministic demo shoe catalogue (every model in every size) and store_operator role; create-only, safe
-to re-run."""
 import os
-import random
-from decimal import ROUND_HALF_UP, Decimal
+from datetime import datetime, time, timedelta
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
+from django.db.models import Count, Max
+from django.utils import timezone
 
-from catalogue.models import Product, ShoeModel
-from catalogue.shoes import SHOES, SIZES, sku
+from accounts.models import CustomerProfile, Seller
+from catalogue.models import Product
+from orders.models import Order, OrderLine
 
-
-def money(value):
-    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+MEMBERS = ("chee-long", "erfan", "syahfariz", "jun-keat", "joash")
+RELISTED_LABEL = "relisted for demo visibility"
 
 
 class Command(BaseCommand):
-    help = "Create deterministic demo catalogue products in settings.DEMO_NAMESPACE. Create-only: safe to re-run."
-
-    def add_arguments(self, parser):
-        parser.add_argument("--seed", type=int, default=42)
-        parser.add_argument("--no-products", action="store_true", help="Create the operator without demo products")
+    help = "Create demo logins from environment passwords and label two demo stock adjustments."
 
     def handle(self, *args, **options):
-        operator_password = os.environ.get("DEMO_OPERATOR_PASSWORD")
-
-        rng = random.Random(options["seed"])
-        created = 0
-        shoes = [] if options["no_products"] else SHOES
-        for shoe_id, name, category, price, cost, _, _ in shoes:
-            model, _ = ShoeModel.objects.get_or_create(
-                namespace=settings.DEMO_NAMESPACE, external_id=shoe_id,
-                defaults={"name": name, "category": category})
-            for size in SIZES:
-                _, was_created = Product.objects.get_or_create(
-                    namespace=settings.DEMO_NAMESPACE,
-                    external_id=sku(shoe_id, size),
-                    defaults={
-                        "name": name,
-                        "category": category,
-                        "price": money(price),
-                        "cost": money(cost),
-                        "stock": rng.randint(0, 40),
-                        "lead_time_days": rng.randint(3, 14),
-                        "shoe_model": model,
-                        "size": size,
-                    },
-                )
-                created += was_created
-        total = len(shoes) * len(SIZES)
-        self.stdout.write(f"Created {created} demo product(s); {total - created} already existed.")
-
-        group, _ = Group.objects.get_or_create(name="store_operator")
-        for app_label, codename in [("catalogue", "toggle_product_active"), ("reporting", "view_analytics")]:
-            try:
-                permission = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-            except Permission.DoesNotExist:
-                raise CommandError(
-                    f"{app_label}.{codename} permission not found — run 'manage.py migrate' before seed_demo."
-                ) from None
-            group.permissions.add(permission)
-
+        passwords = {}
+        for role in ("customer", "seller", "operator"):
+            value = os.environ.get("DEMO_" + role.upper() + "_PASSWORD", "")
+            if not value or value.startswith("replace-"):
+                raise CommandError("All three DEMO_*_PASSWORD variables must be supplied; no fallback passwords exist.")
+            passwords[role] = value
         User = get_user_model()
-        operator, operator_created = User.objects.get_or_create(username="demo-operator")
-        if operator_created:
-            operator.set_password(operator_password or "Str0ngDemoOperator!2026")
+        with transaction.atomic():
+            latest = Order.objects.filter(checkout__olist_order_id__isnull=False).aggregate(latest=Max("placed_at"))["latest"]
+            if latest is None:
+                raise CommandError("Import Olist before seeding demo accounts.")
+            as_of = timezone.localdate(latest)
+            start = timezone.make_aware(datetime.combine(as_of - timedelta(days=27), time.min))
+            end = timezone.make_aware(datetime.combine(as_of + timedelta(days=1), time.min))
+            recent_lines = OrderLine.objects.filter(order__checkout__olist_order_id__isnull=False,
+                order__placed_at__gte=start, order__placed_at__lt=end).exclude(order__status="cancelled")
+            seller = Seller.objects.filter(user__username="demo-seller").first()
+            if seller is None:
+                eligible = (Product.objects.values("seller_id").annotate(n=Count("id"))
+                            .filter(n__gte=2).values("seller_id"))
+                seller = (Seller.objects.filter(status="approved", olist_seller_id__isnull=False, pk__in=eligible,
+                                                id__in=recent_lines.values("seller_id"))
+                          .annotate(volume=Count("orders")).order_by("-volume", "olist_seller_id").first())
+            if seller is None:
+                raise CommandError("Import Olist first: a real approved seller with at least two products is required.")
+            if User.objects.filter(username="demo-seller").exclude(pk=seller.user_id).exists():
+                raise CommandError("demo-seller is already owned by a different account")
+            for name in MEMBERS:
+                user, _ = User.objects.get_or_create(username="demo-" + name, defaults={"role": "customer"})
+                if user.role != "customer":
+                    raise CommandError("A demo customer name belongs to another role")
+                user.set_password(passwords["customer"])
+                user.save()
+                CustomerProfile.objects.get_or_create(user=user)
+            operator, _ = User.objects.get_or_create(username="demo-operator", defaults={"role": "operator", "is_staff": True})
+            if operator.role != "operator":
+                raise CommandError("demo-operator belongs to another role")
+            operator.set_password(passwords["operator"])
             operator.save()
-            operator.groups.add(group)
-        elif not operator.groups.filter(pk=group.pk).exists():
-            raise CommandError(
-                "'demo-operator' already exists and is not a seed-provisioned operator; "
-                "refusing to grant privileges."
-            )
-        self.stdout.write(
-            "Created demo-operator account with a fresh password."
-            if operator_created
-            else "demo-operator already existed; password left unchanged."
-        )
+            user = seller.user
+            if user.role != "seller":
+                raise CommandError("Imported seller has an invalid user role")
+            user.username = "demo-seller"
+            user.set_password(passwords["seller"])
+            user.save()
+            flagged = seller.products.filter(id__in=recent_lines.values("product_id"), taken_down=False).order_by("id").first()
+            sold_out = seller.products.exclude(pk=flagged.pk if flagged else None).filter(taken_down=False).order_by("-active", "id").first()
+            if flagged is None or sold_out is None:
+                raise CommandError("The demo seller needs two visible products and recent imported demand.")
+            for product, stock, lead_time, label in (
+                (sold_out, 0, 7, "Demo adjustment: sold out for the later wishlist demonstration"),
+                (flagged, 1, 30, "Demo adjustment: low stock and 30-day lead time; recent 28-day imported demand for the later dashboard demonstration"),
+            ):
+                # Rule 15 derives imported visibility from distinct retained
+                # orders. Earlier seeding may already have changed active.
+                imported_orders = product.order_lines.filter(
+                    order__checkout__olist_order_id__isnull=False).values("order_id").distinct().count()
+                if imported_orders < 2 or not product.active or RELISTED_LABEL in product.demo_adjustment:
+                    label += "; " + RELISTED_LABEL
+                product.stock = stock
+                product.lead_time_days = lead_time
+                product.active = True
+                product.has_generated_content = True
+                product.demo_adjustment = label
+                product.save(update_fields=["stock", "lead_time_days", "active", "has_generated_content", "demo_adjustment"])
+        self.stdout.write("Demo customers: " + ", ".join("demo-" + name for name in MEMBERS))
+        self.stdout.write("Demo operator: demo-operator; seller: demo-seller (real high-volume Olist seller). Passwords were not printed.")
+        self.stdout.write("Two products carry explicit demo-adjustment labels; no historical money or orders changed.")

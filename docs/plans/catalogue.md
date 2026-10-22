@@ -67,3 +67,8 @@ injection negatives on search parameters.
 facet counts exclude unbuyable products, with "Top rated" sorted in the pipeline (X1); `taken_down` and the
 `purchasable_product` view now come from `olist-import`; the multikey index joins `mongo_setup`; the generated-content
 label; `photo_file_id`, old-photo deletion and `check_specs` defined.
+
+22 October 2026, follow-ups from the independent `olist-import` code review: reuse a MongoClient per application
+process rather than opening one for each product-detail request, while retaining explicit test-database routing
+and controlled outage behaviour; replace the minimum import's generic `package` category icons with the category
+mapping required by DESIGN.md. These remain catalogue work and do not block the Phase 1A data import.

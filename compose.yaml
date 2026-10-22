@@ -91,6 +91,9 @@ services:
       # Only the role tests use these, to prove what the runtime role may not do.
       POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
       POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+      DEMO_CUSTOMER_PASSWORD: ${DEMO_CUSTOMER_PASSWORD:?Run python src/tools/init_env.py first}
+      DEMO_SELLER_PASSWORD: ${DEMO_SELLER_PASSWORD:?Run python src/tools/init_env.py first}
+      DEMO_OPERATOR_PASSWORD: ${DEMO_OPERATOR_PASSWORD:?Run python src/tools/init_env.py first}
     command: ["python", "manage.py", "migrate", "--noinput"]
     depends_on:
       db:
@@ -102,6 +105,35 @@ services:
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
     restart: "no"
+  tools:
+    profiles: [tools]
+    build:
+      context: .
+      dockerfile: scripts/tools.Dockerfile
+    image: mercer-tools
+    volumes:
+      - ./analytics:/workspace/analytics:ro,z
+      - ./scripts:/workspace/scripts:ro,z
+      - ./data:/workspace/data:z
+      - ./data/raw:/workspace/data/raw:ro,z
+      - ./tests:/workspace/tests:z
+      - ./docs:/workspace/docs:z
+      - ./.cache:/workspace/.cache:z
+    network_mode: none
+  translation:
+    profiles: [translation]
+    build:
+      context: .
+      dockerfile: scripts/translation.Dockerfile
+    image: mercer-translation
+    volumes:
+      - ./scripts:/workspace/scripts:ro,z
+      - ./data/raw:/workspace/data/raw:ro,z
+      - ./data/derived:/workspace/data/derived:z
+      - ./tests/fixtures/olist:/workspace/tests/fixtures/olist:z
+      - ./tests/fixtures/olist/raw:/workspace/tests/fixtures/olist/raw:ro,z
+      - ./.cache/translation:/workspace/.cache/translation:z
+    network_mode: none
 volumes:
   postgres_data:
   mongo_data:

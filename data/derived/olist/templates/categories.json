@@ -1,0 +1,133 @@
+{
+  "seed": 82,
+  "label": "Generated demonstration attributes and word lists, not factual product specifications",
+  "generic": {
+    "words": ["Everyday", "Essential", "Classic", "Practical"],
+    "attributes": {
+      "colour": {"type": "string", "values": ["black", "white", "blue", "grey"]},
+      "collection": {"type": "string", "values": ["classic", "everyday", "modern"]}
+    }
+  },
+  "categories": {
+    "cama_mesa_banho": {
+      "words": ["Soft", "Woven", "Comfort"],
+      "attributes": {
+        "material": {"type": "string", "values": ["cotton", "linen", "microfibre"]},
+        "size": {"type": "string", "values": ["single", "queen", "king"]},
+        "pattern": {"type": "string", "values": ["plain", "striped", "geometric"]}
+      }
+    },
+    "beleza_saude": {
+      "words": ["Daily", "Gentle", "Fresh"],
+      "attributes": {
+        "format": {"type": "string", "values": ["cream", "gel", "lotion"]},
+        "skin_type": {"type": "string", "values": ["dry", "normal", "combination"]},
+        "volume_ml": {"type": "integer", "values": [50, 100, 200]}
+      }
+    },
+    "esporte_lazer": {
+      "words": ["Active", "Trail", "Motion"],
+      "attributes": {
+        "activity": {"type": "string", "values": ["fitness", "camping", "running"]},
+        "material": {"type": "string", "values": ["nylon", "polyester", "steel"]},
+        "outdoor": {"type": "boolean", "values": [true, false]}
+      }
+    },
+    "moveis_decoracao": {
+      "words": ["Modern", "Studio", "Home"],
+      "attributes": {
+        "material": {"type": "string", "values": ["wood", "metal", "fabric"]},
+        "style": {"type": "string", "values": ["minimal", "classic", "industrial"]},
+        "room": {"type": "string", "values": ["bedroom", "living room", "study"]}
+      }
+    },
+    "informatica_acessorios": {
+      "words": ["Connect", "Desk", "Compact"],
+      "attributes": {
+        "connection": {"type": "string", "values": ["USB", "Bluetooth", "wired"]},
+        "compatibility": {"type": "string", "values": ["Windows", "Linux", "universal"]},
+        "wireless": {"type": "boolean", "values": [true, false]}
+      }
+    },
+    "utilidades_domesticas": {
+      "words": ["Kitchen", "Everyday", "Household"],
+      "attributes": {
+        "material": {"type": "string", "values": ["steel", "glass", "silicone"]},
+        "capacity_ml": {"type": "integer", "values": [250, 500, 1000]},
+        "dishwasher_safe": {"type": "boolean", "values": [true, false]}
+      }
+    },
+    "relogios_presentes": {
+      "words": ["Classic", "Timeless", "Signature"],
+      "attributes": {
+        "strap": {"type": "string", "values": ["leather", "steel", "silicone"]},
+        "display": {"type": "string", "values": ["analogue", "digital"]},
+        "case_colour": {"type": "string", "values": ["silver", "black", "gold"]}
+      }
+    },
+    "telefonia": {
+      "words": ["Mobile", "Pocket", "Connect"],
+      "attributes": {
+        "accessory": {"type": "string", "values": ["case", "charger", "cable"]},
+        "connector": {"type": "string", "values": ["USB-C", "micro-USB", "universal"]},
+        "colour": {"type": "string", "values": ["black", "white", "blue"]}
+      }
+    },
+    "ferramentas_jardim": {
+      "words": ["Garden", "Outdoor", "Green"],
+      "attributes": {
+        "tool_type": {"type": "string", "values": ["hand tool", "watering", "pruning"]},
+        "material": {"type": "string", "values": ["steel", "aluminium", "plastic"]},
+        "handle": {"type": "string", "values": ["wood", "rubber", "plastic"]}
+      }
+    },
+    "automotivo": {
+      "words": ["Road", "Drive", "Touring"],
+      "attributes": {
+        "use": {"type": "string", "values": ["interior", "maintenance", "storage"]},
+        "material": {"type": "string", "values": ["rubber", "plastic", "metal"]},
+        "fit": {"type": "string", "values": ["compact", "standard", "universal"]}
+      }
+    },
+    "brinquedos": {
+      "words": ["Play", "Creative", "Discovery"],
+      "attributes": {
+        "age_years": {"type": "integer", "values": [3, 6, 9]},
+        "play_type": {"type": "string", "values": ["building", "puzzle", "pretend"]},
+        "material": {"type": "string", "values": ["wood", "plastic", "fabric"]}
+      }
+    },
+    "cool_stuff": {
+      "words": ["Curious", "Creative", "Novel"],
+      "attributes": {
+        "theme": {"type": "string", "values": ["travel", "desk", "hobby"]},
+        "material": {"type": "string", "values": ["metal", "plastic", "wood"]},
+        "portable": {"type": "boolean", "values": [true, false]}
+      }
+    },
+    "perfumaria": {
+      "words": ["Fresh", "Botanical", "Signature"],
+      "attributes": {
+        "scent": {"type": "string", "values": ["citrus", "floral", "woody"]},
+        "volume_ml": {"type": "integer", "values": [30, 50, 100]},
+        "concentration": {"type": "string", "values": ["eau de toilette", "eau de parfum"]}
+      }
+    },
+    "bebes": {
+      "words": ["Little", "Soft", "Gentle"],
+      "attributes": {
+        "age_months": {"type": "integer", "values": [0, 6, 12]},
+        "material": {"type": "string", "values": ["cotton", "silicone", "polyester"]},
+        "care": {"type": "string", "values": ["hand wash", "machine wash"]}
+      }
+    },
+    "eletronicos": {
+      "words": ["Digital", "Compact", "Smart"],
+      "attributes": {
+        "power": {"type": "string", "values": ["USB", "battery", "mains"]},
+        "connection": {"type": "string", "values": ["wired", "Bluetooth", "Wi-Fi"]},
+        "portable": {"type": "boolean", "values": [true, false]}
+      }
+    }
+  }
+}

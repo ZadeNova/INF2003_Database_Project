@@ -461,3 +461,10 @@ below the palette in the same block and are built from these values.
   whitespace. The "As built in this project" section records our adaptations.
   See [licence text and verification details](docs/licenses/voicebox-MIT.txt)
   and [docs/AI_USE.md](docs/AI_USE.md).
+
+### 8. Marketplace product media
+
+The minimum marketplace product list and detail page reuse the existing flat cards, typography and category glyph
+surfaces. Product media is a sprite icon selected by the category; descriptions and generated-content labels use the
+existing body and helper-text styles. The prior dataset's 3D viewer, hover enlargement and size picker are removed.
+No new visual tokens or typefaces are introduced.

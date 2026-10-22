@@ -1,69 +1,57 @@
 from io import StringIO
-from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import OperationalError
+from django.db.migrations.recorder import MigrationRecorder
 from django.test import override_settings
 from django.urls import reverse
-from pymongo.errors import ServerSelectionTimeoutError
 
 
 @pytest.mark.django_db
-def test_health_is_safe_and_has_no_database_queries(client, django_assert_num_queries):
+def test_health_is_safe_and_has_no_database_queries(client,django_assert_num_queries):
     with django_assert_num_queries(0):
-        response = client.get(reverse("health"))
-        head = client.head(reverse("health"))
+        response=client.get(reverse("health"));head=client.head(reverse("health"))
     assert response.status_code == head.status_code == 200
-    assert response.json() == {"status": "ok"}
-    assert response["Cache-Control"] == "no-store"
-    assert response["Content-Type"] == "application/json"
-    assert not head.content
-    assert not response.cookies
+    assert response.json() == {"status":"ok"}
+    assert response["Cache-Control"] == "no-store" and not head.content and not response.cookies
 
 
-def test_health_survives_database_failure(client):
-    with patch("django.db.backends.postgresql.base.DatabaseWrapper.get_new_connection",
-               side_effect=OperationalError("private connection details")):
+def test_health_survives_database_failure(client,postgres_unavailable):
+    with postgres_unavailable():
         assert client.get("/health/").status_code == 200
 
 
 def test_health_rejects_mutations(client):
-    assert client.post("/health/").status_code == 405
-    assert client.delete("/health/").status_code == 405
+    assert client.post("/health/").status_code == client.delete("/health/").status_code == 405
 
 
 @override_settings(ALLOWED_HOSTS=["localhost"])
 def test_health_validates_host(client):
-    assert client.get("/health/", HTTP_HOST="unexpected.example").status_code == 400
+    assert client.get("/health/",HTTP_HOST="unexpected.example").status_code == 400
 
 
 @pytest.mark.django_db
 def test_database_readiness_command():
-    output = StringIO()
-    call_command("check_database", stdout=output)
+    output=StringIO();call_command("check_database",stdout=output)
     assert output.getvalue().strip() == '{"postgresql": "ok", "mongodb": "ok", "migrations": "applied"}'
 
 
-def test_database_failure_is_sanitized():
-    with patch("config.management.commands.check_database.connection.cursor",
-               side_effect=OperationalError("private connection details")):
-        with pytest.raises(CommandError, match=r"^Database unavailable\.$"):
-            call_command("check_database")
+def test_database_failure_is_sanitized(postgres_unavailable):
+    with postgres_unavailable(),pytest.raises(CommandError,match=r"^Database unavailable\.$"):
+        call_command("check_database")
 
 
 @pytest.mark.django_db
-def test_mongodb_failure_is_sanitized():
-    with patch("config.management.commands.check_database.mongo.client",
-               side_effect=ServerSelectionTimeoutError("private connection details")):
-        with pytest.raises(CommandError, match=r"^MongoDB unavailable\.$"):
-            call_command("check_database")
+def test_mongodb_failure_is_sanitized(monkeypatch):
+    monkeypatch.setenv("MONGO_HOST","127.0.0.1");monkeypatch.setenv("MONGO_PORT","1")
+    with pytest.raises(CommandError,match=r"^MongoDB unavailable\.$"):
+        call_command("check_database")
 
 
 @pytest.mark.django_db
 def test_pending_migrations_fail_readiness():
-    with patch("config.management.commands.check_database.MigrationExecutor") as executor:
-        executor.return_value.migration_plan.return_value = ["pending"]
-        with pytest.raises(CommandError, match="migrations are pending"):
-            call_command("check_database")
+    # Remove the actual leaf migration record; the test transaction restores it.
+    MigrationRecorder.Migration.objects.filter(app="sessions",name="0001_initial").delete()
+    with pytest.raises(CommandError,match="migrations are pending"):
+        call_command("check_database")

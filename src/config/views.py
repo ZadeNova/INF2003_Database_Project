@@ -23,13 +23,7 @@ def design_notes_unavailable(request):
 
 @require_safe
 def statistics_preview(request):
-    """Presentation-only operator dashboard comp. Every figure is invented.
-
-    The real dashboard is batch 06c and reads reporting.queries against a
-    completed analytics run; it lives at its own protected route. This one is
-    a design comp with hardcoded numbers, so it deliberately sits in the
-    foundation preview namespace and has no permission check to imply.
-    """
+    """Labelled presentation-only statistics comp, with invented figures."""
     return render(request, "foundation/statistics.html")
 
 

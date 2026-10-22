@@ -2,15 +2,12 @@
 import io
 import json
 import logging
-from unittest import mock
 
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import OperationalError
-from django.db.backends.postgresql.base import DatabaseWrapper
 from django.test import Client, override_settings
-from django.urls import reverse
+from django.urls import reverse, path
 
 from config.jsonlog import JsonFormatter
 
@@ -69,7 +66,7 @@ def test_the_numeric_user_id_is_logged_when_the_view_loaded_the_user(logs, user)
     client = Client()
     client.force_login(user)
 
-    client.get(reverse("cart:detail"))
+    client.get(reverse("catalogue:product_list"))
 
     assert logs.request_lines()[-1]["user_id"] == user.pk
     assert "shopper" not in logs.raw                       # the username is never logged
@@ -122,12 +119,12 @@ def test_a_login_post_logs_neither_the_password_nor_the_cookie(logs, user):
         assert secret not in logs.raw
 
 
+@override_settings(ROOT_URLCONF=__name__)
 def test_a_controlled_failure_can_be_correlated_without_leaking_its_message(logs, user):
     client = Client(raise_request_exception=False)
     client.force_login(user)
 
-    with mock.patch("cart.services.get_cart", side_effect=ValueError("secret-detail password=hunter2")):
-        response = client.get(reverse("cart:detail"))
+    response = client.get("/controlled-failure/")
 
     assert response.status_code == 500
     request_id = response["X-Request-ID"]
@@ -136,17 +133,17 @@ def test_a_controlled_failure_can_be_correlated_without_leaking_its_message(logs
     (error,) = logs.records("django.request")
     assert error["exception"] == "ValueError" and error["request_id"] == request_id
     assert error["frames"] and all(":" in frame for frame in error["frames"])
-    assert any("cart/views.py" in frame for frame in error["frames"])         # the frame that called the failing code
+    assert any("tests/test_request_logging.py" in frame for frame in error["frames"])         # the frame that called the failing code
     for secret in ("secret-detail", "hunter2"):
         assert secret not in logs.raw
 
 
-def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a_lookup(logs, user):
+def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a_lookup(logs, user, postgres_unavailable):
     client = Client()
     client.force_login(user)
 
-    with mock.patch.object(DatabaseWrapper, "create_cursor", side_effect=OperationalError("db-secret-host refused")):
-        response = client.get(reverse("cart:detail"))
+    with postgres_unavailable():
+        response = client.get(reverse("catalogue:product_list"))
 
     assert response.status_code == 503
     (line,) = logs.request_lines()
@@ -229,3 +226,10 @@ def test_rejected_host_keeps_request_id_in_response_and_security_event(logs):
     (request,) = logs.request_lines()
     assert security["request_id"] == request["request_id"] == "review-request-123"
     assert request["status"] == 400 and "rejected.example" not in logs.raw
+
+
+def controlled_failure(request):
+    raise ValueError("secret-detail password=hunter2")
+
+
+urlpatterns=[path("controlled-failure/",controlled_failure)]

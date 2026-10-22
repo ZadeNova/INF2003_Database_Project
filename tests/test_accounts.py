@@ -29,7 +29,7 @@ def test_anonymous_visitors_can_open_the_auth_pages(route, template):
     assert response.templates[0].name == template
 
 
-def test_registration_creates_user_with_usable_password_and_no_profile():
+def test_registration_creates_customer_with_usable_password_and_one_profile():
     client = Client()
 
     response = client.post(reverse("accounts:register"), {
@@ -42,7 +42,8 @@ def test_registration_creates_user_with_usable_password_and_no_profile():
     assert response.url == reverse("accounts:login")
     user = get_user_model().objects.get(username="newcustomer")
     assert user.has_usable_password()
-    assert CustomerProfile.objects.count() == 0
+    assert user.role == "customer"
+    assert CustomerProfile.objects.get(user=user).olist_customer_unique_id is None
 
 
 def test_registration_rejects_duplicate_username():

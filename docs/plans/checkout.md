@@ -57,6 +57,11 @@ role and scoping negatives; SQL-injection negatives on every raw-SQL path.
 
 ## Review notes
 
+22 October 2026, follow-up from the independent `olist-import` code review: confirm whether the shipping fee on
+Product is per collapsed line or per unit before implementing new checkout charges. The current cleaner takes
+the median collapsed historical line freight, while Product.price is per item. Preserve imported historical
+line freight and exact checkout totals; document and test the chosen new-purchase quantity rule here.
+
 21 October 2026, cross-plan review (fresh session); findings applied: cart and checkout use the `purchasable_product` view; the importer's trigger
 handling; status triggers fire only on a real change, with the named timestamps; an order-status audit trigger owned
 here; the actor set at the start of each transaction; no payment status.

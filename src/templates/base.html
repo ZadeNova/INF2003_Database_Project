@@ -50,27 +50,9 @@
 
             <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation">
                 <a href="{% url 'catalogue:product_list' %}"{% if request.resolver_match.view_name == 'catalogue:product_list' %} aria-current="page"{% endif %}>Shop</a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'orders:list' %}"{% if request.resolver_match.namespace == 'orders' %} aria-current="page"{% endif %}>Orders</a>
-                {% endif %}
             </nav>
 
             <div class="site-header__meta">
-                {% if perms.catalogue.toggle_product_active %}
-                <a class="nav-pill nav-pill--quiet" href="{% url 'catalogue:manage_list' %}"{% if request.resolver_match.view_name == 'catalogue:manage_list' %} aria-current="page"{% endif %}>Manage products</a>
-                {% endif %}
-                {% if perms.reporting.view_analytics %}
-                <a class="nav-pill" href="{% url 'reporting:dashboard' %}"{% if request.resolver_match.namespace == 'reporting' %} aria-current="page"{% endif %}>Analytics</a>
-                {% endif %}
-                {% if user.is_authenticated %}
-                {% with cart_count=user.cart.items.count %}
-                <a class="nav-pill" href="{% url 'cart:detail' %}"{% if request.resolver_match.namespace == 'cart' %} aria-current="page"{% endif %}>
-                    {% include "_icon.html" with name="cart" only %}
-                    Cart
-                    {% if cart_count %}<span class="count-badge">{{ cart_count }}</span><span class="visually-hidden">items in cart</span>{% endif %}
-                </a>
-                {% endwith %}
-                {% endif %}
                 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch between light and dark theme">
                     {% include "_icon.html" with name="moon" extra="theme-toggle__to-dark" only %}
                     {% include "_icon.html" with name="sun" extra="theme-toggle__to-light" only %}
@@ -93,7 +75,7 @@
             {% for message in messages %}
             <div class="message message--{{ message.level_tag }}" role="{% if message.level_tag == 'error' %}alert{% else %}status{% endif %}">
                 <span class="message__icon" aria-hidden="true">{% if message.level_tag == 'error' %}!{% else %}✓{% endif %}</span>
-                <div><p>{{ message }}{% if "cart-added" in message.extra_tags %} <a class="message__link" href="{% url 'cart:detail' %}">View cart</a>{% endif %}</p></div>
+                <div><p>{{ message }}</p></div>
             </div>
             {% endfor %}
         </div>
@@ -112,13 +94,7 @@
                 <p class="site-footer__heading">Shop</p>
                 <ul class="site-footer__links">
                     <li><a href="{% url 'catalogue:product_list' %}">All products</a></li>
-                    {% if user.is_authenticated %}
-                    <li><a href="{% url 'cart:detail' %}">Your cart</a></li>
-                    <li><a href="{% url 'orders:list' %}">Order history</a></li>
-                    {% else %}
                     <li><a href="{% url 'accounts:login' %}">Log in</a></li>
-                    <li><a href="{% url 'accounts:register' %}">Create an account</a></li>
-                    {% endif %}
                 </ul>
             </div>
             <div>

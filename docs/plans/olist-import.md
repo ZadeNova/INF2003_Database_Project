@@ -1,8 +1,9 @@
 # olist-import: Olist cleaning, schema, import, adaptations, accounts
 
-status: approved
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 4 to 5 days
-· phase 1 (26 October to 1 November) · depends on: `foundation`
+· Phase 1A (22 to 24 October 2026, accelerated schedule in PLAN.md section 13) · depends on: `foundation`
+The 4-to-5-day estimate remains an effort risk estimate, not a guarantee for this window.
 
 ## Contract
 
@@ -154,6 +155,48 @@ query's rows; generation is deterministic; rule 18 drops exactly the products le
 | p | `taken_down` and the `purchasable_product` view are created here, so `checkout` (phase 2A) can use them before `catalogue` (2B) |
 | q | One idempotent `mongo_setup` command owns MongoDB setup; later plans extend it |
 
+## Implementation notes (Codex, 22 October 2026; independent review complete)
+
+- The accelerated Phase 1A header follows PLAN.md section 13; the original effort estimate remains a risk estimate.
+- The initial migrations replace the baseline. Existing local databases need the documented project-scoped reset.
+- Implementation choices are recorded in [DECISIONS.md](../DECISIONS.md#olist-import-implementation-22-october-2026-independent-review-complete),
+  including source-address/date anchors, minimal offline Argos inference, FX publication timing, trigger restoration,
+  ledger grouping semantics and a demo product with real recent demand. These are implementation notes, not Claude Code findings.
+- The fixture includes both one-cent and larger exact payment mismatches. Its selection manifest records the source's
+  single no-payment order rather than inventing a second. Its intentionally adversarial tiny longest-delay cohort
+  changes by more than the full-data comparison tolerance when that broken order is removed; a test verifies that
+  strict comparison rejects this case. Full-data comparison remains a required exit check.
+- Profile and verification use the five non-overlapping delay buckets from the dashboard contract. They count one
+  original checkout review, including reviews copied to lines, and preserve the actual raw ordering pattern.
+- No later application routes, benchmark loader, Redis, activity collection, photos, checkout service or dashboard
+  implementation is added. Applicable auth/security/privilege/logging/outage coverage is ported to the new schema.
+- Independent Claude Code review and fix-round verification are complete; their record is retained below.
+  The workstream is closed out and its AI-use log is recorded.
+
+### Implementation verification (Codex; not independent review)
+
+The importer emits measured duration and loader RSS as JSON; `verify_olist` emits the full-data invariant and delivery
+comparison. Execution logs and review evidence remain outside the data checksum tree (decision olist-i17). The test
+commands report their own outcomes; fixture and full-data determinism checks are separate. All required implementation
+exit checks passed. PostgreSQL/MongoDB were recreated from the
+ownership-verified local project volumes and initial migrations applied successfully. The final bulk import, invariant
+queries, demo accounts and real HTTP smoke checks passed. Two full clean/generation runs in separate directories have
+identical checksums; raw and derived manifests verify. The generated profile and ledger are in DATA_MODEL.md.
+
+The final Docker suite uses real databases. Its Git-index-only documentation checks are skipped because the app image
+has no Git; those checks passed in the separate host run. No database test is skipped. Host pytest needed a fresh temp
+directory outside the repository after a Windows temp ACL conflict; README records the remedy.
+
+The first full MongoDB load exceeded a single transaction's lifetime. Bounded batch transactions and ID-scoped
+compensation fixed it; affected failure tests and the complete Docker suite were rerun. Counts in the approved profile
+reproduce exactly. The approximate active estimate and product-removal counts are defined precisely by the ledger:
+active is counted after cleaning per seller-product, and rule 18 separately records removed seller-products and source
+products with no surviving lines. Rule counters overlap and source grouping differs from output row counts.
+
+The workstream is closed out following independent review and fix-round verification; PLAN.md section 14 records
+its status. Benchmark and CI plan review and approval are still required for Phase 1A. No later workstream or Tier 2/3
+feature was added. Publication uses the workstream branch and a pull request; merging is outside this close-out.
+
 ## Review notes
 
 21 October 2026, fresh Claude Code session; findings verified against the data and accepted: exact payment comparison
@@ -169,3 +212,70 @@ import (X4), `mongo_setup`, `platform_stats` and the Bayesian fields, settled na
 timestamps, no payment status, "delisted"), `taken_down` and the `purchasable_product` view moved here, where each
 command runs, demo passwords, the generation step, freight and rounding order, dropped products (X3), 74 categories
 with `category.icon`, and the demo products `seed_demo` guarantees.
+
+22 October 2026, independent code review (fresh Claude Code session) of the uncommitted implementation. No blocking
+findings; every exit check was rerun and passed. After an ownership-verified reset of this project's three named
+volumes: full `import_olist` well under ten minutes with progress; `verify_olist` before `seed_demo` with zero invariant
+rows, all five delay buckets within 0.05 and the raw ordering pattern; `seed_demo` (rerun idempotently) and the HTTP
+smoke script with all three role logins; runtime-role DDL, TRUNCATE, DROP, trigger, `COPY PROGRAM` and `setval`
+negatives refused. Pipeline tests and the full Docker suite passed (only the Git-index checks skipped, which passed on
+the host); `check_docs.py` passed. Two full clean and generation runs matched each other and the committed files; the
+profile, generated DATA_MODEL.md sections, fixture and `make_fixture` subset reproduced; fixture clean plus import ran
+well under a minute. Types, composite FKs, trigger and sequence restoration, validators and indexes were inspected on
+the live databases; ledger counts match the rule table. Translation was reviewed by reading only (model not present).
+- **Medium, open:** `data/derived/olist/verification.json` is built by an uncommitted script in ignored `.cache/` from
+  uncommitted logs, embeds timings, test counts and a review status, and sits in the derived checksum tree. Commit its
+  generator or drop it, and keep evidence outside the data checksums.
+- **Low, open:** the detail page doubles the "Demo adjustment:" prefix; `seed_demo` relists a delisted product without
+  saying so in its label; README says full-data determinism is covered by pipeline tests (only the fixture is); the
+  runtime role has DML on `django_migrations`; import errors drop their cause (`from None`); the detail view opens a
+  MongoClient per request (`catalogue`); product freight takes the median of collapsed lines while price is per item
+  (`checkout` to confirm per-line or per-unit fees); every category icon is `package` while DESIGN.md says the icon is
+  selected by category (`catalogue`).
+- **Noted, accepted:** the FX rate is the 21 October ECB fixing retrieved on 22 October, as olist-i1 records; the
+  fixture's strict delay comparison fails by design and full data is the real evidence; MongoDB batches commit
+  separately, so a hard kill mid-load needs the documented reset.
+
+22 October 2026, Codex fix round responding to the independent review above:
+- **Medium, resolved:** dropped the ad hoc `verification.json` from the repository data tree and regenerated the
+  derived manifest. Its execution evidence remains in ignored local review logs; README points to the commands
+  that emit measurements and comparisons. No ignored evidence generator is required to reproduce the dataset.
+- **Low, fixed:** the product template renders the stored demo label once; relisting is labelled explicitly and
+  the label survives repeated seeding; README distinguishes fixture tests from the separate full-data determinism
+  procedure; runtime is read-only on `django_migrations` and has no privileges on its identity sequence; import
+  command errors retain their causes for the owner's `--traceback` diagnostics.
+- **Low, deferred:** [catalogue](catalogue.md#review-notes) owns MongoClient reuse and the category-icon mapping;
+  [checkout](checkout.md#review-notes) must confirm the product freight unit before implementing new purchases.
+  Imported historical totals and the existing cleaning rule remain unchanged.
+- **Fix-round validation:** affected catalogue, import, role and SQL-injection modules passed on the real databases,
+  followed by the complete Docker suite. The Git-only container skips passed in the host documentation/packaging
+  run. The documented full-data cleaning/generation procedure matched both output directories and the prepared
+  dataset byte for byte. The app image was rebuilt; the migration-history restriction was reapplied to the existing
+  local application database and verified independently in the newly migrated test database. Execution logs remain
+  local review evidence outside the data manifests. Repeated demo seeding, live product pages, all three role logins,
+  SQL invariants and the runtime database health check passed; the migration drift check reported no changes.
+  The workstream remains at review with all changes uncommitted.
+
+22 October 2026, fix-round verification (the independent Claude Code reviewer). Each fix was checked against its
+finding and holds: `verification.json` is gone and the derived manifest verifies; the detail page shows one demo
+label; relisting is labelled and tested; README separates fixture tests from the full-data procedure; on the live
+database the runtime role can read `django_migrations` but not insert, delete or draw its sequence, while app DML
+still works; import errors keep their cause; the deferred items are recorded in the catalogue and checkout plans.
+On a rebuilt image the full Docker suite passed (only the Git-index checks skipped), the migration drift check found
+no changes, host documentation checks, `check_docs.py` and pipeline tests passed, raw, derived and fixture manifests
+verified, and the earlier full-data runs still match the prepared clean data. Rerunning `seed_demo`, the HTTP smoke
+script and all three role logins passed.
+- **Low, open (follow-up):** on the live database seeded before the fix, product 549 shows no relisted label. The fix
+  decides from the current `active` flag, which the earlier seed had already set, so a rerun cannot tell the product
+  was relisted. A fresh reset and import labels it correctly, as the new test shows. A sturdier rule would derive
+  relisting from imported order history (fewer than two distinct orders) instead of the current flag.
+
+22 October 2026, Codex resolution of the previously seeded product's missing-label follow-up: `seed_demo` now derives original
+visibility from distinct retained imported orders (cleaning rule 15), alongside current visibility and any existing
+relisting label. This repairs an earlier seed's missing label without resetting the database; later application
+orders do not contribute to the source threshold. A real-database regression starts with an already-active imported
+product whose old demo label omits relisting and checks repair and repeated-seed stability. On the rebuilt image,
+the catalogue module and complete Docker suite passed (the same Git-only checks skipped). Rerunning the seeder
+repaired the existing live product without a reset; a second run preserved the label, all SQL invariants returned
+no diagnostic rows, and the live HTTP smoke check and role logins passed. The recorded low follow-up is resolved;
+final close-out remains pending and all changes remain uncommitted.

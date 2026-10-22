@@ -1,4 +1,4 @@
-"""Turn transient database failures into a controlled 503 (docs/API.md; review finding SEC-002)."""
+"""Turn transient database failures into a controlled 503; never expose connection details."""
 import logging
 import re
 import time
@@ -9,6 +9,7 @@ from django.db import InterfaceError, OperationalError
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils.functional import empty
+from pymongo.errors import ConnectionFailure
 
 logger = logging.getLogger("mercer.errors")
 request_logger = logging.getLogger("mercer.request")
@@ -89,7 +90,7 @@ class DatabaseUnavailableMiddleware:
         return self.get_response(request)
 
     def process_exception(self, request, exception):
-        if not isinstance(exception, (OperationalError, InterfaceError)):
+        if not isinstance(exception, (OperationalError, InterfaceError, ConnectionFailure)):
             return None
         logger.warning("database unavailable: %s (%s %s)", type(exception).__name__, request.method, request.path,
                        extra={"fields": {"request_id": getattr(request, "request_id", None)}})

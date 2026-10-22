@@ -1,0 +1,6 @@
+id,order_id,checkout_id,amount,reason,refunded_at,imported
+1,72,71,14.05,Imported Olist cancellation; time anchored to purchase,2026-10-14T14:29:08+08:00,True
+2,78,77,9.44,Imported Olist cancellation; time anchored to purchase,2026-07-08T14:14:06+08:00,True
+3,200,197,12.77,Imported Olist cancellation; time anchored to purchase,2026-10-04T22:27:23+08:00,True
+4,232,228,63.42,Imported Olist cancellation; time anchored to purchase,2026-09-28T12:04:19+08:00,True
+5,587,576,27.45,Imported Olist cancellation; time anchored to purchase,2026-04-14T14:38:55+08:00,True

@@ -4,6 +4,11 @@ data/raw/**/*.csv -text
 data/derived/**/*.csv -text
 data/derived/**/*.ndjson -text
 data/derived/**/*.json -text
+tests/fixtures/**/*.csv -text
+tests/fixtures/**/*.ndjson -text
+tests/fixtures/**/*.json -text
+# Checksums describe bytes, so these manifests must keep their LF newlines too.
+**/checksums.txt text eol=lf
 # Linux container startup scripts require LF shebangs on Windows checkouts.
 src/docker/*.sh text eol=lf
 # Every shell script runs under bash (Linux, macOS, WSL); keep LF endings on Windows checkouts too.

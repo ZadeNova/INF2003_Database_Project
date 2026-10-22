@@ -1415,56 +1415,8 @@ h1 {
     background: var(--color-surface-raised);
 }
 
-.tile--kitchen,
-.tile--electronics {
-    background: var(--color-surface-raised);
-}
-
 .tile--muted {
     opacity: 0.65;
-}
-
-/* The model fades up from slightly small once its file has loaded, instead of
-   popping in. Hover lifts the card and pushes the shoe towards the viewer;
-   site.js eases the spin speed so it never jumps. */
-.tile__model {
-    width: 100%;
-    height: 100%;
-    --poster-color: transparent;
-    opacity: 0;
-    transform: scale(0.94);
-    transition: opacity var(--dur-enter) var(--ease-out),
-                transform 320ms var(--ease-out);
-}
-
-.tile__model.is-loaded {
-    opacity: 1;
-    transform: scale(1);
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .product-card {
-        position: relative;
-        transition: border-color var(--dur-fast) var(--ease-out),
-                    transform 240ms var(--ease-out);
-    }
-
-    .product-card:hover {
-        z-index: 1;
-        transform: scale(1.03);
-    }
-
-    .product-card:hover .tile__model.is-loaded {
-        transform: scale(1.12);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .tile__model,
-    .product-card:hover,
-    .product-card:hover .tile__model.is-loaded {
-        transform: none;
-    }
 }
 
 .tile__glyph {
@@ -1516,60 +1468,6 @@ h1 {
 .product-card__action {
     margin-top: auto;
     padding-top: var(--space-2);
-}
-
-/* Size picker: DESIGN.md Inputs. 44px, 2px medium border, square, 14px text;
-   uppercase 12px label; a square caret replaces the native rounded arrow. */
-.size-field__label {
-    display: block;
-    margin-bottom: 0.6rem;
-    color: var(--color-text-primary);
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.size-field {
-    position: relative;
-    display: block;
-    margin-bottom: var(--space-2);
-}
-
-.size-field::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 1.4rem;
-    width: 1rem;
-    height: 0.6rem;
-    background: var(--color-text-primary);
-    clip-path: polygon(0 0, 100% 0, 50% 100%);
-    transform: translateY(-50%);
-    pointer-events: none;
-}
-
-.size-select {
-    width: 100%;
-    height: 4.4rem;
-    border: var(--border-structural) solid var(--color-border-medium);
-    border-radius: 0;
-    padding: 0.8rem 4rem 0.8rem 1.4rem;
-    background: var(--color-surface);
-    color: var(--color-text-primary);
-    font-size: 1.4rem;
-    appearance: none;
-    cursor: pointer;
-    transition: border-color var(--dur-fast) var(--ease-out);
-}
-
-.size-select:hover,
-.size-select:focus-visible {
-    border-color: var(--color-border-strong);
-}
-
-.size-select option:disabled {
-    color: var(--color-text-secondary);
 }
 
 .product-card__note {
@@ -3677,9 +3575,6 @@ h2 {
         border-color: var(--card-border);
     }
 
-    .size-select:hover:not(:focus-visible) {
-        border-color: var(--color-border-medium);
-    }
 }
 
 /* --- work in flight ----------------------------------------------------
