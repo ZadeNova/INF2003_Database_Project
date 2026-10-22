@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
+from django.db.models.functions import Now
 
 
 class User(AbstractUser):
@@ -42,6 +43,30 @@ class Seller(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid")]
+
+
+class AuditLog(models.Model):
+    """Written only by owner-owned SECURITY DEFINER triggers; the runtime role may only read it."""
+    table_name = models.CharField(max_length=63)
+    row_id = models.CharField(max_length=64)  # text, so MongoDB ObjectIds fit as well as bigint ids
+    action = models.CharField(max_length=64)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+                              related_name="audit_entries")  # NULL means a system change
+    before = models.JSONField(null=True, blank=True)
+    after = models.JSONField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(db_default=Now())
+
+    class Meta:
+        db_table = "audit_log"
+        indexes = [models.Index(F("created_at").desc(), F("id").desc(), name="audit_log_newest"),
+                   models.Index(fields=["action"], name="audit_log_action")]
+        constraints = [
+            models.CheckConstraint(condition=~Q(table_name="") & ~Q(row_id="") & ~Q(action=""), name="audit_log_identity_nonblank"),
+            # An operator (non-NULL actor) must give a reason. Both sides are non-NULL so the CHECK cannot pass on NULL.
+            models.CheckConstraint(condition=Q(actor__isnull=True) | (Q(reason__isnull=False) & Q(reason__regex=r"\S")),
+                                   name="audit_log_actor_reason"),
+        ]
 
 
 class Geolocation(models.Model):

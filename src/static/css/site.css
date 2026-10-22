@@ -3822,3 +3822,15 @@ h2 {
     .analytics-empty { flex-direction:column; }
     .chart-wrap,.chart-wrap--category { height:24rem; }
 }
+
+/* --- accounts: operator console and seller pages (existing tokens only) --- */
+.form-field textarea,
+.form-field select { width:100%; min-height:4.6rem; border:var(--border-structural) solid var(--color-border-medium); border-radius:0; padding:1rem 1.2rem; background:var(--color-surface); color:var(--color-text-primary); }
+.optable__row--sellers { grid-template-columns:minmax(16rem, 2fr) 1.2fr 1.2fr 1fr 1fr; min-width:64rem; }
+.optable__row--audit { grid-template-columns:1.3fr 1.1fr 1.2fr 1fr 1.6fr 2fr; min-width:80rem; }
+.optable__row--audit .optable__name { font-size:1.4rem; }
+.range-nav { margin-bottom:var(--space-4); }
+.action-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(28rem, 1fr)); gap:var(--space-4); margin-bottom:var(--space-4); }
+.detail-list { display:grid; grid-template-columns:max-content 1fr; gap:var(--space-2) var(--space-4); margin:0; }
+.detail-list dt { color:var(--color-text-secondary); font-size:1.3rem; font-weight:700; }
+.detail-list dd { margin:0; color:var(--color-text-primary); font-size:1.5rem; font-variant-numeric:tabular-nums; }

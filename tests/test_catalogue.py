@@ -161,3 +161,26 @@ def test_seed_demo_refuses_to_promote_an_existing_customer(imported):
         call_command("seed_demo",stdout=StringIO())
     assert get_user_model().objects.count() == before
     assert get_user_model().objects.get(username="demo-operator").role == "customer"
+
+
+def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported):
+    from accounts.audit import change_seller_status
+    call_command("seed_demo",stdout=StringIO())
+    applicant=Seller.objects.select_related("user").get(user__username="demo-applicant")
+    assert applicant.status == "pending" and applicant.has_generated_content and "generated" in applicant.shop_name
+    assert applicant.olist_seller_id is None and applicant.user.role == "seller"
+    if not applicant.user.check_password(os.environ["DEMO_SELLER_PASSWORD"]):
+        pytest.fail("Applicant password did not match DEMO_SELLER_PASSWORD (secret omitted)",pytrace=False)
+    client=Client()
+    assert client.post("/login/",{"username":"demo-applicant","password":os.environ["DEMO_SELLER_PASSWORD"]}).url == "/seller/status/"
+    demo_seller=Seller.objects.get(user__username="demo-seller")
+    labels=dict(demo_seller.products.exclude(demo_adjustment="").values_list("pk","demo_adjustment"))
+    operator=get_user_model().objects.get(username="demo-operator")
+    change_seller_status(applicant.pk,"approve",operator,"Demo approval")
+    change_seller_status(demo_seller.pk,"suspend",operator,"Demo suspension")
+    users=get_user_model().objects.count()
+    call_command("seed_demo",stdout=StringIO())
+    assert Seller.objects.get(pk=applicant.pk).status == "approved"
+    assert Seller.objects.get(pk=demo_seller.pk).status == "suspended"
+    assert dict(demo_seller.products.exclude(demo_adjustment="").values_list("pk","demo_adjustment")) == labels
+    assert get_user_model().objects.count() == users

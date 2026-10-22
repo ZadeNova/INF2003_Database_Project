@@ -110,9 +110,12 @@ def test_purchasable_view_has_the_canonical_visibility_rules(graph):
         Product.objects.filter(pk=product.pk).update(**{field: value})
         assert not PurchasableProduct.objects.filter(pk=product.pk).exists()
         Product.objects.filter(pk=product.pk).update(active=True, taken_down=False)
+    # One seller per status: the status trigger (accounts) forbids moving one seller through all of them.
     for status in ("pending", "rejected", "suspended"):
-        Seller.objects.filter(pk=seller.pk).update(status=status)
-        assert not PurchasableProduct.objects.filter(pk=product.pk).exists()
+        other = Seller.objects.create(user=get_user_model().objects.create_user(username="seller-" + status, role="seller"),
+                                      status=status, shop_name=status)
+        hidden = Product.objects.create(seller=other, category=product.category, name=status, price="1", freight="0", stock=1, lead_time_days=1)
+        assert not PurchasableProduct.objects.filter(pk=hidden.pk).exists()
 
 
 def test_historical_values_survive_price_changes_and_deletion_is_protected(graph):

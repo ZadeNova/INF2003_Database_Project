@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ seller.shop_name }} — Operator — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <a class="page__back" href="{% url 'accounts:operator_sellers' %}?status={{ seller.status }}">← {{ seller.status|capfirst }} sellers</a>
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller #{{ seller.pk }}</p>
+            <h1 class="page__title">{{ seller.shop_name }}</h1>
+            <p class="page__lead">{{ seller.user.username }} · {{ seller.city|default:"—" }}{% if seller.state %}, {{ seller.state }}{% endif %}{% if seller.zip_prefix %} · {{ seller.zip_prefix }}{% endif %} · {{ product_count }} product{{ product_count|pluralize }}{% if seller.has_generated_content %} · generated shop name{% endif %}</p>
+        </div>
+        <span class="badge badge--neutral">{{ seller.status }}</span>
+    </div>
+    {% if actions %}
+    <div class="action-grid">
+        {% for action, form in actions %}
+        <form class="surface-card panel auth-form" method="post" action="{% url 'accounts:operator_seller_action' seller.pk action %}" novalidate>
+            {% csrf_token %}
+            <h2 class="panel__title">{{ action|capfirst }}</h2>
+            {% include "accounts/_form_fields.html" %}
+            <button type="submit" class="button {% if action == 'reject' or action == 'suspend' %}button--outline-neutral{% else %}button--dark{% endif %}">{{ action|capfirst }} seller</button>
+        </form>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="panel__note">No further action: a rejected application is final.</p>
+    {% endif %}
+    <div class="surface-card panel">
+        <div class="panel__head"><h2 class="panel__title">Status history</h2><a href="{% url 'accounts:operator_audit' %}">Full audit log</a></div>
+        {% for entry in history %}
+        <p class="panel__note"><strong>{{ entry.action }}</strong> · {{ entry.created_at|date:"j M Y, H:i" }} · {{ entry.actor.username|default:"system" }} · {{ entry.reason|default:"—" }}</p>
+        {% empty %}
+        <p class="panel__note">No status changes recorded.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

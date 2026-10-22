@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Seller status — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller status</p>
+            <h1 class="page__title">{{ seller.shop_name }}</h1>
+            <p class="page__lead">
+                {% if seller.status == "pending" %}Your application is waiting for an operator's review. You will be able to list products once it is approved.
+                {% elif seller.status == "approved" %}Your shop is approved. <a href="{% url 'accounts:seller_home' %}">Open the seller centre</a>.
+                {% elif seller.status == "suspended" %}Your shop is suspended. Its products are hidden from the shop and seller tools are unavailable until an operator reinstates it.
+                {% else %}Your application was not approved. This decision is final; seller tools stay unavailable.{% endif %}
+            </p>
+        </div>
+        <span class="badge {% if seller.status == 'approved' %}badge--completed{% elif seller.status == 'pending' %}badge--neutral{% else %}badge--refunded{% endif %}">{{ seller.get_status_display }}</span>
+    </div>
+    {% if decision %}
+    <div class="surface-card panel">
+        <h2 class="panel__title">Latest decision</h2>
+        <p class="panel__note">{{ decision.created_at|date:"j F Y, H:i" }} · {{ decision.reason|default:"System change" }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

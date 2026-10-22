@@ -10,7 +10,7 @@
             {% include "accounts/_form_fields.html" %}
             <button type="submit" class="button button--dark">Register</button>
         </form>
-        <p class="form-note">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a>.</p>
+        <p class="form-note">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a>. Selling instead? <a href="{% url 'accounts:seller_apply' %}">Apply to sell</a>.</p>
     </div>
 </section>
 {% endblock %}

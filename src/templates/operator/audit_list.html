@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Audit log — Operator — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Operator console</p>
+            <h1 class="page__title">Audit log</h1>
+            <p class="page__lead">Written by database triggers in the same transaction as each change; the web application can read it but never write it. Newest first.</p>
+        </div>
+    </div>
+    <form class="surface-card manage-filters" method="get" aria-label="Filter the audit log">
+        <div class="manage-filters__search">
+            {% for field in filters %}
+            <div class="form-field manage-filters__field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="button button--dark">Filter</button>
+            {% if query %}<a class="button button--outline-neutral" href="{% url 'accounts:operator_audit' %}">Clear</a>{% endif %}
+        </div>
+    </form>
+    <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="Audit entries">
+        <div class="optable__row optable__row--head optable__row--audit">
+            <span>When</span><span>Action</span><span>Row</span><span>Actor</span><span>Change</span><span>Reason</span>
+        </div>
+        {% for entry in entries %}
+        <div class="optable__row optable__row--audit">
+            <span class="optable__muted">{{ entry.created_at|date:"j M Y, H:i:s" }}</span>
+            <span class="optable__name">{{ entry.action }}</span>
+            <span class="optable__muted">{{ entry.table_name }} #{{ entry.row_id }}</span>
+            <span class="optable__muted">{{ entry.actor.username|default:"system" }}</span>
+            <span class="optable__muted">{{ entry.before.status|default:"—" }} → {{ entry.after.status|default:"—" }}{% if entry.after.shop_name %} · {{ entry.after.shop_name }}{% endif %}</span>
+            <span class="optable__muted">{{ entry.reason|default:"—" }}</span>
+        </div>
+        {% empty %}
+        <div class="optable__empty"><p>No audit entries match.</p></div>
+        {% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <nav class="pager" aria-label="Audit pages">
+        {% if page_obj.has_previous %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        <p class="pager__status">Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</p>
+        {% if page_obj.has_next %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

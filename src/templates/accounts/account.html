@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My account — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Customer</p>
+            <h1 class="page__title">{{ user.username }}</h1>
+            <p class="page__lead">Orders, wishlist and reviews arrive with their workstreams.</p>
+        </div>
+    </div>
+    <dl class="surface-card panel detail-list">
+        <dt>Location</dt>
+        <dd>{% if profile.city or profile.state or profile.zip_prefix %}{{ profile.city|default:"—" }}{% if profile.state %}, {{ profile.state }}{% endif %}{% if profile.zip_prefix %} · {{ profile.zip_prefix }}{% endif %}{% else %}Not given{% endif %}</dd>
+        <dt>Member since</dt>
+        <dd>{{ user.date_joined|date:"j F Y" }}</dd>
+    </dl>
+</div>
+{% endblock %}

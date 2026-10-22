@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Apply to sell — Mercer{% endblock %}
+{% block content %}
+<section class="auth-page" aria-labelledby="apply-title">
+    <div class="surface-card auth-page__card">
+        <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> Sell on Mercer</p>
+        <h1 id="apply-title">Apply to sell</h1>
+        <p class="form-note">Your shop starts as pending. An operator reviews each application before your products can be listed.</p>
+        <form class="auth-form" method="post" novalidate>
+            {% csrf_token %}
+            {% include "accounts/_form_fields.html" %}
+            <button type="submit" class="button button--dark">Submit application</button>
+        </form>
+        <p class="form-note">Buying instead? <a href="{% url 'accounts:register' %}">Create a customer account</a>.</p>
+    </div>
+</section>
+{% endblock %}

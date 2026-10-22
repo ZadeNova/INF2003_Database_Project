@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Seller centre — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller centre</p>
+            <h1 class="page__title">{{ seller.shop_name }}</h1>
+            <p class="page__lead">Product editing and order handling arrive with the catalogue and checkout workstreams.{% if seller.has_generated_content %} The shop name is generated for this demonstration.{% endif %}</p>
+        </div>
+        <span class="badge badge--completed">{{ seller.get_status_display }}</span>
+    </div>
+    <dl class="surface-card panel detail-list">
+        <dt>Products</dt><dd>{{ product_count }}</dd>
+        <dt>Visible in the shop</dt><dd>{{ visible_count }}</dd>
+        <dt>Orders</dt><dd>{{ order_count }}</dd>
+        <dt>Location</dt><dd>{{ seller.city|default:"—" }}{% if seller.state %}, {{ seller.state }}{% endif %}{% if seller.zip_prefix %} · {{ seller.zip_prefix }}{% endif %}</dd>
+    </dl>
+</div>
+{% endblock %}

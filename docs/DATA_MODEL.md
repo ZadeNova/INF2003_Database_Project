@@ -28,6 +28,7 @@ erDiagram
     CHECKOUT ||--|{ PAYMENT : receives
     ORDER ||--o| REFUND : refunds
     CHECKOUT ||--o{ REFUND : reconciles
+    USER ||--o{ AUDIT_LOG : acts
     USER {
         bigint id PK
         varchar username UK
@@ -113,6 +114,17 @@ erDiagram
         numeric amount
         boolean imported
     }
+    AUDIT_LOG {
+        bigint id PK
+        varchar table_name
+        varchar row_id
+        varchar action
+        bigint actor_id FK
+        jsonb before
+        jsonb after
+        text reason
+        timestamptz created_at
+    }
     GEOLOCATION {
         varchar zip_prefix PK
         numeric latitude
@@ -136,6 +148,7 @@ erDiagram
 | OrderLine / orders_orderline | Positive quantity and unit price; nonnegative freight. Composite FKs (order_id, seller_id) and (product_id, seller_id) enforce ownership with ON DELETE RESTRICT. shipping_limit_at is the earliest original item's shifted deadline when repeated lines collapse |
 | Payment / orders_payment | Unique (checkout_id, sequence); positive sequence and instalments. Method CHECK: credit_card, boleto, voucher, debit_card; nonnegative finite amount. A row means money received; there is no payment-status column and no card-number field |
 | Refund / orders_refund | At most one per order; composite FK (order_id, checkout_id) prevents cross-checkout refunds. Nonnegative finite amount; reason, refunded_at and imported. Imported cancellations with payments receive their full order total |
+| AuditLog / audit_log | Written only by triggers. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, and action |
 | Geolocation / accounts_geolocation | One row per zip prefix, median coordinates and separate modal city/state (lexical tie-break). Coordinates use exact numeric columns |
 
 Django creates B-tree indexes for ordinary FKs, primary keys and unique constraints. The initial migrations are
@@ -151,8 +164,8 @@ IDs through an unmanaged ORM model. Later workstreams reuse this definition.
 
 The customer_profile_role and seller_profile_role triggers require the linked user's role to match the profile;
 user_profile_role prevents changing a role while an incompatible profile exists. The profile check locks the user row
-in SHARE mode. These are schema guards; registration/approval workflows and audit/status/payment triggers belong to
-the later approved workstreams. The importer disables USER triggers only on loaded tables, retains FK/check/unique
+in SHARE mode. These are schema guards; the seller status and audit triggers below come from accounts, and payment
+triggers belong to checkout. The importer disables USER triggers only on loaded tables, retains FK/check/unique
 constraints, flushes deferred FK events before restoring triggers, and runs the explicit reconciliation queries.
 A failed transaction rolls back COPY and trigger changes together.
 The loader requires a standalone owner transaction, so it cannot commit MongoDB inside a caller's uncommitted
@@ -160,6 +173,26 @@ PostgreSQL transaction. Compensation removes only IDs attempted by that import. 
 cleanup is reported as requiring the documented local reset, without claiming a distributed atomic commit.
 MongoDB loads commit bounded batches to respect transaction lifetime/cache limits; later failures compensate already
 committed batches as well as the current batch. Progress is printed during large collection loads.
+
+**Seller status and audit (`accounts` 0002).** seller_status_transition (BEFORE UPDATE, only
+`WHEN (OLD.status IS DISTINCT FROM NEW.status)`) allows pending → approved or rejected, approved → suspended and
+suspended → approved; rejected is terminal, and any other change fails with SQLSTATE 23514. Unchanged status and
+shop-name edits pass without an audit row. seller_status_audit (AFTER UPDATE, same WHEN) inserts one audit_log row named
+seller.approve, seller.reject, seller.suspend or seller.reinstate in the same transaction, with id, user_id, status and
+shop_name snapshots. Its actor and reason come from the transaction-local settings `mercer.actor_id` and
+`mercer.audit_reason`, which [accounts/audit.py](../src/accounts/audit.py) sets together with bound `set_config(..., true)`
+on every action and which clear at commit or rollback; the trigger reads them with `NULLIF(current_setting(..., true), '')`.
+The operator service locks the seller row (`SELECT ... FOR UPDATE`), rechecks the expected status, sets the context and
+updates, so a stale or repeated action fails without a second row. Suspension hides products through
+purchasable_product; reinstatement restores those otherwise eligible.
+
+Both functions are owned by the migration owner, schema-qualified and pinned to `search_path = public, pg_temp`; only
+the audit function is SECURITY DEFINER, because it alone writes a table the runtime role cannot. The migration revokes
+runtime INSERT, UPDATE, DELETE and TRUNCATE on audit_log and every privilege on its identity sequence, keeping SELECT;
+`grant_runtime` reapplies this after its broad grants (`TRIGGER_WRITTEN_TABLES` in
+[config/privileges.py](../src/config/privileges.py)), so rerunning it cannot restore audit writes. Runtime cannot own or
+replace functions, disable triggers, create temporary objects or change session_replication_role. Revoking PUBLIC
+EXECUTE on the functions is hygiene only. Later catalogue and checkout triggers reuse this boundary.
 
 The first accounts migration grants the runtime role access to tables/sequences and installs default privileges for
 later owner-created objects. It applies equally to mercer and pytest's test_mercer. PUBLIC database privileges and

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Sellers — Operator — Mercer{% endblock %}
+{% block content %}
+<div class="page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Operator console</p>
+            <h1 class="page__title">Sellers</h1>
+            <p class="page__lead">Approve or reject applications, and suspend or reinstate approved shops. Every change needs a reason and is written to the audit log by the database.</p>
+        </div>
+    </div>
+    <nav class="range-nav" aria-label="Filter sellers by status">
+        <span class="range-nav__label">Status</span>
+        <div class="range-nav__links">
+            {% for value, count in counts.items %}
+            <a class="chip{% if value == status %} chip--on{% endif %}" href="?status={{ value }}"{% if value == status %} aria-current="page"{% endif %}>{{ value }} · {{ count }}</a>
+            {% endfor %}
+        </div>
+    </nav>
+    <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="{{ status|capfirst }} sellers">
+        <div class="optable__row optable__row--head optable__row--sellers">
+            <span>Shop</span><span>Username</span><span>Location</span><span>Source</span><span>Status</span>
+        </div>
+        {% for seller in sellers %}
+        <div class="optable__row optable__row--sellers">
+            <a class="optable__name" href="{% url 'accounts:operator_seller' seller.pk %}">{{ seller.shop_name }}</a>
+            <span class="optable__muted">{{ seller.user.username }}</span>
+            <span class="optable__muted">{{ seller.city|default:"—" }}{% if seller.state %}, {{ seller.state }}{% endif %}</span>
+            <span class="optable__muted">{% if seller.olist_seller_id %}Olist import{% else %}Application{% endif %}</span>
+            <span><span class="badge badge--neutral">{{ seller.status }}</span></span>
+        </div>
+        {% empty %}
+        <div class="optable__empty"><p>No {{ status }} sellers.</p></div>
+        {% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <nav class="pager" aria-label="Seller pages">
+        {% if page_obj.has_previous %}<a class="button button--outline-neutral" href="?status={{ status }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        <p class="pager__status">Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</p>
+        {% if page_obj.has_next %}<a class="button button--outline-neutral" href="?status={{ status }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

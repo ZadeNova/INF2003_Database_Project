@@ -2,6 +2,10 @@
 import os
 from psycopg import sql
 
+# Tables written only by owner-owned SECURITY DEFINER triggers (accounts plan, P2). Runtime may read them;
+# every broad grant below is followed by these revocations so it can never restore a forbidden write.
+TRIGGER_WRITTEN_TABLES = ("audit_log",)
+
 
 def grant_runtime(apps, schema_editor):
     role = os.environ["POSTGRES_RUNTIME_USER"]
@@ -27,3 +31,26 @@ def grant_runtime(apps, schema_editor):
         if sequence:
             cursor.execute(sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(
                 sql.Identifier(*sequence), sql.Identifier(role)))
+        restrict_trigger_tables(cursor, role)
+
+
+def restrict_trigger_tables(cursor, role):
+    for table in TRIGGER_WRITTEN_TABLES:
+        cursor.execute("SELECT to_regclass(%s)", ["public." + table])
+        if cursor.fetchone()[0] is None:  # not created yet; its own migration applies this
+            continue
+        target = sql.Identifier("public", table)
+        cursor.execute(sql.SQL("REVOKE ALL ON TABLE {} FROM {}").format(target, sql.Identifier(role)))
+        cursor.execute(sql.SQL("GRANT SELECT ON TABLE {} TO {}").format(target, sql.Identifier(role)))
+        cursor.execute("""SELECT n.nspname, c.relname FROM pg_class c
+            JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE c.oid=pg_get_serial_sequence(%s, %s)::regclass""", ["public." + table, "id"])
+        sequence = cursor.fetchone()
+        if sequence:
+            cursor.execute(sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(
+                sql.Identifier(*sequence), sql.Identifier(role)))
+
+
+def protect_trigger_tables(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        restrict_trigger_tables(cursor, os.environ["POSTGRES_RUNTIME_USER"])
