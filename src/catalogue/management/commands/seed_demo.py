@@ -13,10 +13,12 @@ from orders.models import Order, OrderLine
 
 MEMBERS = ("chee-long", "erfan", "syahfariz", "jun-keat", "joash")
 RELISTED_LABEL = "relisted for demo visibility"
+APPLICANT = "demo-applicant"
+APPLICANT_SHOP = "Demo applicant shop (generated, pending approval)"
 
 
 class Command(BaseCommand):
-    help = "Create demo logins from environment passwords and label two demo stock adjustments."
+    help = "Create demo logins (including a pending seller) from environment passwords and label two demo stock adjustments."
 
     def handle(self, *args, **options):
         passwords = {}
@@ -58,6 +60,15 @@ class Command(BaseCommand):
                 raise CommandError("demo-operator belongs to another role")
             operator.set_password(passwords["operator"])
             operator.save()
+            # A pending application for the approval demo. Reruns keep any status an operator has decided.
+            applicant, _ = User.objects.get_or_create(username=APPLICANT, defaults={"role": "seller"})
+            if applicant.role != "seller":
+                raise CommandError(APPLICANT + " belongs to another role")
+            applicant.set_password(passwords["seller"])
+            applicant.save()
+            Seller.objects.get_or_create(user=applicant, defaults={
+                "status": "pending", "shop_name": APPLICANT_SHOP, "city": "sao paulo", "state": "SP",
+                "zip_prefix": "01310", "has_generated_content": True})
             user = seller.user
             if user.role != "seller":
                 raise CommandError("Imported seller has an invalid user role")
@@ -85,5 +96,6 @@ class Command(BaseCommand):
                 product.demo_adjustment = label
                 product.save(update_fields=["stock", "lead_time_days", "active", "has_generated_content", "demo_adjustment"])
         self.stdout.write("Demo customers: " + ", ".join("demo-" + name for name in MEMBERS))
-        self.stdout.write("Demo operator: demo-operator; seller: demo-seller (real high-volume Olist seller). Passwords were not printed.")
+        self.stdout.write("Demo operator: demo-operator; seller: demo-seller (real high-volume Olist seller); "
+                          "pending applicant: " + APPLICANT + ". Passwords were not printed.")
         self.stdout.write("Two products carry explicit demo-adjustment labels; no historical money or orders changed.")

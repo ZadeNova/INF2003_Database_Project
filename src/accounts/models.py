@@ -1,7 +1,10 @@
+import re
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
+from django.db.models.functions import Now
 
 
 class User(AbstractUser):
@@ -40,8 +43,55 @@ class Seller(models.Model):
     state = models.CharField(max_length=2, blank=True)
     has_generated_content = models.BooleanField(default=False)
 
+    @property
+    def display_name(self):
+        """A readable, still distinct name for imported placeholder shops ("Olist seller 0015a82c" becomes
+        "Santo Andre Shop 0015A82C"); stored names and every other shop name are shown unchanged."""
+        match = re.fullmatch(r"Olist seller ([0-9a-f]{8})", self.shop_name)
+        if self.has_generated_content and match:
+            return f"{self.city.title() or 'Imported'} Shop {match.group(1).upper()}"
+        return self.shop_name
+
+    @property
+    def location(self):
+        return ", ".join(part for part in (self.city.title(), self.state) if part)
+
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid")]
+
+
+class AuditLog(models.Model):
+    """Written only by owner-owned SECURITY DEFINER triggers; the runtime role may only read it."""
+    table_name = models.CharField(max_length=63)
+    row_id = models.CharField(max_length=64)  # text, so MongoDB ObjectIds fit as well as bigint ids
+    action = models.CharField(max_length=64)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+                              related_name="audit_entries")  # NULL means a system change
+    before = models.JSONField(null=True, blank=True)
+    after = models.JSONField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(db_default=Now())
+
+    @property
+    def action_label(self):
+        from .audit import AUDIT_LABELS
+        return AUDIT_LABELS.get(self.action, "Updated")
+
+    @property
+    def action_tone(self):
+        from .audit import AUDIT_TONES
+        return AUDIT_TONES.get(self.action, "neutral")
+
+    class Meta:
+        db_table = "audit_log"
+        indexes = [models.Index(F("created_at").desc(), F("id").desc(), name="audit_log_newest"),
+                   models.Index(fields=["action"], name="audit_log_action")]
+        constraints = [
+            models.CheckConstraint(condition=~Q(table_name="") & ~Q(row_id="") & ~Q(action=""), name="audit_log_identity_nonblank"),
+            # An operator (non-NULL actor) must give a reason. Both sides are non-NULL so the CHECK cannot pass on NULL.
+            models.CheckConstraint(condition=Q(actor__isnull=True) | (Q(reason__isnull=False) & Q(reason__regex=r"\S")),
+                                   name="audit_log_actor_reason"),
+        ]
 
 
 class Geolocation(models.Model):

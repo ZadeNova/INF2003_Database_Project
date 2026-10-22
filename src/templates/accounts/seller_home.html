@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Seller centre — Mercer{% endblock %}
+{% block content %}
+<div class="page account-page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller centre</p>
+            <h1 class="page__title">{{ seller.display_name }}</h1>
+            <p class="page__meta">{{ seller.location|default:"Location not given" }}{% if seller.has_generated_content %} <span class="name-tag">Generated name</span>{% endif %}</p>
+        </div>
+        {% include "accounts/_status_badge.html" with seller=seller only %}
+    </div>
+    <div class="stat-grid stat-grid--three">
+        <div class="surface-card stat-tile">
+            <p class="stat-tile__label">Products</p>
+            <p class="stat-tile__value">{{ product_count }}</p>
+        </div>
+        <div class="surface-card stat-tile">
+            <p class="stat-tile__label">Visible in the shop</p>
+            <p class="stat-tile__value">{{ visible_count }}</p>
+        </div>
+        <div class="surface-card stat-tile">
+            <p class="stat-tile__label">Orders</p>
+            <p class="stat-tile__value">{{ order_count }}</p>
+        </div>
+    </div>
+    <p class="panel__note">Product and order tools are coming soon.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ seller.display_name }} — Operator — Mercer{% endblock %}
+{% block content %}
+<div class="page account-page">
+    <a class="page__back" href="{% url 'accounts:operator_sellers' %}?status={{ seller.status }}">← {{ seller.get_status_display }} sellers</a>
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller</p>
+            <h1 class="page__title">{{ seller.display_name }}</h1>
+            {% if seller.has_generated_content %}<p class="page__meta"><span class="name-tag">Generated name</span></p>{% endif %}
+        </div>
+        {% include "accounts/_status_badge.html" with seller=seller only %}
+    </div>
+    <dl class="surface-card panel detail-list detail-list--facts">
+        <dt>Login</dt><dd>{{ seller.user.username }}</dd>
+        <dt>Location</dt><dd>{{ seller.location|default:"—" }}{% if seller.zip_prefix %} · {{ seller.zip_prefix }}{% endif %}</dd>
+        <dt>Joined</dt><dd>{% if seller.olist_seller_id %}Imported{% else %}Applied {{ seller.user.date_joined|date:"j M Y" }}{% endif %}</dd>
+        <dt>Products</dt><dd>{{ product_count }}</dd>
+    </dl>
+    {% if actions %}
+    <h2 class="section-title">Decision</h2>
+    <div class="action-grid">
+        {% for action, form in actions %}
+        <form class="surface-card panel auth-form" method="post" action="{% url 'accounts:operator_seller_action' seller.pk action %}" novalidate>
+            {% csrf_token %}
+            <h3 class="panel__title">{{ action|capfirst }}</h3>
+            {% include "accounts/_form_fields.html" %}
+            <button type="submit" class="button {% if action == 'reject' or action == 'suspend' %}button--outline-neutral{% else %}button--dark{% endif %}">{{ action|capfirst }} seller</button>
+        </form>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="panel__note">Rejected applications are final.</p>
+    {% endif %}
+    <div class="surface-card panel">
+        <div class="panel__head"><h2 class="panel__title">History</h2><a href="{% url 'accounts:operator_audit' %}">Full audit log</a></div>
+        {% if history %}
+        <ol class="history-list">
+            {% for entry in history %}
+            <li>
+                <span class="badge badge--{{ entry.action_tone }}">{{ entry.action_label }}</span>
+                <span class="history-list__meta">{{ entry.created_at|date:"j M Y, H:i" }} · {{ entry.actor.username|default:"System" }}</span>
+                <span class="history-list__reason">{{ entry.reason|default:"No reason given" }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="panel__note">No decisions yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

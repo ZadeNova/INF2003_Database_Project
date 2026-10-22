@@ -1,7 +1,7 @@
 # accounts: Three roles, seller registration and approval, operator console, audit log
 
-status: approved
-plan owner: Chee Long · implementer: Chee Long · reviewer: fresh Claude Code session · estimate: 1.5 to 2 days
+status: done
+plan owner: Chee Long · implementer: Chee Long · reviewer: Codex (fresh session) · estimate: 1.5 to 2 days
 · Phase 1B (25 October 2026) · depends on: `olist-import` (custom user with `role`, seller table)
 
 ## Contract
@@ -69,3 +69,38 @@ suspension checked through the `purchasable_product` view.
 22 October 2026, fix round: P1–P4/P7 applied; status-only access, audit security/context, locking, verification scope and date corrected; draft retained.
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
+
+22 October 2026, independent Codex implementation review of `8e9e57a`: **CHANGES REQUESTED**. **AR1 (Should fix,
+required before merge):** `tests/test_registration.py:61–68` replaces `Seller.objects.create` with a simulated
+exception, contrary to AGENTS.md rule 8. Replace it with an actual PostgreSQL insert failure; a transaction-scoped
+CHECK on the disposable copy proved that both user and seller roll back without mocking. Docker build, migration
+drift check, full database suite, host documentation/package tests and documentation checker passed. Browser exit
+checks passed, including existing-session approval, rejection reason and product visibility through suspension and
+reinstatement. Runtime privilege/tampering and illegal-transition probes passed; copy migration preserved all existing
+application-table row counts. The copy was dropped and web restarted; demo-seller is approved. No application code
+or tests changed. Detailed commands and results are in the review chat; AR1 remains for the implementer's fix round.
+
+22 October 2026, fix round (Claude Code): AR1 fixed. The rollback test now adds a transaction-scoped CHECK on
+`accounts_seller` and posts `/sell/apply/`; PostgreSQL rejects the seller insert and neither row remains. No stub
+remains. Registration tests and the full Docker suite were rerun and passed.
+
+22 October 2026, independent Codex fix verification of `c34115a`: **APPROVE; AR1 closed.** The test now exercises
+a real PostgreSQL CHECK violation, matches the named constraint and verifies that neither user nor seller remains;
+the test transaction also rolls back the added constraint. No database call is mocked. Independently reran the
+registration module in Docker and `scripts/check_docs.py`; both passed. No new findings. This fix verification
+reran the affected module only, as required for a fix round; the earlier full review and exit-check results stand.
+Normal workstream close-out and the full-suite gate before merge still apply. This review entry is left uncommitted.
+
+22 October 2026, display amendment requested by Chee Long: simplify account and operator copy, map decision labels
+once in `accounts/audit.py`, link audit entries to shops and retain generated-name labels. Stored data, actions,
+access rules and filter validation stay unchanged. Codex implementation and checks remain uncommitted for fresh
+Claude Code review; the earlier approval covers the implementation before this display amendment.
+Validation: rebuilt migrate/web; the requested account modules, full Docker suite, migration drift check and
+documentation checker passed. Browser checks covered the operator list/detail/log, seller status/centre and customer
+account at desktop and 375px, plus both public forms; wide tables scroll within their containers. Results and
+screenshots are in the implementation chat. This display amendment still awaits Claude Code review.
+
+22 October 2026, display amendment check (Claude Code): kept the copy changes; replaced "Shop in City" with distinct
+"City Shop CODE" names, also on product pages; added a shared status badge (no red statuses), a generated-name tag,
+stacked audit times, a history timeline on seller detail, stat tiles in the seller centre and progress steps on the
+status page. Display only: no schema, SQL, access or validation change. Checked at desktop, 375px and light theme.

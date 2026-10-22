@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Not available · Mercer{% endblock %}
+
+{% block content %}
+<section class="error-page" aria-labelledby="error-title">
+    <div class="error-page__card">
+        <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> Not available</p>
+        <h1 id="error-title">This page is not part of your account.</h1>
+        <p>Try a page from the menu or return to the shop.</p>
+        <div class="hero__actions">
+            <a class="button button--dark" href="{% url 'catalogue:product_list' %}">Browse products</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

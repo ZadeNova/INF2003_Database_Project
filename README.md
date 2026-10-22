@@ -10,7 +10,8 @@ simulated and no personal data is used.
 ## Status
 
 Phase 1A replaces the earlier dataset with a reproducible Olist pipeline, fresh marketplace schema, cross-store import,
-minimum product pages and demo logins. Scope, tiers, dates and review status live in [PLAN.md](PLAN.md); contributor rules
+minimum product pages and demo logins. Phase 1B adds the three roles, seller applications, the operator console and the
+database-written audit log. Scope, tiers, dates and review status live in [PLAN.md](PLAN.md); contributor rules
 are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
 [docs/DATA_MODEL.md](docs/DATA_MODEL.md). Later application workstreams build the purchasing and operator workflows.
 
@@ -157,13 +158,14 @@ are separate. Budget for the initial image downloads separately; import reads th
 Memory is bounded by COPY blocks and MongoDB batches during loading; full-data profiling/cleaning additionally holds
 the source tables and needs several GB of Docker memory. A long translation is optional regeneration, not startup work.
 
-Demo usernames are demo-chee-long, demo-erfan, demo-syahfariz, demo-jun-keat, demo-joash (customer role), demo-seller and
-demo-operator. Read their passwords locally from the corresponding DEMO_*_PASSWORD variables in the ignored .env;
+Demo usernames are demo-chee-long, demo-erfan, demo-syahfariz, demo-jun-keat, demo-joash (customer role), demo-seller,
+demo-applicant (a labelled pending seller, using DEMO_SELLER_PASSWORD) and demo-operator. Read their passwords locally from the corresponding DEMO_*_PASSWORD variables in the ignored .env;
 passwords have no fallback and are never printed. The seller is linked to a real high-volume Olist seller. Two product
 rows explicitly label their sold-out and low-stock/long-lead-time demo adjustments, including any relisting needed to
 make them visible. Imported accounts otherwise have
-unusable passwords. The minimum shop, product details, registration and all three role logins work; cart, checkout,
-orders and the live dashboard return 404 until their workstreams replace them. The labelled foundation design previews
+unusable passwords. Rerunning `seed_demo` never resets a seller status an operator has already decided. The shop,
+product details, registration, seller applications and the operator console work; cart, checkout, orders and the live
+dashboard return 404 until their workstreams replace them. The labelled foundation design previews
 remain available as visual samples.
 
 Relisting labels also use retained imported order history, so rerunning `seed_demo` repairs labels omitted by an
@@ -176,6 +178,30 @@ For a fresh import, first verify the project is mercer and that its named volume
 docker compose down --volumes
 docker compose up -d --build
 docker compose run --rm migrate python manage.py import_olist
+```
+
+## Accounts and the operator console
+
+Each account has one role. After login, customers land on the shop, approved sellers on the seller centre and every
+other seller on their status page; operators land on the console. Pending, rejected and suspended sellers can log in but
+see only their status page. A Phase 1A database is upgraded in place by the `migrate` service on the next
+`docker compose up --build`; no reset or re-import is needed.
+
+| Path | Who | Purpose |
+|---|---|---|
+| `/register/` | Anyone logged out | Customer account, with an optional zip prefix, city and state |
+| `/sell/apply/` | Anyone logged out | Seller application: the account and a pending seller in one transaction |
+| `/account/` | Customers | Profile |
+| `/seller/`, `/seller/status/` | Approved sellers; any seller | Read-only seller centre; the seller's own status and latest decision |
+| `/operator/`, `/operator/sellers/<id>/` | Operators | Sellers by status; approve, reject, suspend or reinstate with a required reason (POST only) |
+| `/operator/audit/` | Operators | Audit log of seller decisions, newest first, with Made by and Decision filters |
+
+Operators are never created through the web. Besides `demo-operator` from `seed_demo`, create or re-password one with
+the password from `DEMO_OPERATOR_PASSWORD` (never a command-line argument, never printed); an existing account with
+another role is refused:
+
+```sh
+docker compose run --rm migrate python manage.py create_operator <username>
 ```
 
 ## Regenerate the data (optional)

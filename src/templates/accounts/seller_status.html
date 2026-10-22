@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Seller status — Mercer{% endblock %}
+{% block content %}
+<div class="page account-page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Seller status</p>
+            <h1 class="page__title">{{ seller.display_name }}</h1>
+            {% if seller.has_generated_content %}<p class="page__meta"><span class="name-tag">Generated name</span></p>{% endif %}
+        </div>
+        {% include "accounts/_status_badge.html" with seller=seller only %}
+    </div>
+    <div class="surface-card panel status-panel">
+        <ol class="steps" aria-label="Application progress">
+            <li class="step step--done"><span class="step__mark" aria-hidden="true">✓</span> Applied</li>
+            <li class="steps__rule" aria-hidden="true"></li>
+            <li class="step {% if seller.status == 'pending' %}step--current{% else %}step--done{% endif %}"><span class="step__mark" aria-hidden="true">{% if seller.status == 'pending' %}2{% else %}✓{% endif %}</span> Review</li>
+            <li class="steps__rule" aria-hidden="true"></li>
+            <li class="step{% if seller.status != 'pending' %} step--current{% endif %}"><span class="step__mark" aria-hidden="true">3</span> {% if seller.status == 'rejected' %}Not approved{% elif seller.status == 'suspended' %}Suspended{% else %}Selling{% endif %}</li>
+        </ol>
+        <p class="status-panel__message">
+            {% if seller.status == "pending" %}We're reviewing your application. You can start selling once it's approved.
+            {% elif seller.status == "approved" %}Your shop is approved. <a href="{% url 'accounts:seller_home' %}">Open the seller centre</a>.
+            {% elif seller.status == "suspended" %}Your shop is suspended. Your products and seller tools are hidden until it's reinstated.
+            {% else %}Your application was not approved. This decision is final.{% endif %}
+        </p>
+        {% if decision %}
+        <p class="panel__note">Latest decision, {{ decision.created_at|date:"j M Y" }}: {{ decision.reason|default:"No reason given" }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

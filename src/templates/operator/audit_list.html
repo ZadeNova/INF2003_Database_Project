@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Audit log — Operator — Mercer{% endblock %}
+{% block content %}
+<div class="page account-page">
+    <div class="page__header">
+        <div>
+            <p class="eyebrow">Operator console</p>
+            <h1 class="page__title">Audit log</h1>
+            <p class="page__lead">Seller decisions, who made them and why, newest first.</p>
+        </div>
+    </div>
+    <form class="surface-card manage-filters" method="get" aria-label="Filter the audit log">
+        <div class="manage-filters__search">
+            {% for field in filters %}
+            <div class="form-field manage-filters__field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="button button--dark">Filter</button>
+            {% if query %}<a class="button button--outline-neutral" href="{% url 'accounts:operator_audit' %}">Clear</a>{% endif %}
+        </div>
+    </form>
+    <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="Audit entries">
+        <div class="optable__row optable__row--head optable__row--audit">
+            <span>When</span><span>Decision</span><span>Shop</span><span>By</span><span>Reason</span>
+        </div>
+        {% for entry in entries %}
+        <div class="optable__row optable__row--audit">
+            <span class="stacked"><span>{{ entry.created_at|date:"j M Y" }}</span><span class="optable__muted">{{ entry.created_at|date:"H:i" }}</span></span>
+            <span><span class="badge badge--{{ entry.action_tone }}">{{ entry.action_label }}</span></span>
+            {% if entry.shop %}
+            {% url 'accounts:operator_seller' entry.shop.pk as shop_url %}
+            {% include "accounts/_shop_name.html" with seller=entry.shop href=shop_url only %}
+            {% else %}<span class="optable__muted">Shop unavailable</span>{% endif %}
+            <span class="optable__muted">{{ entry.actor.username|default:"System" }}</span>
+            <span>{{ entry.reason|default:"—" }}</span>
+        </div>
+        {% empty %}
+        <div class="optable__empty"><p>No decisions match these filters.</p></div>
+        {% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <nav class="pager" aria-label="Audit pages">
+        {% if page_obj.has_previous %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        <p class="pager__status">Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</p>
+        {% if page_obj.has_next %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

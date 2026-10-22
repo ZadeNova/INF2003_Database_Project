@@ -31,6 +31,24 @@ The contract is [ci](plans/ci.md); these are the implementation choices behind s
 | benchmark-plan | Keep [benchmark](plans/benchmark.md) as the canonical B1–B6 contract; Chee Long owns/implements it | BM1–BM9 and placement/a–e decisions accepted 22 October; plan approved 22 October after fresh re-review, with no app privilege change or scaled Tier 1 runs |
 | ci-plan | Keep [ci](plans/ci.md) as the sole CI contract; Chee Long owns/implements it | CI1–CI6 and a–f/full-data decisions accepted 22 October; plan approved 22 October after fresh re-review. The requested minutes-budget amount is a recommendation pending confirmation, not a billing change |
 
+## accounts implementation (22 October 2026; review complete)
+
+The approved contract is [accounts](plans/accounts.md); these are the implementation choices behind it.
+
+| ID | Decision | Why |
+|---|---|---|
+| accounts-i1 | Two seller triggers: a BEFORE UPDATE transition check and an AFTER UPDATE audit insert, both `WHEN (OLD.status IS DISTINCT FROM NEW.status)`; only the audit function is SECURITY DEFINER | The audit row records the final committed change; the definer privilege is limited to the one function that writes a table runtime cannot |
+| accounts-i2 | A CHECK on audit_log requires a non-blank reason whenever an actor is set | "Operator actions require a reason" holds in the database too, not only in the form |
+| accounts-i3 | Snapshots name their fields (id, user_id, status, shop_name) instead of `to_jsonb(row)` | A column added later cannot leak into the log unreviewed |
+| accounts-i4 | `TRIGGER_WRITTEN_TABLES` in config/privileges.py: `grant_runtime` revokes runtime writes on these tables after every broad grant | The default and broad grants would otherwise give runtime DML on audit_log; rerunning a grant helper must not restore it |
+| accounts-i5 | Role and seller status are read from the database on each request; another role gets 403, an unapproved seller's GET on a seller page redirects to the status page | Operator decisions apply to sessions already logged in; sellers who are waiting or blocked are pointed at the one page they may use |
+| accounts-i6 | `next` after login is honoured only as a same-site path (leading `/`, not `//` or `/\`) | Stricter than Django's host check: no absolute URLs, even to this host |
+| accounts-i7 | In Phase 1B the seller centre and customer account are read-only pages | Product CRUD and orders belong to catalogue and checkout; the pages give the role checks real targets |
+| accounts-i8 | `create_operator <username>` creates an operator or resets an existing operator's password; it refuses any other role | Idempotent for the demo set-up, with no path from a customer or seller to operator |
+| accounts-i9 | The purchasable-view schema test uses one seller per status instead of moving one seller through every status | The new transition trigger forbids approved → pending or rejected; the test still checks the same visibility rule |
+| accounts-i10 | Audit privilege tests connect as the runtime role to pytest's database (transactional tests) and also check the migrated application database read-only | Default and migration grants now apply in both databases (compare foundation-n); the application check fails, not skips, if it was not migrated |
+| accounts-i11 | Account and operator pages use plain labels; stored action codes map once in `accounts/audit.py`. Audit shop links resolve the current seller. Imported placeholder names ("Olist seller 0015a82c") display everywhere, product pages included, as "Santo Andre Shop 0015A82C" with a "Generated name" tag; names applicants type are never rewritten. Status badges use one include: approved green, pending amber, rejected and suspended neutral | Operators read decisions without database terminology; the code keeps 695 São Paulo shops distinguishable where "Shop in City" would not; DESIGN.md keeps red out of statuses. Stored records, audit snapshots, schema and access are unchanged |
+
 ## Phase 1B planning document (22 October 2026)
 
 | ID | Decision | Why |
