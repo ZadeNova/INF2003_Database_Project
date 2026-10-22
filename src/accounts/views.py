@@ -188,22 +188,22 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(filters=self.filters, query=urlencode(self.query), **kwargs)
-        # Resolve only this page's sellers in one query; audit IDs may also refer to other kinds of records.
+        # Resolve each audited row on this page to its current shop: one query per record type, ids bound as values.
         entries = context["entries"]
-        seller_ids = {int(entry.row_id) for entry in entries
-                      if entry.table_name == "accounts_seller" and entry.row_id.isdecimal()
-                      and 0 < int(entry.row_id) < 2**63}
-        shops = Seller.objects.in_bulk(seller_ids)
+        lookups = {
+            "accounts_seller": lambda ids: {pk: (None, seller) for pk, seller in Seller.objects.in_bulk(ids).items()},
+            "orders_order": lambda ids: {order.pk: (None, order.seller)
+                                         for order in Order.objects.filter(pk__in=ids).select_related("seller")},
+            "catalogue_product": lambda ids: {product.pk: (product, product.seller)
+                                              for product in Product.objects.filter(pk__in=ids).select_related("seller")},
+        }
+        wanted = {}
         for entry in entries:
-            entry.shop = (shops.get(int(entry.row_id))
-                          if entry.table_name == "accounts_seller" and entry.row_id.isdecimal() else None)
-        # catalogue audit context: resolve only this page's products and their current shops.
-        product_ids = {int(entry.row_id) for entry in entries
-                       if entry.table_name == "catalogue_product" and entry.row_id.isdecimal()
-                       and 0 < int(entry.row_id) < 2**63}
-        products = Product.objects.select_related("seller").in_bulk(product_ids)
+            entry.shop = entry.product = None
+            if entry.table_name in lookups and entry.row_id.isdecimal() and 0 < int(entry.row_id) < 2**63:
+                wanted.setdefault(entry.table_name, set()).add(int(entry.row_id))
+        found = {table: lookups[table](ids) for table, ids in wanted.items()}
         for entry in entries:
-            if entry.table_name == "catalogue_product" and entry.row_id.isdecimal():
-                entry.product = products.get(int(entry.row_id))
-                entry.shop = entry.product.seller if entry.product is not None else None
+            if entry.table_name in found and entry.row_id.isdecimal():
+                entry.product, entry.shop = found[entry.table_name].get(int(entry.row_id), (None, None))
         return context

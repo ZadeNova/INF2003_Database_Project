@@ -48,7 +48,7 @@ INVARIANTS = {
     "refund_totals": """SELECT o.id, o.status, o.total, r.amount, r.checkout_id
         FROM orders_order o LEFT JOIN orders_refund r ON r.order_id=o.id
         WHERE (o.status='cancelled' AND EXISTS (SELECT 1 FROM orders_payment p WHERE p.checkout_id=o.checkout_id)
-            AND (r.id IS NULL OR r.amount<>o.total OR r.checkout_id<>o.checkout_id OR NOT r.imported))
+            AND (r.id IS NULL OR r.amount<>o.total OR r.checkout_id<>o.checkout_id))
         OR (r.id IS NOT NULL AND (o.status<>'cancelled' OR r.amount<>o.total OR r.checkout_id<>o.checkout_id))""",
     "profile_roles": """SELECT u.id, u.role FROM accounts_user u
         LEFT JOIN accounts_customerprofile c ON c.user_id=u.id LEFT JOIN accounts_seller s ON s.user_id=u.id
@@ -62,10 +62,15 @@ def fail(name, rows):
     raise CommandError(f"Invariant {name} failed; diagnostic rows: " + json.dumps(rows[:10], default=str, sort_keys=True))
 
 
-def sql_invariants():
+def sql_invariants(*, importing=False):
+    checks = dict(INVARIANTS)
+    if importing:
+        # Provenance is an import-time rule, not an ongoing money invariant: an imported paid
+        # order can later be cancelled by its customer, creating an application refund.
+        checks["imported_refund_provenance"] = "SELECT id FROM orders_refund WHERE NOT imported"
     counts = {}
     with connection.cursor() as cursor:
-        for name, query in INVARIANTS.items():
+        for name, query in checks.items():
             cursor.execute(query)
             rows = cursor.fetchmany(10)
             if rows:
@@ -100,7 +105,10 @@ def verify_manifest(source):
         with (source / f"{label}.csv").open(encoding="utf-8", newline="") as stream:
             fields = next(csv.reader(stream))
         approved = {field.column for field in model._meta.local_fields}
-        if len(fields) != len(set(fields)) or set(fields) != approved:
+        # New application metadata has a database default and is absent from the fixed clean dataset.
+        optional = {"request_fingerprint"} if label == "checkouts" else set()
+        if (len(fields) != len(set(fields)) or not set(fields) <= approved
+                or not approved - set(fields) <= optional):
             raise CommandError(f"Unexpected CSV header: {label}")
     ledger = json.loads((source / "cleaning_ledger.json").read_text(encoding="utf-8"))
     if set(ledger["output_counts"]) != set(TABLES) | set(COLLECTIONS):

@@ -1,6 +1,6 @@
 # checkout: Cart across sellers, split checkout, simulated payment, order lifecycle, cancellation
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 2.5 to 3 days
 · phase 2A (dates in PLAN.md section 13) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
 
@@ -81,3 +81,44 @@ owner-owned audit boundary defined in `accounts`; no other contract change.
 
 22 October 2026, Phase 2 amendments e–h approved by Chee Long before implementation (freight per unit, estimated
 delivery, fingerprint contents, benchmark scope); the freight follow-up note above is resolved by e.
+
+
+23 October 2026, implementation self-check complete; independent Claude Code review pending. The additive orders
+migration, ORM cart edits, parameterised split checkout and scoped lifecycle actions implement the approved contract
+and amendments e–h. Full-data browser checks used the demo customer, seller and operator: a three-shop purchase,
+shipping and delivery, customer cancellation with stock/refund reconciliation, and replay of the original review key
+and digest all passed. Desktop and 375px checks covered cart, review, purchase, history, order, seller and operator
+pages; wide management tables keep their horizontal scroll inside the page.
+
+Migration drift, the full Docker suite (including the required repeated real-thread race), analytics tests, host
+Git-index/packaging tests and documentation checks passed. The application image lacks Git, so its staged-index
+checks skip there; the separate host run executes them. Raw command logs, browser screenshots and generated full-data
+reconciliation are retained in the isolated worktree's local handoff evidence. No benchmark cases were added.
+The remaining owner confirmations are checkout-i1 through checkout-i9 in [DECISIONS](../DECISIONS.md#checkout-implementation).
+Integration must retain both workstreams' separate navigation/audit lookup blocks, the cart include in product detail,
+and each appended CSS block. PLAN.md marks checkout review; this plan stays in-progress until independent review.
+
+
+23 October 2026, integration self-check: order-audit test assertions are scoped to orders_order, with a real seller
+status transition proving unrelated audit events can coexist. Affected checkout modules were rerun after this
+assertion-only change; the orchestrator's independent final suite covers the resulting branch. Shared seed/audit-page
+integration decisions are recorded alongside the existing cart and lookup decisions.
+
+23 October 2026, independent Claude Code review of `5e65e3b` (fresh session): **APPROVE with two Should-fix doc
+items for the fix round; no blockers.** Build, migration drift check (no changes), the full Docker suite (500 passed,
+4 git-index skips), the concurrency module twice (20 race runs), host Git-index/packaging tests, analytics tests and
+`check_docs.py` passed. A disposable project's fresh full import and `verify_olist` passed, with the deferred
+invariants holding for every imported checkout. Exit checks 1–4 passed over HTTP against the full-data app (three
+shops, freight × quantity, delivery estimate, replay, ship/deliver/audit, cancel with stock/refund); runtime-role
+probes for audit writes, trigger tampering, illegal transitions and deferred money breaks were all rejected.
+**CK1 (Should fix):** checkout-i10/i11 record catalogue code absent from this branch; move them to the integration
+change. **CK2 (Should fix):** add Cart/CartLine to the main ER diagram and move the orders 0002 text into the
+tables/triggers sections of DATA_MODEL. **Optional:** CK3 server-side cap on the cancel reason; CK4 per-unit shipping
+label on the review page; CK5 move the README section beside the other feature sections. checkout-i1–i9 approvable as
+written. Full report: the review chat.
+
+23 October 2026, fix round (Claude Code, at Chee Long's request): CK1 removed checkout-i10/i11, which describe
+catalogue code, for the integration change to record; CK2 added Cart and CartLine to the main ER diagram and tables,
+moved the trigger and invariant text into "View, triggers and privileges" and the 3NF section, and removed the
+appended section; CK3 refuses cancel reasons over 1000 characters in the service (test added); CK4 makes per-unit and
+total shipping explicit on the review page; CK5 moved the README section above "Regenerate the data".

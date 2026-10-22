@@ -51,7 +51,7 @@ class Command(BaseCommand):
                         # Check deferred FK constraints before a MongoDB commit.
                         with connection.cursor() as cursor:
                             cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
-                        sql_invariants()
+                        sql_invariants(importing=True)
                         self.stdout.write("PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows.")
                         with client.start_session() as session:
                             insert_documents(database, source, session, self.stdout.write, attempted_ids)

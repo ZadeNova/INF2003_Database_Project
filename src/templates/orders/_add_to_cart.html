@@ -1,0 +1,4 @@
+{% if user.is_authenticated and user.role == 'customer' %}
+{% if product.stock %}<form method="post" action="{% url 'orders:cart_add' product.pk %}" hx-post="{% url 'orders:cart_add' product.pk %}" hx-target="#cart-feedback" class="checkout-add">{% csrf_token %}
+<div class="form-field"><label for="add-quantity">Quantity</label><input id="add-quantity" name="quantity" type="number" min="1" max="999" value="1" required></div><button type="submit" class="button button--dark">Add to cart</button></form><div id="cart-feedback" aria-live="polite"></div>{% endif %}
+{% elif not user.is_authenticated %}<p><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Log in to add to your cart</a></p>{% endif %}

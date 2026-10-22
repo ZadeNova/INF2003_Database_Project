@@ -10,3 +10,5 @@ src/staticfiles/
 
 # Local overnight implementation handoff
 PROGRESS-catalogue.md
+# Local checkout implementation handoff
+PROGRESS-checkout.md

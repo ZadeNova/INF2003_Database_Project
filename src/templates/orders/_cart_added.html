@@ -1,0 +1,1 @@
+{% if error %}<p role="alert">{{ error }}</p>{% else %}<p role="status">Added to your cart. <a href="{% url 'orders:cart' %}">View cart</a></p>{% endif %}

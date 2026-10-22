@@ -136,3 +136,17 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 | catalogue-i10 (needs owner confirmation) | The shared audit page uses a generic changes lead and wraps long decision badges only inside its audit table | Product and order actions share narrow cells; the adjustment preserves global badge styling and both audit lookup additions |
 
 Pillow 13.0.0 is pinned for the upload path after checking the [maintainer release listing](https://pypi.org/project/pillow/13.0.0/).
+
+## checkout implementation
+
+| ID | Decision | Why |
+|---|---|---|
+| checkout-i1 | **needs owner confirmation**; Lock the cart parent for all edits and checkout, followed by cart lines and products in ID order | Serializes first inserts, removals and duplicate submits without a cart phantom; products retain the contract's consistent lock order |
+| checkout-i2 | **needs owner confirmation**; Keep imported CSV headers fixed and allow omission only of the database-defaulted checkout fingerprint | The reproducible clean dataset predates application review metadata; unknown and other missing columns remain rejected |
+| checkout-i3 | **needs owner confirmation**; Deferred checks lock old and new parent checkouts before summing | Moving a payment cannot leave either checkout unbalanced; concurrent writers serialize at the parent |
+| checkout-i4 | **needs owner confirmation**; Keep the requested untracked local PROGRESS-checkout.md ignored by its exact filename | Local handoff state is execution evidence, like .cache; it is excluded from source packaging and documentation checks |
+| checkout-i5 | **needs owner confirmation**; Product detail includes orders/_add_to_cart.html; its customer-only form posts orders:cart_add at /cart/add/<product id>/ | Small shared boundary with catalogue; server validates role, canonical visibility and stock |
+| checkout-i6 | **needs owner confirmation**; Payment UI asks for method and instalments only; it never collects card details | Simulated payments need no sensitive input; multi-method payments remain available to the tested service |
+| checkout-i7 | **needs owner confirmation**; Audit pages resolve each page's order IDs to their current seller in a separate lookup block | Order decisions display readable shop names; integration retains the existing seller lookup and catalogue's product lookup |
+| checkout-i8 | **needs owner confirmation**; Imported-refund provenance is checked only during import; ongoing reconciliation checks amount, status and ownership for every refund | A customer may cancel imported paid history later; that new refund is correctly non-imported, while malformed source labels must still reject the import |
+| checkout-i9 | **needs owner confirmation**; Seller and operator order pages offer validated status and exact order-number filters, preserving the role's original queryset | The shifted Olist history includes dates after the current date; these filters make a newly placed order findable without paging through that history |

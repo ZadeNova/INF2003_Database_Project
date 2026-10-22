@@ -79,7 +79,7 @@ def test_future_routes_are_404_even_for_authenticated_roles(imported):
         if user is None:
             user=get_user_model().objects.create_user(username="operator",role="operator")
         client=Client();client.force_login(user)
-        for route in ("/cart/","/checkout/","/orders/","/analytics/","/dashboard/","/products/manage/"):
+        for route in ("/analytics/","/dashboard/","/products/manage/"):
             assert client.get(route).status_code == 404
 
 

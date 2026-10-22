@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Orders — Mercer{% endblock %}
+{% block content %}<div class="page account-page checkout-page"><div class="page__header"><div><p class="eyebrow">Your account</p><h1 class="page__title">Your orders</h1></div></div>
+{% for checkout in page_obj %}<section class="panel checkout-panel"><div class="panel__head"><h2 class="panel__title"><a href="{% url 'orders:checkout_detail' checkout.pk %}">Purchase #{{ checkout.pk }}</a></h2><span>{{ checkout.placed_at|date:"j M Y" }} · S${{ checkout.total }}</span></div>
+{% for order in checkout.orders.all %}<div class="checkout-review-line"><div><a href="{% url 'orders:order_detail' order.pk %}">{{ order.seller.display_name }}</a><p class="panel__note">Order #{{ order.pk }} · S${{ order.total }}</p></div>{% include "orders/_status.html" %}</div>{% endfor %}</section>
+{% empty %}<section class="panel checkout-panel"><h2 class="panel__title">No orders yet</h2><p class="panel__note">Your purchases will appear here.</p><a href="{% url 'catalogue:product_list' %}">Browse products</a></section>{% endfor %}
+{% include "orders/_pagination.html" %}</div>{% endblock %}
