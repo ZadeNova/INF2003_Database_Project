@@ -2,7 +2,7 @@
 
 status: approved
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
-· phase 2B (5 to 8 November) · depends on: `olist-import`, `accounts`
+· phase 2B (dates in PLAN.md section 13) · depends on: `olist-import`, `accounts`
 
 **Assumes:** the `olist-import` schema (product with seller, category, price, freight, stock, `active`, `featured`;
 MongoDB `product_specs` with `attributes`, `rating_summary`, `latest_reviews`; `category_templates`); `accounts` roles,
@@ -18,7 +18,7 @@ databases; the operator evolves category attributes live and takes products down
 | Area | Deliverable |
 |---|---|
 | Shop pages | Home (featured products; "trending" slot filled later by `activity`), category pages, product detail, seller shop page. Only products in the `purchasable_product` view (from `olist-import`) are shown. Generated names and descriptions carry a small "generated" label (AGENTS.md rule 9). Product detail = PostgreSQL product + MongoDB spec (description, attributes, rating summary, latest five reviews) + photo or icon card |
-| Icon cards (D10) | Category → icon map covering all 73 categories (about 25 to 30 icons in `src/static/img/icons.svg`, adding what is missing); the card shows icon and name; alt text is the name |
+| Icon cards (D10) | Category → icon map covering all 74 categories, many to one (about 25 to 30 icons in `src/static/img/icons.svg`, adding what is missing); the card shows icon and name; alt text is the name |
 | Featured photos (D11, D12) | 15 openly licensed stock photos (best seller in each of the top 15 categories), chosen after names exist, committed under `data/derived/olist/photos/` with `manifest.csv` (file, product, source URL, author, licence); `manage.py load_photos` (run in `migrate`) stores them in GridFS (bucket `photos`) and records the file id on the spec as `photo_file_id`. Served by a view with caching headers. Shown as "illustrative photo" |
 | Search and facets (decision a) | One search page, entered with a category or a name query (with neither, the home page shows featured and trending instead). **PostgreSQL first:** the candidate ids from the `purchasable_product` view, narrowed by category, price range and the name query (`pg_trgm`, decision b; see the note below), at most about 2k for a category. **MongoDB second:** a `$facet` pipeline over `product_specs` with `_id` in those candidates, filtering by attributes and rating, returning the matching ids plus counts per rating band and attribute value, so counts only ever include buyable products. **Ordering:** for price or newest, PostgreSQL sorts and paginates the matching ids with `WHERE id = ANY(%s)`; for "Top rated", the pipeline sorts by `rating_summary.bayesian` and returns one page of ids, which PostgreSQL then fetches |
 | Specifications | `$jsonSchema` on outer fields only (from `olist-import`); the app validates `attributes` against the category's template. Multikey index on attribute values used by the facets, created by adding it to `mongo_setup` (`olist-import`) |
@@ -61,6 +61,16 @@ injection negatives on search parameters.
 | c | Cross-store writes: PostgreSQL transaction open, MongoDB write, then commit; a MongoDB failure rolls PostgreSQL back. A MongoDB success followed by a failed PostgreSQL commit is logged and repaired by `manage.py check_specs`, which compares product ids in PostgreSQL with spec ids in MongoDB, removes orphan specs and reports products without one | No distributed transaction exists across the two engines; this keeps the rare failure visible and fixable, and it is a good report discussion |
 | d | Take-down is a separate flag from seller deactivation | The seller cannot undo an operator take-down |
 
+**Phase 2 amendments (approved by Chee Long, 22 October 2026)**, settling questions the contract left open; see
+[DECISIONS](../DECISIONS.md#phase-2-plan-amendments-22-october-2026):
+
+| ID | Decision | Why |
+|---|---|---|
+| e | `lead_time_days` is a required field in seller create and edit (with the price, stock and freight fields); new products start with `has_generated_content` false | The column is not nullable; the field list above omitted it |
+| f | The design rewrite (DESIGN.md and `site.css`) and the 15 featured photos are a separate, owner-steered step after the core is built, not part of an unattended run. They remain in this contract and its exit check 5. Until then pages use the current design and products show icon cards | Design is a taste decision tied to the presentation grade (foundation-a: the UI work decides the design); each photo needs its licence verified on its source page |
+| g | Icons map many to one: the 26 existing symbols plus any added cover all 74 imported categories | The import produced 74 categories, not 73 |
+| h | Benchmark case B1 is not built in this workstream | `benchmark` owns it on its separate bench databases; PLAN.md section 13 only aligns the timing |
+
 ## Review notes
 
 21 October 2026, cross-plan review (fresh session); findings applied: search reversed to PostgreSQL first so
@@ -75,3 +85,6 @@ mapping required by DESIGN.md. These remain catalogue work and do not block the 
 
 22 October 2026, Phase 1B decision P3 (accepted by Chee Long): the product audit trigger follows the shared
 owner-owned audit boundary defined in `accounts`; no other contract change.
+
+22 October 2026, Phase 2 amendments e–h approved by Chee Long before implementation (lead time field, design and
+photos as an owner-steered step, many-to-one icons for 74 categories, benchmark scope).
