@@ -118,3 +118,11 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 | foundation-o | Plan files are kept after close-out with `status: done`, not deleted; `check_docs.py` now checks that every plan has a valid status line | The team wants the plans as a reference; each holds the contract, decisions and review notes behind its workstream |
 | foundation-p | `docs/OVERVIEW.md`: a plain-language team guide that summarises PLAN.md and links to it rather than copying details | Teammates need one readable page on scope and features; linking keeps PLAN.md the single home of each fact |
 | foundation-q | No separate human gate: the implementer asks a teammate to review in a fresh Claude Code session | One main developer; the fresh-session review already runs the tests and exit checks |
+
+
+## catalogue implementation
+
+| ID | Decision | Why |
+|---|---|---|
+| catalogue-i1 (needs owner confirmation) | Use an attributes.$** wildcard index for the scalar attribute dictionaries already imported; it supports multikey array values without changing documents | A fixed attribute index cannot cover live schema evolution; explain evidence must distinguish scalar isMultiKey false from actual arrays |
+| catalogue-i2 (needs owner confirmation) | Newest means descending product ID | The approved schema has no creation timestamp; additive indexing and audit need no product-field/import-format change |

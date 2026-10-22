@@ -394,3 +394,14 @@ Rule counts overlap; the union of removed order IDs determines the surviving his
 | sellers | 3,095 |
 | users | 99,191 |
 <!-- end generated -->
+
+
+## Catalogue search and product audit
+
+`catalogue` 0002 adds the trusted pg_trgm extension and the `product_name_trgm` GIN index on product.name.
+`product_update_audit` runs AFTER UPDATE only when price, stock, active or taken_down actually changes. The
+owner-owned SECURITY DEFINER function `public.audit_product_update()` pins `search_path = public, pg_temp`, reads
+the shared transaction-local actor/reason settings and writes named-field before/after snapshots to audit_log.
+Runtime retains SELECT only on audit_log and cannot execute or replace the function or disable its trigger.
+MongoDB `spec_attributes` is an `attributes.$**` wildcard index: fields added to templates are indexed without
+collection-schema changes; array-valued fields use multikey entries, while the imported scalar fields do not.

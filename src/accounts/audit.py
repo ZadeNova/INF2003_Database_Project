@@ -60,3 +60,12 @@ def change_seller_status(seller_id, action, actor, reason):
         Seller.objects.filter(pk=seller.pk).update(status=new)
         seller.status = new
     return seller
+
+
+# catalogue labels (append-only shared navigation/audit integration).
+AUDIT_LABELS.update({
+    "product.update": "Product updated", "product.activate": "Product activated",
+    "product.deactivate": "Product deactivated", "product.takedown": "Product taken down",
+    "product.restore": "Product restored",
+})
+AUDIT_TONES.update({"product.activate": "completed", "product.restore": "completed"})
