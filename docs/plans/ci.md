@@ -1,6 +1,6 @@
 # ci: Real-database correctness, quality gates and demo-story tests
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · Phases 1B–4 (25 October to 4 November 2026)
 · depends on: `foundation`; extend feature and benchmark checks as their workstreams land
 
@@ -107,3 +107,13 @@ whether full-data checks run in CI.
 22 October 2026, fix round: CI1–CI6, a–f/full-data decisions and requested minutes-budget recommendation applied; draft retained.
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
+
+22 October 2026, independent Codex implementation review of `e3c7d2c`: **APPROVE; no CR findings.** Verified the
+Action release SHAs through GitHub's API, PR/main triggers, read-only permissions, pinned runner, timeouts, secret
+masking, project isolation and all stage 1 checks. Extracted kernel-guard boundary checks passed; the host skip guard
+passed the real report and rejected a report with a skipped case. The isolated `mercer-ci-review` reproduction passed
+fresh migrations, drift, fixture import, demo seeding, the full Django suite, pipeline tests and host Git-index/
+packaging tests in a temporary pinned Python environment. Generated secret values were absent from database logs.
+Teardown removed only the review project's containers, network and volumes; the original `mercer` volume metadata
+and running container identities were unchanged. Removed the worktree's generated `.env`. Commands and actual
+results are in the review chat. Hosted PR/main evidence is still required to close stage 1; stages 2 and 3 remain.
