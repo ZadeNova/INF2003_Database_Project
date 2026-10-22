@@ -197,4 +197,13 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
         for entry in entries:
             entry.shop = (shops.get(int(entry.row_id))
                           if entry.table_name == "accounts_seller" and entry.row_id.isdecimal() else None)
+        # catalogue audit context: resolve only this page's products and their current shops.
+        product_ids = {int(entry.row_id) for entry in entries
+                       if entry.table_name == "catalogue_product" and entry.row_id.isdecimal()
+                       and 0 < int(entry.row_id) < 2**63}
+        products = Product.objects.select_related("seller").in_bulk(product_ids)
+        for entry in entries:
+            if entry.table_name == "catalogue_product" and entry.row_id.isdecimal():
+                entry.product = products.get(int(entry.row_id))
+                entry.shop = entry.product.seller if entry.product is not None else None
         return context

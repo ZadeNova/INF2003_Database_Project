@@ -405,3 +405,16 @@ the shared transaction-local actor/reason settings and writes named-field before
 Runtime retains SELECT only on audit_log and cannot execute or replace the function or disable its trigger.
 MongoDB `spec_attributes` is an `attributes.$**` wildcard index: fields added to templates are indexed without
 collection-schema changes; array-valued fields use multikey entries, while the imported scalar fields do not.
+
+
+### Catalogue specifications and photos
+
+Sellers write only the specification fields they own (category_id, description, attributes, photo_file_id and the
+existing generated-content flag); edits leave rating_summary and latest_reviews intact. Category templates retain
+the imported text, integer and boolean field shapes, allowed-value lists and an increasing version; adding an
+optional field updates the template document without any validator or PostgreSQL migration.
+The `photos` GridFS bucket stores re-encoded raster bytes in photos.files/photos.chunks. File metadata holds its
+product_id and content_type; product_specs.photo_file_id is the reference. Replacements remove the old file after
+the new spec and PostgreSQL change are accepted. Public photo reads first check current product visibility.
+New seller-created products/specifications have has_generated_content false. seed_demo explicitly clears actor and
+reason inside its existing transaction, so its labelled adjustments remain system audit entries.

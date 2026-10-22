@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load catalogue_tags %}
 {% block title %}{{ product.name }} — Mercer{% endblock %}
 {% block content %}
 <div class="page catalogue-page">
@@ -14,8 +15,8 @@
             <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %} · Ready in {{ product.lead_time_days }} days</p>
             {% if spec %}
             <p>{{ spec.description }}</p>
-            <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|capfirst }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
-            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
+            <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt><dd>{{ value|option_value }}</dd>{% endfor %}</dl>
+            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
             {% else %}<p>Specifications are temporarily unavailable.</p>{% endif %}
             {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
             {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>{% endif %}

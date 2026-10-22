@@ -15,8 +15,13 @@ def role_navigation(request):
         status = Seller.objects.filter(user=user).values_list("status", flat=True).first()
         if status == Seller.Status.APPROVED:
             links.append(("Seller centre", reverse("accounts:seller_home"), "accounts:seller_home"))
+            # catalogue links
+            links.append(("My products", reverse("catalogue:seller_products"), "catalogue:seller_products"))
         links.append(("Seller status", reverse("accounts:seller_status"), "accounts:seller_status"))
     elif user.role == User.Role.OPERATOR:
         links += [("Sellers", reverse("accounts:operator_sellers"), "accounts:operator_sellers"),
                   ("Audit log", reverse("accounts:operator_audit"), "accounts:operator_audit")]
+        # catalogue links
+        links += [("Products", reverse("catalogue:operator_products"), "catalogue:operator_products"),
+                  ("Categories", reverse("catalogue:operator_categories"), "catalogue:operator_categories")]
     return {"nav_links": links}

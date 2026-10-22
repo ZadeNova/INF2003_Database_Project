@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My products — Mercer{% endblock %}
+{% block content %}
+<div class="page account-page catalogue-page">
+    <div class="page__header"><div><p class="eyebrow">Seller centre</p><h1 class="page__title">My products</h1><p>{{ seller.display_name }}</p></div><a class="button button--dark" href="{% url 'catalogue:product_create' %}">Add a product</a></div>
+    <form class="surface-card manage-filters" method="get"><div class="manage-filters__search"><div class="form-field manage-filters__field"><label for="product-q">Product name</label><input id="product-q" name="q" value="{{ q }}" maxlength="200"></div><button class="button button--dark">Find</button></div></form>
+    <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="My products">
+        <div class="optable__row optable__row--head optable__row--products"><span>Product</span><span>Category</span><span>Price</span><span>Stock</span><span>Status</span></div>
+        {% for product in page_obj %}<div class="optable__row optable__row--products">
+            <span class="stacked">{% if product.taken_down %}<strong>{{ product.name }}</strong><span>{{ product.taken_down_reason }}</span>{% else %}<a class="optable__name" href="{% url 'catalogue:product_edit' product.pk %}">{{ product.name }}</a>{% endif %}{% if product.has_generated_content %}<span class="name-tag">Generated content</span>{% endif %}</span>
+            <span>{{ product.category.name_en }}</span><span>{{ product.display_price }}</span><span>{{ product.stock }}</span><span class="badge badge--{% if product.active and not product.taken_down %}completed{% else %}neutral{% endif %}">{% if product.taken_down %}Taken down{% elif product.active %}Active{% else %}Inactive{% endif %}</span>
+        </div>{% empty %}<div class="optable__empty"><p>No products found. Add your first product.</p></div>{% endfor %}
+    </div>
+    {% include "catalogue/_pager.html" %}
+</div>
+{% endblock %}

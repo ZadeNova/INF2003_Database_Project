@@ -35,7 +35,7 @@
             {% include "accounts/_shop_name.html" with seller=entry.shop href=shop_url only %}
             {% else %}<span class="optable__muted">Shop unavailable</span>{% endif %}
             <span class="optable__muted">{{ entry.actor.username|default:"System" }}</span>
-            <span>{{ entry.reason|default:"—" }}</span>
+            <span class="stacked"><span>{{ entry.reason|default:"—" }}</span>{% if entry.product %}<a href="{% url 'catalogue:operator_product' entry.product.pk %}">{{ entry.product.name }}</a><span class="optable__muted">Price: S${{ entry.before.price|floatformat:2 }} → S${{ entry.after.price|floatformat:2 }} · Stock: {{ entry.before.stock }} → {{ entry.after.stock }}</span>{% endif %}</span>
         </div>
         {% empty %}
         <div class="optable__empty"><p>No decisions match these filters.</p></div>

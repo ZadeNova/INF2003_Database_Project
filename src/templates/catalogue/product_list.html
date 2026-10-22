@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load catalogue_tags %}
 {% block title %}{% if category %}{{ category.name_en }}{% elif searching %}Search{% else %}Shop{% endif %} — Mercer{% endblock %}
 {% block content %}
 <div class="page catalogue-page">
@@ -16,7 +17,7 @@
             </form>
             {% if rating_counts %}<h3>Ratings in these results</h3><ul class="catalogue-counts">{% for rating in rating_counts %}<li>{{ rating.label }} <span class="badge badge--neutral">{{ rating.count }}</span></li>{% endfor %}</ul>{% endif %}
             {% if facet_groups %}<details open class="catalogue-counts"><summary>In these results</summary>
-                {% for name, values in facet_groups %}<h3>{{ name|capfirst }}</h3><ul>{% for value in values %}<li>{{ value.value }} <span class="badge badge--neutral">{{ value.count }}</span></li>{% endfor %}</ul>{% endfor %}
+                {% for name, values in facet_groups %}<h3>{{ name|option_label }}</h3><ul>{% for value in values %}<li>{{ value.value|option_value }} <span class="badge badge--neutral">{{ value.count }}</span></li>{% endfor %}</ul>{% endfor %}
             </details>{% endif %}
         </aside>
         <section class="catalogue-results" aria-label="Products">

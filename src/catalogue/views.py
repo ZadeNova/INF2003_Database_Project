@@ -55,7 +55,7 @@ def _listing(request, category=None):
             name, value = row["_id"]["name"], row["_id"]["value"]
             groups.setdefault(name, []).append({"value": value, "count": row["count"]})
         context.update(page_obj=page, searching=True, result_count=page.paginator.count,
-                       facet_groups=sorted(groups.items()), rating_counts=[{"label": "Not rated" if str(row["_id"]) == "0" else str(row["_id"]) + " stars",
+                       facet_groups=sorted(groups.items()), rating_counts=[{"label": "Not rated" if str(row["_id"]) == "0" else str(row["_id"]) + (" star" if str(row["_id"]) == "1" else " stars"),
                                       "count": row["count"]} for row in facets["ratings"]])
     query = data.copy()
     query.pop("page", None)
