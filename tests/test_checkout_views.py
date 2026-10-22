@@ -204,3 +204,28 @@ def test_operator_audit_labels_and_resolves_order_shop():
     assert response.status_code==200 and b"Shipped" in response.content and b"example shop" in response.content
     assert b"order.shipped" not in response.content.split(b'<div class="surface-card optable')[1]
     assert b"Shop unavailable" not in response.content
+
+
+def test_order_filters_find_full_data_actions_without_widening_seller_scope():
+    buyer,item,foreign=customer(),product(),product("foreign")
+    own=order_for(buyer,item)
+    other=order_for(buyer,foreign)
+    seller=signed_in(item.seller.user)
+    response=seller.get(reverse("orders:seller_orders"),{"order_id":own.pk,"status":"paid"})
+    assert list(response.context["page_obj"])==[own]
+    assert str(own.pk) in response.context["query"]
+    response=seller.get(reverse("orders:seller_orders"),{"order_id":other.pk})
+    assert list(response.context["page_obj"])==[]
+    operator=User.objects.create_user(username="operator",role="operator")
+    response=signed_in(operator).get(reverse("orders:operator_orders"),{"order_id":other.pk,"status":"paid"})
+    assert list(response.context["page_obj"])==[other]
+
+
+@pytest.mark.parametrize("query", [{"order_id":"1; DROP TABLE orders_order"},{"order_id":"9223372036854775808"},
+                                    {"order_id":"0"},{"status":"paid' OR 1=1 --"}])
+def test_invalid_order_filters_are_errors_and_never_broaden_the_list(query):
+    buyer,item=customer(),product()
+    order_for(buyer,item)
+    response=signed_in(item.seller.user).get(reverse("orders:seller_orders"),query)
+    assert response.status_code==200 and response.context["filters"].errors
+    assert not list(response.context["page_obj"]) and Order.objects.count()==1

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Payment
+from .models import Order, Payment
 
 
 class PaymentForm(forms.Form):
@@ -14,3 +14,17 @@ class PaymentForm(forms.Form):
         if cleaned.get("method") != "credit_card" and cleaned.get("instalments", 1) != 1:
             self.add_error("instalments", "Choose 1 for this payment method.")
         return cleaned
+
+
+class OrderFilterForm(forms.Form):
+    status = forms.ChoiceField(required=False, choices=[("", "Any status"), *Order.Status.choices])
+    order_id = forms.IntegerField(label="Order number", required=False, min_value=1, max_value=9223372036854775807)
+
+    def apply(self, orders):
+        if not self.is_valid():
+            return orders.none()
+        if self.cleaned_data["status"]:
+            orders = orders.filter(status=self.cleaned_data["status"])
+        if self.cleaned_data["order_id"]:
+            orders = orders.filter(pk=self.cleaned_data["order_id"])
+        return orders

@@ -334,3 +334,6 @@ Checkout's real-database tests, including the repeated last-unit race, can be ru
 ```sh
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_checkout.py /app/tests/test_checkout_schema.py /app/tests/test_checkout_concurrency.py /app/tests/test_checkout_views.py
 ```
+
+The seller and operator order lists can filter by status and order number. Invalid filter values show a form error;
+seller filters always stay within that seller's orders.

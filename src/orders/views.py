@@ -1,4 +1,5 @@
 import uuid
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -9,7 +10,7 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 
 from accounts.mixins import CustomerRequiredMixin, SellerRequiredMixin, OperatorRequiredMixin
-from .forms import PaymentForm
+from .forms import PaymentForm, OrderFilterForm
 from .models import Checkout, Order, OrderLine
 from .services import (CheckoutError, add_to_cart, set_cart_quantity, remove_from_cart,
                        cart_review, checkout, change_order_status)
@@ -113,8 +114,11 @@ class CancelView(CustomerRequiredMixin, View):
 @method_decorator(never_cache, name="dispatch")
 class SellerOrdersView(SellerRequiredMixin, View):
     def get(self, request):
-        orders = Order.objects.filter(seller=self.seller).select_related("checkout", "seller").order_by("-placed_at", "-pk")
-        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")), "seller_mode": True})
+        filters = OrderFilterForm(request.GET)
+        orders = filters.apply(Order.objects.filter(seller=self.seller)).select_related("checkout", "seller").order_by("-placed_at", "-pk")
+        query = urlencode({key: value for key, value in filters.cleaned_data.items() if value}) if filters.is_valid() else ""
+        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
+                                                             "seller_mode": True, "filters": filters, "query": query})
 
 
 class ShipView(SellerRequiredMixin, View):
@@ -131,8 +135,11 @@ class ShipView(SellerRequiredMixin, View):
 @method_decorator(never_cache, name="dispatch")
 class OperatorOrdersView(OperatorRequiredMixin, View):
     def get(self, request):
-        orders = Order.objects.select_related("checkout", "seller").order_by("-placed_at", "-pk")
-        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")), "seller_mode": False})
+        filters = OrderFilterForm(request.GET)
+        orders = filters.apply(Order.objects.all()).select_related("checkout", "seller").order_by("-placed_at", "-pk")
+        query = urlencode({key: value for key, value in filters.cleaned_data.items() if value}) if filters.is_valid() else ""
+        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
+                                                             "seller_mode": False, "filters": filters, "query": query})
 
 
 class DeliverView(OperatorRequiredMixin, View):
