@@ -6,8 +6,4 @@ __pycache__/
 .pytest_cache/
 .venv/
 src/staticfiles/
-
-# Derived shoe data is reproducible from data/raw; keep only the map and its checksums.
-data/derived/shoes/*
-!data/derived/shoes/checksums.txt
-!data/derived/shoes/product_map.csv
+.cache/

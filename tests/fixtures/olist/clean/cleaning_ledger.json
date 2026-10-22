@@ -1,0 +1,267 @@
+{
+  "assumptions": {
+    "customer_address": "Latest retained purchase, then source customer ID",
+    "freight_median": "Median collapsed order-line freight, rounded half-up",
+    "geolocation": "All source points contribute to medians; grouping is transformation, not row removal",
+    "prior_population": "All retained seller-products including zero-review products",
+    "refund_time": "Purchase time: Olist has no cancellation timestamp",
+    "user_date_joined": "Earliest source purchase for that customer/seller; earliest dataset purchase if no observed activity; Olist provides no signup date"
+  },
+  "fx": {
+    "date_note": "Latest ECB reference available on execution day, before the 22 October European publication",
+    "eur_brl": "5.6432",
+    "eur_sgd": "1.4348",
+    "reference_date": "2026-10-21",
+    "retrieved_on": "2026-10-22",
+    "sgd_per_brl": "0.2542529061525375673376807485",
+    "source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+  },
+  "generation": {
+    "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes",
+    "seed": 82,
+    "template_sha256": "14394682030ecbefe75af8cc41930e5cc387f64502554773a046856e71c83750"
+  },
+  "output_counts": {
+    "categories": 74,
+    "category_templates": 74,
+    "checkouts": 980,
+    "customers": 998,
+    "geolocation": 20,
+    "order_lines": 1042,
+    "orders": 1002,
+    "payments": 1028,
+    "platform_stats": 1,
+    "product_specs": 118,
+    "products": 118,
+    "refunds": 5,
+    "reviews": 1028,
+    "sellers": 101,
+    "users": 1099
+  },
+  "rules": {
+    "1": {
+      "affected": 3,
+      "source_order_ids": [
+        "0d3adebce4bebc1f80a7f36e9833f497",
+        "10a045cdf6a5650c21e9cfeb60384c16",
+        "4637ca194b6387e2d538dc89b124b0ee"
+      ]
+    },
+    "10": {
+      "affected": 22
+    },
+    "11": {
+      "affected": 980
+    },
+    "12": {
+      "affected": 467
+    },
+    "13": {
+      "affected": 980
+    },
+    "14": {
+      "affected": 1167
+    },
+    "15": {
+      "affected": 7
+    },
+    "16": {
+      "affected": 118
+    },
+    "17": {
+      "affected": 5
+    },
+    "18": {
+      "affected": 11,
+      "seller_product_keys": [
+        {
+          "olist_product_id": "4c3ae5db49258df0784827bdacf3b396",
+          "olist_seller_id": "d98eec89afa3380e14463da2aabaea72"
+        },
+        {
+          "olist_product_id": "55bfa0307d7a46bed72c492259921231",
+          "olist_seller_id": "343e716476e3748b069f980efbaa294e"
+        },
+        {
+          "olist_product_id": "5a6b04657a4c5ee34285d1e4619a96b4",
+          "olist_seller_id": "ecccfa2bb93b34a3bf033cc5d1dcdc69"
+        },
+        {
+          "olist_product_id": "6f7400c1577bd99fb7c9cd196edb6ae2",
+          "olist_seller_id": "0c8380b62e38e8a1e6adbeba7eb9688c"
+        },
+        {
+          "olist_product_id": "9a98180ffbd0765e89f11cc8dd2385f4",
+          "olist_seller_id": "0c8380b62e38e8a1e6adbeba7eb9688c"
+        },
+        {
+          "olist_product_id": "c6ea63369936552872ae890c82175b4b",
+          "olist_seller_id": "37be5a7c751166fbc5f8ccba4119e043"
+        },
+        {
+          "olist_product_id": "e24f73b7631ee3fbb2ab700a9acaa258",
+          "olist_seller_id": "0cbcee27c791afa0cdcb08587a2013a8"
+        },
+        {
+          "olist_product_id": "e435ceb7ced9b8446defd858630454ed",
+          "olist_seller_id": "2a61c271b1ac763450d846849783e922"
+        },
+        {
+          "olist_product_id": "ec165cd31c50585786ffda6feff5d0a6",
+          "olist_seller_id": "8bdd8e3fd58bafa48af76b2c5fd71974"
+        },
+        {
+          "olist_product_id": "f9d774a1820f792952eea079a40a7c6b",
+          "olist_seller_id": "2709af9587499e95e803a6498a5a56e9"
+        },
+        {
+          "olist_product_id": "fb7a100ec8c7b34f60cec22b1a9a10e0",
+          "olist_seller_id": "d98eec89afa3380e14463da2aabaea72"
+        }
+      ],
+      "source_product_ids": [
+        "00066f42aeeb9f3007548bb9d3f33c38",
+        "00088930e925c41fd95ebfe695fd2655",
+        "4c3ae5db49258df0784827bdacf3b396",
+        "55bfa0307d7a46bed72c492259921231",
+        "5a6b04657a4c5ee34285d1e4619a96b4",
+        "6f7400c1577bd99fb7c9cd196edb6ae2",
+        "9a98180ffbd0765e89f11cc8dd2385f4",
+        "c6ea63369936552872ae890c82175b4b",
+        "e24f73b7631ee3fbb2ab700a9acaa258",
+        "e435ceb7ced9b8446defd858630454ed",
+        "ec165cd31c50585786ffda6feff5d0a6",
+        "f9d774a1820f792952eea079a40a7c6b",
+        "fb7a100ec8c7b34f60cec22b1a9a10e0"
+      ],
+      "source_products_without_any_original_lines": [
+        "00066f42aeeb9f3007548bb9d3f33c38",
+        "00088930e925c41fd95ebfe695fd2655"
+      ]
+    },
+    "2": {
+      "affected": 7,
+      "source_order_ids": [
+        "0010dedd556712d7bb69a19cb7bbd37a",
+        "00a500bc03bc4ec968e574c2553bed4b",
+        "00b1cb0320190ca0daa2c88b35206009",
+        "0d3adebce4bebc1f80a7f36e9833f497",
+        "10a045cdf6a5650c21e9cfeb60384c16",
+        "4637ca194b6387e2d538dc89b124b0ee",
+        "bfbd0f9bdef84302105ad712db648a6c"
+      ]
+    },
+    "3": {
+      "affected": 9,
+      "source_order_ids": [
+        "005d9a5423d47281ac463a968b3936fb",
+        "00789ce015e7e5791c7914f32bb4fad4",
+        "016726239765c18f66826453f39c64e3",
+        "0603e869ecff28981f22e3ea3e91911b",
+        "8d9c0dc8d5a2ce804f6b925d8f8e6c1d",
+        "c5bb8cf75ccd20ee373200ab31628770",
+        "c887c09a3acf3b6fe0ba319d68d385a8",
+        "e4406088398131aed8c21c5a4ec3442b",
+        "faf132fb35b3b3b533a67efbd6e7c02d"
+      ]
+    },
+    "4": {
+      "affected": 2,
+      "source_order_ids": [
+        "00b1cb0320190ca0daa2c88b35206009",
+        "4637ca194b6387e2d538dc89b124b0ee"
+      ]
+    },
+    "5": {
+      "affected": 4,
+      "source_order_ids": [
+        "0d3268bad9b086af767785e3f0fc0133",
+        "1950d777989f6a877539f53795b4c3c3",
+        "20edc82cf5400ce95e1afacc25798b31",
+        "2c45c33d2f9cb8ff8b1c86cc28c11c30"
+      ]
+    },
+    "6": {
+      "affected": 2
+    },
+    "7": {
+      "affected": 5,
+      "removed_with_orders": 20
+    },
+    "8": {
+      "affected": 4
+    },
+    "9": {
+      "affected": 125
+    }
+  },
+  "shift_weeks": 426,
+  "source_sha256": {
+    "olist_customers_dataset.csv": "e8f3537dec1e97a47bd4b143dd085b157a26b57ece2afdc38c05ea8e18b8c613",
+    "olist_geolocation_dataset.csv": "67d5796dcde3144d7b4024f2415818199e562684e0b28da3bcd2b8fa16617768",
+    "olist_order_items_dataset.csv": "bb7439f71c8edb7e8d728e1dd051f950bdd45ecff29d3aafd29b3addbdc66061",
+    "olist_order_payments_dataset.csv": "4df300b1569846dcecdb9f227a3c20de1d26453232b87b5f6fa8c97ba4ab80c4",
+    "olist_order_reviews_dataset.csv": "36a1b432f2eb474eeef4778ec891d8061f2ae75b92f7bd1de37b79d962c8d8a0",
+    "olist_orders_dataset.csv": "666f17f412b581b0d8c552b30c9d555e90d6d8c3c7b97f0a6faf9ed7c104886d",
+    "olist_products_dataset.csv": "8c1925073f379b23b26e116e82cf5bb7e8c3c4014bccb5742308ee5ff141c868",
+    "olist_sellers_dataset.csv": "f93003b7601c43604cfa194baeb963499580f890577bd0717deeeb9e053e6929",
+    "product_category_name_translation.csv": "9f32ccbb03ebbee49acd00d7f8753ed6fee4a0714157ffe9527a0546ff883d38"
+  },
+  "tables": {
+    "categories": {
+      "kept": 71,
+      "read": 71,
+      "removed": 0,
+      "transformed": 71
+    },
+    "customers": {
+      "kept": 1000,
+      "read": 1000,
+      "removed": 0,
+      "transformed": 1000
+    },
+    "geolocation": {
+      "kept": 487,
+      "read": 487,
+      "removed": 0,
+      "transformed": 487
+    },
+    "order_items": {
+      "kept": 1167,
+      "read": 1191,
+      "removed": 24,
+      "transformed": 1167
+    },
+    "order_payments": {
+      "kept": 1028,
+      "read": 1047,
+      "removed": 19,
+      "transformed": 1028
+    },
+    "order_reviews": {
+      "kept": 968,
+      "read": 993,
+      "removed": 25,
+      "transformed": 968
+    },
+    "orders": {
+      "kept": 980,
+      "read": 1000,
+      "removed": 20,
+      "transformed": 980
+    },
+    "products": {
+      "kept": 114,
+      "read": 127,
+      "removed": 13,
+      "transformed": 114
+    },
+    "sellers": {
+      "kept": 101,
+      "read": 101,
+      "removed": 0,
+      "transformed": 101
+    }
+  },
+  "version": 1
+}

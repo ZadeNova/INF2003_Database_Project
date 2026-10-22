@@ -1,0 +1,9 @@
+{
+  "date_note": "Latest ECB reference available on execution day, before the 22 October European publication",
+  "eur_brl": "5.6432",
+  "eur_sgd": "1.4348",
+  "reference_date": "2026-10-21",
+  "retrieved_on": "2026-10-22",
+  "sgd_per_brl": "0.2542529061525375673376807485",
+  "source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+}

@@ -9,7 +9,7 @@ final-submission timeline (section 13).
 PostgreSQL is the system of record; MongoDB owns product specifications, reviews, photos and activity events; a benchmark
 harness compares both engines on identical data and workloads. Scope is tiered: Tier 1 is the A-grade core; Tier 2
 (Redis, observability, row-level security, replication and failover, full-text search, product Q&A) is earned at the
-8 November checkpoint and is outside the accelerated sprint. `foundation` is done; `olist-import` is next.
+8 November checkpoint and is outside the accelerated sprint. Workstream progress is recorded in section 14.
 
 ## 1. Principles
 
@@ -431,7 +431,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | Workstream | Scope | Depends on | Tier | Status |
 |---|---|---|---|---|
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | done |
-| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | ready |
+| `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | done |
 | `accounts` | Three roles, seller registration and approval, operator console (approve or suspend sellers, take-downs, audit log) | `olist-import` | 1 | ready |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | ready |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |

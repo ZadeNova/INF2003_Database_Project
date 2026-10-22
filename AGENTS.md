@@ -12,8 +12,9 @@ Django with HTMX serves the pages. The target is an A.
 - `docs/plans/<workstream>.md`: the contract for the workstream you are working on.
 - [DESIGN.md](DESIGN.md) for anything visual; `src/static/css/site.css` is its single implementation.
 
-**Current state:** `src/` is still the earlier shoe-shop baseline. `foundation` removed its AWS parts and `olist-import`
-replaces the shoe data. Do not extend shoe code; where a file contradicts PLAN.md, PLAN.md is the target.
+**Current state:** Phase 1A replaces the earlier baseline with the Olist marketplace schema, pipeline and importer.
+Product list/detail and demo logins are the minimum working application. Later routes remain closed until their
+approved workstreams rebuild them; PLAN.md section 14 is the progress index.
 
 ## Phase check (before starting and before merging)
 
@@ -112,7 +113,7 @@ close-out). A new one needs a
 CI. It catches broken links and paths, unlisted `.md` files, unpaired generated-section markers, plan files without a valid status line and
 README commands naming a missing script or service, not wrong prose, so the docs map still applies.
 
-## Running and testing (current baseline)
+## Running and testing
 
 Docker Desktop (or Docker Engine) with Compose 2.20 or later, from the repository root:
 
@@ -121,6 +122,8 @@ python src/tools/init_env.py                                    # writes .env, o
 docker compose up --build                                       # app at http://127.0.0.1:8000/
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_settings.py   # one module
+docker compose --profile tools run --rm tools pytest -q -p no:cacheprovider analytics/tests
+python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py tests/test_package_submission.py
 ```
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test

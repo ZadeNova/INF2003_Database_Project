@@ -21,3 +21,4 @@ One line per workstream, added at close-out.
 | Workstream | Agent | What it did | Reviewer |
 |---|---|---|---|
 | foundation | Claude Code (Sonnet 5.5) | Removed AWS and K-means code; two PostgreSQL roles; MongoDB replica set in Compose; docs consolidation and `scripts/check_docs.py`; packager | Claude Code (fresh session): Windows exit-check run, see `docs/plans/foundation.md` |
+| olist-import | Codex | Implemented Olist preparation, translation and generated content; marketplace schema and cross-store import; demo pages, tests and review fixes | Claude Code (fresh independent session): review and fix-round verification completed; see [the workstream review notes](plans/olist-import.md#review-notes) |

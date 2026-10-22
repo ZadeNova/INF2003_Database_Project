@@ -1,8 +1,11 @@
 """One MongoDB connection policy for Django and offline tools (no Django import)."""
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pymongo import MongoClient
 
 REPLICA_SET = "rs0"
+_database = ContextVar("mongo_database", default=None)
 
 
 def connection_options(*, environ=None, direct=False):
@@ -29,4 +32,17 @@ def client(*, environ=None, direct=False):
 
 
 def database_name(environ=None):
-    return (os.environ if environ is None else environ)["MONGO_DB"]
+    return _database.get() or (os.environ if environ is None else environ)["MONGO_DB"]
+
+
+@contextmanager
+def using_database(name):
+    """Explicit test routing; never replace a real database with a mock."""
+    allowed = {os.environ["MONGO_DB"], "test_" + os.environ["MONGO_DB"]}
+    if name not in allowed:
+        raise ValueError("MongoDB database must be the configured application or test database")
+    token = _database.set(name)
+    try:
+        yield
+    finally:
+        _database.reset(token)

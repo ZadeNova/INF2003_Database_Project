@@ -1,0 +1,10 @@
+{
+  "argos_version": "1.9.6",
+  "beam_size": 4,
+  "compute_type": "float32",
+  "model_url": "https://argos-net.com/v1/translate-pt_en-1_9.argosmodel",
+  "model_version": "1.9",
+  "segmentation": "whole newline-separated paragraphs",
+  "sha256": "ae76df6f650895c16f2b582065014fab496755ca846ecb19fae81d51f332a38e",
+  "threads": 1
+}

@@ -1,0 +1,219 @@
+{
+  "broken_orders": {
+    "after_august_2018": [
+      "0d3adebce4bebc1f80a7f36e9833f497",
+      "10a045cdf6a5650c21e9cfeb60384c16",
+      "4637ca194b6387e2d538dc89b124b0ee"
+    ],
+    "delivered_without_date": [
+      "0d3268bad9b086af767785e3f0fc0133",
+      "20edc82cf5400ce95e1afacc25798b31"
+    ],
+    "no_lines": [
+      "0010dedd556712d7bb69a19cb7bbd37a",
+      "00a500bc03bc4ec968e574c2553bed4b",
+      "00b1cb0320190ca0daa2c88b35206009",
+      "0d3adebce4bebc1f80a7f36e9833f497",
+      "10a045cdf6a5650c21e9cfeb60384c16",
+      "4637ca194b6387e2d538dc89b124b0ee"
+    ],
+    "no_payments": [
+      "bfbd0f9bdef84302105ad712db648a6c"
+    ],
+    "not_defined": [
+      "00b1cb0320190ca0daa2c88b35206009",
+      "4637ca194b6387e2d538dc89b124b0ee"
+    ],
+    "payment_mismatch": [
+      "005d9a5423d47281ac463a968b3936fb",
+      "00789ce015e7e5791c7914f32bb4fad4",
+      "016726239765c18f66826453f39c64e3",
+      "0603e869ecff28981f22e3ea3e91911b",
+      "8d9c0dc8d5a2ce804f6b925d8f8e6c1d",
+      "c5bb8cf75ccd20ee373200ab31628770",
+      "c887c09a3acf3b6fe0ba319d68d385a8",
+      "e4406088398131aed8c21c5a4ec3442b",
+      "faf132fb35b3b3b533a67efbd6e7c02d"
+    ],
+    "undelivered_with_date": [
+      "1950d777989f6a877539f53795b4c3c3",
+      "2c45c33d2f9cb8ff8b1c86cc28c11c30"
+    ]
+  },
+  "categories_without_source_translation": 2,
+  "category_concentration": [
+    {
+      "category": "moveis_decoracao",
+      "lines": 544
+    },
+    {
+      "category": "cama_mesa_banho",
+      "lines": 520
+    },
+    {
+      "category": "casa_conforto",
+      "lines": 30
+    },
+    {
+      "category": "informatica_acessorios",
+      "lines": 12
+    },
+    {
+      "category": "beleza_saude",
+      "lines": 11
+    },
+    {
+      "category": "esporte_lazer",
+      "lines": 9
+    },
+    {
+      "category": "telefonia",
+      "lines": 7
+    },
+    {
+      "category": "cool_stuff",
+      "lines": 6
+    },
+    {
+      "category": "eletronicos",
+      "lines": 6
+    },
+    {
+      "category": "ferramentas_jardim",
+      "lines": 5
+    },
+    {
+      "category": "utilidades_domesticas",
+      "lines": 5
+    },
+    {
+      "category": "brinquedos",
+      "lines": 4
+    },
+    {
+      "category": "bebes",
+      "lines": 3
+    },
+    {
+      "category": "fashion_bolsas_e_acessorios",
+      "lines": 3
+    },
+    {
+      "category": "pc_gamer",
+      "lines": 3
+    },
+    {
+      "category": "perfumaria",
+      "lines": 3
+    },
+    {
+      "category": "Uncategorised",
+      "lines": 2
+    },
+    {
+      "category": "alimentos",
+      "lines": 2
+    },
+    {
+      "category": "consoles_games",
+      "lines": 2
+    },
+    {
+      "category": "livros_tecnicos",
+      "lines": 2
+    },
+    {
+      "category": "pet_shop",
+      "lines": 2
+    },
+    {
+      "category": "portateis_cozinha_e_preparadores_de_alimentos",
+      "lines": 2
+    },
+    {
+      "category": "agro_industria_e_comercio",
+      "lines": 1
+    },
+    {
+      "category": "audio",
+      "lines": 1
+    },
+    {
+      "category": "automotivo",
+      "lines": 1
+    },
+    {
+      "category": "construcao_ferramentas_construcao",
+      "lines": 1
+    },
+    {
+      "category": "construcao_ferramentas_iluminacao",
+      "lines": 1
+    },
+    {
+      "category": "livros_interesse_geral",
+      "lines": 1
+    },
+    {
+      "category": "malas_acessorios",
+      "lines": 1
+    },
+    {
+      "category": "moveis_escritorio",
+      "lines": 1
+    }
+  ],
+  "customers_with_leading_zero_zip": 275,
+  "delivery_delay_scores": {
+    "early_over_7": {
+      "average": "4.1991",
+      "count": 678
+    },
+    "early_up_to_7_or_on_time": {
+      "average": "4.0794",
+      "count": 214
+    },
+    "late_1_to_7": {
+      "average": "2.7222",
+      "count": 36
+    },
+    "late_8_to_14": {
+      "average": "1.5500",
+      "count": 20
+    },
+    "late_over_14": {
+      "average": "1.7500",
+      "count": 8
+    }
+  },
+  "duplicate_review_ids": 0,
+  "geolocation_exact_duplicates": 249,
+  "geolocation_unique_prefixes": 20,
+  "multi_seller_orders": 23,
+  "one_cent_mismatches": 3,
+  "orders_with_duplicate_reviews": 5,
+  "payment_mismatches": 9,
+  "purchase_dates": {
+    "first": "2016-09-15 12:16:38",
+    "last": "2018-10-17 17:30:18"
+  },
+  "repeated_line_excess": 130,
+  "repeated_line_groups": 112,
+  "seller_products_before_cleaning": 129,
+  "shared_product_lines": 498,
+  "shared_products": 4,
+  "source_counts": {
+    "categories": 71,
+    "customers": 1000,
+    "geolocation": 487,
+    "order_items": 1191,
+    "order_payments": 1047,
+    "order_reviews": 993,
+    "orders": 1000,
+    "products": 127,
+    "sellers": 101
+  },
+  "superseded_reviews": 5,
+  "uncategorised_products": 2,
+  "zero_instalment_payments": 2
+}

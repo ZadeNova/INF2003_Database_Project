@@ -1,0 +1,75 @@
+id,slug,name_en,name_pt,icon,hand_translated
+1,agro-industry-and-commerce,Agro industry and commerce,agro_industria_e_comercio,package,False
+2,food,Food,alimentos,package,False
+3,food-drink,Food drink,alimentos_bebidas,package,False
+4,art,Art,artes,package,False
+5,arts-and-craftmanship,Arts and craftmanship,artes_e_artesanato,package,False
+6,party-supplies,Party supplies,artigos_de_festas,package,False
+7,christmas-supplies,Christmas supplies,artigos_de_natal,package,False
+8,audio,Audio,audio,package,False
+9,auto,Auto,automotivo,package,False
+10,baby,Baby,bebes,package,False
+11,drinks,Drinks,bebidas,package,False
+12,health-beauty,Health beauty,beleza_saude,package,False
+13,toys,Toys,brinquedos,package,False
+14,bed-bath-table,Bed bath table,cama_mesa_banho,package,False
+15,home-confort,Home confort,casa_conforto,package,False
+16,home-comfort-2,Home comfort 2,casa_conforto_2,package,False
+17,home-construction,Home construction,casa_construcao,package,False
+18,cds-dvds-musicals,Cds dvds musicals,cds_dvds_musicais,package,False
+19,cine-photo,Cine photo,cine_foto,package,False
+20,air-conditioning,Air conditioning,climatizacao,package,False
+21,consoles-games,Consoles games,consoles_games,package,False
+22,construction-tools-construction,Construction tools construction,construcao_ferramentas_construcao,package,False
+23,costruction-tools-tools,Costruction tools tools,construcao_ferramentas_ferramentas,package,False
+24,construction-tools-lights,Construction tools lights,construcao_ferramentas_iluminacao,package,False
+25,costruction-tools-garden,Costruction tools garden,construcao_ferramentas_jardim,package,False
+26,construction-tools-safety,Construction tools safety,construcao_ferramentas_seguranca,package,False
+27,cool-stuff,Cool stuff,cool_stuff,package,False
+28,dvds-blu-ray,Dvds blu ray,dvds_blu_ray,package,False
+29,home-appliances,Home appliances,eletrodomesticos,package,False
+30,home-appliances-2,Home appliances 2,eletrodomesticos_2,package,False
+31,electronics,Electronics,eletronicos,package,False
+32,small-appliances,Small appliances,eletroportateis,package,False
+33,sports-leisure,Sports leisure,esporte_lazer,package,False
+34,fashion-bags-accessories,Fashion bags accessories,fashion_bolsas_e_acessorios,package,False
+35,fashion-shoes,Fashion shoes,fashion_calcados,package,False
+36,fashion-sport,Fashion sport,fashion_esporte,package,False
+37,fashio-female-clothing,Fashio female clothing,fashion_roupa_feminina,package,False
+38,fashion-childrens-clothes,Fashion childrens clothes,fashion_roupa_infanto_juvenil,package,False
+39,fashion-male-clothing,Fashion male clothing,fashion_roupa_masculina,package,False
+40,fashion-underwear-beach,Fashion underwear beach,fashion_underwear_e_moda_praia,package,False
+41,garden-tools,Garden tools,ferramentas_jardim,package,False
+42,flowers,Flowers,flores,package,False
+43,diapers-and-hygiene,Diapers and hygiene,fraldas_higiene,package,False
+44,industry-commerce-and-business,Industry commerce and business,industria_comercio_e_negocios,package,False
+45,computers-accessories,Computers accessories,informatica_acessorios,package,False
+46,musical-instruments,Musical instruments,instrumentos_musicais,package,False
+47,la-cuisine,La cuisine,la_cuisine,package,False
+48,books-imported,Books imported,livros_importados,package,False
+49,books-general-interest,Books general interest,livros_interesse_geral,package,False
+50,books-technical,Books technical,livros_tecnicos,package,False
+51,luggage-accessories,Luggage accessories,malas_acessorios,package,False
+52,market-place,Market place,market_place,package,False
+53,furniture-mattress-and-upholstery,Furniture mattress and upholstery,moveis_colchao_e_estofado,package,False
+54,kitchen-dining-laundry-garden-furniture,Kitchen dining laundry garden furniture,moveis_cozinha_area_de_servico_jantar_e_jardim,package,False
+55,furniture-decor,Furniture decor,moveis_decoracao,package,False
+56,office-furniture,Office furniture,moveis_escritorio,package,False
+57,furniture-bedroom,Furniture bedroom,moveis_quarto,package,False
+58,furniture-living-room,Furniture living room,moveis_sala,package,False
+59,music,Music,musica,package,False
+60,stationery,Stationery,papelaria,package,False
+61,gaming-pc,Gaming pc,pc_gamer,package,True
+62,computers,Computers,pcs,package,False
+63,perfumery,Perfumery,perfumaria,package,False
+64,pet-shop,Pet shop,pet_shop,package,False
+65,small-appliances-home-oven-and-coffee,Small appliances home oven and coffee,portateis_casa_forno_e_cafe,package,False
+66,portable-kitchen-and-food-preparers,Portable kitchen and food preparers,portateis_cozinha_e_preparadores_de_alimentos,package,True
+67,watches-gifts,Watches gifts,relogios_presentes,package,False
+68,security-and-services,Security and services,seguros_e_servicos,package,False
+69,signaling-and-security,Signaling and security,sinalizacao_e_seguranca,package,False
+70,tablets-printing-image,Tablets printing image,tablets_impressao_imagem,package,False
+71,telephony,Telephony,telefonia,package,False
+72,fixed-telephony,Fixed telephony,telefonia_fixa,package,False
+73,housewares,Housewares,utilidades_domesticas,package,False
+74,uncategorised,Uncategorised,Sem categoria,package,False

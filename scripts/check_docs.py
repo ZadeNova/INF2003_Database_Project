@@ -20,7 +20,6 @@ ALLOWED_MARKDOWN = {
     "docs/DATA_MODEL.md", "docs/DECISIONS.md", "docs/AI_USE.md", "docs/OVERVIEW.md",
 }
 ALLOWED_MARKDOWN_PREFIXES = ("docs/plans/", "src/static/vendor/")   # workstream plans (kept after close-out); vendored library notices
-ALLOWED_MARKDOWN |= {"src/static/models/CREDITS.md"}                 # until the 3D models are deleted (olist-import)
 PATH_RULE_SKIPS = ("PLAN.md", "docs/plans/")     # these describe the target, so they name files not yet written
 
 FENCE = re.compile(r"^(```|~~~).*?^\1[ \t]*$", re.DOTALL | re.MULTILINE)

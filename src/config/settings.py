@@ -33,7 +33,7 @@ CSRF_TRUSTED_ORIGINS = [v.strip() for v in ENVIRON.get("DJANGO_CSRF_TRUSTED_ORIG
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
     "django.contrib.messages", "django.contrib.staticfiles",
-    "config", "accounts", "catalogue", "cart", "orders", "reporting",
+    "config", "accounts", "catalogue", "orders",
 ]
 MIDDLEWARE = [
     "config.middleware.DatabaseUnavailableMiddleware",
@@ -80,6 +80,7 @@ TIME_ZONE = "Asia/Singapore"
 USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTH_USER_MODEL = "accounts.User"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -93,7 +94,6 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/products/"
 LOGOUT_REDIRECT_URL = "/products/"
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
-DEMO_NAMESPACE = "synthetic/shoes/revision-a/demo/v1"
 
 # One JSON line per event on standard output (collected by Docker). Only our own request and
 # error loggers, Django's 5xx error records and Django's security warnings are routed here; the formatter

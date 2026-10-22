@@ -1,0 +1,102 @@
+id,user_id,status,shop_name,olist_seller_id,zip_prefix,city,state,has_generated_content
+1,999,approved,Olist seller 0176f73c,0176f73cc1195f367f7b32db1e5b3aa8,14940,ibitinga,SP,True
+2,1000,approved,Olist seller 058fd0aa,058fd0aa2bfdb2274e05e1ae971dabb6,09020,santo andre,SP,True
+3,1001,approved,Olist seller 062ce95f,062ce95fa2ad4dfaedfc79260130565f,95913,lajeado,RS,True
+4,1002,approved,Olist seller 0887a9f0,0887a9f087bcd5d9f6642b52f897fc6c,11990,cananeia,SP,True
+5,1003,approved,Olist seller 0c8380b6,0c8380b62e38e8a1e6adbeba7eb9688c,37410,tres coracoes,MG,True
+6,1004,approved,Olist seller 0cbcee27,0cbcee27c791afa0cdcb08587a2013a8,37410,tres coracoes,MG,True
+7,1005,approved,Olist seller 12b9676b,12b9676b00f60f3b700e83af21824c0e,95780,montenegro,RS,True
+8,1006,approved,Olist seller 1554a685,1554a68530182680ad5c8b042c3ab563,37580,monte siao,MG,True
+9,1007,approved,Olist seller 16090f2c,16090f2ca825584b5a147ab24aa30c86,12940,atibaia,SP,True
+10,1008,approved,Olist seller 1835b56c,1835b56ce799e6a4dc4eddc053f04066,14940,ibitinga,SP,True
+11,1009,approved,Olist seller 1961c3e1,1961c3e1272bfeceb05d0b78b5bbfdaf,07241,guarulhos,SP,True
+12,1010,approved,Olist seller 1c129092,1c129092bf23f28a5930387c980c0dfc,02972,sao paulo,SP,True
+13,1011,approved,Olist seller 1f50f920,1f50f920176fa81dab994f9023523100,15025,sao jose do rio preto,SP,True
+14,1012,approved,Olist seller 218d46b8,218d46b86c1881d022bce9c68a7d4b15,14070,ribeirao preto,SP,True
+15,1013,approved,Olist seller 25c5c91f,25c5c91f63607446a97b143d2d535d31,35680,itauna,MG,True
+16,1014,approved,Olist seller 2709af95,2709af9587499e95e803a6498a5a56e9,03813,sao paulo,SP,True
+17,1015,approved,Olist seller 282f23a9,282f23a9769b2690c5dda22e316f9941,31573,belo horizonte,MG,True
+18,1016,approved,Olist seller 2a61c271,2a61c271b1ac763450d846849783e922,09175,santo andre,SP,True
+19,1017,approved,Olist seller 2a84855f,2a84855fd20af891be03bc5924d2b453,30111,belo horizonte,MG,True
+20,1018,approved,Olist seller 3340ef19,3340ef1913fb70d28420f6ceb685c339,87040,maringa,PR,True
+21,1019,approved,Olist seller 343e7164,343e716476e3748b069f980efbaa294e,13033,campinas,SP,True
+22,1020,approved,Olist seller 3504c0cb,3504c0cb71d7fa48d967e0e4c94d59d9,09350,maua,SP,True
+23,1021,approved,Olist seller 37be5a7c,37be5a7c751166fbc5f8ccba4119e043,04248,sao paulo,SP,True
+24,1022,approved,Olist seller 38e6dada,38e6dada03429a47197d5d584d793b41,04763,sao paulo,SP,True
+25,1023,approved,Olist seller 3bb548e3,3bb548e3cb7f70f28e3f11ee9dce0e59,87040,maringa,PR,True
+26,1024,approved,Olist seller 41b39e28,41b39e28db005d9731d9d485a83b4c38,09220,santo andre,SP,True
+27,1025,approved,Olist seller 48436dad,48436dade18ac8b2bce089ec2a041202,27277,volta redonda,SP,True
+28,1026,approved,Olist seller 4a3ca931,4a3ca9315b744ce9f8e9374361493884,14940,ibitinga,SP,True
+29,1027,approved,Olist seller 530ec610,530ec6109d11eaaf87999465c6afee01,85807,cascavel,PR,True
+30,1028,approved,Olist seller 53d00c40,53d00c40e32aeb924a84ce72b1af869d,14940,ibitinga,SP,True
+31,1029,approved,Olist seller 53e4c6e0,53e4c6e0f4312d4d2107a8c9cddf45cd,13920,pedreira,SP,True
+32,1030,approved,Olist seller 5656537e,5656537e588803a555b8eb41f07a944b,72015,brasilia,DF,True
+33,1031,approved,Olist seller 5996cdda,5996cddab893a4652a15592fb58ab8db,19010,presidente prudente,SP,True
+34,1032,approved,Olist seller 5acd070d,5acd070dd3fe441bbb2ec1f1ede515ee,13203,jundiai,SP,True
+35,1033,approved,Olist seller 5b51032e,5b51032eddd242adc84c38acab88f23d,37564,borda da mata,MG,True
+36,1034,approved,Olist seller 5f3ae913,5f3ae9136c875522250f8184f253413a,01550,sao paulo,SP,True
+37,1035,approved,Olist seller 6426d21a,6426d21aca402a131fc0a5d0960a3c90,14091,ribeirao preto,SP,True
+38,1036,approved,Olist seller 6560211a,6560211a19b47992c3666cc44a7e94c0,05849,sao paulo,SP,True
+39,1037,approved,Olist seller 688756f7,688756f717c462a206ad854c5027a64a,07094,guarulhos,SP,True
+40,1038,approved,Olist seller 6c7d50c2,6c7d50c24b3ccd2fd83b44d8bb34e073,19025,presidente prudente,SP,True
+41,1039,approved,Olist seller 702835e4,702835e4b785b67a084280efca355756,36046,juiz de fora,MG,True
+42,1040,approved,Olist seller 7040e82f,7040e82f899a04d1b434b795a43b4617,01026,sao paulo,SP,True
+43,1041,approved,Olist seller 7202e2ba,7202e2ba20579a9bd1acb29e61fe71f6,14401,franca,SP,True
+44,1042,approved,Olist seller 7299e27e,7299e27ed73d2ad986de7f7c77d919fa,38440,araguari,MG,True
+45,1043,approved,Olist seller 77530e97,77530e9772f57a62c906e1c21538ab82,80310,curitiba,PR,True
+46,1044,approved,Olist seller 7a67c85e,7a67c85e85bb2ce8582c35f2203ad736,03426,sao paulo,SP,True
+47,1045,approved,Olist seller 7aa538dd,7aa538dd6e114e503a2e6154ea352253,15807,catanduva,SP,True
+48,1046,approved,Olist seller 7c67e144,7c67e1448b00f6e969d365cea6b010ab,08577,itaquaquecetuba,SP,True
+49,1047,approved,Olist seller 81602554,8160255418d5aaa7dbdc9f4c64ebda44,14940,ibitinga,SP,True
+50,1048,approved,Olist seller 8602a61d,8602a61d680a10a82cceeeda0d99ea3d,01001,sao paulo,SP,True
+51,1049,approved,Olist seller 87142160,87142160b41353c4e5fca2360caf6f92,90230,porto alegre,RS,True
+52,1050,approved,Olist seller 8a32e327,8a32e327fe2c1b3511609d81aaf9f042,02443,sao paulo,SP,True
+53,1051,approved,Olist seller 8b28d096,8b28d096634035667e8263d57ba3368c,12243,sao jose dos campos,SP,True
+54,1052,approved,Olist seller 8b321bb6,8b321bb669392f5163d04c59e235e066,01212,sao paulo,SP,True
+55,1053,approved,Olist seller 8bdd8e3f,8bdd8e3fd58bafa48af76b2c5fd71974,01552,sao paulo,SP,True
+56,1054,approved,Olist seller 8cbac7e1,8cbac7e12637ed9cffa18c7875207478,89254,jaragua do sul,SC,True
+57,1055,approved,Olist seller 8d79c8a0,8d79c8a04e42d722a75097ce5cbcf2ef,61658,caucaia,CE,True
+58,1056,approved,Olist seller 8f78f090,8f78f0903005064036736c7173a5c2ed,36325,tiradentes,MG,True
+59,1057,approved,Olist seller 900ba814,900ba814c251a692506d7834c1218441,13328,salto,SP,True
+60,1058,approved,Olist seller 92eb0f42,92eb0f42c21942b6552362b9b114707d,03504,sao paulo,SP,True
+61,1059,approved,Olist seller 955fee92,955fee9216a65b617aa5c0531780ce60,04782,sao paulo,SP,True
+62,1060,approved,Olist seller 972d0f9c,972d0f9cf61b499a4812cf0bfa3ad3c4,88359,brusque,SC,True
+63,1061,approved,Olist seller 974cf2cb,974cf2cb8f4b7add98709c30df02fe10,14802,araraquara,SP,True
+64,1062,approved,Olist seller 99eaacc9,99eaacc9e6046db1c82b163c5f84869f,14400,franca,SP,True
+65,1063,approved,Olist seller 9c0e69c7,9c0e69c7bf2619675bbadf47b43f655a,12230,sao jose dos campos,SP,True
+66,1064,approved,Olist seller 9d7a1d34,9d7a1d34a5052409006425275ba1c2b4,14403,franca,SP,True
+67,1065,approved,Olist seller 9f505651,9f505651f4a6abe901a56cdc21508025,04102,sao paulo,SP,True
+68,1066,approved,Olist seller a17f621c,a17f621c590ea0fab3d5d883e1630ec6,18055,sorocaba,SP,True
+69,1067,approved,Olist seller a2deecd5,a2deecd5398f5df4987110c80a1972a3,05043,sao paulo,SP,True
+70,1068,approved,Olist seller a35124e2,a35124e2d763d7ca3fbe3b97d143200f,04041,sao paulo,SP,True
+71,1069,approved,Olist seller a3e9a2c7,a3e9a2c700480d9bb01fba070ba80a0e,14940,ibitinga,SP,True
+72,1070,approved,Olist seller a416b6a8,a416b6a846a11724393025641d4edd5e,03702,sao paulo,SP,True
+73,1071,approved,Olist seller b2ba3715,b2ba3715d723d245138f291a6fe42594,03470,sao paulo,SP,True
+74,1072,approved,Olist seller ba143b05,ba143b05f0110f0dc71ad71b4466ce92,02274,sao paulo,SP,True
+75,1073,approved,Olist seller bf0d50a6,bf0d50a6410d487dc97d2baac0a8c0be,13408,piracicaba,SP,True
+76,1074,approved,Olist seller bfd27a96,bfd27a966d91cfaafdb25d076585f0da,13930,serra negra,SP,True
+77,1075,approved,Olist seller c3cfdc64,c3cfdc648177fdbbbb35635a37472c53,80610,curitiba,PR,True
+78,1076,approved,Olist seller c864036f,c864036feaab8c1659f65ea4faebe1da,83605,campo largo,PR,True
+79,1077,approved,Olist seller cc419e06,cc419e0650a3c5ba77189a1882b7556a,09015,santo andre,SP,True
+80,1078,approved,Olist seller cca3071e,cca3071e3e9bb7d12640c9fbe2301306,14940,ibitinga,SP,True
+81,1079,approved,Olist seller cfb1a033,cfb1a033743668a192316f3c6d1d2671,18110,votorantim,SP,True
+82,1080,approved,Olist seller d1c281d3,d1c281d3ae149232351cd8c8cc885f0d,14940,ibitinga,SP,True
+83,1081,approved,Olist seller d3dcf060,d3dcf0604eabf0224fbd5948b5e02f69,03654,sao paulo,SP,True
+84,1082,approved,Olist seller d98eec89,d98eec89afa3380e14463da2aabaea72,90010,porto alegre,RS,True
+85,1083,approved,Olist seller da8622b1,da8622b14eb17ae2831f4ac5b9dab84a,13405,piracicaba,SP,True
+86,1084,approved,Olist seller dbd66278,dbd66278cbfe1aa1000f90a217ca4695,05588,sao paulo,SP,True
+87,1085,approved,Olist seller dd7ddc04,dd7ddc04e1b6c2c614352b383efe2d36,03471,sao paulo,SP,True
+88,1086,approved,Olist seller df560393,df560393f3a51e74553ab94004ba5c87,87900,loanda,PR,True
+89,1087,approved,Olist seller e59aa562,e59aa562b9f8076dd550fcddf0e73491,82810,curitiba,PR,True
+90,1088,approved,Olist seller e8b42252,e8b4225284fbb02d16f200513f1f395d,14960,novo horizonte,SP,True
+91,1089,approved,Olist seller ea177692,ea1776927851da2532aa70d6a32c095a,08223,sao paulo,SP,True
+92,1090,approved,Olist seller ea8482cd,ea8482cd71df3c1969d7b9473ff13abc,04160,sao paulo,SP,True
+93,1091,approved,Olist seller ecccfa2b,ecccfa2bb93b34a3bf033cc5d1dcdc69,81810,curitiba,PR,True
+94,1092,approved,Olist seller f45122a9,f45122a9ab94eb4f3f8953578bc0c560,13419,piracicaba,SP,True
+95,1093,approved,Olist seller f4aba7c0,f4aba7c0bca51484c30ab7bdc34bcdd1,01031,sao paulo,SP,True
+96,1094,approved,Olist seller f8db351d,f8db351d8c4c4c22c6835c19a46f01b0,13324,salto,SP,True
+97,1095,approved,Olist seller fa40cc5b,fa40cc5b934574b62717c68f3d678b6d,02310,sao paulo,SP,True
+98,1096,approved,Olist seller fcb5ace8,fcb5ace8bcc92f75707dc0f01a27d269,07032,guarulhos,SP,True
+99,1097,approved,Olist seller fe2032da,fe2032dab1a61af8794248c8196565c9,13030,campinas,SP,True
+100,1098,approved,Olist seller ff063b02,ff063b022a9a0aab91bad2c9088760b7,09171,santo andre,SP,True
+101,1099,approved,Olist seller ffc47076,ffc470761de7d0232558ba5e786e57b7,07091,guarulhos,SP,True
