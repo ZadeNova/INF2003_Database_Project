@@ -115,3 +115,6 @@ captured by dropping only that index inside a transaction which rolled back; no 
 Exit check 5 is pending the owner-steered amendment f step. The Phase 2B buy/ship/deliver checkpoint remains pending
 checkout integration. The shared cart include and separate product/order audit lookups must be retained at merge;
 implementation choices catalogue-i1 through catalogue-i10 remain marked needs owner confirmation in DECISIONS.
+
+Final coverage audit: the bound cross-store ANY helper has its own hostile-ID PostgreSQL negative, in addition to
+the search parameter negatives. The affected search module was rerun after adding it; no application code changed.

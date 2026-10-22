@@ -129,3 +129,17 @@ def test_category_shop_and_generated_labels_render(imported, mongo_db):
         response = client.get(path)
         assert response.status_code == 200 and "generated" in response.content.decode().lower()
         assert client.post(path).status_code == 405
+
+
+def test_cross_store_any_ids_are_bound_values_not_sql(imported):
+    from django.db import DatabaseError, transaction
+    from catalogue.search import matching_products
+
+    item = visible_products().first()
+    before = Product.objects.count()
+    # An invalid text[] cannot be compared to the bigint key; it must fail as data, never become SQL.
+    with pytest.raises(DatabaseError):
+        with transaction.atomic():
+            list(matching_products([f"{item.pk}); DELETE FROM catalogue_product; --"]))
+    assert Product.objects.count() == before
+    assert visible_products().filter(pk=item.pk).exists()
