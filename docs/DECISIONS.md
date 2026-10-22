@@ -9,7 +9,7 @@ this file holds the choices behind the code. Add a row when a decision is made, 
 |---|---|---|
 | schedule-gating | A phase starts as soon as the previous phase is closed (exit check passed, work merged to `main`); PLAN.md section 13 dates are targets and deadlines, not start gates. Decided by Chee Long | Phase 1A finished early; waiting for a calendar window would waste sprint time without adding safety. Dependency order, approved plans, reviews and exit checks stay binding |
 
-## ci stage 1 implementation (22 October 2026; awaiting hosted runs and review)
+## ci stage 1 implementation (22 October 2026; reviewed, awaiting hosted runs)
 
 The contract is [ci](plans/ci.md); these are the implementation choices behind stage 1.
 
