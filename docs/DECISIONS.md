@@ -16,7 +16,7 @@ this file holds the choices behind the code. Add a row when a decision is made, 
 | benchmark-plan | Keep [benchmark](plans/benchmark.md) as the canonical B1–B6 contract; Chee Long owns/implements it | BM1–BM9 and placement/a–e decisions accepted 22 October; plan approved 22 October after fresh re-review, with no app privilege change or scaled Tier 1 runs |
 | ci-plan | Keep [ci](plans/ci.md) as the sole CI contract; Chee Long owns/implements it | CI1–CI6 and a–f/full-data decisions accepted 22 October; plan approved 22 October after fresh re-review. The requested minutes-budget amount is a recommendation pending confirmation, not a billing change |
 
-## accounts implementation (22 October 2026; awaiting independent review)
+## accounts implementation (22 October 2026; review complete)
 
 The approved contract is [accounts](plans/accounts.md); these are the implementation choices behind it.
 

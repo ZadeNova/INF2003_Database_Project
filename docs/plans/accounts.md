@@ -1,7 +1,7 @@
 # accounts: Three roles, seller registration and approval, operator console, audit log
 
-status: in-progress
-plan owner: Chee Long · implementer: Chee Long · reviewer: fresh Claude Code session · estimate: 1.5 to 2 days
+status: done
+plan owner: Chee Long · implementer: Chee Long · reviewer: Codex (fresh session) · estimate: 1.5 to 2 days
 · Phase 1B (25 October 2026) · depends on: `olist-import` (custom user with `role`, seller table)
 
 ## Contract
