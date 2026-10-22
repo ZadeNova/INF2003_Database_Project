@@ -22,6 +22,7 @@ from .models import Cart, CartLine, Checkout, MAX_CART_QUANTITY, Payment
 
 ZERO = Decimal("0.00")
 MAX_MONEY = Decimal("9999999999.99")
+MAX_REASON_LENGTH = 1000  # matches the cancel form's maxlength; enforced here for hand-made requests
 
 
 class CheckoutError(Exception):
@@ -269,6 +270,8 @@ def change_order_status(actor, order_id, action, reason=""):
         raise CheckoutError("Choose a valid order action.")
     role = {"ship": "seller", "deliver": "operator", "cancel": "customer"}[action]
     reason = (reason or "").strip() or {"ship": "Seller shipped order", "deliver": "Operator delivered order", "cancel": "Customer cancelled order"}[action]
+    if len(reason) > MAX_REASON_LENGTH:
+        raise CheckoutError(f"Keep the reason under {MAX_REASON_LENGTH} characters.")
     with transaction.atomic():
         set_audit_context(actor.pk, reason)
         if not User.objects.filter(pk=actor.pk, role=role, is_active=True).exists():

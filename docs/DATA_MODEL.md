@@ -29,6 +29,9 @@ erDiagram
     ORDER ||--o| REFUND : refunds
     CHECKOUT ||--o{ REFUND : reconciles
     USER ||--o{ AUDIT_LOG : acts
+    USER ||--o| CART : owns
+    CART ||--o{ CART_LINE : contains
+    PRODUCT ||--o{ CART_LINE : "is in"
     USER {
         bigint id PK
         varchar username UK
@@ -78,6 +81,7 @@ erDiagram
         bigint customer_id FK
         varchar olist_order_id UK
         uuid idempotency_key
+        varchar request_fingerprint
         numeric total
         timestamptz placed_at
     }
@@ -125,6 +129,16 @@ erDiagram
         text reason
         timestamptz created_at
     }
+    CART {
+        bigint id PK
+        bigint customer_id FK,UK
+    }
+    CART_LINE {
+        bigint id PK
+        bigint cart_id FK
+        bigint product_id FK
+        integer quantity
+    }
     GEOLOCATION {
         varchar zip_prefix PK
         numeric latitude
@@ -143,7 +157,9 @@ erDiagram
 | Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
 | Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time. Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion |
-| Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total |
+| Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
+| CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
+| Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
 | Order / orders_order | Unique (checkout_id, seller_id), (id, seller_id) and (id, checkout_id). Status CHECK: placed, paid, shipped, delivered, cancelled. Nonnegative finite items/freight/total; total = items + freight. placed_at, paid_at, shipped_at, delivered_at, cancelled_at, estimated_delivery. Index on (seller_id, placed_at) |
 | OrderLine / orders_orderline | Positive quantity and unit price; nonnegative freight. Composite FKs (order_id, seller_id) and (product_id, seller_id) enforce ownership with ON DELETE RESTRICT. shipping_limit_at is the earliest original item's shifted deadline when repeated lines collapse |
 | Payment / orders_payment | Unique (checkout_id, sequence); positive sequence and instalments. Method CHECK: credit_card, boleto, voucher, debit_card; nonnegative finite amount. A row means money received; there is no payment-status column and no card-number field |
@@ -164,8 +180,8 @@ IDs through an unmanaged ORM model. Later workstreams reuse this definition.
 
 The customer_profile_role and seller_profile_role triggers require the linked user's role to match the profile;
 user_profile_role prevents changing a role while an incompatible profile exists. The profile check locks the user row
-in SHARE mode. These are schema guards; the seller status and audit triggers below come from accounts, and payment
-triggers belong to checkout. The importer disables USER triggers only on loaded tables, retains FK/check/unique
+in SHARE mode. These are schema guards; the seller status and audit triggers come from accounts, and the order
+status, order audit and money triggers from checkout (all described below). The importer disables USER triggers only on loaded tables, retains FK/check/unique
 constraints, flushes deferred FK events before restoring triggers, and runs the explicit reconciliation queries.
 A failed transaction rolls back COPY and trigger changes together.
 The loader requires a standalone owner transaction, so it cannot commit MongoDB inside a caller's uncommitted
@@ -194,6 +210,20 @@ runtime INSERT, UPDATE, DELETE and TRUNCATE on audit_log and every privilege on 
 replace functions, disable triggers, create temporary objects or change session_replication_role. Revoking PUBLIC
 EXECUTE on the functions is hygiene only. Later catalogue and checkout triggers reuse this boundary.
 
+**Order lifecycle and money (`orders` 0002).** order_status_transition (BEFORE UPDATE, only when the status changes)
+permits placed → paid or cancelled, paid → shipped or cancelled and shipped → delivered, and stamps the destination's
+timestamp. order_status_audit writes named before/after status snapshots to audit_log on the same owner-owned,
+SECURITY DEFINER boundary as the seller audit, with PUBLIC EXECUTE revoked. check_checkout_money and
+check_checkout_refunds run as deferred constraint triggers (`DEFERRABLE INITIALLY DEFERRED`) on every insert, update or
+delete of checkouts, orders, payments and refunds: at commit they lock the affected checkouts in id order (both the old
+and new parent after a move) and require payments = checkout total = sum of order totals, and refunds = totals of the
+cancelled orders. All money arithmetic is PostgreSQL numeric or Python Decimal. New purchases charge freight per unit
+(product freight × quantity) and estimate delivery as the placed time plus the longest product lead time plus 15 days.
+Checkout locks the cart row, then its lines, then products in id order, so concurrent checkouts cannot deadlock.
+The importer disables these USER triggers while loading and checks the same invariants with its reconciliation
+queries; imported-refund provenance is checked during import only, so a later customer cancellation of imported paid
+history adds a new, non-imported refund that the triggers still balance.
+
 The first accounts migration grants the runtime role access to tables/sequences and installs default privileges for
 later owner-created objects. It applies equally to mercer and pytest's test_mercer. PUBLIC database privileges and
 schema CREATE are revoked; runtime receives CONNECT, schema USAGE, row DML and sequence USAGE/SELECT, without CREATE,
@@ -214,7 +244,9 @@ Those historical prices are facts about a sale, independent of the current catal
 The composite ownership keys are deliberate redundancy needed for declarative cross-table enforcement: seller_id in a
 line must agree with both its parent order and product. Stored totals are deliberate transactional summaries, checked
 against their components during import; they are the bounded, documented exceptions to a strictly minimal 3NF layout.
-The approved checkout workstream adds commit-time money enforcement for new application writes. Repeating source
+The deferred money triggers enforce those summaries at commit for every application write. A cart line is a separate
+fact from an order line: it holds an intended quantity only, never a price, so prices are read from the product at
+checkout and then frozen on the order line. Repeating source
 Olist IDs as provenance does not create a second application entity or an additional authoritative store.
 
 ## MongoDB
@@ -394,31 +426,3 @@ Rule counts overlap; the union of removed order IDs determines the surviving his
 | sellers | 3,095 |
 | users | 99,191 |
 <!-- end generated -->
-
-## Checkout enforcement (orders 0002)
-
-Checkout adds `request_fingerprint` (64-character review digest; empty by database default for imported history).
-`orders_cart` has one customer per cart; `orders_cartline` has a unique (cart, product) and quantity from 1 to 999.
-The cart's parent row serializes edits and checkout; checkout then locks cart lines and product rows in ID order.
-
-`order_status_transition` permits placed → paid/cancelled, paid → shipped/cancelled and shipped → delivered and
-stamps the destination's timestamp. `order_status_audit` writes named before/after status snapshots to `audit_log`.
-Its owner-owned SECURITY DEFINER function pins `search_path=public, pg_temp`, uses schema-qualified tables, and has
-PUBLIC EXECUTE revoked. Runtime audit-log privileges stay governed by accounts' existing trigger-only grants.
-
-`check_checkout_money` and `check_checkout_refunds` run through deferred constraint triggers on every insert, update
-or delete of checkouts, orders, payments and refunds. They lock affected parent checkouts in ID order, check both old
-and new parents after moves, and require payments = checkout total = order totals, and refunds = cancelled order totals.
-All money arithmetic is PostgreSQL numeric or Python Decimal. The importer keeps its fixed CSV schema, omits the new
-defaulted fingerprint, disables these USER triggers while loading and runs its existing reconciliation queries.
-
-
-```mermaid
-erDiagram
-    User ||--o| Cart : owns
-    Cart ||--o{ CartLine : contains
-    Product ||--o{ CartLine : appears_in
-```
-
-Refund provenance is checked during import only. Ongoing money reconciliation accepts a later customer cancellation
-of imported paid history with a new, non-imported refund; amount, status and ownership remain enforced.

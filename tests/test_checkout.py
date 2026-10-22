@@ -230,6 +230,20 @@ def test_shipped_order_cannot_be_cancelled():
     assert item.stock == 19
 
 
+def test_an_oversized_cancel_reason_is_refused_before_anything_changes():
+    # The form's maxlength is only a browser hint; a hand-made POST must not store megabytes in refunds and audit rows.
+    buyer,item=customer(),product()
+    add_to_cart(buyer,item.pk)
+    order=buy(buyer).orders.get()
+    audit_rows=AuditLog.objects.count()
+    with pytest.raises(CheckoutError, match="under 1000 characters"):
+        change_order_status(buyer,order.pk,"cancel","x"*1001)
+    order.refresh_from_db()
+    assert order.status == "paid" and not Refund.objects.exists() and AuditLog.objects.count() == audit_rows
+    change_order_status(buyer,order.pk,"cancel","y"*1000)
+    assert Refund.objects.get().reason == "y"*1000
+
+
 def test_services_scope_cart_order_and_actor_roles():
     buyer,other,item,foreign=customer(),customer("other"),product(),product("foreign")
     line=add_to_cart(buyer,item.pk)

@@ -204,6 +204,27 @@ another role is refused:
 docker compose run --rm migrate python manage.py create_operator <username>
 ```
 
+## Cart, payments and orders
+
+Customers add available products from product detail pages, change quantities or remove items at `/cart/`, and review
+and choose a simulated payment method at `/checkout/`. Shipping is charged per unit. A single payment creates one
+order per shop; `/orders/` lists purchases and links to each shop order's items, delivery progress and refund.
+Prices and shipping must still match the review before payment; changed values send the customer back to review.
+Credit cards support one to twelve instalments; boleto, voucher and debit card use one. No card details are collected.
+
+Approved sellers use `/seller/orders/` (My orders) to mark their own paid orders shipped. Operators use
+`/operator/orders/` to mark shipped orders delivered. A customer can cancel their own shop order before shipping;
+its stock and full shop payment return together, with the refund visible on the order detail page.
+
+Checkout's real-database tests, including the repeated last-unit race, can be run separately:
+
+```sh
+docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_checkout.py /app/tests/test_checkout_schema.py /app/tests/test_checkout_concurrency.py /app/tests/test_checkout_views.py
+```
+
+The seller and operator order lists can filter by status and order number. Invalid filter values show a form error;
+seller filters always stay within that seller's orders.
+
 ## Regenerate the data (optional)
 
 The raw files are never edited. The preparation image pins Python by digest and pandas/NumPy/pytest versions, and has
@@ -315,25 +336,3 @@ Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#
 | JOASH | to add | Supporting developer, QA |
 
 Individual contributions: [CONTRIBUTIONS.md](CONTRIBUTIONS.md). AI use: [docs/AI_USE.md](docs/AI_USE.md).
-
-
-## Cart, payments and orders
-
-Customers add available products from product detail pages, change quantities or remove items at `/cart/`, and review
-and choose a simulated payment method at `/checkout/`. Shipping is charged per unit. A single payment creates one
-order per shop; `/orders/` lists purchases and links to each shop order's items, delivery progress and refund.
-Prices and shipping must still match the review before payment; changed values send the customer back to review.
-Credit cards support one to twelve instalments; boleto, voucher and debit card use one. No card details are collected.
-
-Approved sellers use `/seller/orders/` (My orders) to mark their own paid orders shipped. Operators use
-`/operator/orders/` to mark shipped orders delivered. A customer can cancel their own shop order before shipping;
-its stock and full shop payment return together, with the refund visible on the order detail page.
-
-Checkout's real-database tests, including the repeated last-unit race, can be run separately:
-
-```sh
-docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_checkout.py /app/tests/test_checkout_schema.py /app/tests/test_checkout_concurrency.py /app/tests/test_checkout_views.py
-```
-
-The seller and operator order lists can filter by status and order number. Invalid filter values show a form error;
-seller filters always stay within that seller's orders.
