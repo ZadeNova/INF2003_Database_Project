@@ -23,6 +23,10 @@ from account_helpers import make_customer, make_operator, make_seller
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
+def product_audits():
+    return AuditLog.objects.filter(table_name="catalogue_product")
+
+
 @pytest.fixture
 def shop(mongo_db):
     seller = make_seller()
@@ -72,7 +76,7 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
     assert response.status_code == 302
     item.refresh_from_db()
     assert str(item.price) == "15.67" and item.stock == 5
-    row = AuditLog.objects.get(table_name="catalogue_product")
+    row = product_audits().get(table_name="catalogue_product")
     assert row.actor_id == seller.user_id and row.reason == "Seller saved product"
     assert row.before["stock"] == 8 and row.after["stock"] == 5
     assert Client().get(f"/products/{item.pk}/").status_code == 200
@@ -111,7 +115,7 @@ def test_deactivate_is_post_only_and_audited_and_keeps_spec(shop, mongo_db):
     assert client.post(path).status_code == 302
     item.refresh_from_db()
     assert not item.active and mongo_db.product_specs.find_one({"_id": item.pk}) is not None
-    row = AuditLog.objects.get()
+    row = product_audits().get()
     assert row.action == "product.deactivate" and row.actor_id == seller.user_id
     assert Client().get(f"/products/{item.pk}/").status_code == 404
 
@@ -128,7 +132,7 @@ def test_real_mongodb_connection_failure_after_sql_write_rolls_it_back(shop, mon
         save_product(seller, seller.user, form.cleaned_data, pk=item.pk)
     item.refresh_from_db()
     assert item.stock == 8 and str(item.price) == "12.34"
-    assert not AuditLog.objects.exists()
+    assert not product_audits().exists()
     assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "A seller-written description."
 
 
@@ -143,7 +147,7 @@ def test_real_mongodb_validator_failure_rolls_back_sql_and_audit(shop, mongo_db)
         save_product(seller, seller.user, invalid_spec, pk=item.pk)
     assert error.value.code == 121
     item.refresh_from_db()
-    assert item.stock == 8 and not AuditLog.objects.exists()
+    assert item.stock == 8 and not product_audits().exists()
     assert mongo_db.product_specs.find_one({"_id": item.pk})["attributes"]["material"] == "steel"
 
 
@@ -225,7 +229,7 @@ def test_operator_takedown_restore_and_stale_actions_are_audited(shop, mongo_db)
     assert seller_client.get(f"/products/mine/{item.pk}/edit/").status_code == 404
     assert seller_client.post(f"/products/mine/{item.pk}/edit/", data(category, taken_down="false")).status_code == 404
     assert client.post(path, {"action": "takedown", "reason": "Repeated action"}).status_code == 400
-    row = AuditLog.objects.get()
+    row = product_audits().get()
     assert row.action == "product.takedown" and row.actor == operator and row.reason == "Misleading description"
     assert client.post(path, {"action": "restore", "reason": "Description corrected"}).status_code == 302
     assert Client().get(f"/products/{item.pk}/").status_code == 200

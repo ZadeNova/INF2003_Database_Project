@@ -418,3 +418,7 @@ product_id and content_type; product_specs.photo_file_id is the reference. Repla
 the new spec and PostgreSQL change are accepted. Public photo reads first check current product visibility.
 New seller-created products/specifications have has_generated_content false. seed_demo explicitly clears actor and
 reason inside its existing transaction, so its labelled adjustments remain system audit entries.
+
+Category.icon_name resolves imported category slugs through the catalogue icon map, with Category.icon retained as
+the fallback for other categories. This replaces the imported generic card at render time without changing the
+checked source CSVs; Uncategorised keeps the package icon.

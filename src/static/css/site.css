@@ -3885,3 +3885,5 @@ h2 {
 @media (max-width:1100px) { .catalogue-results .product-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 @media (max-width:760px) { .catalogue-layout { grid-template-columns:minmax(0, 1fr); } .catalogue-results .product-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } .catalogue-page .product-detail { grid-template-columns:minmax(0, 1fr); } }
 @media (max-width:480px) { .catalogue-results .product-grid { grid-template-columns:minmax(0, 1fr); } .catalogue-page .detail-list { grid-template-columns:minmax(0, 1fr); } }
+
+.optable__row--audit .badge { max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.4; }

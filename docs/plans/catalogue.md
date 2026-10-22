@@ -88,3 +88,30 @@ owner-owned audit boundary defined in `accounts`; no other contract change.
 
 22 October 2026, Phase 2 amendments e–h approved by Chee Long before implementation (lead time field, design and
 photos as an owner-steered step, many-to-one icons for 74 categories, benchmark scope).
+
+
+23 October 2026, Codex implementation under Chee Long's approved parallel Phase 2A/2B run: the core is ready for
+fresh Claude Code review. The plan remains in-progress and PLAN section 14 is review. Local slice commits contain
+additive catalogue migration 0002, search/facets, public shops, scoped seller CRUD and re-encoded GridFS uploads,
+operator take-down/restore and template additions, product audit and the repair command. No existing initial
+migration was changed. The design rewrite/featured stock photos and benchmark B1 remain outside this run.
+
+Self-check evidence is retained in the ignored .cache directory with a command ledger, raw command outputs,
+full-data exit results, EXPLAIN/executionStats JSON and browser screenshots. Migration drift, the full Docker suite,
+tools-profile analytics tests, host Git-index/packaging checks and documentation checks passed. The full suite ran
+before the narrow audit-table display fix; affected audit and product modules were rerun after the fix and audit
+assertions were scoped to catalogue_product for integration. The Docker image lacks Git, so its Git-index skips were
+covered by the separate host run without skips. All new page routes were checked at desktop and 375px; tables scroll
+inside their regions. A long audit badge overflow was fixed in the appended catalogue CSS block and rechecked.
+
+Exit checks 2, 3 and 4 passed against the full import through CSRF-enabled Django clients using the demo logins:
+photo create/serve, price/stock edit and deactivation with seller audit; new template option filled and faceted;
+operator take-down, denied seller edit and restore. check_specs found no missing/orphan specs or category mismatch.
+Exit check 1's counts matched a direct count for two attributes plus a price range; natural PostgreSQL plans use
+product_name_trgm and the primary-key ANY path, and natural MongoDB winning plans use spec_attributes for both
+existing and newly added fields. The imported scalar dictionaries report isMultiKey false: strict multikey wording
+remains catalogue-i1 for owner confirmation, not a claimed array demonstration. The without-trigram comparison was
+captured by dropping only that index inside a transaction which rolled back; no forced plan is claimed as natural.
+Exit check 5 is pending the owner-steered amendment f step. The Phase 2B buy/ship/deliver checkpoint remains pending
+checkout integration. The shared cart include and separate product/order audit lookups must be retained at merge;
+implementation choices catalogue-i1 through catalogue-i10 remain marked needs owner confirmation in DECISIONS.
