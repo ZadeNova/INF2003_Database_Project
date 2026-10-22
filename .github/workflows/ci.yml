@@ -19,7 +19,9 @@ concurrency:
 jobs:
   databases:
     name: Django suite, migrations and pipeline tests (real PostgreSQL and MongoDB)
-    runs-on: ubuntu-24.04
+    # ubuntu-22.04 (kernel 6.8): from image 20261021, ubuntu-24.04 runners use kernel 7.0.0-azure, which MongoDB 9.0
+    # refuses because Ubuntu reports every 7.0 kernel as 7.0.0 (SERVER-136848). See ci.md decision b.
+    runs-on: ubuntu-22.04
     timeout-minutes: 45
     env:
       COMPOSE_PROJECT_NAME: mercer-ci-${{ github.run_id }}-${{ github.run_attempt }}
@@ -32,7 +34,7 @@ jobs:
           patch="${patch%%[!0-9]*}"
           version=$(( major * 1000000 + minor * 1000 + ${patch:-0} ))
           if [ "$version" -ge 6019000 ] && [ "$version" -le 7000013 ]; then
-            echo "::error::Kernel $kernel is in 6.19-7.0.13, which MongoDB 9.0 refuses (DECISIONS foundation-m, SERVER-121912). Use another runner image or a self-hosted runner; do not skip MongoDB."
+            echo "::error::Kernel $kernel is in 6.19-7.0.13, which MongoDB 9.0 refuses (DECISIONS foundation-m, SERVER-121912). Keep this job on ubuntu-22.04 or use a self-hosted runner (ci.md decision b); do not skip MongoDB."
             exit 1
           fi
 

@@ -70,7 +70,7 @@ checks operate only on temporary documentation trees and submission archives.
 ### Continuous integration
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every pull request and every push to `main` on
-GitHub-hosted `ubuntu-24.04` runners, with no repository secrets: each run generates throwaway credentials with
+GitHub-hosted runners (`databases` on `ubuntu-22.04`, `host` on `ubuntu-24.04`), with no repository secrets: each run generates throwaway credentials with
 `init_env.py`. The `databases` job checks the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13), builds the images,
 waits for healthy databases, migrates as the owner, runs the drift check, imports the committed Olist fixture with
 `seed_demo`, then runs the full suite and the pipeline tests; it always removes only its own Compose project. The
@@ -250,6 +250,9 @@ every operating system.
 - **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
   8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
   Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.
+  Ubuntu reports every 7.0 kernel as `7.0.0-…` (for example Ubuntu 26.04), so MongoDB refuses it even when the fix is
+  included (MongoDB SERVER-136848); use Docker Desktop or an Ubuntu 22.04/24.04 kernel older than 6.19 there. CI
+  runs its database job on `ubuntu-22.04` for the same reason.
 - **Docker "cannot find the file specified" (`dockerDesktopLinuxEngine`) on Windows:** Docker Desktop is not running.
 - **Git Bash on Windows turns `/app/...` into a Windows path:** run the commands in PowerShell, or set
   `MSYS_NO_PATHCONV=1` first.
