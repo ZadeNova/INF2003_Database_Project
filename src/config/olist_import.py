@@ -100,7 +100,10 @@ def verify_manifest(source):
         with (source / f"{label}.csv").open(encoding="utf-8", newline="") as stream:
             fields = next(csv.reader(stream))
         approved = {field.column for field in model._meta.local_fields}
-        if len(fields) != len(set(fields)) or set(fields) != approved:
+        # New application metadata has a database default and is absent from the fixed clean dataset.
+        optional = {"request_fingerprint"} if label == "checkouts" else set()
+        if (len(fields) != len(set(fields)) or not set(fields) <= approved
+                or not approved - set(fields) <= optional):
             raise CommandError(f"Unexpected CSV header: {label}")
     ledger = json.loads((source / "cleaning_ledger.json").read_text(encoding="utf-8"))
     if set(ledger["output_counts"]) != set(TABLES) | set(COLLECTIONS):

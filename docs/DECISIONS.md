@@ -118,3 +118,12 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 | foundation-o | Plan files are kept after close-out with `status: done`, not deleted; `check_docs.py` now checks that every plan has a valid status line | The team wants the plans as a reference; each holds the contract, decisions and review notes behind its workstream |
 | foundation-p | `docs/OVERVIEW.md`: a plain-language team guide that summarises PLAN.md and links to it rather than copying details | Teammates need one readable page on scope and features; linking keeps PLAN.md the single home of each fact |
 | foundation-q | No separate human gate: the implementer asks a teammate to review in a fresh Claude Code session | One main developer; the fresh-session review already runs the tests and exit checks |
+
+## checkout implementation
+
+| ID | Decision | Why |
+|---|---|---|
+| checkout-i1 | **needs owner confirmation**; Lock the cart parent for all edits and checkout, followed by cart lines and products in ID order | Serializes first inserts, removals and duplicate submits without a cart phantom; products retain the contract's consistent lock order |
+| checkout-i2 | **needs owner confirmation**; Keep imported CSV headers fixed and allow omission only of the database-defaulted checkout fingerprint | The reproducible clean dataset predates application review metadata; unknown and other missing columns remain rejected |
+| checkout-i3 | **needs owner confirmation**; Deferred checks lock old and new parent checkouts before summing | Moving a payment cannot leave either checkout unbalanced; concurrent writers serialize at the parent |
+| checkout-i4 | **needs owner confirmation**; Keep the requested untracked local PROGRESS-checkout.md ignored by its exact filename | Local handoff state is execution evidence, like .cache; it is excluded from source packaging and documentation checks |

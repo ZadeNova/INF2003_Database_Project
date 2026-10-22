@@ -394,3 +394,20 @@ Rule counts overlap; the union of removed order IDs determines the surviving his
 | sellers | 3,095 |
 | users | 99,191 |
 <!-- end generated -->
+
+## Checkout enforcement (orders 0002)
+
+Checkout adds `request_fingerprint` (64-character review digest; empty by database default for imported history).
+`orders_cart` has one customer per cart; `orders_cartline` has a unique (cart, product) and quantity from 1 to 999.
+The cart's parent row serializes edits and checkout; checkout then locks cart lines and product rows in ID order.
+
+`order_status_transition` permits placed → paid/cancelled, paid → shipped/cancelled and shipped → delivered and
+stamps the destination's timestamp. `order_status_audit` writes named before/after status snapshots to `audit_log`.
+Its owner-owned SECURITY DEFINER function pins `search_path=public, pg_temp`, uses schema-qualified tables, and has
+PUBLIC EXECUTE revoked. Runtime audit-log privileges stay governed by accounts' existing trigger-only grants.
+
+`check_checkout_money` and `check_checkout_refunds` run through deferred constraint triggers on every insert, update
+or delete of checkouts, orders, payments and refunds. They lock affected parent checkouts in ID order, check both old
+and new parents after moves, and require payments = checkout total = order totals, and refunds = cancelled order totals.
+All money arithmetic is PostgreSQL numeric or Python Decimal. The importer keeps its fixed CSV schema, omits the new
+defaulted fingerprint, disables these USER triggers while loading and runs its existing reconciliation queries.

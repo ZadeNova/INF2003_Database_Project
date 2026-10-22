@@ -204,3 +204,20 @@ def test_trigger_state_and_hostile_catalog_identifiers_are_preserved():
         with connection.cursor() as cursor:
             cursor.execute(sql.SQL("DROP TRIGGER {} ON accounts_user").format(sql.Identifier(name)))
             cursor.execute("DROP FUNCTION phase1a_probe()")
+
+
+@pytest.mark.parametrize("field", ["total", "customer_id", "placed_at"])
+def test_checkout_header_allowance_does_not_allow_missing_imported_fields(source, mongo_db, field):
+    path = source / "checkouts.csv"
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        fields, rows = reader.fieldnames, list(reader)
+    fields.remove(field)
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fields, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+    refresh_checksums(source)
+    with pytest.raises(CommandError, match="Unexpected CSV header: checkouts"):
+        call_command("import_olist", source=source, stdout=StringIO())
+    assert_empty(mongo_db)

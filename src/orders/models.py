@@ -12,6 +12,7 @@ class Checkout(models.Model):
     placed_at = models.DateTimeField()
     total = models.DecimalField(max_digits=12, decimal_places=2)
     idempotency_key = models.UUIDField(null=True, blank=True)
+    request_fingerprint = models.CharField(max_length=64, blank=True, default="", db_default="")
     olist_order_id = models.CharField(max_length=32, unique=True, null=True, blank=True)
 
     class Meta:
@@ -102,3 +103,22 @@ class Refund(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=nonnegative("amount"), name="refund_amount_valid")]
+
+
+MAX_CART_QUANTITY = 999
+
+
+class Cart(models.Model):
+    customer = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cart")
+
+
+class CartLine(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="lines")
+    product = models.ForeignKey("catalogue.Product", on_delete=models.PROTECT, related_name="cart_lines")
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["cart", "product"], name="cart_product_unique"),
+            models.CheckConstraint(condition=Q(quantity__gte=1, quantity__lte=MAX_CART_QUANTITY), name="cart_quantity_valid"),
+        ]
