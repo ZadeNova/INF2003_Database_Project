@@ -5,9 +5,9 @@
 {% block content %}
 <section class="error-page" aria-labelledby="error-title">
     <div class="error-page__card">
-        <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> 403 · not available</p>
+        <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> Not available</p>
         <h1 id="error-title">This page is not part of your account.</h1>
-        <p>Each account has one role: customer, seller or operator. This page belongs to another role, or your seller account is not approved.</p>
+        <p>Try a page from the menu or return to the shop.</p>
         <div class="hero__actions">
             <a class="button button--dark" href="{% url 'catalogue:product_list' %}">Browse products</a>
         </div>

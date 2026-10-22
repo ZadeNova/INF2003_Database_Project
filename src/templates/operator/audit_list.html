@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Audit log — Operator — Mercer{% endblock %}
 {% block content %}
-<div class="page">
+<div class="page account-page">
     <div class="page__header">
         <div>
             <p class="eyebrow">Operator console</p>
             <h1 class="page__title">Audit log</h1>
-            <p class="page__lead">Written by database triggers in the same transaction as each change; the web application can read it but never write it. Newest first.</p>
+            <p class="page__lead">Seller decisions, who made them and why, newest first.</p>
         </div>
     </div>
     <form class="surface-card manage-filters" method="get" aria-label="Filter the audit log">
@@ -24,19 +24,21 @@
     </form>
     <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="Audit entries">
         <div class="optable__row optable__row--head optable__row--audit">
-            <span>When</span><span>Action</span><span>Row</span><span>Actor</span><span>Change</span><span>Reason</span>
+            <span>When</span><span>Decision</span><span>Shop</span><span>By</span><span>Reason</span>
         </div>
         {% for entry in entries %}
         <div class="optable__row optable__row--audit">
-            <span class="optable__muted">{{ entry.created_at|date:"j M Y, H:i:s" }}</span>
-            <span class="optable__name">{{ entry.action }}</span>
-            <span class="optable__muted">{{ entry.table_name }} #{{ entry.row_id }}</span>
-            <span class="optable__muted">{{ entry.actor.username|default:"system" }}</span>
-            <span class="optable__muted">{{ entry.before.status|default:"—" }} → {{ entry.after.status|default:"—" }}{% if entry.after.shop_name %} · {{ entry.after.shop_name }}{% endif %}</span>
-            <span class="optable__muted">{{ entry.reason|default:"—" }}</span>
+            <span class="stacked"><span>{{ entry.created_at|date:"j M Y" }}</span><span class="optable__muted">{{ entry.created_at|date:"H:i" }}</span></span>
+            <span><span class="badge badge--{{ entry.action_tone }}">{{ entry.action_label }}</span></span>
+            {% if entry.shop %}
+            {% url 'accounts:operator_seller' entry.shop.pk as shop_url %}
+            {% include "accounts/_shop_name.html" with seller=entry.shop href=shop_url only %}
+            {% else %}<span class="optable__muted">Shop unavailable</span>{% endif %}
+            <span class="optable__muted">{{ entry.actor.username|default:"System" }}</span>
+            <span>{{ entry.reason|default:"—" }}</span>
         </div>
         {% empty %}
-        <div class="optable__empty"><p>No audit entries match.</p></div>
+        <div class="optable__empty"><p>No decisions match these filters.</p></div>
         {% endfor %}
     </div>
     {% if page_obj.has_other_pages %}

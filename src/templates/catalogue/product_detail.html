@@ -8,7 +8,7 @@
         <div class="product-detail__info">
             <p class="eyebrow">{{ product.category.name_en }}</p>
             <h1 class="product-detail__name">{{ product.name }}</h1>
-            <p>{{ product.seller.shop_name }}</p>
+            <p>{{ product.seller.display_name }}</p>
             <p class="product-detail__price">{{ product.display_price }}</p>
             <p>Shipping: S${{ product.freight }}</p>
             <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %}</p>

@@ -14,7 +14,7 @@ from django.views.generic.edit import CreateView
 from catalogue.models import Product, PurchasableProduct
 from orders.models import Order
 
-from .audit import SELLER_ACTIONS, StaleAction, allowed_actions, change_seller_status
+from .audit import AUDIT_LABELS, SELLER_ACTIONS, StaleAction, allowed_actions, change_seller_status
 from .forms import AuditFilterForm, CustomerCreationForm, ReasonForm, SellerApplicationForm
 from .mixins import (AnySellerMixin, CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin,
                      landing_url, safe_local_path)
@@ -159,9 +159,10 @@ class OperatorSellerActionView(OperatorRequiredMixin, View):
             change_seller_status(seller.pk, action, request.user, form.cleaned_data["reason"])
         except StaleAction:
             seller.refresh_from_db()
-            messages.error(request, f"Not changed: this seller is now {seller.status}. Nothing was recorded.")
+            messages.error(request, f"No change made: {seller.display_name} is already {seller.get_status_display().lower()}. "
+                           "Another operator may have acted first.")
             return redirect("accounts:operator_seller", pk=seller.pk)
-        messages.success(request, f"{seller.shop_name}: {action} recorded in the audit log.")
+        messages.success(request, f"{AUDIT_LABELS['seller.' + action]} {seller.display_name}.")
         return redirect("accounts:operator_seller", pk=seller.pk)
 
 
@@ -186,4 +187,14 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
         return entries
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(filters=self.filters, query=urlencode(self.query), **kwargs)
+        context = super().get_context_data(filters=self.filters, query=urlencode(self.query), **kwargs)
+        # Resolve only this page's sellers in one query; audit IDs may also refer to other kinds of records.
+        entries = context["entries"]
+        seller_ids = {int(entry.row_id) for entry in entries
+                      if entry.table_name == "accounts_seller" and entry.row_id.isdecimal()
+                      and 0 < int(entry.row_id) < 2**63}
+        shops = Seller.objects.in_bulk(seller_ids)
+        for entry in entries:
+            entry.shop = (shops.get(int(entry.row_id))
+                          if entry.table_name == "accounts_seller" and entry.row_id.isdecimal() else None)
+        return context

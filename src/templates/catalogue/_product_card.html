@@ -5,7 +5,7 @@
     <div class="product-card__body">
         <span class="product-card__category">{{ product.category.name_en }}</span>
         <h2 class="product-card__name"><a href="{% url 'catalogue:product_detail' product.pk %}">{{ product.name }}</a></h2>
-        <p>{{ product.seller.shop_name }}</p>
+        <p>{{ product.seller.display_name }}</p>
         <p class="product-card__price">{{ product.display_price }}</p>
         <p>{% if product.stock %}In stock{% else %}Sold out{% endif %}</p>
         {% if product.has_generated_content %}<p class="form-note">Generated product name and stock.</p>{% endif %}

@@ -167,7 +167,7 @@ see only their status page. A Phase 1A database is upgraded in place by the `mig
 | `/account/` | Customers | Profile |
 | `/seller/`, `/seller/status/` | Approved sellers; any seller | Read-only seller centre; the seller's own status and latest decision |
 | `/operator/`, `/operator/sellers/<id>/` | Operators | Sellers by status; approve, reject, suspend or reinstate with a required reason (POST only) |
-| `/operator/audit/` | Operators | Audit log, newest first, filtered by actor and action |
+| `/operator/audit/` | Operators | Audit log of seller decisions, newest first, with Made by and Decision filters |
 
 Operators are never created through the web. Besides `demo-operator` from `seed_demo`, create or re-password one with
 the password from `DEMO_OPERATOR_PASSWORD` (never a command-line argument, never printed); an existing account with

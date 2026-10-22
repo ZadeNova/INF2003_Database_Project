@@ -39,7 +39,7 @@ def test_seller_application_creates_a_pending_seller_atomically():
     assert not CustomerProfile.objects.filter(user=seller.user).exists()
     client = Client()
     assert client.post("/login/", {"username": "new-shop", "password": PASSWORD}).url == "/seller/status/"
-    assert "waiting for an operator" in client.get("/seller/status/").content.decode()
+    assert "We're reviewing your application." in client.get("/seller/status/").content.decode()
 
 
 @pytest.mark.parametrize("missing", ["shop_name", "city", "state", "zip_prefix"])

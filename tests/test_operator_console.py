@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from django.db import transaction
 from django.test import Client
+from django.utils.html import strip_tags
 
 from accounts.audit import change_seller_status, set_audit_context
 from accounts.models import AuditLog, Seller
@@ -31,7 +32,7 @@ def test_seller_list_filters_by_status_and_paginates(console):
     first = console.get("/operator/")
     body = first.content.decode()
     assert "applicant-00 shop" in body and "approved-one shop" not in body
-    assert "pending · 27" in body and "approved · 1" in body
+    assert "Pending (27)" in body and "Approved (1)" in body
     assert first.context["page_obj"].paginator.num_pages == 2
     assert "applicant-26 shop" in console.get("/operator/?status=pending&page=2").content.decode()
     assert "approved-one shop" in console.get("/operator/?status=approved").content.decode()
@@ -56,7 +57,7 @@ def test_approve_with_a_reason_changes_status_and_records_the_operator(console, 
     entry = AuditLog.objects.get()
     assert seller.status == "approved" and entry.actor == operator and entry.reason == "Documents verified"
     page = console.get(response.url).content.decode()
-    assert "approve recorded in the audit log" in page and "Documents verified" in page
+    assert f"Approved {seller.shop_name}." in page and "Documents verified" in page
 
 
 @pytest.mark.parametrize("reason", ["", "   ", "x" * 501])
@@ -72,7 +73,7 @@ def test_repeated_post_fails_cleanly_without_a_second_audit_row(console):
     url = f"/operator/sellers/{seller.pk}/approve/"
     console.post(url, {"approve-reason": "First"})
     second = console.post(url, {"approve-reason": "Second"}, follow=True)
-    assert "Not changed: this seller is now approved" in second.content.decode()
+    assert f"No change made: {seller.shop_name} is already approved." in second.content.decode()
     assert AuditLog.objects.count() == 1
 
 
@@ -145,3 +146,43 @@ def test_audit_output_is_escaped(console, operator):
     body = console.get("/operator/audit/").content.decode()
     assert "<script>alert" not in body and "<img src=x" not in body
     assert "&lt;script&gt;" in body and "&lt;img src=x" in body
+
+
+def test_audit_page_uses_plain_decision_labels_and_links_to_the_shop(console, operator):
+    seller = make_seller(status="pending", shop_name="Willow Goods")
+    change_seller_status(seller.pk, "approve", operator, "Documents verified")
+    body = console.get("/operator/audit/").content.decode()
+    visible = strip_tags(body)
+    assert "accounts_seller" not in visible and "Row" not in visible and "trigger" not in visible.lower()
+    assert ">seller.approve<" not in body and "seller.approve" not in visible
+    assert "Approved" in visible and "Willow Goods" in visible
+    assert f'href="/operator/sellers/{seller.pk}/"' in body
+    assert '<option value="seller.approve">Approved</option>' in body
+
+
+@pytest.mark.parametrize("status, label", Seller.Status.choices)
+def test_seller_list_and_detail_use_capitalised_status_labels(console, status, label):
+    seller = make_seller(status=status, shop_name="Olist seller ab12cd34")
+    seller.has_generated_content = True
+    seller.save(update_fields=["has_generated_content"])
+    body = console.get(f"/operator/sellers/{seller.pk}/").content.decode()
+    assert f'>{label}</span>' in body and f'>{status}</span>' not in body
+    assert f'>{label} ({1})</a>' in console.get(f"/operator/?status={status}").content.decode()
+    for url in (f"/operator/?status={status}", f"/operator/sellers/{seller.pk}/"):
+        body = console.get(url).content.decode()
+        assert "Sao Paulo Shop AB12CD34" in body and "Olist seller ab12cd34" not in body
+        assert "Generated name" in body
+
+
+def test_imported_shops_in_one_city_keep_distinct_readable_names(console):
+    names = []
+    for code in ("ab12cd34", "ef56ab78"):
+        seller = make_seller(f"imported-{code}", "approved", shop_name=f"Olist seller {code}")
+        Seller.objects.filter(pk=seller.pk).update(has_generated_content=True)
+        names.append(Seller.objects.get(pk=seller.pk).display_name)
+    assert names == ["Sao Paulo Shop AB12CD34", "Sao Paulo Shop EF56AB78"]
+    body = console.get("/operator/?status=approved").content.decode()
+    assert all(name in body for name in names)
+    # A shop name an applicant typed is never rewritten, even if it looks like an imported one.
+    typed = make_seller("typed", "pending", shop_name="Olist seller 12345678")
+    assert typed.display_name == "Olist seller 12345678"

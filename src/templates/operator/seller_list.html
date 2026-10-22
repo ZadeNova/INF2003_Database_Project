@@ -1,36 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Sellers — Operator — Mercer{% endblock %}
 {% block content %}
-<div class="page">
+<div class="page account-page">
     <div class="page__header">
         <div>
             <p class="eyebrow">Operator console</p>
             <h1 class="page__title">Sellers</h1>
-            <p class="page__lead">Approve or reject applications, and suspend or reinstate approved shops. Every change needs a reason and is written to the audit log by the database.</p>
+            <p class="page__lead">Review new shop applications and manage existing shops.</p>
         </div>
     </div>
     <nav class="range-nav" aria-label="Filter sellers by status">
         <span class="range-nav__label">Status</span>
         <div class="range-nav__links">
             {% for value, count in counts.items %}
-            <a class="chip{% if value == status %} chip--on{% endif %}" href="?status={{ value }}"{% if value == status %} aria-current="page"{% endif %}>{{ value }} · {{ count }}</a>
+            <a class="chip{% if value == status %} chip--on{% endif %}" href="?status={{ value }}"{% if value == status %} aria-current="page"{% endif %}>{{ value|capfirst }} ({{ count }})</a>
             {% endfor %}
         </div>
     </nav>
     <div class="surface-card optable table-scroll" tabindex="0" role="region" aria-label="{{ status|capfirst }} sellers">
         <div class="optable__row optable__row--head optable__row--sellers">
-            <span>Shop</span><span>Username</span><span>Location</span><span>Source</span><span>Status</span>
+            <span>Shop</span><span>Login</span><span>Location</span><span>Joined</span>
         </div>
         {% for seller in sellers %}
+        {% url 'accounts:operator_seller' seller.pk as seller_url %}
         <div class="optable__row optable__row--sellers">
-            <a class="optable__name" href="{% url 'accounts:operator_seller' seller.pk %}">{{ seller.shop_name }}</a>
-            <span class="optable__muted">{{ seller.user.username }}</span>
-            <span class="optable__muted">{{ seller.city|default:"—" }}{% if seller.state %}, {{ seller.state }}{% endif %}</span>
-            <span class="optable__muted">{% if seller.olist_seller_id %}Olist import{% else %}Application{% endif %}</span>
-            <span><span class="badge badge--neutral">{{ seller.status }}</span></span>
+            {% include "accounts/_shop_name.html" with seller=seller href=seller_url only %}
+            <span class="optable__muted optable__clip" title="{{ seller.user.username }}">{{ seller.user.username }}</span>
+            <span class="optable__muted">{{ seller.location|default:"—" }}</span>
+            <span class="optable__muted">{% if seller.olist_seller_id %}Imported{% else %}Applied{% endif %}</span>
         </div>
         {% empty %}
-        <div class="optable__empty"><p>No {{ status }} sellers.</p></div>
+        <div class="optable__empty"><p>No {{ status }} sellers right now.</p></div>
         {% endfor %}
     </div>
     {% if page_obj.has_other_pages %}

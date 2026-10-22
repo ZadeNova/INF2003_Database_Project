@@ -16,6 +16,16 @@ SELLER_ACTIONS = {
     "reinstate": (Seller.Status.SUSPENDED, Seller.Status.APPROVED),
 }
 
+# Display labels only; the stored action codes remain the audit record's stable identifiers.
+AUDIT_LABELS = {
+    "seller.approve": "Approved",
+    "seller.reject": "Rejected",
+    "seller.suspend": "Suspended",
+    "seller.reinstate": "Reinstated",
+}
+# Badge tone per decision (DESIGN.md: red is never a status, so negative decisions stay neutral).
+AUDIT_TONES = {"seller.approve": "completed", "seller.reinstate": "completed"}
+
 
 class StaleAction(Exception):
     """The seller is no longer in the state the action expects (another operator acted first, or a repeat)."""

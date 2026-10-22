@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -41,6 +43,19 @@ class Seller(models.Model):
     state = models.CharField(max_length=2, blank=True)
     has_generated_content = models.BooleanField(default=False)
 
+    @property
+    def display_name(self):
+        """A readable, still distinct name for imported placeholder shops ("Olist seller 0015a82c" becomes
+        "Santo Andre Shop 0015A82C"); stored names and every other shop name are shown unchanged."""
+        match = re.fullmatch(r"Olist seller ([0-9a-f]{8})", self.shop_name)
+        if self.has_generated_content and match:
+            return f"{self.city.title() or 'Imported'} Shop {match.group(1).upper()}"
+        return self.shop_name
+
+    @property
+    def location(self):
+        return ", ".join(part for part in (self.city.title(), self.state) if part)
+
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid")]
 
@@ -56,6 +71,16 @@ class AuditLog(models.Model):
     after = models.JSONField(null=True, blank=True)
     reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(db_default=Now())
+
+    @property
+    def action_label(self):
+        from .audit import AUDIT_LABELS
+        return AUDIT_LABELS.get(self.action, "Updated")
+
+    @property
+    def action_tone(self):
+        from .audit import AUDIT_TONES
+        return AUDIT_TONES.get(self.action, "neutral")
 
     class Meta:
         db_table = "audit_log"

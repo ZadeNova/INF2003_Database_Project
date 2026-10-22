@@ -90,3 +90,17 @@ the test transaction also rolls back the added constraint. No database call is m
 registration module in Docker and `scripts/check_docs.py`; both passed. No new findings. This fix verification
 reran the affected module only, as required for a fix round; the earlier full review and exit-check results stand.
 Normal workstream close-out and the full-suite gate before merge still apply. This review entry is left uncommitted.
+
+22 October 2026, display amendment requested by Chee Long: simplify account and operator copy, map decision labels
+once in `accounts/audit.py`, link audit entries to shops and retain generated-name labels. Stored data, actions,
+access rules and filter validation stay unchanged. Codex implementation and checks remain uncommitted for fresh
+Claude Code review; the earlier approval covers the implementation before this display amendment.
+Validation: rebuilt migrate/web; the requested account modules, full Docker suite, migration drift check and
+documentation checker passed. Browser checks covered the operator list/detail/log, seller status/centre and customer
+account at desktop and 375px, plus both public forms; wide tables scroll within their containers. Results and
+screenshots are in the implementation chat. This display amendment still awaits Claude Code review.
+
+22 October 2026, display amendment check (Claude Code): kept the copy changes; replaced "Shop in City" with distinct
+"City Shop CODE" names, also on product pages; added a shared status badge (no red statuses), a generated-name tag,
+stacked audit times, a history timeline on seller detail, stat tiles in the seller centre and progress steps on the
+status page. Display only: no schema, SQL, access or validation change. Checked at desktop, 375px and light theme.

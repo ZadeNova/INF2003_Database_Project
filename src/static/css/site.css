@@ -3826,7 +3826,7 @@ h2 {
 /* --- accounts: operator console and seller pages (existing tokens only) --- */
 .form-field textarea,
 .form-field select { width:100%; min-height:4.6rem; border:var(--border-structural) solid var(--color-border-medium); border-radius:0; padding:1rem 1.2rem; background:var(--color-surface); color:var(--color-text-primary); }
-.optable__row--sellers { grid-template-columns:minmax(16rem, 2fr) 1.2fr 1.2fr 1fr 1fr; min-width:64rem; }
+.optable__row--sellers { grid-template-columns:minmax(18rem, 2.2fr) minmax(0, 1.4fr) 1.2fr 0.8fr; min-width:60rem; }
 .optable__row--audit { grid-template-columns:1.3fr 1.1fr 1.2fr 1fr 1.6fr 2fr; min-width:80rem; }
 .optable__row--audit .optable__name { font-size:1.4rem; }
 .range-nav { margin-bottom:var(--space-4); }
@@ -3834,3 +3834,31 @@ h2 {
 .detail-list { display:grid; grid-template-columns:max-content 1fr; gap:var(--space-2) var(--space-4); margin:0; }
 .detail-list dt { color:var(--color-text-secondary); font-size:1.3rem; font-weight:700; }
 .detail-list dd { margin:0; color:var(--color-text-primary); font-size:1.5rem; font-variant-numeric:tabular-nums; }
+
+/* Account pages keep long names inside the page and wide tables inside their scroll containers. */
+.account-page .page__header > div { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.account-page .panel, .account-page .detail-list dd, .account-page .optable__row > * { min-width:0; overflow-wrap:anywhere; }
+.account-page .optable__row--audit { grid-template-columns:0.9fr 0.9fr 1.7fr 1fr 2fr; }
+.account-page .action-grid { grid-template-columns:repeat(auto-fit, minmax(min(28rem, 100%), 1fr)); }
+.account-page .detail-list { grid-template-columns:max-content minmax(0, 1fr); }
+.account-page .manage-filters__field { min-width:0; }
+
+/* Account pages: generated-name tag, compact cells, decision history and the seller's progress panel. */
+.name-tag { display:inline-block; margin-left:0.4rem; border:var(--border-structural) solid var(--color-border-subtle); padding:0.1rem 0.6rem; color:var(--color-text-secondary); font-size:1rem; font-weight:700; letter-spacing:var(--tracking-caps); text-transform:uppercase; vertical-align:middle; white-space:nowrap; }
+.page__meta .name-tag { margin-left:0; }
+.account-page .optable__row .optable__clip { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; overflow-wrap:normal; }
+.stacked { display:grid; gap:0.2rem; font-size:1.4rem; }
+.account-page .section-title { margin:var(--space-5) 0 var(--space-3); font-size:2rem; font-weight:400; }
+.account-page .detail-list--facts { margin-bottom:var(--space-4); }
+.account-page .action-grid .panel__title { font-size:1.8rem; }
+.stat-grid--three { grid-template-columns:repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }
+.history-list { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+.history-list li { display:grid; grid-template-columns:auto minmax(0, 1fr); gap:0.4rem var(--space-3); align-items:center; border-top:1px solid var(--color-border-subtle); padding:var(--space-3) 0; }
+.history-list li:first-child { border-top:0; padding-top:0; }
+.history-list__meta { color:var(--color-text-secondary); font-size:1.3rem; }
+.history-list__reason { grid-column:2; color:var(--color-text-primary); font-size:1.5rem; overflow-wrap:anywhere; }
+.status-panel { display:grid; gap:var(--space-3); }
+.status-panel .steps { flex-wrap:wrap; }
+.status-panel__message { margin:0; font-size:1.6rem; line-height:1.55; }
+.optable .shop-name { display:grid; justify-items:start; gap:0.4rem; min-width:0; }
+.optable .shop-name .name-tag { margin-left:0; }

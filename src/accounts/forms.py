@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import RegexValidator
 
-from .audit import SELLER_ACTIONS
+from .audit import AUDIT_LABELS, SELLER_ACTIONS
 from .models import AuditLog, User
 
 zip_prefix_validator = RegexValidator(r"^[0-9]{5}$", "Enter the first five digits of the postcode.")
@@ -47,7 +47,7 @@ class SellerApplicationForm(CustomerCreationForm):
 
 class ReasonForm(forms.Form):
     reason = forms.CharField(max_length=500, widget=forms.Textarea(attrs={"rows": 3}),
-                             help_text="Recorded in the audit log and shown to the seller on their status page.")
+                             help_text="The seller sees this reason on their status page.")
 
     def clean_reason(self):
         reason = self.cleaned_data["reason"].strip()
@@ -58,14 +58,14 @@ class ReasonForm(forms.Form):
 
 class AuditFilterForm(forms.Form):
     """Only the actor and action filters; both are validated choices, never text placed into a query."""
-    actor = forms.TypedChoiceField(required=False, coerce=str)
-    action = forms.ChoiceField(required=False)
+    actor = forms.TypedChoiceField(label="Made by", required=False, coerce=str)
+    action = forms.ChoiceField(label="Decision", required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         actors = (User.objects.filter(pk__in=AuditLog.objects.filter(actor__isnull=False).values("actor_id"))
                   .order_by("username").values_list("pk", "username"))
-        self.fields["actor"].choices = [("", "Any actor"), ("system", "System")] + [(str(pk), name) for pk, name in actors]
+        self.fields["actor"].choices = [("", "Anyone"), ("system", "System")] + [(str(pk), name) for pk, name in actors]
         actions = sorted({"seller." + name for name in SELLER_ACTIONS} |
                          set(AuditLog.objects.values_list("action", flat=True).distinct()))
-        self.fields["action"].choices = [("", "Any action")] + [(name, name) for name in actions]
+        self.fields["action"].choices = [("", "Any decision")] + [(name, AUDIT_LABELS.get(name, "Updated")) for name in actions]

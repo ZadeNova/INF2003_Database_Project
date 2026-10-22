@@ -1,0 +1,2 @@
+{# One status badge everywhere. DESIGN.md: red is never a status, so rejected and suspended stay neutral. #}
+<span class="badge {% if seller.status == 'approved' %}badge--completed{% elif seller.status == 'pending' %}badge--warning{% else %}badge--neutral{% endif %}">{{ seller.get_status_display }}</span>
