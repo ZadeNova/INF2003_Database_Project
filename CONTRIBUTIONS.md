@@ -24,3 +24,9 @@ section 12; write what you did, not what you were assigned.
 | Member | Work | Evidence |
 |---|---|---|
 | Chee Long | Implemented the Olist pipeline, marketplace schema, importer, minimum pages and tests with Codex assistance; resolved review findings | [Workstream contract and completed independent review](docs/plans/olist-import.md) |
+
+## Phase 1B close-out (22 October 2026)
+
+| Member | Work | Evidence |
+|---|---|---|
+| Chee Long | Implemented accounts and CI stage 1 with Claude Code; reviewed by Codex. Sol drafted the plain-language wording, which Claude Code checked and finished | [Accounts implementation and review](docs/plans/accounts.md#review-notes); [CI stage 1 review and hosted exit evidence](docs/plans/ci.md#review-notes) |
