@@ -81,3 +81,19 @@ owner-owned audit boundary defined in `accounts`; no other contract change.
 
 22 October 2026, Phase 2 amendments e–h approved by Chee Long before implementation (freight per unit, estimated
 delivery, fingerprint contents, benchmark scope); the freight follow-up note above is resolved by e.
+
+
+23 October 2026, implementation self-check complete; independent Claude Code review pending. The additive orders
+migration, ORM cart edits, parameterised split checkout and scoped lifecycle actions implement the approved contract
+and amendments e–h. Full-data browser checks used the demo customer, seller and operator: a three-shop purchase,
+shipping and delivery, customer cancellation with stock/refund reconciliation, and replay of the original review key
+and digest all passed. Desktop and 375px checks covered cart, review, purchase, history, order, seller and operator
+pages; wide management tables keep their horizontal scroll inside the page.
+
+Migration drift, the full Docker suite (including the required repeated real-thread race), analytics tests, host
+Git-index/packaging tests and documentation checks passed. The application image lacks Git, so its staged-index
+checks skip there; the separate host run executes them. Raw command logs, browser screenshots and generated full-data
+reconciliation are retained in the isolated worktree's local handoff evidence. No benchmark cases were added.
+The remaining owner confirmations are checkout-i1 through checkout-i9 in [DECISIONS](../DECISIONS.md#checkout-implementation).
+Integration must retain both workstreams' separate navigation/audit lookup blocks, the cart include in product detail,
+and each appended CSS block. PLAN.md marks checkout review; this plan stays in-progress until independent review.

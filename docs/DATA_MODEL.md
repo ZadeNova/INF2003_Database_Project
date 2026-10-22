@@ -411,3 +411,14 @@ or delete of checkouts, orders, payments and refunds. They lock affected parent 
 and new parents after moves, and require payments = checkout total = order totals, and refunds = cancelled order totals.
 All money arithmetic is PostgreSQL numeric or Python Decimal. The importer keeps its fixed CSV schema, omits the new
 defaulted fingerprint, disables these USER triggers while loading and runs its existing reconciliation queries.
+
+
+```mermaid
+erDiagram
+    User ||--o| Cart : owns
+    Cart ||--o{ CartLine : contains
+    Product ||--o{ CartLine : appears_in
+```
+
+Refund provenance is checked during import only. Ongoing money reconciliation accepts a later customer cancellation
+of imported paid history with a new, non-imported refund; amount, status and ownership remain enforced.
