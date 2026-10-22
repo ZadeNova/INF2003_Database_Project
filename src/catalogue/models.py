@@ -13,6 +13,11 @@ class Category(models.Model):
     def __str__(self):
         return self.name_en
 
+    @property
+    def icon_name(self):
+        from .icons import CATEGORY_ICONS
+        return CATEGORY_ICONS.get(self.slug, self.icon)
+
 
 class Product(models.Model):
     seller = models.ForeignKey("accounts.Seller", on_delete=models.PROTECT, related_name="products")

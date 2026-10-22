@@ -126,3 +126,6 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 |---|---|---|
 | catalogue-i1 (needs owner confirmation) | Use an attributes.$** wildcard index for the scalar attribute dictionaries already imported; it supports multikey array values without changing documents | A fixed attribute index cannot cover live schema evolution; explain evidence must distinguish scalar isMultiKey false from actual arrays |
 | catalogue-i2 (needs owner confirmation) | Newest means descending product ID | The approved schema has no creation timestamp; additive indexing and audit need no product-field/import-format change |
+
+| catalogue-i3 (needs owner confirmation) | Resolve category icons at render time with a complete slug map, including a package icon only for Uncategorised | Preserves the checked source CSVs and their reproducible import; no stored/generated-data rewrite is needed |
+| catalogue-i4 (needs owner confirmation) | Product detail keeps the context name product; checkout adds orders/_add_to_cart.html there after integration, posting to orders:cart_add at /cart/add/<product id>/ | Both branches remain runnable independently; the shared integration review must preserve that include placement |

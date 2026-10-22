@@ -1,0 +1,7 @@
+{% if page_obj.has_other_pages %}
+<nav class="pager" aria-label="Product pages">
+    {% if page_obj.has_previous %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+    <p class="pager__status">Page <strong>{{ page_obj.number }}</strong> of {{ page_obj.paginator.num_pages }}</p>
+    {% if page_obj.has_next %}<a class="button button--outline-neutral" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</nav>
+{% endif %}

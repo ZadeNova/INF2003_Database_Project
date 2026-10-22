@@ -315,3 +315,13 @@ Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#
 | JOASH | to add | Supporting developer, QA |
 
 Individual contributions: [CONTRIBUTIONS.md](CONTRIBUTIONS.md). AI use: [docs/AI_USE.md](docs/AI_USE.md).
+
+
+### Catalogue browsing
+
+The shop at `/products/` shows featured picks and categories. Search by name or choose a category, then combine
+price, rating and category options. Newest, price and top-rated ordering keep filters when changing pages.
+Category pages use `/products/category/<slug>/`; public shops use `/products/shops/<id>/`.
+The detail page combines price and stock from PostgreSQL with descriptions, ratings and recent reviews from MongoDB.
+Generated fields remain labelled. Category icon cards cover the imported categories; licensed featured stock photos
+remain the owner-steered follow-up described in [catalogue amendment f](docs/plans/catalogue.md).
