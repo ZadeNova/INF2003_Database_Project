@@ -123,3 +123,12 @@ results are in the review chat. Hosted PR/main evidence is still required to clo
 because Ubuntu reports them as 7.0.0 (SERVER-136848, open); no MongoDB release fixes SERVER-121912. The `databases`
 job moves to hosted `ubuntu-22.04` (kernel 6.8, which that release cannot exceed); `host` stays on `ubuntu-24.04`.
 Real MongoDB checks still run on hosted runners; self-hosted remains the fallback.
+
+22 October 2026, hosted stage 1 exit verification (Codex): the [PR #4 run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39793132301)
+passed, but the [main run after PR #4](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39794200058)
+failed before database setup because the kernel guard rejected `7.0.0-1017-azure`. After decision b's runner fix,
+the [runner-kernel PR #5 run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39796588676) and
+[main run after PR #5](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39798217952) passed;
+their database logs printed `6.8.0-1070-azure`. The [accounts PR #6 run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39801783027)
+and [main run after PR #6](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39803121613) also passed
+both jobs. **CI stage 1's exit check passed on GitHub.** Stages 2 and 3 remain; the CI workstream stays in progress.
