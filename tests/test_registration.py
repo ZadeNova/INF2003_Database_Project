@@ -1,7 +1,7 @@
 """Customer registration with an optional location, and atomic seller applications."""
 import pytest
 from django.contrib.auth import get_user_model
-from django.db import DatabaseError
+from django.db import IntegrityError, connection
 from django.test import Client
 
 from accounts.models import CustomerProfile, Seller
@@ -58,14 +58,16 @@ def test_seller_application_ignores_forged_role_status_and_staff_fields():
     assert seller.user.role == "seller" and not seller.user.is_staff and not seller.user.is_superuser
 
 
-def test_a_failed_seller_insert_rolls_back_the_new_user(monkeypatch):
-    # The database is real; only the second insert is made to fail, to prove both share one transaction.
-    def fail(*args, **kwargs):
-        raise DatabaseError("simulated failure after the user insert")
-    monkeypatch.setattr(Seller.objects, "create", fail)
-    with pytest.raises(DatabaseError):
+def test_a_failed_seller_insert_rolls_back_the_new_user():
+    # A real PostgreSQL failure on the second insert: a CHECK added inside this test's transaction (and rolled
+    # back with it) rejects the seller row after the user row was written, so both must share one transaction.
+    with connection.cursor() as cursor:
+        cursor.execute("ALTER TABLE accounts_seller ADD CONSTRAINT test_refuse_new_shop "
+                       "CHECK (shop_name <> 'New Shop') NOT VALID")
+    with pytest.raises(IntegrityError, match="test_refuse_new_shop"):
         Client().post("/sell/apply/", APPLICATION)
     assert not get_user_model().objects.filter(username="new-shop").exists()
+    assert not Seller.objects.filter(shop_name="New Shop").exists()
 
 
 @pytest.mark.parametrize("route", ["/register/", "/sell/apply/"])

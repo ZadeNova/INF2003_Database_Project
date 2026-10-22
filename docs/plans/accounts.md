@@ -69,3 +69,17 @@ suspension checked through the `purchasable_product` view.
 22 October 2026, fix round: P1–P4/P7 applied; status-only access, audit security/context, locking, verification scope and date corrected; draft retained.
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
+
+22 October 2026, independent Codex implementation review of `8e9e57a`: **CHANGES REQUESTED**. **AR1 (Should fix,
+required before merge):** `tests/test_registration.py:61–68` replaces `Seller.objects.create` with a simulated
+exception, contrary to AGENTS.md rule 8. Replace it with an actual PostgreSQL insert failure; a transaction-scoped
+CHECK on the disposable copy proved that both user and seller roll back without mocking. Docker build, migration
+drift check, full database suite, host documentation/package tests and documentation checker passed. Browser exit
+checks passed, including existing-session approval, rejection reason and product visibility through suspension and
+reinstatement. Runtime privilege/tampering and illegal-transition probes passed; copy migration preserved all existing
+application-table row counts. The copy was dropped and web restarted; demo-seller is approved. No application code
+or tests changed. Detailed commands and results are in the review chat; AR1 remains for the implementer's fix round.
+
+22 October 2026, fix round (Claude Code): AR1 fixed. The rollback test now adds a transaction-scoped CHECK on
+`accounts_seller` and posts `/sell/apply/`; PostgreSQL rejects the seller insert and neither row remains. No stub
+remains. Registration tests and the full Docker suite were rerun and passed.
