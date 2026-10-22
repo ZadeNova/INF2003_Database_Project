@@ -1,6 +1,6 @@
 # checkout: Cart across sellers, split checkout, simulated payment, order lifecycle, cancellation
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 2.5 to 3 days
 · phase 2A (dates in PLAN.md section 13) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
 

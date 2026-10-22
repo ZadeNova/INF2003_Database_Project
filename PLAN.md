@@ -443,7 +443,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | done |
 | `accounts` | Three roles, seller registration and approval, operator console (approve, reject, suspend or reinstate sellers, audit log) | `olist-import` | 1 | done |
 | `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | ready |
-| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | ready |
+| `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | in progress |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | ready |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | ready |
