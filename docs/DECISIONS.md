@@ -9,6 +9,22 @@ this file holds the choices behind the code. Add a row when a decision is made, 
 |---|---|---|
 | schedule-gating | A phase starts as soon as the previous phase is closed (exit check passed, work merged to `main`); PLAN.md section 13 dates are targets and deadlines, not start gates. Decided by Chee Long | Phase 1A finished early; waiting for a calendar window would waste sprint time without adding safety. Dependency order, approved plans, reviews and exit checks stay binding |
 
+## Phase 2 plan amendments (22 October 2026)
+
+Approved by Chee Long before implementation, so unattended builds do not invent business rules. Details are in
+[checkout](plans/checkout.md#decisions-all-approved-21-october-2026) (e–h) and
+[catalogue](plans/catalogue.md#decisions-all-approved-21-october-2026) (e–h).
+
+| ID | Decision | Why |
+|---|---|---|
+| phase2-c1 | New purchases charge freight per unit (`product.freight` × quantity) | Olist charges freight per item; `product.freight` matches the per-unit median for 90.3% of products, and the slightly high remainder is documented rather than regenerated |
+| phase2-c2 | Estimated delivery = placed time + longest product lead time + 15 days | Calibrated to Olist's 23.3-day median estimate, given generated lead times with an 8-day median |
+| phase2-c3 | The checkout review fingerprint includes unit price and freight as well as product and quantity | The old pattern deliberately excluded price; including it means a customer never pays an amount they did not review |
+| phase2-c4 | Benchmark cases B1, B3 and B6 stay in `benchmark`, not in checkout or catalogue | benchmark.md runs them on separate bench databases; PLAN.md section 13 only aligns their timing |
+| phase2-k1 | `lead_time_days` is a required seller product field | The column is not nullable; the catalogue field list omitted it |
+| phase2-k2 | The design rewrite and the 15 licensed photos are an owner-steered step after the catalogue core, not an unattended run | Design affects the presentation grade (foundation-a); photo licences must be verified individually |
+| phase2-k3 | Category icons map many to one across all 74 categories | 26 icons exist; the import produced 74 categories, not the 73 the plan stated |
+
 ## ci stage 1 implementation (22 October 2026; reviewed, hosted runs passed)
 
 The contract is [ci](plans/ci.md); these are the implementation choices behind stage 1.

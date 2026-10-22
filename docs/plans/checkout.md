@@ -2,7 +2,7 @@
 
 status: approved
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 2.5 to 3 days
-· phase 2A (2 to 4 November) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
+· phase 2A (dates in PLAN.md section 13) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
 
 ## Contract
 
@@ -55,6 +55,16 @@ role and scoping negatives; SQL-injection negatives on every raw-SQL path.
 | c | Refund invariant: refunds equal cancelled orders' totals. `olist-import` adds a refund row for each imported cancelled order that has payments, flagged as imported | Keeps the books balanced for every checkout, old and new, so the invariant can be a hard constraint |
 | d | Cancellation cancels a whole order (one seller's order), not single lines | As on Shopee, where a shop order is cancelled as a whole before shipping; per-item handling there is a post-delivery return, which is out of scope |
 
+**Phase 2 amendments (approved by Chee Long, 22 October 2026)**, settling questions the contract left open; see
+[DECISIONS](../DECISIONS.md#phase-2-plan-amendments-22-october-2026):
+
+| ID | Decision | Why |
+|---|---|---|
+| e | New purchases charge freight **per unit**: line freight = `product.freight` × quantity; an order's freight is the sum of its lines. Imported lines keep their stored freight | Olist charges `freight_value` per item. `product.freight` equals the per-unit median for 90.3% of products; the rest (from multi-unit lines, 6.6% of lines) are slightly high, documented rather than regenerated now. Settles the review note below |
+| f | New orders' `estimated_delivery` = placed time + the longest `lead_time_days` among that order's products + 15 days | The column is required. Olist's own estimates have a 23.3-day median (18 to 28 days for the middle half); generated lead times have an 8-day median, so this lands near Olist's typical estimate |
+| g | The review fingerprint covers each line's product, quantity, unit price and freight, sorted; the idempotency key is created when the review page renders and submitted with the pay form | Ports the old fingerprint/replay pattern, but includes price and freight so a customer never pays an amount they did not review |
+| h | Benchmark cases B3/B6 are not built in this workstream | `benchmark` owns them in its separate bench databases ("not the full app checkout"); PLAN.md section 13 only aligns their timing with checkout |
+
 ## Review notes
 
 22 October 2026, follow-up from the independent `olist-import` code review: confirm whether the shipping fee on
@@ -68,3 +78,6 @@ here; the actor set at the start of each transaction; no payment status.
 
 22 October 2026, Phase 1B decision P3 (accepted by Chee Long): the order-status audit trigger follows the shared
 owner-owned audit boundary defined in `accounts`; no other contract change.
+
+22 October 2026, Phase 2 amendments e–h approved by Chee Long before implementation (freight per unit, estimated
+delivery, fingerprint contents, benchmark scope); the freight follow-up note above is resolved by e.
