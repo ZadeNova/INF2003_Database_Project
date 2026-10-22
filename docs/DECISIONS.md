@@ -3,6 +3,25 @@
 Lasting decisions someone could later question, with the reason. Scope, tiers and dates are in [PLAN.md](../PLAN.md);
 this file holds the choices behind the code. Add a row when a decision is made, not when it is rediscovered.
 
+## Schedule (22 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| schedule-gating | A phase starts as soon as the previous phase is closed (exit check passed, work merged to `main`); PLAN.md section 13 dates are targets and deadlines, not start gates. Decided by Chee Long | Phase 1A finished early; waiting for a calendar window would waste sprint time without adding safety. Dependency order, approved plans, reviews and exit checks stay binding |
+
+## Benchmark and CI planning documents (22 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-plan | Keep [benchmark](plans/benchmark.md) as the canonical B1–B6 contract; Chee Long owns/implements it | BM1–BM9 and placement/a–e decisions accepted 22 October; plan approved 22 October after fresh re-review, with no app privilege change or scaled Tier 1 runs |
+| ci-plan | Keep [ci](plans/ci.md) as the sole CI contract; Chee Long owns/implements it | CI1–CI6 and a–f/full-data decisions accepted 22 October; plan approved 22 October after fresh re-review. The requested minutes-budget amount is a recommendation pending confirmation, not a billing change |
+
+## Phase 1B planning document (22 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| phase-1b-review | Keep [the Phase 1B decision/review record](plans/phase-1b.md), as requested by Chee Long | Chee Long accepted P1–P7 on 22 October 2026. Canonical contracts live in accounts/ci and the affected downstream plans; accounts, benchmark and ci were approved 22 October 2026; catalogue, checkout and reviews carry only the P3 amendment and stay approved |
+
 ## olist-import implementation (22 October 2026; independent review complete)
 
 The approved scope decisions remain in [the workstream plan](plans/olist-import.md#decisions-all-approved-21-october-2026).
