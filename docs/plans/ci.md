@@ -132,3 +132,54 @@ the [runner-kernel PR #5 run](https://github.com/ZadeNova/INF2003_Database_Proje
 their database logs printed `6.8.0-1070-azure`. The [accounts PR #6 run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39801783027)
 and [main run after PR #6](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/39803121613) also passed
 both jobs. **CI stage 1's exit check passed on GitHub.** Stages 2 and 3 remain; the CI workstream stays in progress.
+
+23 October 2026, Codex startup correction (ci-i9), requested in the owner's handoff: attached mongosh credential
+arguments in the startup script and healthcheck; retry newly generated secrets that start with `-`, retaining
+existing `.env` values. Regression checks cover generated secret size/alphabet, existing credentials, and both
+command forms. `migrate` mounts `compose.yaml` read-only so the same checks run inside Docker. README troubleshooting
+explains the difference between empty-volume setup and existing credentials. Phase check: this is stage 1
+maintenance, dependent on the completed foundation; stages 2 and 3 remain outside this change.
+Fresh Claude Code review and hosted verification are pending; the owner requested all changes remain uncommitted.
+
+Local implementation verification used the isolated Compose project `mercer-ci-password-dash`, an ephemeral MongoDB
+host port, and deliberately dash-leading root username and password supplied through the process environment.
+Fresh-volume startup and restart with the same credentials both became healthy; owner-role migrations passed.
+The full Django suite through `migrate` passed, including the new startup/secret regression checks; only the
+Git-index tests skipped in the Git-free app image. Host documentation/Git-index/packaging tests ran without skips
+and passed, as did `scripts/check_docs.py`. Command outputs are in the
+implementation chat; this evidence does not replace the independent review or hosted PR/main checks.
+
+23 October 2026, independent fresh Claude Code review of the uncommitted ci-i9 change (on `6a5f874`): **APPROVE, no
+blockers.** Phase check: stage 1 maintenance of the in-progress `ci` workstream; `foundation` is done. Checks used a
+separate project (`-p mercer-review-dash` with a matching `COMPOSE_PROJECT_NAME`, `MONGO_PORT=0`) and process-environment
+overrides in which the root username, root password and application password all began with `-`. A fresh volume
+became healthy; Docker stored the healthcheck with variable names, so `$$` escaping holds. Owner migrations, the drift
+check, the fixture import, `seed_demo` and the full suite passed through `migrate`; only the Git-index tests skipped.
+Restarting on the populated volume became healthy again. The old `-u`/`-p` form, run in the same container with the same
+password, reproduced the CI error ("unrecognized option"), and the application user authenticated with its dash-leading
+password. Wrong passwords shaped like `--eval`, `-p`, `--`, `a=b=c` and a leading space failed authentication, not
+argument parsing; users created with `12345`, `true` and `-1e5` authenticated, so values stay strings. With a changed
+root password on the populated volume, the healthcheck command failed authentication, as the README says (no
+rotation). Host documentation/Git-index/packaging tests passed without skips (with a short `--basetemp`; a long one
+made `git add` fail on Windows), as did `scripts/check_docs.py` and `git diff --check`. Mutation runs on a scratch copy
+showed the new tests fail when the retry loop is removed, when either startup call returns to `-u`/`-p`,
+`--password VALUE` or `-p"$X"`, or when the healthcheck uses `-u`/`-p` or a single `$`. The `compose.yaml` mount is
+appropriate: it holds only variable references, is read-only, is limited to `migrate`, and without it the test fails
+loudly instead of skipping.
+**Optional:** CS1, the source-text test (`tests/test_init_env.py:62`) compares `shlex` tokens, so dropping the double
+quotes still passes; harmless for generated secrets, but a hand-set password with spaces would then break. Asserting the
+raw quoted substring would close it. CS2, README Troubleshooting (`README.md:341`) reads as if changing a dash-leading
+password were required; after the fix it is optional. CS3, at commit, drop "implementation awaiting review" from the
+DECISIONS heading (`docs/DECISIONS.md:43`). Not caused by this change: the `0o600` assertion in
+`test_a_missing_env_is_created_private_with_generated_secrets` cannot pass on a Windows host; it passes in Docker.
+Hosted PR and main runs remain pending until the owner pushes.
+
+23 October 2026, fix round (Claude Code, at Chee Long's request), still uncommitted: CS1 adds raw-text assertions for
+the quoted `--username="..."`/`--password="..."` arguments in both the startup script and the healthcheck; the
+unquoted mutations that previously passed now fail. CS2 says a dash-leading password works as it is, and any change
+belongs on an empty volume only. CS3 drops "implementation awaiting review" from the DECISIONS heading.
+`tests/test_init_env.py` passed in Docker (separate project `mercer-review-cs`, since removed), and
+`scripts/check_docs.py` and `git diff --check` passed. Pre-merge run on the fixed tree, following the README's
+continuous-integration commands in the separate project `mercer-review-final` (since removed): build, owner
+migrations, the drift check, the fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) and
+the pipeline tests all passed; the host Git-index/packaging tests passed without skips.

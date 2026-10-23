@@ -13,7 +13,7 @@ chmod 400 "$KEY"
 # credentials; afterwards the root user is used. Every step is safe to repeat.
 initialise() {
   until mongosh --quiet --eval 'db.hello().ok' >/dev/null 2>&1; do sleep 1; done
-  if ! mongosh --quiet -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PASSWORD" --authenticationDatabase admin \
+  if ! mongosh --quiet --username="$MONGO_ROOT_USER" --password="$MONGO_ROOT_PASSWORD" --authenticationDatabase admin \
       --eval 'rs.status().ok' >/dev/null 2>&1; then
     mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "mongo:27017"}]})'
     until mongosh --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)' >/dev/null 2>&1; do sleep 1; done
@@ -21,7 +21,7 @@ initialise() {
       user: process.env.MONGO_ROOT_USER, pwd: process.env.MONGO_ROOT_PASSWORD, roles: ["root"]})'
   fi
   # The application user: readWrite on the application database and its test database, nothing else.
-  mongosh --quiet -u "$MONGO_ROOT_USER" -p "$MONGO_ROOT_PASSWORD" --authenticationDatabase admin --eval '
+  mongosh --quiet --username="$MONGO_ROOT_USER" --password="$MONGO_ROOT_PASSWORD" --authenticationDatabase admin --eval '
     const admin = db.getSiblingDB("admin");
     if (!admin.getUser(process.env.MONGO_APP_USER)) {
       admin.createUser({user: process.env.MONGO_APP_USER, pwd: process.env.MONGO_APP_PASSWORD, roles: [

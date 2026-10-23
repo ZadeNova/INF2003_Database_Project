@@ -40,6 +40,12 @@ The contract is [ci](plans/ci.md); these are the implementation choices behind s
 | ci-i7 | The kernel guard compares major/minor/patch numerically and fails for 6.19.0 through 7.0.13 inclusive | Fails clearly before MongoDB starts (foundation-m) instead of timing out on a container health check |
 | ci-i8 | The `databases` job runs on hosted `ubuntu-22.04`; `host` stays on `ubuntu-24.04` (ci decision b amended by Chee Long) | From image 20261021, ubuntu-24.04 runners use kernel 7.0.0-azure. MongoDB 9.0 refuses every Ubuntu 7.0 kernel because Ubuntu reports 7.0.0 even when the 7.0.14 fix is backported (SERVER-136848), and no MongoDB release fixes SERVER-121912. Ubuntu 22.04 kernels stop at 6.8, so real MongoDB checks stay on hosted runners without pinning an older MongoDB (foundation-f) |
 
+## CI startup correction (23 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i9 | Pass mongosh credentials with `--username=...` and `--password=...` in startup and healthcheck commands; retry new `token_urlsafe` secrets beginning with `-`, preserving token size and alphabet and all existing `.env` values | A dash-leading password was parsed as an option, intermittently preventing MongoDB from becoming healthy. Attached arguments also support existing credentials; regenerating a stored credential would not update the database user |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |
