@@ -30,3 +30,9 @@ section 12; write what you did, not what you were assigned.
 | Member | Work | Evidence |
 |---|---|---|
 | Chee Long | Implemented accounts and CI stage 1 with Claude Code; reviewed by Codex. Sol drafted the plain-language wording, which Claude Code checked and finished | [Accounts implementation and review](docs/plans/accounts.md#review-notes); [CI stage 1 review and hosted exit evidence](docs/plans/ci.md#review-notes) |
+
+## Phase 2 core (23 October 2026)
+
+| Member | Work | Evidence |
+|---|---|---|
+| Chee Long | Approved the Phase 2 plan amendments; ran the overnight build of checkout and catalogue (Codex orchestrator with two Sol sub-agents); had both reviewed in fresh Claude Code sessions; directed the fix rounds, integration and merges | [Checkout review and checkpoint](docs/plans/checkout.md#review-notes); [catalogue review and checkpoint](docs/plans/catalogue.md#review-notes); [Phase 2 amendments](docs/DECISIONS.md#phase-2-plan-amendments-22-october-2026) |

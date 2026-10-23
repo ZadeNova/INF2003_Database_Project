@@ -1,6 +1,6 @@
 # checkout: Cart across sellers, split checkout, simulated payment, order lifecycle, cancellation
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 2.5 to 3 days
 · phase 2A (dates in PLAN.md section 13) · depends on: `olist-import` (schema), `accounts` (roles, seller status, audit actor)
 
@@ -122,3 +122,13 @@ catalogue code, for the integration change to record; CK2 added Cart and CartLin
 moved the trigger and invariant text into "View, triggers and privileges" and the 3NF section, and removed the
 appended section; CK3 refuses cancel reasons over 1000 characters in the service (test added); CK4 makes per-unit and
 total shipping explicit on the review page; CK5 moved the README section above "Regenerate the data".
+
+23 October 2026, Phase 2 checkpoint on `main` (Claude Code, at Chee Long's request), against the full-data `mercer`
+database through the running web service (runtime role): the demo customer bought from three sellers in one checkout
+(one checkout, three paid orders, payments = total = 278.25; stock fell by one each, every change audited with the
+buyer and a reason; resending the pay form created nothing); the demo seller could not ship another shop's order,
+shipped its own, and the operator delivered it, with the customer seeing Delivered and the audit trail recording both;
+faceted category search with a price range rendered; the demo seller created a product with an uploaded photo, saw
+it on the detail page and deactivated it (it then left the shop). 20 of 20 steps passed. Merged: amendments PR #8,
+checkout PR #9, catalogue PR #10 (combined suite 566 passed, 4 skipped; both CI jobs green on the combined code).
+Checkout is done: every exit check has passed, alone and combined with catalogue.

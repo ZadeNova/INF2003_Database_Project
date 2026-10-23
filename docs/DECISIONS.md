@@ -120,7 +120,7 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 | foundation-q | No separate human gate: the implementer asks a teammate to review in a fresh Claude Code session | One main developer; the fresh-session review already runs the tests and exit checks |
 
 
-## catalogue implementation
+## catalogue implementation (23 October 2026; reviewed and merged, PR #10)
 
 | ID | Decision | Why |
 |---|---|---|
@@ -137,7 +137,7 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 
 Pillow 13.0.0 is pinned for the upload path after checking the [maintainer release listing](https://pypi.org/project/pillow/13.0.0/).
 
-## checkout implementation
+## checkout implementation (23 October 2026; reviewed and merged, PR #9)
 
 | ID | Decision | Why |
 |---|---|---|

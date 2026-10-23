@@ -156,7 +156,7 @@ erDiagram
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
 | Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
-| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time. Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion |
+| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time. Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
 | CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
 | Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
@@ -232,6 +232,14 @@ quoted with psycopg Identifier; data values are bound parameters.
 `django_migrations` is an explicit exception to row DML: runtime has SELECT only and no access to its identity
 sequence, so only the owner can modify migration history in either the application or test database.
 
+**Product search and audit (`catalogue` 0002).** The trusted pg_trgm extension and the `product_name_trgm` GIN index
+on product.name serve typo-tolerant name search. product_update_audit (AFTER UPDATE, only when price, stock, active or
+taken_down actually changes) runs the owner-owned SECURITY DEFINER function `public.audit_product_update()` with
+`search_path = public, pg_temp`; it reads the same transaction-local actor and reason and writes named-field
+before/after snapshots. Checkout's stock decrements and cancellation restocks therefore leave product audit rows
+with the buyer as actor. Runtime keeps SELECT only on audit_log and cannot execute or replace the function or disable
+its trigger.
+
 ### Normalisation (3NF)
 
 Each base table describes one entity, with a surrogate primary key and explicit source/business candidate keys.
@@ -276,6 +284,24 @@ undelivered orders remain historical evidence. The later reviews workstream adds
 Cross-store reconciliation verifies each review's line/order/checkout/product/seller/customer tuple, every spec's
 product/category and each category template. Raw-versus-imported delivery analysis counts one review per checkout,
 avoiding the bias that copying an order review to several lines would otherwise introduce.
+
+**Catalogue indexes, specifications and photos.** MongoDB `spec_attributes` is an `attributes.$**` wildcard index: fields added to templates are indexed without
+collection-schema changes; array-valued fields use multikey entries, while the imported scalar fields do not.
+
+Sellers write only the specification fields they own (category_id, description, attributes, photo_file_id and the
+existing generated-content flag); edits leave rating_summary and latest_reviews intact. Category templates retain
+the imported `string`, `integer` and `boolean` field types, allowed-value lists and an increasing version; adding an
+optional field updates the template document without any validator or PostgreSQL migration.
+The `photos` GridFS bucket stores re-encoded raster bytes in photos.files/photos.chunks. File metadata holds its
+product_id and content_type; product_specs.photo_file_id is the reference, indexed as `spec_photo_file` so the photo
+endpoint resolves a file id to its product without scanning every specification. Replacements remove the old file after
+the new spec and PostgreSQL change are accepted. Public photo reads first check current product visibility.
+New seller-created products/specifications have has_generated_content false. seed_demo explicitly clears actor and
+reason inside its existing transaction, so its labelled adjustments remain system audit entries.
+
+Category.icon_name resolves imported category slugs through the catalogue icon map, with Category.icon retained as
+the fallback for other categories. This replaces the imported generic card at render time without changing the
+checked source CSVs; Uncategorised keeps the package icon.
 
 ## Reproducible pipeline
 
@@ -426,32 +452,3 @@ Rule counts overlap; the union of removed order IDs determines the surviving his
 | sellers | 3,095 |
 | users | 99,191 |
 <!-- end generated -->
-
-
-## Catalogue search and product audit
-
-`catalogue` 0002 adds the trusted pg_trgm extension and the `product_name_trgm` GIN index on product.name.
-`product_update_audit` runs AFTER UPDATE only when price, stock, active or taken_down actually changes. The
-owner-owned SECURITY DEFINER function `public.audit_product_update()` pins `search_path = public, pg_temp`, reads
-the shared transaction-local actor/reason settings and writes named-field before/after snapshots to audit_log.
-Runtime retains SELECT only on audit_log and cannot execute or replace the function or disable its trigger.
-MongoDB `spec_attributes` is an `attributes.$**` wildcard index: fields added to templates are indexed without
-collection-schema changes; array-valued fields use multikey entries, while the imported scalar fields do not.
-
-
-### Catalogue specifications and photos
-
-Sellers write only the specification fields they own (category_id, description, attributes, photo_file_id and the
-existing generated-content flag); edits leave rating_summary and latest_reviews intact. Category templates retain
-the imported `string`, `integer` and `boolean` field types, allowed-value lists and an increasing version; adding an
-optional field updates the template document without any validator or PostgreSQL migration.
-The `photos` GridFS bucket stores re-encoded raster bytes in photos.files/photos.chunks. File metadata holds its
-product_id and content_type; product_specs.photo_file_id is the reference, indexed as `spec_photo_file` so the photo
-endpoint resolves a file id to its product without scanning every specification. Replacements remove the old file after
-the new spec and PostgreSQL change are accepted. Public photo reads first check current product visibility.
-New seller-created products/specifications have has_generated_content false. seed_demo explicitly clears actor and
-reason inside its existing transaction, so its labelled adjustments remain system audit entries.
-
-Category.icon_name resolves imported category slugs through the catalogue icon map, with Category.icon retained as
-the fallback for other categories. This replaces the imported generic card at render time without changing the
-checked source CSVs; Uncategorised keeps the package icon.
