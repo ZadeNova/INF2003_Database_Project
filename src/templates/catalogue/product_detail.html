@@ -5,7 +5,9 @@
 <div class="page catalogue-page">
     <a href="{% url 'catalogue:product_list' %}">Back to shop</a>
     <article class="surface-card product-detail">
-        <div class="product-detail__media tile" role="img" aria-label="{{ product.name }}">{% if spec.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' spec.photo_file_id %}" alt="{{ product.name }}">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
+        <figure class="product-detail__figure">
+            <div class="product-detail__media tile" role="img" aria-label="{{ product.name }}">{% if spec.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' spec.photo_file_id %}" alt="{{ product.name }}">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
+        </figure>
         <div class="product-detail__info">
             <a class="eyebrow" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.name_en }}</a>
             <h1 class="product-detail__name">{{ product.name }}</h1>

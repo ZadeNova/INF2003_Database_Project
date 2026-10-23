@@ -5,6 +5,7 @@ from gridfs.errors import NoFile
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views.decorators.http import require_safe
 
 from accounts.models import Seller
@@ -13,6 +14,27 @@ from .forms import SearchForm
 from .models import Category
 from .search import (PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page,
                      visible_products)
+
+
+def _filter_chips(form, data):
+    chips = []
+    for name, field in form.fields.items():
+        value = form.cleaned_data.get(name)
+        # Only filters in the request get a chip: an absent rating still cleans to its empty value, 0.
+        if name == "sort" or not data.get(name) or value is None or value == "":
+            continue
+        if name == "category":
+            label = value.name_en
+        elif getattr(field, "choices", None):
+            label = dict(field.choices).get(data.get(name), value)
+        else:
+            label = value
+        remaining = data.copy()
+        remaining.pop(name, None)
+        remaining.pop("page", None)
+        chips.append({"label": f"{field.label}: {label}",
+                      "url": reverse("catalogue:product_list") + "?" + remaining.urlencode()})
+    return chips
 
 
 def _listing(request, category=None):
@@ -60,6 +82,7 @@ def _listing(request, category=None):
     query = data.copy()
     query.pop("page", None)
     context["query"] = query.urlencode()
+    context["filter_chips"] = _filter_chips(context["search_form"], data) if searching else []
     return render(request, "catalogue/product_list.html", context)
 
 

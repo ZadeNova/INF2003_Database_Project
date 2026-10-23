@@ -36,3 +36,9 @@ section 12; write what you did, not what you were assigned.
 | Member | Work | Evidence |
 |---|---|---|
 | Chee Long | Approved the Phase 2 plan amendments; ran the overnight build of checkout and catalogue (Codex orchestrator with two Sol sub-agents); had both reviewed in fresh Claude Code sessions; directed the fix rounds, integration and merges | [Checkout review and checkpoint](docs/plans/checkout.md#review-notes); [catalogue review and checkpoint](docs/plans/catalogue.md#review-notes); [Phase 2 amendments](docs/DECISIONS.md#phase-2-plan-amendments-22-october-2026) |
+
+## Catalogue design sign-off (23 October 2026)
+
+| Member | Work | Evidence |
+|---|---|---|
+| Chee Long | Chose the Mercer design direction, approved amendment j to defer stock photos, directed the Codex design implementation and browser checks, and signed off the screenshots and DESIGN.md rewrite; had it reviewed by Claude Code with one fix round (DG1–DG3) | [Design system](DESIGN.md); [implementation and validation record](docs/plans/catalogue.md#amendments-fj-design-implementation-23-october-2026) |

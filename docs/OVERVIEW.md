@@ -73,7 +73,8 @@ a **cleaning ledger** that becomes a table in the report, and the raw files stay
 
 **What we adapt (labelled):** Olist hid product names, descriptions and photos to protect sellers, so we **generate**
 names, descriptions and attributes from templates (rich templates for the 15 biggest categories), show an icon card for
-each product, and use real stock photos for 15 featured best sellers. Reviews are machine-translated to English, with the
+each product unless its seller uploaded a photo. Featured stock photos are deferred by
+[catalogue amendment j](plans/catalogue.md). Reviews are machine-translated to English, with the
 Portuguese kept. Prices are converted to SGD at one fixed rate. All dates are moved forward by a fixed number of weeks so
 the shop feels current. Products sold only once in two years are delisted (kept in the data, hidden from the shop).
 **Everything generated is labelled as generated**, in the app and in the report.

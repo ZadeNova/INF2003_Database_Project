@@ -33,7 +33,7 @@ Each value lives in exactly one store; nothing is copied, so no synchronisation 
 |---|---|
 | Users and roles, sellers, products (one seller each, with price and stock), carts, checkouts (hold the payments; one order per seller), orders, order lines, payments, wishlist, analytics | PostgreSQL (latest stable, pinned by digest) |
 | Product specifications (category attributes, rating summary, latest five reviews); reviews, one per order line | MongoDB (latest stable, pinned by digest), single-node replica set |
-| Product photos (featured set; other products show an icon card) | MongoDB GridFS |
+| Seller-uploaded product photos (other products show an icon card) | MongoDB GridFS |
 | Activity events (views, searches; 30-day TTL) | MongoDB time-series collection |
 | Cache and rate limits (Tier 2 only) | Redis, never source of truth |
 

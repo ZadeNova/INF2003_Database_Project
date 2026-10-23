@@ -71,31 +71,6 @@
         }
     });
 
-    document.addEventListener("click", function (event) {
-        var button = event.target.closest("[data-step]");
-        if (!button) {
-            return;
-        }
-        var input = document.getElementById(button.getAttribute("data-step-target"));
-        if (!input || input.disabled) {
-            return;
-        }
-        var min = Number(input.getAttribute("min")) || 1;
-        var max = Number(input.getAttribute("max")) || 999;
-        var current = Number(input.value) || min;
-        var next = Math.min(max, Math.max(min, current + Number(button.getAttribute("data-step"))));
-        if (next === current) {
-            return;
-        }
-        input.value = String(next);
-        // The form listens for change, so this is what posts the new quantity.
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    if (!window.htmx) {
-        document.documentElement.classList.add("no-htmx");
-    }
-
     var readSubtotal = function () {
         var node = document.querySelector("#cart-content .summary__total dd");
         return node ? node.textContent.trim() : null;

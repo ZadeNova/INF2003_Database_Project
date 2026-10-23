@@ -8,9 +8,9 @@ Verified: 11 October 2026
 Downloaded file SHA-256:
 8568789cec8e224408212052a5bdf9187aa0f852da5575331e548cbe9592bf77
 
-The 287-line supplied reference in DESIGN.md matches the upstream download
-after normalising line endings and surrounding whitespace. The subsequent
-"As built in this project" section documents this team's adaptations.
+The supplied reference was verified against the upstream download after
+normalising line endings and surrounding whitespace. It remains in Git history;
+DESIGN.md now describes Mercer's adaptation as one system, including this credit.
 
 The source page explicitly labels this design system MIT. The downloaded
 Markdown supplies no copyright notice or year; none has been invented here.

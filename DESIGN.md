@@ -1,470 +1,237 @@
-# VoiceBox
-
-Bold, opinionated, magazine-style.
+# Mercer
+
+Mercer is a multi-seller marketplace: customers browse independent shops, sellers manage their own catalogue and
+orders, and an operator manages the marketplace. Its visual system adapts VoiceBox into square, flat shopping
+surfaces: clear product information, restrained red marks, readable tables and consistent forms. This is the single
+design specification; [site.css](src/static/css/site.css) implements it.
+
+## Foundations and tokens
+
+The page uses an ink-and-paper palette, square corners, structural 2px borders and no elevation shadows. Focus rings
+are the deliberate exception. Light cards share the page ground and use borders to establish their edge; dark cards
+use the next surface step. Existing token names are retained. The table gives base declarations, before responsive
+overrides; dark values apply both to an explicit theme and the system preference when no light override is stored.
+
+| CSS token | Light | Dark |
+|---|---|---|
+| `--color-primary` | `#0a0a0a` | `#fafafa` |
+| `--color-secondary` | `#ef4444` | `#ef4444` |
+| `--color-tertiary` | `#fafafa` | `#0a0a0a` |
+| `--color-background` | `#fafafa` | `#0a0a0a` |
+| `--color-surface` | `#fafafa` | `#141414` |
+| `--color-surface-raised` | `#f5f5f5` | `#1c1c1c` |
+| `--color-text-primary` | `#0a0a0a` | `#fafafa` |
+| `--color-text-secondary` | `#525252` | `#a3a3a3` |
+| `--color-border-subtle` | `#e5e5e5` | `#2e2e2e` |
+| `--color-border-medium` | `#d4d4d4` | `#3d3d3d` |
+| `--color-border-strong` | `#0a0a0a` | `#fafafa` |
+| `--color-secondary-strong` | `#dc2626` | `#f87171` |
+| `--color-secondary-ink` | `#b91c1c` | `#f87171` |
+| `--color-error` | `#b91c1c` | `#f87171` |
+| `--color-error-tint` | `#fef2f2` | `#2a1213` |
+| `--color-warning` | `#a16207` | `#facc15` |
+| `--color-warning-tint` | `#fefce8` | `#231d05` |
+| `--color-success` | `#15803d` | `#4ade80` |
+| `--color-success-tint` | `#f0fdf4` | `#0c2216` |
+| `--surface-header` | `rgba(250, 250, 250, 0.96)` | `rgba(10, 10, 10, 0.94)` |
+| `--band-fill` | `#0a0a0a` | `#000000` |
+| `--band-ink` | `#fafafa` | `#fafafa` |
+| `--band-ink-soft` | `#a3a3a3` | `#a3a3a3` |
+| `--band-border` | `rgba(250, 250, 250, 0.4)` | `rgba(250, 250, 250, 0.28)` |
+| `--band-wash` | `rgba(250, 250, 250, 0.08)` | `rgba(250, 250, 250, 0.06)` |
+| `--action-fill` | `#0a0a0a` | `#fafafa` |
+| `--action-fill-hover` | `var(--color-secondary)` | `var(--color-secondary)` |
+| `--on-action` | `#fafafa` | `#0a0a0a` |
+| `--on-red` | `#0a0a0a` | `#0a0a0a` |
+| `--on-brand` | `#fafafa` | `#0a0a0a` |
+| `--card-border` | `#e5e5e5` | `#2e2e2e` |
+| `--tile-glyph` | `rgba(10, 10, 10, 0.14)` | `rgba(250, 250, 250, 0.16)` |
+| `--tile-ink` | `#0a0a0a` | `#fafafa` |
+| `--focus-inner` | `var(--color-tertiary)` | `var(--color-tertiary)` |
+| `--focus-outer` | `var(--color-border-strong)` | `var(--color-border-strong)` |
+| `--skeleton` | `rgba(10, 10, 10, 0.08)` | `rgba(250, 250, 250, 0.1)` |
+| `--font-sans` | `"Work Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif` | `"Work Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif` |
+| `--font-display` | `"Archivo Black", Impact, "Arial Black", sans-serif` | `"Archivo Black", Impact, "Arial Black", sans-serif` |
+| `--font-mono` | `"Space Mono", "Courier New", Consolas, monospace` | `"Space Mono", "Courier New", Consolas, monospace` |
+| `--tracking-tight` | `0` | `0` |
+| `--tracking-caps` | `0.12em` | `0.12em` |
+| `--line-normal` | `1.6` | `1.6` |
+| `--line-compact` | `1.1` | `1.1` |
+| `--text-page-title` | `clamp(3rem, 3.6vw, 3.8rem)` | `clamp(3rem, 3.6vw, 3.8rem)` |
+| `--space-1` | `0.4rem` | `0.4rem` |
+| `--space-2` | `0.8rem` | `0.8rem` |
+| `--space-3` | `1.6rem` | `1.6rem` |
+| `--space-4` | `2.4rem` | `2.4rem` |
+| `--space-5` | `3.2rem` | `3.2rem` |
+| `--space-6` | `4rem` | `4rem` |
+| `--space-7` | `4.8rem` | `4.8rem` |
+| `--space-8` | `5.6rem` | `5.6rem` |
+| `--space-9` | `6.4rem` | `6.4rem` |
+| `--gutter` | `1.6rem` | `1.6rem` |
+| `--anchor-offset` | `7.2rem` | `7.2rem` |
+| `--content-max` | `144rem` | `144rem` |
+| `--card-radius` | `0` | `0` |
+| `--panel-radius` | `0` | `0` |
+| `--chip-radius` | `0` | `0` |
+| `--pill-radius` | `0` | `0` |
+| `--border-structural` | `0.2rem` | `0.2rem` |
+| `--rule-accent` | `0.4rem` | `0.4rem` |
+| `--card-shadow` | `none` | `none` |
+| `--panel-shadow` | `none` | `none` |
+| `--nav-shadow` | `none` | `none` |
+| `--button-active-scale` | `0.97` | `0.97` |
+| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` | `cubic-bezier(0.23, 1, 0.32, 1)` |
+| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` | `cubic-bezier(0.77, 0, 0.175, 1)` |
+| `--dur-press` | `120ms` | `120ms` |
+| `--dur-fast` | `160ms` | `160ms` |
+| `--dur-enter` | `220ms` | `220ms` |
+| `--focus-ring` | `0 0 0 0.2rem var(--focus-inner), 0 0 0 0.4rem var(--focus-outer)` | `0 0 0 0.2rem var(--focus-inner), 0 0 0 0.4rem var(--focus-outer)` |
+
+Responsive token overrides: `--gutter` is `1.6rem` below 768px, `2.4rem` from 768px and `4rem` from 1024px.
+`--anchor-offset` is `13.6rem` below 768px, `12rem` from 768px through 1279px, and `9.9rem` from 1280px.
+The content maximum is `144rem`. Layouts use `minmax(0, 1fr)` so long names can wrap without widening the page.
+
+### Colour and accessibility
+
+Normal text requires WCAG AA contrast of at least 4.5:1; large text and meaningful non-text boundaries require 3:1.
+Secondary prose and generated labels use the secondary text token, never a low-opacity foreground.
+Inputs use secondary ink for their boundary; decorative separators can use subtle borders. Focus is a two-colour
+ring built from the inner and outer focus tokens, visible on either ground. Errors include words as well as colour.
+
+The accent remains `#EF4444`. On light paper it is a rule, mark or fill; readable red uses `#B91C1C`. Dark mode lifts
+red ink to `#F87171`. Text on a red button hover or selection uses the dark `--on-red` ink in both themes. Status
+labels use the contrast-corrected success, warning and error colours in the token table, with their own tints.
 
-## Overview
+Red has eleven permitted placements: primary-button hover, brand mark, cart badge when present, section overlines,
+active-navigation underline, order-summary top rule, callout/error left rules, current checkout step, footer wordmark
+rule, destructive hover and text selection. Category labels, focus rings, stock and successful/completed states do
+not acquire a red accent. These are component placements, not a quota per viewport.
 
-VoiceBox is a high-contrast editorial design system for opinion blogs and cultural commentary sites. It channels the energy of print magazines — massive headlines, stark black-and-white foundations, and a single aggressive red accent that punctuates like an exclamation mark. The density is intentionally mixed: bold, oversized headers create dramatic entries while compact body text maintains readability for long-form argument. Every element is flat and sharp, with borders doing all the structural work.
+### Type and spacing
 
-## Colors
-
-### Brand Palette
-
-| Token     | Hex       | Role                                         |
-|-----------|-----------|-----------------------------------------------|
-| Primary   | `#0A0A0A` | Black — headings, primary UI, dominant tone    |
-| Secondary | `#EF4444` | Red — accent, emphasis, editorial highlights   |
-| Tertiary  | `#FAFAFA` | White — backgrounds, inverse text              |
+Archivo Black sets headings and product names; Work Sans sets body copy, forms and labels; Space Mono sets money,
+quantities and compact figures. Pixelify Sans is restricted to the two-glyph "67" brand mark. Page headings scale
+from 30px to 38px; section headings are about 24px, card names 16–17px, body copy 16px, supporting copy 14px and
+small labels 12px. Use uppercase for navigation, short headings and category labels, with the tracking tokens.
+Long product names wrap; they are not clipped or shortened to fit a card.
 
-### Surface Palette
+The spacing tokens form the implementation scale: 4, 8, 16, 24, 32, 40, 48, 56 and 64px. Cards use 16px body padding;
+panels use 24–32px where space allows and 16px on phones. Forms and actions share their section's left edge.
+Borders, empty space and font weight provide hierarchy; gradients, decorative textures and elevation do not.
+There are no blog bylines, pull quotes, author avatars or 56px display-heading component.
 
-| Token          | Hex       | Role                                    |
-|----------------|-----------|------------------------------------------|
-| Background     | `#FAFAFA` | Pure white page background               |
-| Surface        | `#F5F5F5` | Card backgrounds, aside blocks           |
-| Surface Raised | `#E5E5E5` | Hover backgrounds, pull-quote blocks     |
+## Shared shell and controls
 
-### Content Palette
+The utility strip explains that payment is simulated. The header holds the Mercer wordmark, role-appropriate
+navigation, theme switch and login/logout action. On phones the Menu button exposes the navigation, updates
+`aria-expanded`, and supports Escape and focus return. The skip link remains the first keyboard action. The footer
+retains storefront, project-evidence and system-status links; always-dark bands stay dark in either theme.
 
-| Token          | Hex       | Role                                  |
-|----------------|-----------|---------------------------------------|
-| Text Primary   | `#0A0A0A` | Headlines, body copy                  |
-| Text Secondary | `#525252` | Bylines, datelines, secondary prose   |
-| Text Tertiary  | `#A3A3A3` | Placeholders, disabled text           |
-
-### Border Palette
-
-| Token         | Hex       |
-|---------------|-----------|
-| Border Subtle | `#E5E5E5` |
-| Border Medium | `#D4D4D4` |
-| Border Strong | `#0A0A0A` |
-
-### Semantic Colors
-
-| Token   | Hex       |
-|---------|-----------|
-| Success | `#16A34A` |
-| Warning | `#CA8A04` |
-| Error   | `#EF4444` |
-| Info    | `#0A0A0A` |
-
-## Typography
-
-### Font Stack
-
-| Role             | Font                                                        |
-|------------------|-------------------------------------------------------------|
-| Display/Headings | Archivo Black, Impact, 'Arial Black', sans-serif            |
-| UI/Body          | Work Sans, -apple-system, 'Segoe UI', Helvetica, sans-serif |
-| Mono/Code        | Space Mono, 'Courier New', Consolas, monospace              |
-
-### Type Scale
-
-| Level        | Font          | Size   | Weight | Line Height | Letter Spacing | Usage                         |
-|--------------|---------------|--------|--------|-------------|----------------|-------------------------------|
-| Display      | Archivo Black | 56px   | 400    | 1.05        | -0.03em        | Hero opinion headlines        |
-| Headline     | Archivo Black | 38px   | 400    | 1.1         | -0.02em        | Article titles                |
-| Subhead      | Archivo Black | 24px   | 400    | 1.2         | -0.01em        | Section breaks                |
-| Body Large   | Work Sans     | 20px   | 400    | 1.65        | 0              | Lede paragraphs, pull quotes  |
-| Body         | Work Sans     | 16px   | 400    | 1.7         | 0              | Default article text          |
-| Body Small   | Work Sans     | 14px   | 400    | 1.6         | 0              | Sidebar, related links        |
-| Caption      | Work Sans     | 12px   | 500    | 1.5         | 0.01em         | Photo credits, timestamps     |
-| Overline     | Work Sans     | 11px   | 700    | 1.4         | 0.12em         | Section labels, rubrics       |
-| Code         | Space Mono    | 14px   | 400    | 1.6         | 0              | Inline code, embeds           |
-
-## Spacing
-
-| Property                    | Value   |
-|-----------------------------|---------|
-| Base unit                   | 8px     |
-| Scale                       | 4, 8, 16, 24, 32, 48, 64, 96 |
-| Component padding — small   | 8px     |
-| Component padding — medium  | 16px    |
-| Component padding — large   | 32px    |
-| Section spacing — mobile    | 48px    |
-| Section spacing — tablet    | 64px    |
-| Section spacing — desktop   | 96px    |
-
-## Border Radius
-
-| Token  | Value | Usage                               |
-|--------|-------|-------------------------------------|
-| None   | 0px   | All elements — default              |
-| Small  | 0px   | Not used                            |
-| Medium | 0px   | Not used                            |
-| Large  | 0px   | Not used                            |
-| XL     | 0px   | Not used                            |
-| Full   | 9999px| Author avatar thumbnails only       |
-
-Sharp, square edges are mandatory across every component. The magazine aesthetic demands geometric precision.
-
-## Shadows
-
-**Philosophy:** VoiceBox is completely flat with borders. Hierarchy comes from weight, scale, and black-white contrast — never from elevation.
-
-| Level   | CSS Value | Usage                            |
-|---------|-----------|----------------------------------|
-| Subtle  | `none`    | —                                |
-| Medium  | `none`    | —                                |
-| Large   | `none`    | —                                |
-| Overlay | `none`    | —                                |
-
-**Special — Focus Ring:** `0 0 0 2px #FAFAFA, 0 0 0 4px #0A0A0A` — stark black focus indicator.
-
-**Special — Red Underline:** A 3px bottom border in `#EF4444` used as a highlight accent on featured articles and active nav items.
-
-## Components
-
-### Buttons
-
-**Primary**
-- Background: `#0A0A0A`
-- Text: `#FAFAFA`
-- Border: `2px solid #0A0A0A`
-- Padding: 10px 24px
-- Font: Work Sans, 14px, weight 700, uppercase
-- Letter spacing: 0.06em
-- Radius: 0px
-- Hover: Background `#EF4444`, border `#EF4444`
-- Active: Background `#DC2626`, border `#DC2626`
-
-**Secondary**
-- Background: transparent
-- Text: `#0A0A0A`
-- Border: `2px solid #0A0A0A`
-- Padding: 10px 24px
-- Font: Work Sans, 14px, weight 700, uppercase
-- Letter spacing: 0.06em
-- Radius: 0px
-- Hover: Background `#0A0A0A`, text `#FAFAFA`
-- Active: Background `#262626`
-
-**Ghost**
-- Background: transparent
-- Text: `#0A0A0A`
-- Border: none
-- Padding: 10px 24px
-- Font: Work Sans, 14px, weight 700, uppercase
-- Letter spacing: 0.06em
-- Radius: 0px
-- Hover: text `#EF4444`
-- Active: text `#DC2626`
-
-**Destructive**
-- Background: `#EF4444`
-- Text: `#FAFAFA`
-- Border: `2px solid #EF4444`
-- Padding: 10px 24px
-- Font: Work Sans, 14px, weight 700, uppercase
-- Letter spacing: 0.06em
-- Radius: 0px
-- Hover: Background `#DC2626`, border `#DC2626`
-- Active: Background `#B91C1C`, border `#B91C1C`
-
-**Sizes:** Small 6px 16px / 12px, Medium 10px 24px / 14px, Large 14px 32px / 16px
-
-**Disabled:** Opacity 0.35, cursor not-allowed, no hover transition.
-
-### Cards
-
-**Default**
-- Background: `#FAFAFA`
-- Border: `2px solid #E5E5E5`
-- Radius: 0px
-- Padding: 24px
-- Shadow: none
-- Hover: Border `#0A0A0A`
-
-**Elevated**
-- Background: `#FAFAFA`
-- Border-top: `4px solid #EF4444`
-- Border-left/right/bottom: `2px solid #E5E5E5`
-- Radius: 0px
-- Padding: 24px
-- Shadow: none
-
-### Inputs
-
-**Text Input**
-- Height: 44px
-- Background: `#FAFAFA`
-- Border: `2px solid #D4D4D4`
-- Radius: 0px
-- Padding: 8px 14px
-- Font: Work Sans, 14px, weight 400
-- Text color: `#0A0A0A`
-- Placeholder color: `#A3A3A3`
-- Focus: Border `#0A0A0A`, ring `0 0 0 2px #FAFAFA, 0 0 0 4px #0A0A0A`
-- Error: Border `#EF4444`
-- Disabled: Background `#F5F5F5`, opacity 0.5
-
-**Label:** Work Sans, 12px, weight 700, color `#0A0A0A`, uppercase, letter-spacing 0.06em, margin-bottom 6px.
-
-**Helper Text:** Work Sans, 12px, weight 400, color `#525252`, margin-top 4px. Error helper color `#EF4444`.
-
-### Chips
-
-**Filter Chip**
-- Background: transparent
-- Border: `2px solid #D4D4D4`
-- Radius: 0px
-- Padding: 4px 14px
-- Font: Work Sans, 12px, weight 700, uppercase
-- Letter spacing: 0.04em
-- Text: `#525252`
-- Selected: Background `#0A0A0A`, text `#FAFAFA`, border `#0A0A0A`
-
-**Status Chip**
-- Padding: 4px 12px
-- Font: Work Sans, 11px, weight 700, uppercase
-- Letter spacing: 0.06em
-- Radius: 0px
-- Success: Background `#F0FDF4`, text `#16A34A`, border `2px solid #16A34A`
-- Warning: Background `#FEFCE8`, text `#CA8A04`, border `2px solid #CA8A04`
-- Error: Background `#FEF2F2`, text `#EF4444`, border `2px solid #EF4444`
-
-### Lists
-
-**Default List Item**
-- Padding: 14px 0
-- Border bottom: `1px solid #E5E5E5`
-- Font: Work Sans, 16px, weight 400
-- Text: `#0A0A0A`
-- Secondary text: `#A3A3A3`, 12px
-- Hover: Background `#F5F5F5`
-- Active: Background `#E5E5E5`
-- Leading element: 20px icon, color `#0A0A0A`
-
-### Checkboxes
-
-- Size: 18px
-- Border: `2px solid #0A0A0A`
-- Radius: 0px
-- Background: `#FAFAFA`
-- Checked: Background `#0A0A0A`, border `#0A0A0A`, checkmark `#FAFAFA`
-- Indeterminate: Background `#0A0A0A`, dash `#FAFAFA`
-- Hover: Background `#F5F5F5`
-- Focus: Ring `0 0 0 2px #FAFAFA, 0 0 0 4px #0A0A0A`
-- Disabled: Opacity 0.35
-- Label: Work Sans, 14px, weight 400, margin-left 10px
-
-### Radio Buttons
-
-- Size: 18px
-- Border: `2px solid #0A0A0A`
-- Radius: 9999px
-- Background: `#FAFAFA`
-- Selected: Border `#0A0A0A`, inner dot `#0A0A0A` (8px)
-- Hover: Background `#F5F5F5`
-- Focus: Ring `0 0 0 2px #FAFAFA, 0 0 0 4px #0A0A0A`
-- Disabled: Opacity 0.35
-- Label: Work Sans, 14px, weight 400, margin-left 10px
-
-### Tooltips
-
-- Background: `#0A0A0A`
-- Text: `#FAFAFA`
-- Font: Work Sans, 12px, weight 600
-- Padding: 8px 14px
-- Radius: 0px
-- Max width: 220px
-- Arrow: 6px, same background
-- Delay: 250ms enter, 0ms leave
-- Shadow: none
-
-## Do's and Don'ts
-
-1. **Do** make headlines massive and unapologetic — Archivo Black at 38px+ demands attention.
-2. **Don't** use red (`#EF4444`) for more than one element per viewport — it is a scalpel, not a paintbrush.
-3. **Do** use thick 2px borders for interactive elements to maintain the editorial weight.
-4. **Don't** introduce rounded corners or soft shadows — VoiceBox is angular and assertive.
-5. **Do** use pull quotes styled with a left `4px solid #EF4444` border and Body Large italic.
-6. **Don't** use more than three type sizes on a single page — headline, body, caption is the standard.
-7. **Do** set overline category labels in uppercase Work Sans to establish section identity.
-8. **Do** maintain stark black-on-white contrast — the palette is intentionally limited.
-9. **Don't** add decorative imagery, gradients, or background textures that dilute the typographic focus.
-10. **Do** use the red accent on hover states for primary buttons to create a visceral interaction cue.
-
----
-
-## As built in this project
-
-The sections above are the design system as supplied. This section records where
-the Mercer implementation deviates from it, so this file describes the
-delivered system rather than an intention. Implementation lives in
-`src/static/css/site.css`, whose `:root` block carries the reasoning inline.
-
-### 1. Status chip labels are one shade darker
-
-| Token | Specified above | As built | Why |
-|-------|-----------------|----------|-----|
-| Success text | `#16A34A` | `#15803D` | 3.1:1 on its tint fails AA at 11px; 4.79:1 passes |
-| Warning text | `#CA8A04` | `#A16207` | 3.0:1 fails; 4.76:1 passes |
-| Error text | `#EF4444` | `#B91C1C` | 3.5:1 fails; 5.91:1 passes |
-
-The 2px borders and tinted backgrounds keep the specified values. Only the label
-text moved, and only because the specified pairs fail WCAG AA.
-
-### 2. Red is a fill, a rule and a mark, never small text
-
-`#EF4444` reaches only **3.61:1** on `#FAFAFA`. That is enough for a border, a
-rule, a fill or large text, and not enough for a word. Red that has to be read
-steps down to `#B91C1C` (6.20:1), held as `--color-red-ink`.
-
-### 3. Dark mode is derived, not specified
-
-This system defines no dark palette, but the build ships a theme toggle. Dark
-mode is the straight inversion a black-and-white system inverts to: ink and
-ground swap, the red keeps its hue. On `#0A0A0A` the red reaches 5.26:1, so
-there it may be text as well as a rule. Always-dark bands stay dark rather than
-inverting to paper, one step below the page ground.
-
-### 4. Red placement was extended past one element per viewport
-
-Rule 2 of the Do's and Don'ts caps red at one element per viewport. At the
-project owner's request the accent was extended to eleven placements, each a
-rule, a mark or a state and never a decorative wash: primary-button hover (rule
-10 above), brand mark, cart badge, section overlines, active-nav underline,
-order-summary top rule, callout and error left rules, current checkout step,
-footer wordmark rule, destructive hover, and text selection.
-
-Still not red: focus rings (rule above: stark black), success and completed
-states, low stock, and product category overlines.
-
-### 5. Motion
-
-Not covered above, so this is the specification. Motion matches the surfaces:
-flat and square means **crisp and mechanical, never organic**. No springs, no
-bounce, no blur-softened crossfades, no stagger.
-
-#### Easing and duration
-
-| Token | Value | Use |
-|-------|-------|-----|
-| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` | anything entering or leaving |
-| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` | anything moving on screen |
-| `--dur-press` | `120ms` | press feedback; must feel instant |
-| `--dur-fast` | `160ms` | hover, state marks, icon swaps |
-| `--dur-enter` | `220ms` | something arriving on screen |
-
-`ease-in` is never used. It delays the first movement, which is the moment the
-viewer is watching, so it reads as sluggish at any duration. The browser
-defaults (`ease`, `ease-out`) are too weak to read as intentional; use the
-tokens above.
-
-Nothing animates from `scale(0)`. Things that shrink to nothing read as
-appearing out of nowhere; press states go to `0.95`–`0.97`.
-
-#### What does not animate
-
-Anything seen tens or hundreds of times a day should lose its animation. Four
-standing refusals:
-
-1. **Page transitions.** Every navigation is a full document load, so an enter
-   animation would delay content on the highest-frequency interaction there is.
-2. **The product grid.** Stagger is decorative and the catalogue is the most
-   visited page.
-3. **Stat tile count-ups.** An operator opens the statistics page repeatedly;
-   counting up delays the number they came for.
-4. **Theme toggle spin.** A toggle is a state switch, not an event. The icons
-   cross-fade only because a `display` swap is jarring.
-
-#### What animates, and the purpose it serves
-
-Every animation names a purpose: feedback, state indication, spatial
-consistency, or preventing a jarring change. If none applies, it does not ship.
-
-| What | Purpose | Spec |
-|------|---------|------|
-| Button press | feedback | `scale(0.97)`, `--dur-press` |
-| Stepper and icon-button press | feedback | `scale(0.95)`, `--dur-press` |
-| Nav underline | state indication | `scaleX` from the left edge, `--dur-fast` |
-| Card and row hover | feedback | border colour only, `--dur-fast` |
-| Work in flight | preventing a jarring change | opacity to `0.55`, `--dur-fast` |
-| Fragment arriving | preventing a jarring change | `@starting-style`, opacity + 4px rise, `--dur-enter` |
-| A figure that just changed | state indication | inverts instantly, releases over `420ms` |
-| Messages and alerts | preventing a jarring change | `@starting-style`, opacity + rise |
-| Theme icon swap | preventing a jarring change | cross-fade, `--dur-fast` |
-| Skip link | spatial consistency | `translateY`, `--dur-fast` |
-
-The changed-figure mark is the one asymmetric case, and the pattern generalises:
-**slow where the viewer is deciding, fast where the system is responding.** It
-snaps to inverted with `transition-duration: 0ms`, then releases over 420ms, so
-the answer is immediate and the explanation lingers. It is a transition rather
-than a keyframe, so repeated rapid changes retarget smoothly instead of
-restarting from zero. Use transitions, not keyframes, for anything that can be
-triggered in bursts.
-
-#### Reduced motion
-
-`prefers-reduced-motion: reduce` means fewer and gentler animations, not none.
-Opacity and colour changes carry meaning — what is in flight, what just changed
-— and are kept at `--dur-fast`. Everything that **moves** is removed:
-`transition-property` is restricted to `opacity, background-color, color,
-border-color, fill, stroke`, and transforms are set to `none`.
-
-#### Touch
-
-Hover effects are neutralised under `(hover: none)`. A tap triggers hover on a
-touch device and the state then sticks, which is worse than no hover at all.
-
-### 6. Where each value lives in the CSS
-
-Token names follow the palette tables above, so a name here can be found in
-`src/static/css/site.css`. Change a token in its `:root` block and the whole
-site follows; the rules underneath hold no literal colours.
-
-| Table above | CSS token | Light | Dark |
-|---|---|---|---|
-| Primary | `--color-primary` | `#0A0A0A` | `#FAFAFA` |
-| Secondary | `--color-secondary` | `#EF4444` | `#EF4444` |
-| Tertiary | `--color-tertiary` | `#FAFAFA` | `#0A0A0A` |
-| Background | `--color-background` | `#FAFAFA` | `#0A0A0A` |
-| Surface | `--color-surface` | `#FAFAFA` | `#141414` |
-| Surface Raised | `--color-surface-raised` | `#F5F5F5` | `#1C1C1C` |
-| Text Primary | `--color-text-primary` | `#0A0A0A` | `#FAFAFA` |
-| Text Secondary | `--color-text-secondary` | `#525252` | `#A3A3A3` |
-| Border Subtle | `--color-border-subtle` | `#E5E5E5` | `#2E2E2E` |
-| Border Medium | `--color-border-medium` | `#D4D4D4` | `#3D3D3D` |
-| Border Strong | `--color-border-strong` | `#0A0A0A` | `#FAFAFA` |
-| Success / Warning / Error | `--color-success` / `--color-warning` / `--color-error` | see section 1 | lifted for the dark ground |
-
-Light `Surface` equals `Background` on purpose: this system separates a card
-from the page with a 2px border, not a fill. They diverge in dark mode.
-
-Two extra tokens exist because the palette collapses so far that one name
-cannot serve two jobs:
-
-- `--color-secondary-ink` (`#B91C1C`) - red where it has to be read, per
-  section 2 above.
-- `--on-action` - ink on the primary button. It is not `--band-ink`, because
-  the button and an always-dark band invert in opposite directions.
-
-Role tokens (`--band-fill`, `--action-fill`, `--focus-inner`, and so on) sit
-below the palette in the same block and are built from these values.
-
-### 7. Attribution
-
-- **Typefaces**: Archivo Black, Work Sans and Space Mono, all SIL Open Font
-  License, loaded from Google Fonts. Pixelify Sans (SIL Open Font License) sets
-  only the "67" brand mark, loaded from Google Fonts as a two-glyph subset.
-- **Icons**: Phosphor Icons regular weight, MIT, vendored as one SVG sprite at
-  `src/static/img/icons.svg` with the licence in the file header.
-- **This design system**: added to the repository as a Starbucks-inspired
-  reference by Lim Chee Long on 11 September 2026 (commit `c7ed9d1`) and replaced
-  by this VoiceBox version by Jun Keat Lim on 23 September 2026 (commit
-  `d147c9d`). The VoiceBox source was recovered on 11 October 2026:
-  [VoiceBox v1 by Chef (@chef)](https://designmd.ai/chef/voicebox), published
-  under the MIT License. All 287 lines of the supplied reference above match
-  the upstream download after normalising line endings and surrounding
-  whitespace. The "As built in this project" section records our adaptations.
-  See [licence text and verification details](docs/licenses/voicebox-MIT.txt)
-  and [docs/AI_USE.md](docs/AI_USE.md).
-
-### 8. Marketplace product media
-
-The minimum marketplace product list and detail page reuse the existing flat cards, typography and category glyph
-surfaces. Product media is a sprite icon selected by the category; descriptions and generated-content labels use the
-existing body and helper-text styles. The prior dataset's 3D viewer, hover enlargement and size picker are removed.
-No new visual tokens or typefaces are introduced.
+Buttons have a square 2px boundary, a minimum 44px regular touch target, Work Sans bold labels and visible focus.
+Primary actions invert ink and ground, then use the red hover fill with dark text. Secondary actions are outlined;
+destructive actions use an explicit label and the permitted destructive state. Compact table actions retain adequate
+spacing. Disabled controls have no active hover state.
+
+Each form control has a visible label, an ink boundary, at least 44px height and the page's surface and text tokens.
+Helper text sits beneath its field; validation errors use error ink, an explicit message and `aria-invalid` where
+provided by the shared field include. Native selects, checkboxes and radios retain their familiar interaction.
+Chips are square, wrapping inline controls. Active filter chips invert ink and paper and contain a visible removal
+mark plus an accessible "Remove …" name. Removing one preserves the other filters and resets pagination.
+
+Messages use the existing status/alert roles and structural borders. Empty states explain the next useful action.
+In-flight HTMX fragments dim; a changed subtotal can invert briefly. No interface relies on animation alone.
+
+## Catalogue
+
+### Grid and product card
+
+All public catalogue grids use four columns at 1280px and wider, three from 768px through 1279px, and two below
+768px, including phones. Rows stretch to align the cards; card names and labels remain readable without truncation.
+Grid gaps are 24px on larger screens and 16px on phones. The facet column is separate from these product columns.
+
+Each card has a 4:3 media well, category link, wrapping product name, linked shop name, mono price, stock label and
+generated-content label when applicable. Category media uses the existing Phosphor sprite mapping. Seller uploads
+are contained within the same media well, with no cropping or enlargement interaction. The photo, name and category
+links remain keyboard-accessible. Hover changes the border only.
+
+Generated-name/stock labels remain readable on both themes. Stock is
+written as "In stock" or "Sold out" and does not rely on a coloured dot.
+
+### Facets and results
+
+At desktop widths the filter panel sits beside the results; below 1024px it stacks above them with compact paired
+form fields. Controls cover name, category, exact price bounds, rating, ordering and the current category's attributes.
+Counts align beside their values, and applied filters appear above results as removable chips. "Clear" resets the
+search. Counts describe purchasable results, as defined by the catalogue contract; presentation adds no second source
+for price, stock or eligibility. The result heading, broad-search notice, empty state and pagination use the same
+spacing as the grid.
+
+### Product detail
+
+Desktop detail pages place media on the left and purchase information on the right; phones stack them. The media
+shows the category icon unless the seller uploaded a photo, served through the existing GridFS view. Contain uploaded
+photos without cropping, and keep product-name alternative text. Featured stock photos are deferred by amendment j.
+
+The information column holds category, product name, shop, mono price, shipping, stock, lead time, quantity/add action,
+description, attribute definition list, rating summary and the generated-content notice. Latest reviews follow below;
+machine-translated text keeps its label. Long titles and attribute values wrap inside their column.
+
+## Seller centre and operator console
+
+Seller products and operator lists share the page header, filter bar, bordered table region and pagination. Filters
+and their action buttons align at the bottom of the same row, then wrap on narrow screens. Product and shop names can
+wrap; prices and counts use mono/tabular figures. Sellers' edit links stay within their own catalogue and taken-down
+products expose their reason. Generated shop/product names keep their tag.
+
+Wide tables scroll inside a labelled, keyboard-focusable region; the page itself does not scroll horizontally.
+Header and body rows use identical column tracks. The audit list has five columns: time, decision, shop, actor and
+reason; long decisions and reasons wrap within the row. Operator product, seller and category lists reuse this layout.
+
+Seller create/edit uses a bounded form panel with a separate category/options step. Price, stock, freight, lead time,
+description, attributes and the optional photo share the standard field treatment. File inputs fit the panel width.
+Save and deactivate remain distinct, clearly labelled actions. Operator actions and category-attribute forms use the
+same panels, labels, validation messages and explicit reason fields.
+
+## Cart, checkout and orders
+
+Cart items are grouped by shop. Each group shows product links, exact unit price and shipping, labelled quantity and
+update/remove controls, line totals and a shop total. The final total and "Review and pay" action align across the
+page; phone line items stack before their controls. Availability/stock problems include an explicit message.
+
+Checkout retains the same shop groups, makes item and shipping totals visible and presents simulated payment controls
+in a bounded panel. The final amount and payment action form one row on desktop and stack on phones. Labels and money
+wrap sensibly without hiding values. No card-number field is introduced. Order and checkout histories reuse contained
+table regions and visible state labels.
+
+Order-status chips retain text labels: placed/cancelled use neutral ink and raised ground, paid/shipped use warning
+ink and tint, and delivered uses success ink and tint. Refunded/error states use error ink and tint where that state
+is explicitly named. The border uses the label colour; status is never communicated by colour alone.
+
+## Motion, themes and interaction
+
+Motion is crisp and mechanical. Use the easing/duration tokens; do not introduce springs, bounce, blur or stagger.
+Button press uses `scale(0.97)` and 120ms; icon controls use `scale(0.95)`. Navigation underlines scale from their left
+edge. Hover border changes and theme-icon cross-fades use 160ms. New fragments/messages can fade with a 4px rise over
+220ms through `@starting-style`; changed figures invert immediately and release over 420ms.
+
+There are no page-enter animations, product-grid stagger, statistic count-ups or theme-toggle spins. Repeated changes
+use transitions so they retarget smoothly. Under `prefers-reduced-motion: reduce`, movement and press transforms are
+removed; opacity and colour feedback remain at the fast duration. Under `(hover: none)`, hover treatments are
+neutralised so a tap does not leave a persistent state.
+
+The theme switch stores the user's explicit light/dark choice before first paint; otherwise system preference wins.
+Every new text/background pair must pass AA in both themes. Verify desktop and 375px views, including long generated
+names, seller-uploaded media, forms, cart/checkout, seller tables and the operator audit. Inspect the rendered pages
+for document overflow as well as checking computed styles.
+
+## Attribution
+
+- **Design reference:** [VoiceBox v1 by Chef (@chef)](https://designmd.ai/chef/voicebox), published under MIT. Jun Keat
+  Lim introduced the VoiceBox reference on 23 September 2026 (`d147c9d`); its source was verified on 11 October 2026.
+  This Mercer rewrite folds the previous "As built" adaptations into one system under the approved catalogue
+  amendment f. The original reference is retained in Git history. Keep the [MIT notice and verification record](docs/licenses/voicebox-MIT.txt).
+- **Typefaces:** Archivo Black, Work Sans and Space Mono are SIL Open Font License and loaded from Google Fonts.
+  Pixelify Sans is also SIL Open Font License and loads only the "67" brand-mark subset.
+- **Icons:** Phosphor Icons regular weight, MIT, vendored in [icons.svg](src/static/img/icons.svg), with its licence in
+  the sprite header. Existing category mappings remain the default product media.
+See [AI use](docs/AI_USE.md) for the implementation/review record.

@@ -220,8 +220,8 @@ The shop at `/products/` shows featured picks and categories. Search by name or 
 price, rating and category options. Newest, price and top-rated ordering keep filters when changing pages.
 Category pages use `/products/category/<slug>/`; public shops use `/products/shops/<id>/`.
 The detail page combines price and stock from PostgreSQL with descriptions, ratings and recent reviews from MongoDB.
-Generated fields remain labelled. Category icon cards cover the imported categories; licensed featured stock photos
-remain the owner-steered follow-up described in [catalogue amendment f](docs/plans/catalogue.md).
+Generated fields remain labelled. Products show category icon cards unless their seller uploaded a photo, served from
+GridFS. Featured stock photos are deferred by [catalogue amendment j](docs/plans/catalogue.md).
 
 
 ### Seller products and category options

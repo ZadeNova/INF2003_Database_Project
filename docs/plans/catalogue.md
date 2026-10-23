@@ -1,6 +1,6 @@
 # catalogue: Shop pages, specifications, faceted search, seller product CRUD, photos, audit, design
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
 · phase 2B (dates in PLAN.md section 13) · depends on: `olist-import`, `accounts`
 
@@ -19,7 +19,7 @@ databases; the operator evolves category attributes live and takes products down
 |---|---|
 | Shop pages | Home (featured products; "trending" slot filled later by `activity`), category pages, product detail, seller shop page. Only products in the `purchasable_product` view (from `olist-import`) are shown. Generated names and descriptions carry a small "generated" label (AGENTS.md rule 9). Product detail = PostgreSQL product + MongoDB spec (description, attributes, rating summary, latest five reviews) + photo or icon card |
 | Icon cards (D10) | Category → icon map covering all 74 categories, many to one (about 25 to 30 icons in `src/static/img/icons.svg`, adding what is missing); the card shows icon and name; alt text is the name |
-| Featured photos (D11, D12) | 15 openly licensed stock photos (best seller in each of the top 15 categories), chosen after names exist, committed under `data/derived/olist/photos/` with `manifest.csv` (file, product, source URL, author, licence); `manage.py load_photos` (run in `migrate`) stores them in GridFS (bucket `photos`) and records the file id on the spec as `photo_file_id`. Served by a view with caching headers. Shown as "illustrative photo" |
+| Featured photos (D11, D12; deferred by amendment j) | On hold until after Phase 3A, only if time allows before the 30 October freeze; otherwise dropped. Every product shows an icon card unless its seller uploaded a photo |
 | Search and facets (decision a) | One search page, entered with a category or a name query (with neither, the home page shows featured and trending instead). **PostgreSQL first:** the candidate ids from the `purchasable_product` view, narrowed by category, price range and the name query (`pg_trgm`, decision b; see the note below), at most about 2k for a category. **MongoDB second:** a `$facet` pipeline over `product_specs` with `_id` in those candidates, filtering by attributes and rating, returning the matching ids plus counts per rating band and attribute value, so counts only ever include buyable products. **Ordering:** for price or newest, PostgreSQL sorts and paginates the matching ids with `WHERE id = ANY(%s)`; for "Top rated", the pipeline sorts by `rating_summary.bayesian` and returns one page of ids, which PostgreSQL then fetches |
 | Specifications | `$jsonSchema` on outer fields only (from `olist-import`); the app validates `attributes` against the category's template. A wildcard index on `attributes.$**` used by the facets (amendment i), created by adding it to `mongo_setup` (`olist-import`) |
 | Schema evolution demo | Operator page to add an attribute to a category template (name, type, allowed values). Sellers can then fill it, and the facets show it, with no migration and no `collMod`. The report contrasts this with the `ALTER TABLE` the same change needs in PostgreSQL |
@@ -34,7 +34,7 @@ finds "Hose Nozzle" despite the typo, and `ILIKE '%nozz%'` can use an index inst
 on the trigrams of `product.name` makes both fast. The report shows `EXPLAIN` with and without it.
 
 **Out of scope:** reviews UI and Bayesian ranking (`reviews`); trending and recently viewed (`activity`); wishlist
-buttons (`wishlist`); more than 15 photos (top 3 per category only if time allows); full-text search (`search`, Tier 2).
+buttons (`wishlist`); featured stock photos (amendment j); full-text search (`search`, Tier 2).
 
 **Tests:** facet counts match a direct count on the fixture and never include products outside the purchasable view; generated names and descriptions show the label; filters combine correctly across MongoDB and PostgreSQL; a
 suspended seller's or delisted product never appears; a seller cannot edit another's product (scoping); a failed
@@ -49,7 +49,7 @@ injection negatives on search parameters.
    change with the seller as actor.
 3. As the operator, add an attribute to a category template; the seller fills it on a product; the facet appears.
 4. As the operator, take a product down; it disappears from the shop.
-5. The 15 featured photos load from GridFS; every other product shows an icon card.
+5. Every product without an uploaded photo shows an icon card; seller-uploaded photos load from GridFS.
 6. The full test suite passes in Docker.
 
 ## Decisions (all approved 21 October 2026)
@@ -67,10 +67,46 @@ injection negatives on search parameters.
 | ID | Decision | Why |
 |---|---|---|
 | e | `lead_time_days` is a required field in seller create and edit (with the price, stock and freight fields); new products start with `has_generated_content` false | The column is not nullable; the field list above omitted it |
-| f | The design rewrite (DESIGN.md and `site.css`) and the 15 featured photos are a separate, owner-steered step after the core is built, not part of an unattended run. They remain in this contract and its exit check 5. Until then pages use the current design and products show icon cards | Design is a taste decision tied to the presentation grade (foundation-a: the UI work decides the design); each photo needs its licence verified on its source page |
+| f | The design rewrite (DESIGN.md and `site.css`) and the 15 featured photos are a separate, owner-steered step after the core is built, not part of an unattended run. The design remains required; the featured photos are deferred by amendment j. Until then pages use the current design and products show icon cards | Design is a taste decision tied to the presentation grade (foundation-a: the UI work decides the design); each photo needs its licence verified on its source page |
 | g | Icons map many to one: the 26 existing symbols plus any added cover all 74 imported categories | The import produced 74 categories, not 73 |
 | h | Benchmark case B1 is not built in this workstream | `benchmark` owns it on its separate bench databases; PLAN.md section 13 only aligns the timing |
 | i | The attribute index is a wildcard index on `attributes.$**` (approved by Chee Long, 23 October 2026, replacing "multikey index") | It also covers attributes the operator adds later. The imported attributes are scalars, so explain reports `isMultiKey: false`; the report calls it a wildcard index (multikey-capable for arrays) and does not claim a multikey demonstration |
+| j | The 15 featured stock photos (D11, D12; amendment f decisions f4-f8) are deferred: picked up after Phase 3A only if time allows before the 30 October freeze, otherwise dropped. Exit check 5 becomes "every product without an uploaded photo shows an icon card; seller-uploaded photos load from GridFS" (approved by Chee Long, 23 October 2026) | GridFS is already demonstrated by seller photo upload (exit check 2); the photos were the slowest, owner-blocked part of amendment f; the design rewrite is what affects the presentation grade |
+
+**Amendment f plan (approved by Chee Long, 23 October 2026).** Design direction chosen by Chee Long on
+23 October 2026 (f1 to f4); f5 to f8 and the work order were approved the same day:
+
+| ID | Decision | Why |
+|---|---|---|
+| f1 | Evolve VoiceBox into Mercer's own system: same tokens, square 2px-bordered surfaces, accessibility fixes and motion rules; blog-only parts (pull quotes, bylines, avatars, 56px display) go | Keeps the contrast-checked, dark-mode and motion work already built; lowest risk before the 30 October freeze |
+| f2 | Keep the red accent (`#EF4444`, `#B91C1C` where read) and its eleven placements | Already contrast-checked in both themes |
+| f3 | Product grid: 4 per row on desktop, 3 on tablet, 2 on phones | Room for name, price, stock and the labels without truncation |
+| f4 — on hold (amendment j) | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
+| f5 — on hold (amendment j) | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
+| f6 — on hold (amendment j) | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
+| f7 — on hold (amendment j) | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
+| f8 — on hold (amendment j) | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
+
+**Work, in order** (branch `catalogue/design-photos`; revised by amendment j, approved by Chee Long,
+23 October 2026):
+1. Record amendment j as a separate docs commit; remove uncommitted featured-photo assets, loader, manifest and credit
+   UI. Decisions f4-f8 are on hold. Temporary research/contact sheets stay outside the committed tree.
+2. `DESIGN.md` rewrite: one Mercer system (the "As built" deviations folded into the main text) with the marketplace
+   components: product grid and card (icon or seller-uploaded photo, generated labels, mono price, stock), facet
+   sidebar (attribute counts, price range, active-filter chips), product detail, seller centre, operator console,
+   cart and checkout, order-status chips. The VoiceBox MIT attribution and font/icon licences stay.
+3. `site.css`: remove rules no template or script uses (a selector-usage check lists them first), implement the 4/3/2
+   grid, then align the seller and operator layouts. Literal colours live only in the `:root` tokens.
+4. Visual pass in the browser: home, category with facets, product detail (icon and seller-uploaded photo), cart,
+   checkout, seller products and form, operator lists and audit; light and dark; 375 px and desktop; no horizontal
+   scroll and AA contrast for every new pair. Show screenshots and the DESIGN.md diff to Chee Long for sign-off;
+   this is the only stop.
+5. After sign-off, record implementation and checks, set catalogue to review in PLAN.md section 14, update AI_USE and
+   CONTRIBUTIONS, commit and request fresh Claude Code review. Do not mark catalogue done, push, merge or open a PR.
+
+**Amendment f exit check (revised by amendment j):** exit check 5 above; `DESIGN.md` tokens match the `:root` block in
+`site.css`; the visual pass shows no overflow or contrast failure; the full suite passes in Docker and
+`scripts/check_docs.py` passes. Catalogue enters review; Phase 2B closes only after the required review and merge.
 
 ## Review notes
 
@@ -173,3 +209,84 @@ DESIGN.md/site.css rewrite and the 15 featured photos, exit check 5) is done. Fo
 
 23 October 2026: Chee Long confirmed catalogue-i2 through catalogue-i10 as recommended by both reviews (catalogue-i1
 was confirmed earlier as amendment i); see [DECISIONS](../DECISIONS.md).
+
+### Amendments f/j design implementation (23 October 2026)
+
+Codex implemented the owner-selected design half of amendment f under amendment j. Chee Long approved the screenshot
+gallery and DESIGN.md diff on 23 October 2026, then explicitly authorised close-out and committing before the fresh
+Claude Code review. The stock-photo deferral was recorded separately in `0213f5e`.
+
+DESIGN.md now describes one Mercer system, including the catalogue, facets, product detail, seller/operator pages,
+cart, checkout and order-status chips, with the VoiceBox MIT attribution and font/icon licences retained. A selector
+inventory was produced before CSS editing; only the listed unused selector branches were removed. The implementation
+adds the 4/3/2 grid, contained seller-uploaded media, readable generated labels, aligned filters/tables and paid/shipped
+status chips. Removable filter chips preserve the remaining query parameters and reset pagination, covered by a
+real-database regression test in `tests/test_catalogue_search.py`.
+
+The browser pass covered home, category facets, icon and seller-uploaded detail pages, cart, checkout, seller products
+and form, operator sellers/products/categories/audit, and order-status chips. Light/dark views at 375px and desktop
+showed no document overflow or text-contrast failure; the tablet grid was also checked. Wide tables retain their
+labelled scroll regions. Measurements exclude aria-hidden decoration, including the existing logo. The screenshots,
+selector inventory and generated measurements remain local, ignored review evidence.
+
+Revised exit check 5 passed against the full import using the PostgreSQL runtime role: category icons resolve,
+visible products have specifications, the icon fallback renders, and the seller-uploaded file is served from GridFS
+with matching bytes and cache headers. Featured-photo assets, manifest, loader and credit UI are absent. The token
+table matches the CSS root declarations, literal colours remain in root tokens, and `check_specs` reports no missing,
+orphan or category-mismatched specifications. Host Git-index/packaging checks passed with a short temporary path.
+
+Final validation passed: rebuilt `migrate` and `web`, ran the full suite with
+`docker compose run --rm migrate pytest -q -r s -p no:cacheprovider /app/tests`, and ran the host Git-index/packaging
+modules with `--noconftest` and a short `--basetemp` outside the repository. The Docker Git-index skips were covered
+by the host run, which had no skips. `scripts/check_docs.py` and `git diff --check` passed. Generated JUnit results,
+command logs and the runtime-role media check are retained locally under `.cache/catalogue-amendment-f/final-checks/`.
+
+Fresh Claude Code review remains pending, with one fix round. The plan stays in progress; catalogue enters review in
+PLAN.md section 14. Phase 2B remains open until the required review and merge. Existing CG7, CG10 and CG11 follow-ups
+remain recorded above.
+
+23 October 2026, Claude Code review of `b9815c4..c40c551` (amendments f/j): **CHANGES REQUESTED, no blockers.**
+Not a fresh session: the reviewer had planned amendment f, so it is not independent of the plan, but it did not write
+the implementation. Phase check: catalogue is Phase 2B in review; 2A is closed. In a separate Compose project
+(`mercer-review-design`, since removed), the build, owner migrations, the drift check, the fixture import,
+`seed_demo`, the full suite (only the Git-index tests skipped) and the pipeline tests passed. The host
+Git-index/packaging tests passed without skips, as did `check_docs.py` and `git diff --check`; `check_specs` against
+`mercer` reported nothing. The running web service served this branch's `site.css` byte for byte.
+Every class removed from `site.css` was checked against templates, JS and Python, including dynamically built
+prefixes: none is still referenced except `js` and `no-htmx`, whose removed rules only styled the unused quantity
+stepper. Every class left in `site.css` is used. The 28 DESIGN.md token rows match `:root`, the two dark-mode blocks are
+identical, no literal colour sits outside them, and both reduced-motion blocks are intact. In the browser, the grid
+showed 4 columns at 1440 px, 3 at 1024 and 768, and 2 at 375. Home, a filtered category and the icon and seller-upload
+detail pages showed no document overflow and no text below AA in light and dark, at 375 px and 1440 px. The logged-in
+pages were checked from the saved screenshots and records, not live, because the demo passwords stay in `.env`.
+Pagination keeps filters; removing a chip drops `page`; chip labels escape hostile input. The seller photo is served
+from GridFS as `image/jpeg` with `max-age=3600` and `nosniff`; an unknown id returns 404. Revised exit check 5 holds.
+**Should fix:** DG1, `_filter_chips` (`src/catalogue/views.py:19`) skips only `None` and `""`, but the rating field's
+empty value is 0, so every search shows a "Rating: 0" chip whose link reloads the same search (seen on
+`/products/?q=towel` and on the Housewares category page). Skip filters absent from the request.
+**Low:** DG2, the new chip test (`tests/test_catalogue_search.py:67`) checks only the price chip; also assert the whole
+chip set, with no rating chip when no rating is chosen. DG3, cleanup leftovers: comments without rules at
+`src/static/css/site.css:1463-1467`, empty section headers at lines 1587 and 1919, and `src/static/js/site.js:96`
+still adds `no-htmx`, which no rule uses. DG4 (local data, not code): fixture product 34212 "Seller upload preview
+(visual test)" is active in `mercer` and is listed first in Housewares; deactivate it before recording the demo.
+**Optional:** DG5, at 375 px the first product card starts about 2.4 screens down, below the full filter form; collapse
+the filters on phones or put the results first. DG6, two older issues: the audit decision badge breaks mid-word on
+phones (`site.css:3146`, `overflow-wrap: anywhere`), and the seller table's generated tag stretches to the cell width
+(`.stacked`, `site.css:3083`).
+Fix round: DG1 to DG3; rerun the catalogue search tests and `check_docs.py`, then the full suite once before merging.
+
+23 October 2026, fix round (Claude Code, at Chee Long's request): DG1 gives a chip only to filters present in the
+request, so an absent rating (cleaned to 0) no longer shows one; a chosen rating still does. DG2 asserts one chip per
+active filter (category, minimum price, attribute), none for sort or an absent rating, and the "Rating: 4 stars and up"
+chip when a rating is chosen. DG3 removes the dead quantity-stepper click handler and the `no-htmx` hook from
+`site.js`, the comments without rules and the empty section headers from `site.css`, and renames the stepper header
+that now holds only `.field-label`. In a separate project (`mercer-review-fix`, since removed), the rebuilt web
+service showed only "Search: a" for `?q=a` and added "Rating: 4 stars and up" for `rating=4`. The drift check, the
+fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) and the pipeline tests passed, as did
+`check_docs.py`, `git diff --check`, a `site.js` syntax check and the selector audit. DG4 (deactivate local product
+34212 before recording) is left to Chee Long; DG5 and DG6 stay optional.
+
+23 October 2026, close-out (Claude Code, at Chee Long's request): every exit check has passed, with exit check 5 as
+revised by amendment j. The plan is done and catalogue is marked done in PLAN.md section 14; Phase 2B closes when
+`catalogue/design-photos` merges to `main`. Follow-ups CG7, CG10 and CG11, the optional DG5 and DG6, and the deferred
+featured photos (amendment j) remain open.

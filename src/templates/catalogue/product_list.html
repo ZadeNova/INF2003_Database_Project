@@ -12,8 +12,8 @@
             <h2>Find a product</h2>
             <form method="get" action="{% url 'catalogue:product_list' %}">
                 {% include "accounts/_form_fields.html" with form=search_form %}
-                <button class="button button--dark" type="submit">Search</button>
-                {% if searching %}<a class="button button--outline-neutral" href="{% url 'catalogue:product_list' %}">Clear</a>{% endif %}
+                <div class="catalogue-filter-actions"><button class="button button--dark" type="submit">Search</button>
+                {% if searching %}<a class="button button--outline-neutral" href="{% url 'catalogue:product_list' %}">Clear</a>{% endif %}</div>
             </form>
             {% if rating_counts %}<h3>Ratings in these results</h3><ul class="catalogue-counts">{% for rating in rating_counts %}<li>{{ rating.label }} <span class="badge badge--neutral">{{ rating.count }}</span></li>{% endfor %}</ul>{% endif %}
             {% if facet_groups %}<details open class="catalogue-counts"><summary>In these results</summary>
@@ -21,6 +21,7 @@
             </details>{% endif %}
         </aside>
         <section class="catalogue-results" aria-label="Products">
+            {% if filter_chips %}<nav class="catalogue-active-filters" aria-label="Active filters">{% for chip in filter_chips %}<a class="chip chip--on" href="{{ chip.url }}" aria-label="Remove {{ chip.label }}">{{ chip.label }} <span aria-hidden="true">×</span></a>{% endfor %}</nav>{% endif %}
             {% if searching %}<h2>{{ result_count|default:0 }} product{{ result_count|pluralize }}</h2>{% if capped %}<p class="panel__note">Showing the closest matches only. Add a category or more words to narrow your search.</p>{% endif %}
             {% else %}<h2>{% if featured %}Featured{% else %}From the shops{% endif %}</h2>{% endif %}
             {% if page_obj.object_list %}<div class="product-grid">{% for product in page_obj %}{% include "catalogue/_product_card.html" %}{% endfor %}</div>
