@@ -41,4 +41,4 @@ section 12; write what you did, not what you were assigned.
 
 | Member | Work | Evidence |
 |---|---|---|
-| Chee Long | Chose the Mercer design direction, approved amendment j to defer stock photos, directed the Codex design implementation and browser checks, and signed off the screenshots and DESIGN.md rewrite; fresh Claude Code review is pending | [Design system](DESIGN.md); [implementation and validation record](docs/plans/catalogue.md#amendments-fj-design-implementation-23-october-2026) |
+| Chee Long | Chose the Mercer design direction, approved amendment j to defer stock photos, directed the Codex design implementation and browser checks, and signed off the screenshots and DESIGN.md rewrite; had it reviewed by Claude Code with one fix round (DG1–DG3) | [Design system](DESIGN.md); [implementation and validation record](docs/plans/catalogue.md#amendments-fj-design-implementation-23-october-2026) |

@@ -1,6 +1,6 @@
 # catalogue: Shop pages, specifications, faceted search, seller product CRUD, photos, audit, design
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: 3 to 4 days
 · phase 2B (dates in PLAN.md section 13) · depends on: `olist-import`, `accounts`
 
@@ -284,4 +284,9 @@ that now holds only `.field-label`. In a separate project (`mercer-review-fix`, 
 service showed only "Search: a" for `?q=a` and added "Rating: 4 stars and up" for `rating=4`. The drift check, the
 fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) and the pipeline tests passed, as did
 `check_docs.py`, `git diff --check`, a `site.js` syntax check and the selector audit. DG4 (deactivate local product
-34212 before recording) is left to Chee Long; DG5 and DG6 stay optional. Catalogue stays in review until the merge.
+34212 before recording) is left to Chee Long; DG5 and DG6 stay optional.
+
+23 October 2026, close-out (Claude Code, at Chee Long's request): every exit check has passed, with exit check 5 as
+revised by amendment j. The plan is done and catalogue is marked done in PLAN.md section 14; Phase 2B closes when
+`catalogue/design-photos` merges to `main`. Follow-ups CG7, CG10 and CG11, the optional DG5 and DG6, and the deferred
+featured photos (amendment j) remain open.
