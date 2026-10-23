@@ -1449,7 +1449,7 @@ h1 {
     padding: var(--space-3);
 }
 
-/* --- quantity stepper ------------------------------------------------- */
+/* --- field label ------------------------------------------------------ */
 
 .field-label {
     display: block;
@@ -1459,12 +1459,6 @@ h1 {
     font-weight: 700;
     letter-spacing: 0.04em;
 }
-
-/* The pill clips a box-shadow ring, so these two take an inset outline. */
-
-/* Progressive enhancement. The stepper needs both site.js and HTMX: the
-   arrows set the value, HTMX posts it. Hide the Update fallback at paint time
-   on .js so it does not flash, then restore it if HTMX never arrived. */
 
 /* --- summary panel ---------------------------------------------------- */
 
@@ -1583,8 +1577,6 @@ h1 {
     height: 1px;
     background: var(--color-border-subtle);
 }
-
-/* --- order history ---------------------------------------------------- */
 
 /* --- operator list ---------------------------------------------------- */
 
@@ -1915,8 +1907,6 @@ h1 {
     color: var(--band-ink-soft);
     text-decoration: underline;
 }
-
-/* --- HTMX in-flight --------------------------------------------------- */
 
 /* --- responsive ------------------------------------------------------- */
 
@@ -2949,7 +2939,7 @@ h2 {
 
 /* --- the number that just changed --------------------------------------
    Asymmetric on purpose: the answer is instant, the explanation lingers. It
-   is a transition rather than a keyframe so repeated stepper clicks retarget
+   is a transition rather than a keyframe so repeated quantity changes retarget
    it smoothly instead of restarting from zero. The padding is cancelled by an
    equal negative margin, so marking it shifts no layout. */
 

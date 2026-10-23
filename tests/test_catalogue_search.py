@@ -73,11 +73,17 @@ def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db)
     client = Client()
     response = client.get("/products/", params)
     chips = response.context["filter_chips"]
+    removes = [set(params) - {"page"} - set(parse_qs(urlsplit(chip["url"]).query)) for chip in chips]
+    # One chip per active filter, none for sort or the absent rating.
+    assert sorted(map(sorted, removes)) == [["attr_" + attribute], ["category"], ["min_price"]]
+    assert not any(chip["label"].startswith("Rating") for chip in chips)
     price_chip = next(chip for chip in chips if "min_price" not in parse_qs(urlsplit(chip["url"]).query))
     remaining = parse_qs(urlsplit(price_chip["url"]).query)
     assert remaining == {"category": [str(item.category_id)], "sort": ["price"],
                          "attr_" + attribute: [value]}
     assert client.get(price_chip["url"]).status_code == 200
+    rated = client.get("/products/", {"category": item.category_id, "rating": "4"}).context["filter_chips"]
+    assert [chip["label"] for chip in rated if chip["label"].startswith("Rating")] == ["Rating: 4 stars and up"]
 
 
 @pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "top"])

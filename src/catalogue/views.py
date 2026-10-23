@@ -20,7 +20,8 @@ def _filter_chips(form, data):
     chips = []
     for name, field in form.fields.items():
         value = form.cleaned_data.get(name)
-        if name == "sort" or value is None or value == "":
+        # Only filters in the request get a chip: an absent rating still cleans to its empty value, 0.
+        if name == "sort" or not data.get(name) or value is None or value == "":
             continue
         if name == "category":
             label = value.name_en

@@ -244,3 +244,44 @@ command logs and the runtime-role media check are retained locally under `.cache
 Fresh Claude Code review remains pending, with one fix round. The plan stays in progress; catalogue enters review in
 PLAN.md section 14. Phase 2B remains open until the required review and merge. Existing CG7, CG10 and CG11 follow-ups
 remain recorded above.
+
+23 October 2026, Claude Code review of `b9815c4..c40c551` (amendments f/j): **CHANGES REQUESTED, no blockers.**
+Not a fresh session: the reviewer had planned amendment f, so it is not independent of the plan, but it did not write
+the implementation. Phase check: catalogue is Phase 2B in review; 2A is closed. In a separate Compose project
+(`mercer-review-design`, since removed), the build, owner migrations, the drift check, the fixture import,
+`seed_demo`, the full suite (only the Git-index tests skipped) and the pipeline tests passed. The host
+Git-index/packaging tests passed without skips, as did `check_docs.py` and `git diff --check`; `check_specs` against
+`mercer` reported nothing. The running web service served this branch's `site.css` byte for byte.
+Every class removed from `site.css` was checked against templates, JS and Python, including dynamically built
+prefixes: none is still referenced except `js` and `no-htmx`, whose removed rules only styled the unused quantity
+stepper. Every class left in `site.css` is used. The 28 DESIGN.md token rows match `:root`, the two dark-mode blocks are
+identical, no literal colour sits outside them, and both reduced-motion blocks are intact. In the browser, the grid
+showed 4 columns at 1440 px, 3 at 1024 and 768, and 2 at 375. Home, a filtered category and the icon and seller-upload
+detail pages showed no document overflow and no text below AA in light and dark, at 375 px and 1440 px. The logged-in
+pages were checked from the saved screenshots and records, not live, because the demo passwords stay in `.env`.
+Pagination keeps filters; removing a chip drops `page`; chip labels escape hostile input. The seller photo is served
+from GridFS as `image/jpeg` with `max-age=3600` and `nosniff`; an unknown id returns 404. Revised exit check 5 holds.
+**Should fix:** DG1, `_filter_chips` (`src/catalogue/views.py:19`) skips only `None` and `""`, but the rating field's
+empty value is 0, so every search shows a "Rating: 0" chip whose link reloads the same search (seen on
+`/products/?q=towel` and on the Housewares category page). Skip filters absent from the request.
+**Low:** DG2, the new chip test (`tests/test_catalogue_search.py:67`) checks only the price chip; also assert the whole
+chip set, with no rating chip when no rating is chosen. DG3, cleanup leftovers: comments without rules at
+`src/static/css/site.css:1463-1467`, empty section headers at lines 1587 and 1919, and `src/static/js/site.js:96`
+still adds `no-htmx`, which no rule uses. DG4 (local data, not code): fixture product 34212 "Seller upload preview
+(visual test)" is active in `mercer` and is listed first in Housewares; deactivate it before recording the demo.
+**Optional:** DG5, at 375 px the first product card starts about 2.4 screens down, below the full filter form; collapse
+the filters on phones or put the results first. DG6, two older issues: the audit decision badge breaks mid-word on
+phones (`site.css:3146`, `overflow-wrap: anywhere`), and the seller table's generated tag stretches to the cell width
+(`.stacked`, `site.css:3083`).
+Fix round: DG1 to DG3; rerun the catalogue search tests and `check_docs.py`, then the full suite once before merging.
+
+23 October 2026, fix round (Claude Code, at Chee Long's request): DG1 gives a chip only to filters present in the
+request, so an absent rating (cleaned to 0) no longer shows one; a chosen rating still does. DG2 asserts one chip per
+active filter (category, minimum price, attribute), none for sort or an absent rating, and the "Rating: 4 stars and up"
+chip when a rating is chosen. DG3 removes the dead quantity-stepper click handler and the `no-htmx` hook from
+`site.js`, the comments without rules and the empty section headers from `site.css`, and renames the stepper header
+that now holds only `.field-label`. In a separate project (`mercer-review-fix`, since removed), the rebuilt web
+service showed only "Search: a" for `?q=a` and added "Rating: 4 stars and up" for `rating=4`. The drift check, the
+fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) and the pipeline tests passed, as did
+`check_docs.py`, `git diff --check`, a `site.js` syntax check and the selector audit. DG4 (deactivate local product
+34212 before recording) is left to Chee Long; DG5 and DG6 stay optional. Catalogue stays in review until the merge.
