@@ -11,6 +11,7 @@ urlpatterns = [
     path("products/", include("catalogue.urls")),
     path("", include("orders.urls")),
     path("", include("reviews.urls")),
+    path("", include("wishlist.urls")),
     path("foundation/design-notes/", design_notes, name="design-notes"),
     path("foundation/design-notes-unavailable/", design_notes_unavailable, name="design-notes-unavailable"),
     path("foundation/statistics/", statistics_preview, name="statistics-preview"),

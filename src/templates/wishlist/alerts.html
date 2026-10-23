@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Restock alerts — Mercer{% endblock %}
+{% block content %}<div class="page account-page"><div class="page__header"><div><p class="eyebrow">Your wishlist</p><h1 class="page__title">Restock alerts</h1><p class="page__lead">Alerts on this page are marked seen when you open it. Availability can change again.</p></div></div>
+<section class="panel checkout-panel">{% for alert in page_obj %}<article class="catalogue-review"><h2><a href="{% url 'catalogue:product_detail' alert.product_id %}">{{ alert.product.name }}</a></h2><p>Restocked {{ alert.created_at|date:"j M Y, H:i" }} · {% if alert.product.stock %}In stock{% else %}Sold out again{% endif %}</p></article>{% empty %}<p>No restock alerts yet. <a href="{% url 'wishlist:list' %}">View your wishlist</a>.</p>{% endfor %}</section>
+{% include "catalogue/_pager.html" %}</div>{% endblock %}

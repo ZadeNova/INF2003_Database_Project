@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Wishlist — Mercer{% endblock %}
+{% block content %}<div class="page catalogue-page"><div class="page__header"><div><p class="eyebrow">Saved for later</p><h1 class="page__title">Wishlist</h1><p class="page__lead">Save sold-out products to hear when they return. Alerts appear here in Mercer.</p></div></div>
+{% if page_obj.object_list %}<div class="product-grid">{% for product in page_obj %}{% include "catalogue/_product_card.html" %}{% endfor %}</div>{% else %}<div class="empty"><h2>No available saved products</h2><p><a href="{% url 'catalogue:product_list' %}">Browse the shops</a> and save a product.</p></div>{% endif %}
+{% include "catalogue/_pager.html" %}</div>{% endblock %}

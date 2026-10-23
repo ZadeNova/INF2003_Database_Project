@@ -168,3 +168,12 @@ Pillow 13.0.0 is pinned for the upload path after checking the [maintainer relea
 | reviews-i3 | New seller products use the same import-fixed Bayesian prior helper as review writes; zero reviews start at m | The prior count C is not a rating and must never seed the score |
 | reviews-i4 | Moderation opens PostgreSQL with its audit row, commits MongoDB, then commits PostgreSQL; log an uncertain final SQL commit | Follows the approved cross-store order without pretending the two databases share an atomic commit |
 | reviews-i5 | Keep moderation fields optional on existing review documents and preserve the strict imported outer validator | Missing taken_down means visible; no data reset or validator rewrite is needed |
+
+## wishlist implementation (24 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| wishlist-i1 | Use Django's composite primary key for wishlist_item(customer_id, product_id) and a PostgreSQL partial unique index for unseen restock_alert rows | The database enforces both many-to-many identity and duplicate unseen suppression |
+| wishlist-i2 | Add an AFTER UPDATE OF stock trigger alongside product_update_audit, firing only on zero to positive | Seller edits, raw SQL and cancellation restocks share the same database path; both triggers retain their work |
+| wishlist-i3 | Hide non-purchasable products in wishlist/alerts; mark only the displayed page's visible alerts seen on GET, leaving HEAD unchanged | A customer keeps unseen alerts they have not actually opened; hidden products do not leak through the badge |
+| wishlist-i4 | Cache saved product IDs only for the current rendered request | Product cards share one ownership query without introducing a cache service or a second source of truth |

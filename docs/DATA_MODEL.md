@@ -29,6 +29,10 @@ erDiagram
     ORDER ||--o| REFUND : refunds
     CHECKOUT ||--o{ REFUND : reconciles
     USER ||--o{ AUDIT_LOG : acts
+    USER ||--o{ WISHLIST_ITEM : saves
+    PRODUCT ||--o{ WISHLIST_ITEM : saved
+    USER ||--o{ RESTOCK_ALERT : receives
+    PRODUCT ||--o{ RESTOCK_ALERT : restocked
     USER ||--o| CART : owns
     CART ||--o{ CART_LINE : contains
     PRODUCT ||--o{ CART_LINE : "is in"
@@ -171,6 +175,20 @@ Django creates B-tree indexes for ordinary FKs, primary keys and unique constrai
 `src/accounts/migrations/0001_initial.py`, `src/catalogue/migrations/0001_initial.py` and
 `src/orders/migrations/0001_initial.py`. The composite FKs are explicit migration SQL because Django does not express
 these two-column relationships as ordinary ForeignKey fields.
+
+### Wishlist and restock alerts
+
+`wishlist_item` is the many-to-many table: customer_id (accounts_user FK), product_id (catalogue_product FK),
+added_at (timestamptz, default now), with the composite primary key (customer_id, product_id). `restock_alert`
+has a bigint identity, the same two FKs, created_at (timestamptz, default now) and nullable seen_at. Both FKs cascade
+on deletion. `restock_one_unseen` is a partial UNIQUE index on (customer_id, product_id) WHERE seen_at IS NULL;
+`restock_customer_newest` indexes (customer_id, created_at DESC).
+
+`product_restock_alert` is an AFTER UPDATE OF stock trigger on catalogue_product, guarded by OLD.stock = 0 AND
+NEW.stock > 0. Its pinned-search-path function alert_product_restock inserts one row per saved customer through
+INSERT … SELECT … ON CONFLICT (customer_id, product_id) WHERE seen_at IS NULL DO NOTHING. It runs with the caller's
+row privileges; runtime already has row DML and receives no ownership rights. product_update_audit remains a separate
+trigger on the same table. Raw SQL, seller edits and cancellation restocks all fire both relevant triggers.
 
 ### View, triggers and privileges
 

@@ -449,7 +449,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | done |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | review |
-| `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | ready |
+| `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | review |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | ready |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | in progress |

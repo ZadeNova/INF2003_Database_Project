@@ -14,6 +14,8 @@ def role_navigation(request):
         links += [("Cart", reverse("orders:cart"), "orders:cart"),
                   ("Orders", reverse("orders:history"), "orders:history")]
         links.append(("My account", reverse("accounts:account"), "accounts:account"))
+        links += [("Wishlist", reverse("wishlist:list"), "wishlist:list"),
+                  ("Alerts", reverse("wishlist:alerts"), "wishlist:alerts")]
     elif user.role == User.Role.SELLER:
         status = Seller.objects.filter(user=user).values_list("status", flat=True).first()
         if status == Seller.Status.APPROVED:

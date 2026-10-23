@@ -245,6 +245,17 @@ docker compose run --rm migrate python manage.py check_specs --repair
 The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
 mismatches remain reported for restoration from the source; the command does not invent missing product content.
 
+## Wishlist and restock alerts
+
+Customer product cards and detail pages have a save/remove button, including when stock is zero. `/wishlist/`
+shows saved products and their current stock status. When any database update takes a saved product from zero
+stock to a positive amount, PostgreSQL creates one unseen in-app alert per customer. Repeated restocks before
+viewing do not create duplicate unseen alerts. This includes seller edits and checkout cancellations.
+
+The header's Alerts badge counts your visible unseen alerts. Opening `/alerts/` marks the displayed page's alerts
+seen; later restocks can notify you again. Taken-down/inactive products and suspended shops are hidden from the
+wishlist, alerts and badge. Alerts stay inside Mercer; no email setup is needed.
+
 ## Reviews
 
 Customers open a delivered order and choose "Write or edit review" beside an item. Each line has one review, which

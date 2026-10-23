@@ -176,6 +176,10 @@ The information column holds category, product name, shop, mono price, shipping,
 description, attribute definition list, rating summary and the generated-content notice. Latest reviews follow below;
 machine-translated text keeps its label and offers Portuguese originals. A native meter histogram pairs each score with its written count; the same review block paginates newest first. Historical orders carry a written label. Review forms and moderation reuse the bounded form panel and explicit reason field. Long titles and attribute values wrap inside their column.
 
+Wishlist controls use the same outlined button on cards and product details, with a written save/remove state and
+aria-pressed. Wishlist reuses the public product grid. The header's neutral alert badge includes a written unseen
+count; restock history uses the standard bordered panel and pager. Sold-out state remains text, not a colour cue.
+
 ## Seller centre and operator console
 
 Seller products and operator lists share the page header, filter bar, bordered table region and pagination. Filters
