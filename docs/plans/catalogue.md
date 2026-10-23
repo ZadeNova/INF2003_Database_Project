@@ -19,7 +19,7 @@ databases; the operator evolves category attributes live and takes products down
 |---|---|
 | Shop pages | Home (featured products; "trending" slot filled later by `activity`), category pages, product detail, seller shop page. Only products in the `purchasable_product` view (from `olist-import`) are shown. Generated names and descriptions carry a small "generated" label (AGENTS.md rule 9). Product detail = PostgreSQL product + MongoDB spec (description, attributes, rating summary, latest five reviews) + photo or icon card |
 | Icon cards (D10) | Category → icon map covering all 74 categories, many to one (about 25 to 30 icons in `src/static/img/icons.svg`, adding what is missing); the card shows icon and name; alt text is the name |
-| Featured photos (D11, D12) | 15 openly licensed stock photos (best seller in each of the top 15 categories), chosen after names exist, committed under `data/derived/olist/photos/` with `manifest.csv` (file, product, source URL, author, licence); `manage.py load_photos` (run in `migrate`) stores them in GridFS (bucket `photos`) and records the file id on the spec as `photo_file_id`. Served by a view with caching headers. Shown as "illustrative photo" |
+| Featured photos (D11, D12; deferred by amendment j) | On hold until after Phase 3A, only if time allows before the 30 October freeze; otherwise dropped. Every product shows an icon card unless its seller uploaded a photo |
 | Search and facets (decision a) | One search page, entered with a category or a name query (with neither, the home page shows featured and trending instead). **PostgreSQL first:** the candidate ids from the `purchasable_product` view, narrowed by category, price range and the name query (`pg_trgm`, decision b; see the note below), at most about 2k for a category. **MongoDB second:** a `$facet` pipeline over `product_specs` with `_id` in those candidates, filtering by attributes and rating, returning the matching ids plus counts per rating band and attribute value, so counts only ever include buyable products. **Ordering:** for price or newest, PostgreSQL sorts and paginates the matching ids with `WHERE id = ANY(%s)`; for "Top rated", the pipeline sorts by `rating_summary.bayesian` and returns one page of ids, which PostgreSQL then fetches |
 | Specifications | `$jsonSchema` on outer fields only (from `olist-import`); the app validates `attributes` against the category's template. A wildcard index on `attributes.$**` used by the facets (amendment i), created by adding it to `mongo_setup` (`olist-import`) |
 | Schema evolution demo | Operator page to add an attribute to a category template (name, type, allowed values). Sellers can then fill it, and the facets show it, with no migration and no `collMod`. The report contrasts this with the `ALTER TABLE` the same change needs in PostgreSQL |
@@ -34,7 +34,7 @@ finds "Hose Nozzle" despite the typo, and `ILIKE '%nozz%'` can use an index inst
 on the trigrams of `product.name` makes both fast. The report shows `EXPLAIN` with and without it.
 
 **Out of scope:** reviews UI and Bayesian ranking (`reviews`); trending and recently viewed (`activity`); wishlist
-buttons (`wishlist`); more than 15 photos (top 3 per category only if time allows); full-text search (`search`, Tier 2).
+buttons (`wishlist`); featured stock photos (amendment j); full-text search (`search`, Tier 2).
 
 **Tests:** facet counts match a direct count on the fixture and never include products outside the purchasable view; generated names and descriptions show the label; filters combine correctly across MongoDB and PostgreSQL; a
 suspended seller's or delisted product never appears; a seller cannot edit another's product (scoping); a failed
@@ -49,7 +49,7 @@ injection negatives on search parameters.
    change with the seller as actor.
 3. As the operator, add an attribute to a category template; the seller fills it on a product; the facet appears.
 4. As the operator, take a product down; it disappears from the shop.
-5. The 15 featured photos load from GridFS; every other product shows an icon card.
+5. Every product without an uploaded photo shows an icon card; seller-uploaded photos load from GridFS.
 6. The full test suite passes in Docker.
 
 ## Decisions (all approved 21 October 2026)
@@ -67,10 +67,11 @@ injection negatives on search parameters.
 | ID | Decision | Why |
 |---|---|---|
 | e | `lead_time_days` is a required field in seller create and edit (with the price, stock and freight fields); new products start with `has_generated_content` false | The column is not nullable; the field list above omitted it |
-| f | The design rewrite (DESIGN.md and `site.css`) and the 15 featured photos are a separate, owner-steered step after the core is built, not part of an unattended run. They remain in this contract and its exit check 5. Until then pages use the current design and products show icon cards | Design is a taste decision tied to the presentation grade (foundation-a: the UI work decides the design); each photo needs its licence verified on its source page |
+| f | The design rewrite (DESIGN.md and `site.css`) and the 15 featured photos are a separate, owner-steered step after the core is built, not part of an unattended run. The design remains required; the featured photos are deferred by amendment j. Until then pages use the current design and products show icon cards | Design is a taste decision tied to the presentation grade (foundation-a: the UI work decides the design); each photo needs its licence verified on its source page |
 | g | Icons map many to one: the 26 existing symbols plus any added cover all 74 imported categories | The import produced 74 categories, not 73 |
 | h | Benchmark case B1 is not built in this workstream | `benchmark` owns it on its separate bench databases; PLAN.md section 13 only aligns the timing |
 | i | The attribute index is a wildcard index on `attributes.$**` (approved by Chee Long, 23 October 2026, replacing "multikey index") | It also covers attributes the operator adds later. The imported attributes are scalars, so explain reports `isMultiKey: false`; the report calls it a wildcard index (multikey-capable for arrays) and does not claim a multikey demonstration |
+| j | The 15 featured stock photos (D11, D12; amendment f decisions f4-f8) are deferred: picked up after Phase 3A only if time allows before the 30 October freeze, otherwise dropped. Exit check 5 becomes "every product without an uploaded photo shows an icon card; seller-uploaded photos load from GridFS" (approved by Chee Long, 23 October 2026) | GridFS is already demonstrated by seller photo upload (exit check 2); the photos were the slowest, owner-blocked part of amendment f; the design rewrite is what affects the presentation grade |
 
 **Amendment f plan (approved by Chee Long, 23 October 2026).** Design direction chosen by Chee Long on
 23 October 2026 (f1 to f4); f5 to f8 and the work order were approved the same day:
@@ -80,31 +81,32 @@ injection negatives on search parameters.
 | f1 | Evolve VoiceBox into Mercer's own system: same tokens, square 2px-bordered surfaces, accessibility fixes and motion rules; blog-only parts (pull quotes, bylines, avatars, 56px display) go | Keeps the contrast-checked, dark-mode and motion work already built; lowest risk before the 30 October freeze |
 | f2 | Keep the red accent (`#EF4444`, `#B91C1C` where read) and its eleven placements | Already contrast-checked in both themes |
 | f3 | Product grid: 4 per row on desktop, 3 on tablet, 2 on phones | Room for name, price, stock and the labels without truncation |
-| f4 | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
-| f5 | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
-| f6 | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
-| f7 | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
-| f8 | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
+| f4 — on hold (amendment j) | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
+| f5 — on hold (amendment j) | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
+| f6 — on hold (amendment j) | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
+| f7 — on hold (amendment j) | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
+| f8 — on hold (amendment j) | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
 
-**Work, in order** (branch `catalogue/design-photos`):
-1. Photos: for each featured product, 2 to 3 Commons candidates with licence verified, shown to Chee Long on one
-   contact sheet; Chee Long picks; download only the picks (with consent), resize, write `manifest.csv`.
-2. `manage.py load_photos` (run in `migrate`) with tests on the real test MongoDB: manifest validation (allowed licence,
-   file present, product featured, type and size), GridFS metadata, idempotent rerun, old file removed; the photo
-   credit renders on the detail page and the label on cards.
-3. `DESIGN.md` rewrite: one Mercer system (the "As built" deviations folded into the main text) with the marketplace
-   components: product grid and card (photo or icon, labels, mono price, stock), facet sidebar (attribute counts, price
-   range, active-filter chips), product detail with photo credit, seller centre, operator console, cart and checkout,
-   order-status chips. The VoiceBox MIT attribution and font/icon licences stay.
-4. `site.css`: remove rules no template or script uses (a selector-usage check lists them first; the old dataset's
-   leftovers), implement the 4/3/2 grid, card labels and credit, then align the seller and operator layouts.
-5. Visual pass in the browser: home, category with facets, product detail (photo and icon), cart, checkout, seller
-   products and form, operator lists and audit; light and dark; 375 px and desktop; no horizontal scroll and AA
-   contrast for every new pair.
+**Work, in order** (branch `catalogue/design-photos`; revised by amendment j, approved by Chee Long,
+23 October 2026):
+1. Record amendment j as a separate docs commit; remove uncommitted featured-photo assets, loader, manifest and credit
+   UI. Decisions f4-f8 are on hold. Temporary research/contact sheets stay outside the committed tree.
+2. `DESIGN.md` rewrite: one Mercer system (the "As built" deviations folded into the main text) with the marketplace
+   components: product grid and card (icon or seller-uploaded photo, generated labels, mono price, stock), facet
+   sidebar (attribute counts, price range, active-filter chips), product detail, seller centre, operator console,
+   cart and checkout, order-status chips. The VoiceBox MIT attribution and font/icon licences stay.
+3. `site.css`: remove rules no template or script uses (a selector-usage check lists them first), implement the 4/3/2
+   grid, then align the seller and operator layouts. Literal colours live only in the `:root` tokens.
+4. Visual pass in the browser: home, category with facets, product detail (icon and seller-uploaded photo), cart,
+   checkout, seller products and form, operator lists and audit; light and dark; 375 px and desktop; no horizontal
+   scroll and AA contrast for every new pair. Show screenshots and the DESIGN.md diff to Chee Long for sign-off;
+   this is the only stop.
+5. After sign-off, record implementation and checks, set catalogue to review in PLAN.md section 14, update AI_USE and
+   CONTRIBUTIONS, commit and request fresh Claude Code review. Do not mark catalogue done, push, merge or open a PR.
 
-**Amendment f exit check:** exit check 5 above; every featured photo's manifest row matches its Commons file page;
-`DESIGN.md` tokens match the `:root` block in `site.css`; the visual pass shows no overflow or contrast failure; the
-full suite passes in Docker and `scripts/check_docs.py` passes. Then catalogue is done and Phase 2B closes.
+**Amendment f exit check (revised by amendment j):** exit check 5 above; `DESIGN.md` tokens match the `:root` block in
+`site.css`; the visual pass shows no overflow or contrast failure; the full suite passes in Docker and
+`scripts/check_docs.py` passes. Catalogue enters review; Phase 2B closes only after the required review and merge.
 
 ## Review notes
 

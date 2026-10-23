@@ -161,7 +161,7 @@ and counted. The full rule list is in `docs/plans/olist-import.md`.
 |---|---|
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
-| Product images | Every product: an icon card (the category's icon from the existing sprite, extended to cover all 73 categories, plus the product name), drawn at render time with no stored file (D10). Featured set: the best seller in each of the top 15 categories gets an openly licensed stock photo matching its generated name, labelled as illustrative; source files and a manifest (file, product, source URL, author, licence) are committed, and `load_photos` (`catalogue`) loads them into MongoDB GridFS (D11, D12). The same rule extends to the top 3 per category (45 photos) if time allows |
+| Product images | Every product shows an icon card (the category icon from the existing sprite, covering all 74 imported categories, plus the product name; D10) unless its seller uploaded a photo, served from MongoDB GridFS. The 15 featured stock photos (D11, D12) are deferred by catalogue amendment j: revisit after Phase 3A only if time allows before the 30 October freeze, otherwise drop them |
 | Catalogue size | Seller-products in at least two distinct orders after cleaning (about 13.6k) are active and browsable; the rest (about 20k, mostly sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
@@ -442,7 +442,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | done |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | done |
 | `accounts` | Three roles, seller registration and approval, operator console (approve, reject, suspend or reinstate sellers, audit log) | `olist-import` | 1 | done |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and featured photos in GridFS, seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | in progress |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and seller-uploaded photos in GridFS (featured stock photos deferred by amendment j), seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | in progress |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | done |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | ready |
@@ -472,9 +472,10 @@ a workstream changes state, and keep each plan file as short as its contract all
   (D1); categories (D5); one geolocation point per zip prefix (D6); dates shifted 426 weeks (D7); broken orders removed,
   including all 576 payment mismatches and the 20 orders after August 2018 (D9, R2, R5); latest review per order, reviews
   of undelivered orders kept (R3); bigint ids with Olist ids as source columns (R6); cleaning in a script before import.
-- **Catalogue:** icon cards for every product (D10); illustrative stock photos for the best seller in each of the top 15
-  categories (D11) in GridFS (D12); active catalogue = seller-products in at least two orders (D13); rich attribute
-  templates for the top 15 categories.
+- **Catalogue:** every product shows an icon card (D10) unless its seller uploaded a photo, served from GridFS. The
+  featured stock photos (D11/D12) are deferred by amendment j: revisit after Phase 3A only if time allows before the
+  30 October freeze, otherwise drop them. Active catalogue = seller-products in at least two orders (D13); rich
+  attribute templates for the top 15 categories.
 - **Roles and orders:** customer, seller and operator in Tier 1 with row-level security in Tier 2 (D14 to D16); one
   checkout with one order per seller and payments on the checkout (D17); "seller" as the single term (D18); a custom user
   model with a role field (R7); cancellation with refund. `accounts`: one role per account, an audit log filled by
