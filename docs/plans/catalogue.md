@@ -209,3 +209,38 @@ DESIGN.md/site.css rewrite and the 15 featured photos, exit check 5) is done. Fo
 
 23 October 2026: Chee Long confirmed catalogue-i2 through catalogue-i10 as recommended by both reviews (catalogue-i1
 was confirmed earlier as amendment i); see [DECISIONS](../DECISIONS.md).
+
+### Amendments f/j design implementation (23 October 2026)
+
+Codex implemented the owner-selected design half of amendment f under amendment j. Chee Long approved the screenshot
+gallery and DESIGN.md diff on 23 October 2026, then explicitly authorised close-out and committing before the fresh
+Claude Code review. The stock-photo deferral was recorded separately in `0213f5e`.
+
+DESIGN.md now describes one Mercer system, including the catalogue, facets, product detail, seller/operator pages,
+cart, checkout and order-status chips, with the VoiceBox MIT attribution and font/icon licences retained. A selector
+inventory was produced before CSS editing; only the listed unused selector branches were removed. The implementation
+adds the 4/3/2 grid, contained seller-uploaded media, readable generated labels, aligned filters/tables and paid/shipped
+status chips. Removable filter chips preserve the remaining query parameters and reset pagination, covered by a
+real-database regression test in `tests/test_catalogue_search.py`.
+
+The browser pass covered home, category facets, icon and seller-uploaded detail pages, cart, checkout, seller products
+and form, operator sellers/products/categories/audit, and order-status chips. Light/dark views at 375px and desktop
+showed no document overflow or text-contrast failure; the tablet grid was also checked. Wide tables retain their
+labelled scroll regions. Measurements exclude aria-hidden decoration, including the existing logo. The screenshots,
+selector inventory and generated measurements remain local, ignored review evidence.
+
+Revised exit check 5 passed against the full import using the PostgreSQL runtime role: category icons resolve,
+visible products have specifications, the icon fallback renders, and the seller-uploaded file is served from GridFS
+with matching bytes and cache headers. Featured-photo assets, manifest, loader and credit UI are absent. The token
+table matches the CSS root declarations, literal colours remain in root tokens, and `check_specs` reports no missing,
+orphan or category-mismatched specifications. Host Git-index/packaging checks passed with a short temporary path.
+
+Final validation passed: rebuilt `migrate` and `web`, ran the full suite with
+`docker compose run --rm migrate pytest -q -r s -p no:cacheprovider /app/tests`, and ran the host Git-index/packaging
+modules with `--noconftest` and a short `--basetemp` outside the repository. The Docker Git-index skips were covered
+by the host run, which had no skips. `scripts/check_docs.py` and `git diff --check` passed. Generated JUnit results,
+command logs and the runtime-role media check are retained locally under `.cache/catalogue-amendment-f/final-checks/`.
+
+Fresh Claude Code review remains pending, with one fix round. The plan stays in progress; catalogue enters review in
+PLAN.md section 14. Phase 2B remains open until the required review and merge. Existing CG7, CG10 and CG11 follow-ups
+remain recorded above.

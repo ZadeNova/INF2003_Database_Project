@@ -1,6 +1,7 @@
 """Fixture-backed facets never count products PostgreSQL has hidden or priced out."""
 import csv
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -61,6 +62,22 @@ def test_sold_out_products_stay_in_search_counts(imported, mongo_db):
     Product.objects.filter(pk=item.pk).update(stock=0)
     response = Client().get("/products/", {"category": item.category_id})
     assert item.pk in {p.pk for p in response.context["page_obj"]}
+
+
+def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db):
+    item, spec = sample(mongo_db)
+    attribute, value = next(iter(spec["attributes"].items()))
+    value = str(value).lower() if isinstance(value, bool) else str(value)
+    params = {"category": item.category_id, "min_price": "0", "sort": "price",
+              "attr_" + attribute: value, "page": "2"}
+    client = Client()
+    response = client.get("/products/", params)
+    chips = response.context["filter_chips"]
+    price_chip = next(chip for chip in chips if "min_price" not in parse_qs(urlsplit(chip["url"]).query))
+    remaining = parse_qs(urlsplit(price_chip["url"]).query)
+    assert remaining == {"category": [str(item.category_id)], "sort": ["price"],
+                         "attr_" + attribute: [value]}
+    assert client.get(price_chip["url"]).status_code == 200
 
 
 @pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "top"])
