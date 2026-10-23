@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{% if seller_view %}My reviews{% else %}Reviews — Operator{% endif %} — Mercer{% endblock %}
+{% block content %}<div class="page account-page"><div class="page__header"><div><p class="eyebrow">{% if seller_view %}Seller centre{% else %}Operator console{% endif %}</p><h1 class="page__title">{% if seller_view %}My reviews{% else %}Reviews{% endif %}</h1></div></div>
+<section class="panel checkout-panel">{% for review in page_obj %}
+<div class="catalogue-review"><h2>{{ review.product.name }}</h2>{% include "reviews/_review.html" %}{% if not seller_view %}<a href="{% url 'reviews:operator_review' review.order_line_id %}">Review decision</a>{% endif %}</div>
+{% empty %}<p>No reviews to show.</p>{% endfor %}</section>{% include "catalogue/_pager.html" %}
+</div>{% endblock %}

@@ -19,12 +19,17 @@
             {% if spec %}
             <p>{{ spec.description }}</p>
             <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt><dd>{{ value|option_value }}</dd>{% endfor %}</dl>
-            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
+            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|decimal_value|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
             {% else %}<p>Specifications are temporarily unavailable.</p>{% endif %}
             {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
             {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>{% endif %}
         </div>
     </article>
-    {% if spec.latest_reviews %}<section class="panel"><h2>Latest reviews</h2>{% for review in spec.latest_reviews %}<article class="catalogue-review"><h3>{{ review.score }} / 5{% if review.title_en %} · {{ review.title_en }}{% endif %}</h3><p>{{ review.text_en }}</p>{% if review.machine_translated %}<p class="form-note">Machine-translated from Portuguese.</p>{% endif %}</article>{% endfor %}</section>{% endif %}
+    <section class="panel checkout-panel" id="reviews"><h2>Customer reviews</h2>
+        <dl class="review-histogram" aria-label="Rating distribution">{% for bucket in histogram %}<dt>{{ bucket.score }} star{{ bucket.score|pluralize }}</dt><dd><meter min="0" max="{{ spec.rating_summary.count|default:1 }}" value="{{ bucket.count }}">{{ bucket.count }}</meter> <span>{{ bucket.count }}</span></dd>{% endfor %}</dl>
+        <nav class="range-nav" aria-label="Review language"><a href="?lang=en#reviews"{% if review_language == 'en' %} aria-current="true"{% endif %}>English</a><a href="?lang=pt#reviews"{% if review_language == 'pt' %} aria-current="true"{% endif %}>Portuguese originals</a></nav>
+        {% for review in reviews_page %}{% include "reviews/_review.html" %}{% empty %}<p>No reviews yet.</p>{% endfor %}
+        {% if reviews_page.has_other_pages %}<nav class="pager" aria-label="Review pages">{% if reviews_page.has_previous %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.previous_page_number }}#reviews">Previous</a>{% endif %}<span>Page {{ reviews_page.number }} of {{ reviews_page.paginator.num_pages }}</span>{% if reviews_page.has_next %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.next_page_number }}#reviews">Next</a>{% endif %}</nav>{% endif %}
+    </section>
 </div>
 {% endblock %}

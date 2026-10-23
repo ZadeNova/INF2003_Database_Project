@@ -1,0 +1,6 @@
+<article class="catalogue-review">
+<h3>{{ review.score }} / 5{% if review_language == 'pt' and review.machine_translated %}{% if review.title_pt %} · {{ review.title_pt }}{% endif %}{% elif review.title_en %} · {{ review.title_en }}{% endif %}</h3>
+{% if review_language == 'pt' and review.machine_translated %}<p lang="pt">{{ review.text_pt }}</p>{% else %}<p>{{ review.text_en }}</p>{% endif %}
+<p class="form-note">{{ review.answered_at|date:"j M Y" }}{% if review.machine_translated %} · {% if review_language == 'pt' %}Portuguese original{% else %}Machine-translated from Portuguese{% endif %}{% endif %}{% if review.historical %} · Historical review (order not delivered){% endif %}{% if review.taken_down %} · Hidden{% endif %}</p>
+{% if user.is_authenticated and user.pk == review.customer_id %}<a href="{% url 'reviews:write' review.order_line_id %}">Edit your review</a>{% endif %}
+</article>

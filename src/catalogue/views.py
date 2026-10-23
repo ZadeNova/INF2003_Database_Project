@@ -10,6 +10,7 @@ from django.views.decorators.http import require_safe
 
 from accounts.models import Seller
 from config import mongo
+from reviews.queries import review_page, seller_rating
 from .forms import SearchForm
 from .models import Category
 from .search import (PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page,
@@ -100,8 +101,14 @@ def category_detail(request, slug):
 def product_detail(request, pk):
     product = get_object_or_404(visible_products(), pk=pk)
     with mongo.client() as client:
-        spec = client[mongo.database_name()].product_specs.find_one({"_id": product.pk})
-    return render(request, "catalogue/product_detail.html", {"product": product, "spec": spec})
+        database = client[mongo.database_name()]
+        spec = database.product_specs.find_one({"_id": product.pk})
+        page = review_page(database, {"product_id": product.pk}, request.GET.get("page"))
+    language = "pt" if request.GET.get("lang") == "pt" else "en"
+    histogram = [{"score": score, "count": (spec or {}).get("rating_summary", {}).get("distribution", {}).get(str(score), 0)}
+                 for score in range(5, 0, -1)]
+    return render(request, "catalogue/product_detail.html", {"product": product, "spec": spec,
+        "reviews_page": page, "review_language": language, "histogram": histogram})
 
 
 @require_safe
@@ -109,8 +116,10 @@ def seller_shop(request, pk):
     seller = get_object_or_404(Seller, pk=pk, status=Seller.Status.APPROVED)
     page = Paginator(visible_products().filter(seller=seller).order_by("-id"), PAGE_SIZE).get_page(request.GET.get("page"))
     with mongo.client() as client:
-        page.object_list = attach_photos(client[mongo.database_name()], page.object_list)
-    return render(request, "catalogue/seller_shop.html", {"seller": seller, "page_obj": page})
+        database = client[mongo.database_name()]
+        page.object_list = attach_photos(database, page.object_list)
+        rating = seller_rating(database, seller.pk)
+    return render(request, "catalogue/seller_shop.html", {"seller": seller, "page_obj": page, "seller_rating": rating})
 
 
 @require_safe

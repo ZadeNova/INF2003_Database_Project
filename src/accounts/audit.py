@@ -74,3 +74,6 @@ AUDIT_TONES.update({"product.activate": "completed", "product.restore": "complet
 AUDIT_LABELS.update({"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"})
 # "warning" is the existing amber badge; there is no badge--pending class.
 AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "warning", "order.shipped": "warning"})
+
+AUDIT_LABELS.update({"review.takedown": "Review taken down", "review.restore": "Review restored"})
+AUDIT_TONES["review.restore"] = "completed"

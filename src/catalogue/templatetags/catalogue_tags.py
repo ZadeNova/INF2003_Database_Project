@@ -4,6 +4,11 @@ register = template.Library()
 
 
 @register.filter
+def decimal_value(value):
+    return value.to_decimal() if hasattr(value, "to_decimal") else value
+
+
+@register.filter
 def option_label(value):
     return str(value).replace("_", " ").capitalize()
 

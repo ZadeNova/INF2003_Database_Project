@@ -164,7 +164,7 @@ erDiagram
 | OrderLine / orders_orderline | Positive quantity and unit price; nonnegative freight. Composite FKs (order_id, seller_id) and (product_id, seller_id) enforce ownership with ON DELETE RESTRICT. shipping_limit_at is the earliest original item's shifted deadline when repeated lines collapse |
 | Payment / orders_payment | Unique (checkout_id, sequence); positive sequence and instalments. Method CHECK: credit_card, boleto, voucher, debit_card; nonnegative finite amount. A row means money received; there is no payment-status column and no card-number field |
 | Refund / orders_refund | At most one per order; composite FK (order_id, checkout_id) prevents cross-checkout refunds. Nonnegative finite amount; reason, refunded_at and imported. Imported cancellations with payments receive their full order total |
-| AuditLog / audit_log | Written only by triggers. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, and action |
+| AuditLog / audit_log | Written only by owner-owned triggers and the narrow review moderation function. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, and action |
 | Geolocation / accounts_geolocation | One row per zip prefix, median coordinates and separate modal city/state (lexical tie-break). Coordinates use exact numeric columns |
 
 Django creates B-tree indexes for ordinary FKs, primary keys and unique constraints. The initial migrations are
@@ -240,6 +240,12 @@ before/after snapshots. Checkout's stock decrements and cancellation restocks th
 with the buyer as actor. Runtime keeps SELECT only on audit_log and cannot execute or replace the function or disable
 its trigger.
 
+Review moderation uses owner-owned `public.audit_review_moderation(text, text)`, a `SECURITY DEFINER` function with
+`search_path = public, pg_temp`. Runtime has only EXECUTE on this function and SELECT on audit_log; PUBLIC has no
+EXECUTE. It fixes table_name to reviews and action to review.takedown/review.restore, validates a numeric review ID,
+requires an operator from transaction-local mercer.actor_id and a nonblank mercer.audit_reason, and records the
+hidden-state transition. PostgreSQL trusts the app's MongoDB change; the app keeps SQL open through the MongoDB commit.
+
 ### Normalisation (3NF)
 
 Each base table describes one entity, with a surrogate primary key and explicit source/business candidate keys.
@@ -279,7 +285,7 @@ Descriptions, attributes, rating summaries and the latest five reviews are **emb
 because the detail page needs one MongoDB read. The complete, potentially unbounded review history is **referenced** in
 reviews by product ID. Latest-review copies are a subset within MongoDB, not a copy of PostgreSQL data. An original
 order review is copied to every collapsed order line; from_order_review labels multi-line adaptation. Reviews of
-undelivered orders remain historical evidence. The later reviews workstream adds editing/UI and atomic maintenance.
+undelivered orders remain historical evidence. The reviews workstream maintains the running count, sum, histogram, average, Bayesian score and latest five in one snapshot MongoDB transaction, retrying write conflicts. Optional taken_down/takedown_reason fields hide moderated reviews from every public summary. Review edits preserve identity and creation time; answered_at orders the latest changes.
 
 Cross-store reconciliation verifies each review's line/order/checkout/product/seller/customer tuple, every spec's
 product/category and each category template. Raw-versus-imported delivery analysis counts one review per checkout,

@@ -165,8 +165,8 @@ passwords have no fallback and are never printed. The seller is linked to a real
 rows explicitly label their sold-out and low-stock/long-lead-time demo adjustments, including any relisting needed to
 make them visible. Imported accounts otherwise have
 unusable passwords. Rerunning `seed_demo` never resets a seller status an operator has already decided. The shop,
-product details, registration, seller applications and the operator console work; cart, checkout, orders and the live
-dashboard return 404 until their workstreams replace them. The labelled foundation design previews
+product details, registration, seller applications, cart, checkout, orders, reviews and the operator console work. The live
+dashboard remains closed until its workstream replaces it. The labelled foundation design previews
 remain available as visual samples.
 
 Relisting labels also use retained imported order history, so rerunning `seed_demo` repairs labels omitted by an
@@ -244,6 +244,19 @@ docker compose run --rm migrate python manage.py check_specs --repair
 
 The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
 mismatches remain reported for restoration from the source; the command does not invent missing product content.
+
+## Reviews
+
+Customers open a delivered order and choose "Write or edit review" beside an item. Each line has one review, which
+its customer can edit or delete. Product detail has one rating block, a histogram and paginated newest-first reviews;
+English machine translations are labelled and the Portuguese original is available through the language links.
+Undelivered imported reviews carry a historical label. Shop ratings and Top rated sorting use the import-fixed
+Bayesian prior rather than giving one five-star review the same weight as many good reviews.
+
+Approved sellers have a read-only "My reviews" page at `/seller/reviews/`. Operators use `/operator/reviews/` to take
+reviews down with a reason or restore them. Hidden reviews leave the public list, histogram and latest-five subset;
+the operator's audit log records the decision. A MongoDB outage rolls back the SQL audit transaction; an uncertain
+SQL commit after MongoDB succeeds is logged for reconciliation, as with catalogue cross-store writes.
 
 ## Cart, payments and orders
 
