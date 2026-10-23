@@ -132,3 +132,6 @@ faceted category search with a price range rendered; the demo seller created a p
 it on the detail page and deactivated it (it then left the shop). 20 of 20 steps passed. Merged: amendments PR #8,
 checkout PR #9, catalogue PR #10 (combined suite 566 passed, 4 skipped; both CI jobs green on the combined code).
 Checkout is done: every exit check has passed, alone and combined with catalogue.
+
+23 October 2026: Chee Long confirmed checkout-i1 through checkout-i9 as recommended by both reviews; see
+[DECISIONS](../DECISIONS.md).

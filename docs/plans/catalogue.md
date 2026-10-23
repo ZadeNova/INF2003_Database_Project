@@ -170,3 +170,6 @@ it on the detail page and deactivated it (it then left the shop). 20 of 20 steps
 checkout PR #9, catalogue PR #10 (combined suite 566 passed, 4 skipped; both CI jobs green on the combined code).
 The catalogue core is merged; this plan stays in progress until the owner-steered step (amendment f: the
 DESIGN.md/site.css rewrite and the 15 featured photos, exit check 5) is done. Follow-ups CG7, CG10 and CG11 remain.
+
+23 October 2026: Chee Long confirmed catalogue-i2 through catalogue-i10 as recommended by both reviews (catalogue-i1
+was confirmed earlier as amendment i); see [DECISIONS](../DECISIONS.md).
