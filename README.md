@@ -56,7 +56,8 @@ docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_he
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
 database; `web` holds only the runtime role. The tests use the real databases, never mocks or SQLite. `tests/` is
-mounted, but the image copies `src/` at build time, so run `docker compose build migrate` after changing application
+mounted along with read-only `compose.yaml` for startup regression checks, but the image copies `src/` at build time,
+so run `docker compose build migrate` after changing application
 code. Test counts are not written here; the run prints them. The app image has no Git, so its four Git-index-only
 documentation tests are also run on the host with Python/pytest and Git:
 
@@ -334,6 +335,12 @@ every operating system.
 
 ## Troubleshooting
 
+- **`mongo` never becomes healthy and mongosh reports an unrecognised option:** older startup commands treated a
+  leading `-` in `MONGO_ROOT_PASSWORD` as an option. The startup script and healthcheck now use attached
+  `--username=...` and `--password=...` arguments; newly generated secrets also avoid a leading dash.
+  With these commands a dash-leading password works as it is, so there is no need to change it. If you do change it,
+  do so only on an empty MongoDB volume: credentials apply only when the volume is first created, and editing `.env`
+  does not rotate an existing database user's password. Do not delete application data to resolve this error.
 - **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
   8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
   Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.

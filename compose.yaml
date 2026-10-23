@@ -52,7 +52,7 @@ services:
       - "127.0.0.1:${MONGO_PORT:-27017}:27017"
     healthcheck:
       # Healthy once the replica set answers and the application user exists.
-      test: ["CMD-SHELL", "mongosh --quiet -u \"$$MONGO_ROOT_USER\" -p \"$$MONGO_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'quit(rs.status().ok === 1 && db.getSiblingDB(\"admin\").getUser(process.env.MONGO_APP_USER) ? 0 : 1)'"]
+      test: ["CMD-SHELL", "mongosh --quiet --username=\"$$MONGO_ROOT_USER\" --password=\"$$MONGO_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'quit(rs.status().ok === 1 && db.getSiblingDB(\"admin\").getUser(process.env.MONGO_APP_USER) ? 0 : 1)'"]
       interval: 5s
       timeout: 10s
       retries: 30
@@ -102,6 +102,7 @@ services:
         condition: service_healthy
     volumes:
       - ./tests:/app/tests:ro,z
+      - ./compose.yaml:/app/compose.yaml:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
     restart: "no"

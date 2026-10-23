@@ -15,7 +15,11 @@ def fill(line):
     key, _, value = line.partition("=")
     if not value.startswith("replace-"):
         return line
-    return f"{key}={secrets.token_urlsafe(64 if key == 'DJANGO_SECRET_KEY' else 32)}"
+    size = 64 if key == "DJANGO_SECRET_KEY" else 32
+    secret = secrets.token_urlsafe(size)
+    while secret.startswith("-"):
+        secret = secrets.token_urlsafe(size)
+    return f"{key}={secret}"
 
 
 def complete_env(path, example):
