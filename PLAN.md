@@ -169,7 +169,7 @@ and counted. The full rule list is in `docs/plans/olist-import.md`.
 | Category-specific attributes | Rich templates for the top 15 categories, a generic template for the rest; stored in MongoDB (and as EAV and JSONB copies for the benchmark) |
 | Review text | All comments machine-translated offline once with a local model; original Portuguese kept; English labelled as machine-translated |
 | Currency | Converted to SGD at **one fixed rate**: the European Central Bank reference rates (EUR/BRL and EUR/SGD cross rate) on the day `olist-import` executes. Lines rounded to the cent; checkout totals computed from the rounded lines; payments split in proportion with the rounding remainder on the largest, so they equal the total exactly. Raw BRL kept in the raw files |
-| Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to 30 October 2026, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
+| Dates | Shifted by one fixed offset of 426 weeks: 2016 to 2018 becomes November 2024 to December 2026: the last retained order is placed on 28 October 2026 and the last delivery falls on 16 December 2026, after the current date, so demo orders continue the timeline. Whole weeks keep weekdays (weekly patterns survive); the offset is a constant, never relative to today, so imports and benchmarks are reproducible. Raw files keep the original dates |
 | Customers | One user per `customer_unique_id`, bulk-inserted with unusable passwords |
 | Reviews | The latest review per order is kept (by answer time); reviews of orders never delivered are kept as history (R3); single-line orders map to their line; multi-line orders get a copy per line, flagged `from_order_review` |
 | Freight and refunds | Each product's shipping fee is the median freight of its order lines; each imported cancelled order gets a refund row so refunds equal cancelled totals (`checkout` decisions b and c) |
@@ -284,8 +284,11 @@ Tier 1 measures base Olist; generated rows/flags stay in bench databases and sca
 header (visible in browser DevTools). This shows how much of each request is database time against Django overhead,
 which is the evidence for timing engines at the driver level.
 
-**The comparison is not only speed.** The report also compares data modelling, consistency guarantees, constraint
-support and schema flexibility.
+**Questions, fairness and the comparison beyond speed.** Each workload answers a stated design question with an
+expected outcome committed before the final runs, under explicit fairness rules (idiomatic models, equal index effort,
+equal durability settings, stated limits). The report also compares data modelling, consistency guarantees,
+constraint support and schema flexibility, with evidence per criterion; [benchmark.md](docs/plans/benchmark.md)
+(amendments f to i) owns all three.
 
 ## 8. Observability (Tier 2, Erfan)
 

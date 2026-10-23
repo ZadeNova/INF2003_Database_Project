@@ -49,10 +49,70 @@ The Python HTTP script separately measures product list/detail and search as the
 and PyMongo `CommandListener` add database time/count to existing JSON request logs and `Server-Timing`, without
 another app container. CI adds correctness-only gates as workloads and isolated bench services become available.
 
+**Questions and expected outcomes (amendment f).** Each workload tests a Mercer design decision. The expectations
+below are committed before the final runs, so the git history shows they were not written after the results; a
+result that contradicts one is reported as found, with its cause, never rewritten.
+
+| ID | Question, and the decision it tests | Expected outcome and its reason | Would surprise us | Clients | Output |
+|---|---|---|---|---|---|
+| B1 | Where should flexible attributes live? (specifications in MongoDB, [section 3](../../PLAN.md#3-architecture-polyglot-persistence-plus-a-benchmark-harness)) | JSONB with GIN and MongoDB are close on equality filters; EAV falls behind as a filter names more attributes (one join per attribute) and on broad filters; integer ranges need an expression B-tree in JSONB | EAV close to the others: products carry only two or three attributes each | 1/10/50 | p50 and p95 by engine and parameter set (selective to broad, one to three attributes) |
+| B2 | Are analytics better as SQL or as pipelines? (dashboard in PostgreSQL with a materialized view) | PostgreSQL's live CTE/window queries lead where rows are joined; MongoDB is competitive on embedded order lines and slower where it needs `$lookup`. The materialized-view read beats both live queries by orders of magnitude, at the price of `REFRESH` and staleness | MongoDB ahead on the joined queries | 1/10/50 | Live PostgreSQL against live MongoDB per query; view read and `REFRESH` reported beside them |
+| B3 | Does the last-unit race need relational transactions? (checkout in PostgreSQL) | Both engines exactly correct (10, 40, 0). PostgreSQL's conditional `UPDATE` queues on one row lock with no aborts; MongoDB aborts on write conflict and retries, so retries and p95 grow with clients | Any oversell; MongoDB with fewer retries or a lower p95 at 50 clients | 1/10/50 concurrent, 50 buyers | Outcome counts, retries and p50/p95 by concurrency |
+| B4 | What does each index buy, and which index fits which query? (the indexes the app ships) | Large gains on selective B1/B2 queries, little or none on broad ones; plans change from `Seq Scan`/`COLLSCAN` to index scans | An index the planner ignores, or one that makes a query slower | 1 | Before/after ratio per index with plan excerpts, told as slow → index → fast |
+| B5 | What does each data model cost on disk? (normalised tables against documents) | MongoDB smallest on disk through WiredTiger compression despite repeated field names; EAV largest (a row header per attribute); JSONB between; GIN indexes large | PostgreSQL smaller in total | none | Data and index bytes per representation, beside each engine's cache size |
+| B6 | Which anomalies does each engine allow, and what does preventing them cost? (`FOR UPDATE` in checkout) | PostgreSQL READ COMMITTED loses updates in read-then-write; `FOR UPDATE` prevents them by blocking; SERIALIZABLE by aborting, with retries. MongoDB read-modify-write outside a transaction also loses updates; a transaction aborts on write conflict; atomic `$inc` avoids the read | No lost update where one is expected | separate demonstration | Anomaly reproduced or prevented, retries and throughput per strategy |
+
+B2 times four named queries, each the same SQL text the app's feature runs (`dashboard` keeps its queries importable
+for this) against an equivalent pipeline: B2a category revenue per month with `RANK()` and `LAG()`; B2b 28-day
+moving-average demand per product; B2c Bayesian rating per product and per seller; B2d average score by delivery-delay
+bucket. Each states whether `from_order_review` copies count, matching the app feature it mirrors (B2d skips them).
+
+**Fair comparison (amendment g).** A rigged comparison fails the rubric's "rigorous", so each rule is stated in the
+report:
+- **Idiomatic models.** PostgreSQL uses the app's normalised schema plus the bench-only EAV and JSONB tables. MongoDB
+  uses documents designed for these access patterns, not a port of the tables: `bench.products` (id, seller, category,
+  `Decimal128` price, stock, embedded attributes), `bench.orders` (one per seller order, with embedded lines and the
+  paid amount) and `bench.reviews` (as the app). Both models, and why each is idiomatic, go into `docs/DATA_MODEL.md`.
+- **Equal index effort.** Each query gets the index its engine's documentation recommends; B4 shows what each adds.
+- **Equal durability.** Set explicitly and record: PostgreSQL `fsync`, `synchronous_commit` and `full_page_writes`
+  on; MongoDB journaling on, write concern `{w: "majority", j: true}`, transactions with read concern `snapshot`.
+- **Equal work in B3.** The app's migrations put the product audit trigger, and later the restock-alert trigger, on
+  stock updates, and deferred money triggers on checkouts and orders; MongoDB has no equivalent. The headline B3 keeps
+  every key, foreign key and `CHECK`, writes a balanced checkout, order, line and payment, and disables only USER
+  triggers on the bench tables (decision f). A second B3 run with the app's triggers on is reported separately as the
+  cost of trigger-enforced audit and money invariants.
+- **Stated limits.** Base Olist (about 150 MB of clean files) fits in each container's memory, so warm-cache results
+  measure query execution, not disk (B5's sizes beside the cache sizes show it). Every specification attribute is generated (`has_generated_content`; about
+  two or three per product over 35 keys), so B1 selectivity comes from the parameter sets, not natural data. One
+  laptop, under Docker Desktop. Report where each engine wins.
+
+**Comparison beyond speed (amendment h).** Presentation part iii grades a "rigorous comparison between the SQL and
+NoSQL implementations"; speed is only part iv. The report and slides carry this matrix, each cell citing evidence in
+the code or a benchmark, and a verdict for Mercer:
+
+| Criterion | PostgreSQL evidence | MongoDB evidence |
+|---|---|---|
+| Data modelling | 3NF schema and ER diagram (`olist-import`) | Embedded specifications with the latest five reviews; referenced review history |
+| Integrity | Composite foreign keys, `CHECK`s, deferred money triggers, partial unique index (`wishlist`) | `$jsonSchema` validators, unique `order_line_id`; cross-store references checked by the app, not the database |
+| Transactions and consistency | Checkout across sellers; B3, B6 | Review summary transaction (`reviews`); needs a replica set; B3, B6 |
+| Schema evolution | A migration per change | Category template versions, no validator change (`catalogue`) |
+| Query expressiveness | CTEs, window functions, materialized view (`dashboard`); B2 | `$facet`, `$setWindowFields`, time-series collection with TTL (`catalogue`, `activity`); B2 |
+| Security | Runtime role without DDL, `SECURITY DEFINER` functions | `readWrite` on named databases only |
+| Storage and indexing | B4, B5 | B4, B5 |
+
+**Writing each result (amendment i).** Per workload: question, expectation, measured ratio with its range, cause
+(from the saved plan or `docker stats`), implication for Mercer (keep or change the decision) and limits. A script
+turns `benchmarks/results/` into each output's chart or table; no figure or number is typed by hand (AGENTS.md).
+`deliverables` places them: B3, B6 and the matrix in presentation part iii, B1, B2, B4 and B5 in part iv, all in the
+report's results and discussion.
+
 **Exit check.** Reproduce B1–B6, the applicable client/run matrix, plans, storage metrics, resource/provenance records
 and driver/HTTP distinction on the designated machine. Check generator determinism and database restoration after
 success and failure. Deliberately corrupt a result or violate an invariant: the run must be recorded as failed with
-no accepted timing (BM4). No B7, failover, backup drill or other Tier 2/3 work is included.
+no accepted timing (BM4). Each workload's expectation (amendment f) was committed before its final run; the durability
+settings and trigger state (amendment g) are recorded with every result; the generated charts and tables exist for
+every output; the matrix (amendment h) cites evidence for every cell. No B7, failover, backup drill or other Tier 2/3
+work is included.
 
 ## Decisions
 
@@ -66,6 +126,21 @@ Chee Long accepted these decisions on 22 October 2026; plan approved the same da
 | c | Full retained Olist base, every attribute represented in EAV and JSONB; generator built and checksum-tested; scaled runs only in Tier 2 |
 | d | Seeded fixed parameter sets per workload (B1 selective to broad); one untimed warm-up pass, then five measured runs with fixed operation counts per client count. Report median across runs of per-run p50, p95 and throughput, with their ranges. Count retries separately; latency runs from first attempt to success. After mutating B3/B6 runs, restore PostgreSQL from a template database and MongoDB from NDJSON or a dump, including after failures; verify initial state before every run. Warm-up must leave that initial logical state intact; rewarm restored databases. Warm-cache measurement only |
 | e | Python harness in its own container, psycopg 3/PyMongo at app versions, one thread per client, `perf_counter_ns`, no-op overhead baseline, Python HTTP load script, raw JSON-lines output and CSV summary |
+
+**Outcome amendments (proposed 24 October 2026; awaiting the plan owner's approval).** These fill the gap between
+the method, which the contract already fixes, and what the rubric grades: analysis, conclusions, implications and a
+rigorous SQL-to-NoSQL comparison ([RUBRICS.md](../../RUBRICS.md) section 5, presentation part iii).
+
+| ID | Proposed decision | Why |
+|---|---|---|
+| f | Each workload states its question, the Mercer decision it tests and an expected outcome, committed before the final runs. In B3 the headline disables USER triggers on the bench tables only, keeping keys and checks, and a second run with the app's triggers is reported separately | Results become conclusions; committing expectations first shows they were not fitted to the data. The app's audit and money triggers would otherwise charge PostgreSQL for work MongoDB never does |
+| g | Fairness rules: idiomatic models, equal index effort, equal durability settings recorded explicitly, stated limits | Neither default durability nor a table-shaped MongoDB model would survive a marker's question |
+| h | A comparison matrix beyond speed, with evidence per cell | Part iii is required; performance (part iv) is optional |
+| i | A fixed write-up per result and generated charts and tables | Methods, results, conclusions and implications stated the same way for every workload; no hand-typed numbers |
+
+**Open question for the plan owner (not part of f to i).** B1 runs over 34,211 products with two or three attributes
+each. If the first pass shows B1 or B4 differences inside the no-op baseline's noise, decide whether a 10× generator
+run for B1, B4 and B5 moves into Tier 1; until then scaled runs stay Tier 2 (decision c).
 
 ## Review notes
 
