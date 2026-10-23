@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Count, Max
 from django.utils import timezone
 
+from accounts.audit import set_audit_context
 from accounts.models import CustomerProfile, Seller
 from catalogue.models import Product
 from orders.models import Order, OrderLine
@@ -29,6 +30,7 @@ class Command(BaseCommand):
             passwords[role] = value
         User = get_user_model()
         with transaction.atomic():
+            set_audit_context()  # Seeded product adjustments are system changes, never a prior request actor.
             latest = Order.objects.filter(checkout__olist_order_id__isnull=False).aggregate(latest=Max("placed_at"))["latest"]
             if latest is None:
                 raise CommandError("Import Olist before seeding demo accounts.")

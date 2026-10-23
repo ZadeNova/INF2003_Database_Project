@@ -1,25 +1,28 @@
 {% extends "base.html" %}
+{% load catalogue_tags %}
 {% block title %}{{ product.name }} — Mercer{% endblock %}
 {% block content %}
-<div class="page">
-    <a href="{% url 'catalogue:product_list' %}">Back to products</a>
+<div class="page catalogue-page">
+    <a href="{% url 'catalogue:product_list' %}">Back to shop</a>
     <article class="surface-card product-detail">
-        <div class="product-detail__media tile">{% include "_icon.html" with name=product.category.icon extra="tile__glyph" only %}</div>
+        <div class="product-detail__media tile" role="img" aria-label="{{ product.name }}">{% if spec.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' spec.photo_file_id %}" alt="{{ product.name }}">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
         <div class="product-detail__info">
-            <p class="eyebrow">{{ product.category.name_en }}</p>
+            <a class="eyebrow" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.name_en }}</a>
             <h1 class="product-detail__name">{{ product.name }}</h1>
-            <p>{{ product.seller.display_name }}</p>
+            {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url only %}
             <p class="product-detail__price">{{ product.display_price }}</p>
             <p>Shipping: S${{ product.freight }}</p>
-            <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %}</p>
+            <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %} · Ready in {{ product.lead_time_days }} days</p>
             {% include "orders/_add_to_cart.html" %}
             {% if spec %}
             <p>{{ spec.description }}</p>
-            <dl>{% for key, value in spec.attributes.items %}<dt>{{ key }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
+            <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt><dd>{{ value|option_value }}</dd>{% endfor %}</dl>
+            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
             {% else %}<p>Specifications are temporarily unavailable.</p>{% endif %}
-            {% if product.has_generated_content %}<p class="form-note">Name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
+            {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
             {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>{% endif %}
         </div>
     </article>
+    {% if spec.latest_reviews %}<section class="panel"><h2>Latest reviews</h2>{% for review in spec.latest_reviews %}<article class="catalogue-review"><h3>{{ review.score }} / 5{% if review.title_en %} · {{ review.title_en }}{% endif %}</h3><p>{{ review.text_en }}</p>{% if review.machine_translated %}<p class="form-note">Machine-translated from Portuguese.</p>{% endif %}</article>{% endfor %}</section>{% endif %}
 </div>
 {% endblock %}

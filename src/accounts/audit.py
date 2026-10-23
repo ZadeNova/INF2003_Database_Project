@@ -62,6 +62,15 @@ def change_seller_status(seller_id, action, actor, reason):
     return seller
 
 
+# catalogue labels (append-only shared navigation/audit integration).
+AUDIT_LABELS.update({
+    "product.update": "Product updated", "product.activate": "Product activated",
+    "product.deactivate": "Product deactivated", "product.takedown": "Product taken down",
+    "product.restore": "Product restored",
+})
+AUDIT_TONES.update({"product.activate": "completed", "product.restore": "completed"})
+
 # checkout action labels; seller decisions above retain their existing labels and tones.
 AUDIT_LABELS.update({"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"})
-AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "pending", "order.shipped": "pending"})
+# "warning" is the existing amber badge; there is no badge--pending class.
+AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "warning", "order.shipped": "warning"})

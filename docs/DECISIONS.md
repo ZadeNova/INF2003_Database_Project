@@ -119,6 +119,24 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 | foundation-p | `docs/OVERVIEW.md`: a plain-language team guide that summarises PLAN.md and links to it rather than copying details | Teammates need one readable page on scope and features; linking keeps PLAN.md the single home of each fact |
 | foundation-q | No separate human gate: the implementer asks a teammate to review in a fresh Claude Code session | One main developer; the fresh-session review already runs the tests and exit checks |
 
+
+## catalogue implementation
+
+| ID | Decision | Why |
+|---|---|---|
+| catalogue-i1 (confirmed by Chee Long, 23 October 2026; catalogue amendment i) | Use an attributes.$** wildcard index for the scalar attribute dictionaries already imported; it supports multikey array values without changing documents | A fixed attribute index cannot cover live schema evolution; explain evidence must distinguish scalar isMultiKey false from actual arrays |
+| catalogue-i2 (needs owner confirmation) | Newest means descending product ID | The approved schema has no creation timestamp; additive indexing and audit need no product-field/import-format change |
+| catalogue-i3 (needs owner confirmation) | Resolve category icons at render time with a complete slug map, including a package icon only for Uncategorised | Preserves the checked source CSVs and their reproducible import; no stored/generated-data rewrite is needed |
+| catalogue-i4 (needs owner confirmation) | Product detail keeps the context name product; checkout adds orders/_add_to_cart.html there after integration, posting to orders:cart_add at /cart/add/<product id>/ | Both branches remain runnable independently; the shared integration review must preserve that include placement |
+| catalogue-i5 (needs owner confirmation) | Template attributes use the imported scalar types `string` (shown to sellers as "Text"), `integer` and `boolean`, and are optional unless the template explicitly requires them | Existing products need no rewrite when a new option is added; sellers validate filled values against that category's allowed values |
+| catalogue-i6 (needs owner confirmation) | check_specs reports missing specs, orphan specs and category mismatches; --repair explicitly removes orphan specs and their photos | A successful MongoDB write followed by an uncertain PostgreSQL commit stays visible; missing text/attributes cannot safely be invented |
+| catalogue-i7 (needs owner confirmation) | Keep separate catalogue product-to-shop and checkout order-to-shop additions in OperatorAuditView when integrating | Product and order audit rows share the existing paginated page; each must resolve only the current page's own entity IDs |
+| catalogue-i8 (needs owner confirmation) | Re-encode seller photos into a new JPEG or PNG after format/size/pixel checks, and delete replaced files after the committed save | Image metadata/trailing content do not enter GridFS; a failed save keeps the previous photo; a logged cleanup failure leaves a harmless orphan file |
+| catalogue-i9 (needs owner confirmation) | seed_demo calls set_audit_context() before its existing transaction's reads/writes; COPY imports keep their disabled-trigger loading boundary | System changes must never inherit a caller's actor; checkout and catalogue share this actor/reason convention |
+| catalogue-i10 (needs owner confirmation) | The shared audit page uses a generic changes lead and wraps long decision badges only inside its audit table | Product and order actions share narrow cells; the adjustment preserves global badge styling and both audit lookup additions |
+
+Pillow 13.0.0 is pinned for the upload path after checking the [maintainer release listing](https://pypi.org/project/pillow/13.0.0/).
+
 ## checkout implementation
 
 | ID | Decision | Why |

@@ -1,11 +1,15 @@
 """One MongoDB connection policy for Django and offline tools (no Django import)."""
 import os
+import atexit
+from threading import Lock
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pymongo import MongoClient
 
 REPLICA_SET = "rs0"
 _database = ContextVar("mongo_database", default=None)
+_clients = {}
+_clients_lock = Lock()
 
 
 def connection_options(*, environ=None, direct=False):
@@ -27,8 +31,31 @@ def connection_options(*, environ=None, direct=False):
     return options
 
 
+@contextmanager
 def client(*, environ=None, direct=False):
-    return MongoClient(**connection_options(environ=environ, direct=direct))
+    """Borrow a process-local pool. Exiting a request never closes other requests' connections.
+
+    Include the process and connection policy in the key: workers do not share a pre-fork client, and a real
+    refused-connection outage test cannot accidentally reuse a healthy pool. Database selection stays explicit.
+    """
+    options = connection_options(environ=environ, direct=direct)
+    key = (os.getpid(), tuple(sorted(options.items())))
+    with _clients_lock:
+        if key not in _clients:
+            _clients[key] = MongoClient(**options)
+        pooled = _clients[key]
+    yield pooled
+
+
+def close_clients():
+    """Release pools at process shutdown, not at the end of a view or management-command context."""
+    with _clients_lock:
+        for pooled in _clients.values():
+            pooled.close()
+        _clients.clear()
+
+
+atexit.register(close_clients)
 
 
 def database_name(environ=None):

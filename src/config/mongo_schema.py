@@ -39,7 +39,11 @@ INDEXES = {
     "reviews": [IndexModel([("order_line_id", ASCENDING)], unique=True, name="review_order_line_unique"),
                 IndexModel([("olist_review_id", ASCENDING)], name="review_olist_source"),
                 IndexModel([("product_id", ASCENDING), ("answered_at", DESCENDING)], name="review_product_date")],
-    "product_specs": [IndexModel([("category_id", ASCENDING)], name="spec_category")],
+    "product_specs": [IndexModel([("category_id", ASCENDING)], name="spec_category"),
+                      # Wildcard indexing includes future template fields and becomes multikey for array values.
+                      IndexModel([("attributes.$**", ASCENDING)], name="spec_attributes"),
+                      # The photo endpoint resolves a GridFS id to its product; without this every image is a scan.
+                      IndexModel([("photo_file_id", ASCENDING)], name="spec_photo_file")],
     "category_templates": [IndexModel([("category_id", ASCENDING)], unique=True, name="template_category_unique")],
 }
 

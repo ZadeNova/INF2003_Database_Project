@@ -1,11 +1,11 @@
 <article class="surface-card product-card">
-    <a href="{% url 'catalogue:product_detail' product.pk %}">
-        <div class="tile">{% include "_icon.html" with name=product.category.icon extra="tile__glyph" only %}</div>
+    <a href="{% url 'catalogue:product_detail' product.pk %}" aria-label="{{ product.name }}">
+        <div class="tile" role="img" aria-label="{{ product.name }}">{% if product.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' product.photo_file_id %}" alt="{{ product.name }}" loading="lazy">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
     </a>
     <div class="product-card__body">
-        <span class="product-card__category">{{ product.category.name_en }}</span>
+        <a class="product-card__category" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.name_en }}</a>
         <h2 class="product-card__name"><a href="{% url 'catalogue:product_detail' product.pk %}">{{ product.name }}</a></h2>
-        <p>{{ product.seller.display_name }}</p>
+        {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url only %}
         <p class="product-card__price">{{ product.display_price }}</p>
         <p>{% if product.stock %}In stock{% else %}Sold out{% endif %}</p>
         {% if product.has_generated_content %}<p class="form-note">Generated product name and stock.</p>{% endif %}
