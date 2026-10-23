@@ -1,0 +1,1 @@
+{% if pager.page.has_other_pages %}<nav class="pager" aria-label="{{ label }} pages">{% if pager.previous %}<a href="{{ pager.previous }}">Previous</a>{% endif %}<span>Page {{ pager.page.number }} of {{ pager.page.paginator.num_pages }}</span>{% if pager.next %}<a href="{{ pager.next }}">Next</a>{% endif %}</nav>{% endif %}

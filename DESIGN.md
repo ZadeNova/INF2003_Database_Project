@@ -211,6 +211,11 @@ Order-status chips retain text labels: placed/cancelled use neutral ink and rais
 ink and tint, and delivered uses success ink and tint. Refunded/error states use error ink and tint where that state
 is explicitly named. The border uses the label colour; status is never communicated by colour alone.
 
+The operator dashboard reuses bordered panels and contained, keyboard-focusable table regions. Every panel names
+its reporting date and sources. Replenishment and risk use written amber badges. The revenue chart uses the current
+theme's ink and grid colours, has no animation, and retains exact values in the adjacent table. Wide tables scroll
+inside their region; the canvas stays inside its panel on phones. Filters and refresh are separate labelled controls.
+
 ## Motion, themes and interaction
 
 Motion is crisp and mechanical. Use the easing/duration tokens; do not introduce springs, bounce, blur or stagger.

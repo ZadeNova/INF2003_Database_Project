@@ -33,7 +33,7 @@ CSRF_TRUSTED_ORIGINS = [v.strip() for v in ENVIRON.get("DJANGO_CSRF_TRUSTED_ORIG
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
     "django.contrib.messages", "django.contrib.staticfiles",
-    "config", "accounts", "catalogue", "orders", "reviews", "wishlist",
+    "config", "accounts", "catalogue", "orders", "reviews", "wishlist", "dashboard",
 ]
 MIDDLEWARE = [
     "config.middleware.DatabaseUnavailableMiddleware",

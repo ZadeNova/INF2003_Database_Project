@@ -450,7 +450,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | ready |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | review |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | review |
-| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | ready |
+| `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | review |
 | `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | in progress |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
@@ -488,8 +488,8 @@ a workstream changes state, and keep each plan file as short as its contract all
   whole-order cancellation as on Shopee.
 - **Phase 2 and 3 plans** (approved 21 October): `catalogue` (MongoDB narrows and counts facets, PostgreSQL filters
   price, sorts and paginates; `pg_trgm` name search; PostgreSQL-first cross-store writes with a repair check; take-down
-  flag), `wishlist` (partial unique index on unseen alerts; in-app only), `dashboard` (as-of 30 October 2026, to
-  re-confirm before implementation; `SECURITY DEFINER` refresh; cross-store join in Python), `reviews` (Bayesian constants
+  flag), `wishlist` (partial unique index on unseen alerts; in-app only), `dashboard` (as-of the latest imported order date, excluding demo orders and later events;
+  amendment a confirmed 24 October 2026; `SECURITY DEFINER` refresh; cross-store join in Python), `reviews` (Bayesian constants
   fixed at import; running sum; take-downs in `audit_log`), `activity` (seeded synthetic events; `w: 1` writes).
 - **Added scope:** faceted search and schema evolution; Bayesian rating; demand forecast; delivery-delay analysis; 3NF
   justification; isolation benchmark (B6); audit trigger; activity events (M1); Playwright end-to-end tests and

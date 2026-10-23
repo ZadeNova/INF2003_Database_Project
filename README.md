@@ -165,8 +165,7 @@ passwords have no fallback and are never printed. The seller is linked to a real
 rows explicitly label their sold-out and low-stock/long-lead-time demo adjustments, including any relisting needed to
 make them visible. Imported accounts otherwise have
 unusable passwords. Rerunning `seed_demo` never resets a seller status an operator has already decided. The shop,
-product details, registration, seller applications, cart, checkout, orders, reviews and the operator console work. The live
-dashboard remains closed until its workstream replaces it. The labelled foundation design previews
+product details, registration, seller applications, cart, checkout, orders, reviews and the operator console work. The operator dashboard is available as described below. The labelled foundation design previews
 remain available as visual samples.
 
 Relisting labels also use retained imported order history, so rerunning `seed_demo` repairs labels omitted by an
@@ -244,6 +243,27 @@ docker compose run --rm migrate python manage.py check_specs --repair
 
 The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
 mismatches remain reported for restoration from the source; the command does not invent missing product content.
+
+## Operator stock planning
+
+Open `/operator/dashboard/` as an operator. Every panel states the reporting date and its PostgreSQL/MongoDB sources.
+The date is derived from the latest imported order's placed_at; demo orders cannot move it. Sales, reviews and delivery
+events after that date are excluded. Inventory remains the current stock so a seller restock can clear a warning.
+
+The stock table averages demand over 28 complete calendar dates, including zero-sale days, and flags cover shorter
+than lead time. Filter it by category or seller number. Category tables show monthly revenue, units, rank and
+month-on-month change; the locally bundled Chart.js chart shows the latest month's leading categories. Revenue is
+item value without freight. Delivery panels join PostgreSQL delivery dates and zip-centre distances with one MongoDB
+score per order, excluding copied order reviews. More than 20% late deliveries marks a seller at risk. The poor-review
+panel lists products averaging at most two stars from at least five reviews.
+
+`import_olist` refreshes daily product sales after the verified import commits. For a database imported before this
+feature, press "Refresh sales history" once; migrations alone leave the materialized view unpopulated. The button
+also refreshes after a restock. It uses a restricted owner-owned function, so the web role still has no direct refresh
+privilege. A refresh failure after import is reported as a committed import requiring a refresh retry.
+
+Chart.js is pinned to [the upstream 4.5.1 release](https://github.com/chartjs/Chart.js/releases/tag/v4.5.1), with its
+MIT licence beside the vendored distribution. Exact amounts are rendered in the tables; chart coordinates are presentation only.
 
 ## Wishlist and restock alerts
 

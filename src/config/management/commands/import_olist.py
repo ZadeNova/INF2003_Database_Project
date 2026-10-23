@@ -76,6 +76,13 @@ class Command(BaseCommand):
             raise CommandError(f"Invalid clean input ({type(error).__name__}); PostgreSQL rows rolled back.") from error
         except (DatabaseError, PsycopgError, PyMongoError) as error:
             raise CommandError(f"Import failed ({type(error).__name__}); rows rolled back and trigger state restored. Check input, database health and owner privileges.") from error
+        # The import is committed. A refresh failure must never claim that these source rows rolled back.
+        from dashboard.services import refresh_sales
+        try:
+            refresh_sales()
+        except DatabaseError as error:
+            raise CommandError("Import committed, but sales history refresh failed. Use the operator refresh button after checking PostgreSQL.") from error
+        self.stdout.write("Daily product sales refreshed.")
         duration = time.perf_counter() - started
         self.stdout.write(f"Olist import complete in {duration:.3f} seconds.")
         self.stdout.write("Import metrics: " + json.dumps({"duration_seconds": round(duration, 3),
