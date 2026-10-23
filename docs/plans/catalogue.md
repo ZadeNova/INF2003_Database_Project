@@ -159,3 +159,14 @@ confirmed); CG6 caps candidates at 2,000 ordered by trigram similarity, with a n
 narrowed (the largest category has 1,292 buyable products, so category browsing is never capped); CG8 removes the
 unused category facet; CG9 tests that seed_demo writes system audit rows inside a caller's actor context. CG7, CG10
 and CG11 remain follow-ups.
+
+23 October 2026, Phase 2 checkpoint on `main` (Claude Code, at Chee Long's request), against the full-data `mercer`
+database through the running web service (runtime role): the demo customer bought from three sellers in one checkout
+(one checkout, three paid orders, payments = total = 278.25; stock fell by one each, every change audited with the
+buyer and a reason; resending the pay form created nothing); the demo seller could not ship another shop's order,
+shipped its own, and the operator delivered it, with the customer seeing Delivered and the audit trail recording both;
+faceted category search with a price range rendered; the demo seller created a product with an uploaded photo, saw
+it on the detail page and deactivated it (it then left the shop). 20 of 20 steps passed. Merged: amendments PR #8,
+checkout PR #9, catalogue PR #10 (combined suite 566 passed, 4 skipped; both CI jobs green on the combined code).
+The catalogue core is merged; this plan stays in progress until the owner-steered step (amendment f: the
+DESIGN.md/site.css rewrite and the 15 featured photos, exit check 5) is done. Follow-ups CG7, CG10 and CG11 remain.
