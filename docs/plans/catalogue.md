@@ -72,6 +72,40 @@ injection negatives on search parameters.
 | h | Benchmark case B1 is not built in this workstream | `benchmark` owns it on its separate bench databases; PLAN.md section 13 only aligns the timing |
 | i | The attribute index is a wildcard index on `attributes.$**` (approved by Chee Long, 23 October 2026, replacing "multikey index") | It also covers attributes the operator adds later. The imported attributes are scalars, so explain reports `isMultiKey: false`; the report calls it a wildcard index (multikey-capable for arrays) and does not claim a multikey demonstration |
 
+**Amendment f plan (approved by Chee Long, 23 October 2026).** Design direction chosen by Chee Long on
+23 October 2026 (f1 to f4); f5 to f8 and the work order were approved the same day:
+
+| ID | Decision | Why |
+|---|---|---|
+| f1 | Evolve VoiceBox into Mercer's own system: same tokens, square 2px-bordered surfaces, accessibility fixes and motion rules; blog-only parts (pull quotes, bylines, avatars, 56px display) go | Keeps the contrast-checked, dark-mode and motion work already built; lowest risk before the 30 October freeze |
+| f2 | Keep the red accent (`#EF4444`, `#B91C1C` where read) and its eleven placements | Already contrast-checked in both themes |
+| f3 | Product grid: 4 per row on desktop, 3 on tablet, 2 on phones | Room for name, price, stock and the labels without truncation |
+| f4 | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
+| f5 | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
+| f6 | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
+| f7 | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
+| f8 | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
+
+**Work, in order** (branch `catalogue/design-photos`):
+1. Photos: for each featured product, 2 to 3 Commons candidates with licence verified, shown to Chee Long on one
+   contact sheet; Chee Long picks; download only the picks (with consent), resize, write `manifest.csv`.
+2. `manage.py load_photos` (run in `migrate`) with tests on the real test MongoDB: manifest validation (allowed licence,
+   file present, product featured, type and size), GridFS metadata, idempotent rerun, old file removed; the photo
+   credit renders on the detail page and the label on cards.
+3. `DESIGN.md` rewrite: one Mercer system (the "As built" deviations folded into the main text) with the marketplace
+   components: product grid and card (photo or icon, labels, mono price, stock), facet sidebar (attribute counts, price
+   range, active-filter chips), product detail with photo credit, seller centre, operator console, cart and checkout,
+   order-status chips. The VoiceBox MIT attribution and font/icon licences stay.
+4. `site.css`: remove rules no template or script uses (a selector-usage check lists them first; the old dataset's
+   leftovers), implement the 4/3/2 grid, card labels and credit, then align the seller and operator layouts.
+5. Visual pass in the browser: home, category with facets, product detail (photo and icon), cart, checkout, seller
+   products and form, operator lists and audit; light and dark; 375 px and desktop; no horizontal scroll and AA
+   contrast for every new pair.
+
+**Amendment f exit check:** exit check 5 above; every featured photo's manifest row matches its Commons file page;
+`DESIGN.md` tokens match the `:root` block in `site.css`; the visual pass shows no overflow or contrast failure; the
+full suite passes in Docker and `scripts/check_docs.py` passes. Then catalogue is done and Phase 2B closes.
+
 ## Review notes
 
 21 October 2026, cross-plan review (fresh session); findings applied: search reversed to PostgreSQL first so
