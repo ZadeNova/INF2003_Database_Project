@@ -174,7 +174,7 @@ photos without cropping, and keep product-name alternative text. Featured stock 
 
 The information column holds category, product name, shop, mono price, shipping, stock, lead time, quantity/add action,
 description, attribute definition list, rating summary and the generated-content notice. Latest reviews follow below;
-machine-translated text keeps its label. Long titles and attribute values wrap inside their column.
+machine-translated text keeps its label and offers Portuguese originals. A native meter histogram pairs each score with its written count; the same review block paginates newest first. Historical orders carry a written label. Review forms and moderation reuse the bounded form panel and explicit reason field. Long titles and attribute values wrap inside their column.
 
 ## Seller centre and operator console
 

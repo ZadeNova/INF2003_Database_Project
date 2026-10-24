@@ -158,3 +158,13 @@ Pillow 13.0.0 is pinned for the upload path after checking the [maintainer relea
 | checkout-i7 (confirmed by Chee Long, 23 October 2026) | Audit pages resolve each page's order IDs to their current seller in a separate lookup block | Order decisions display readable shop names; integration retains the existing seller lookup and catalogue's product lookup |
 | checkout-i8 (confirmed by Chee Long, 23 October 2026) | Imported-refund provenance is checked only during import; ongoing reconciliation checks amount, status and ownership for every refund | A customer may cancel imported paid history later; that new refund is correctly non-imported, while malformed source labels must still reject the import |
 | checkout-i9 (confirmed by Chee Long, 23 October 2026) | Seller and operator order pages offer validated status and exact order-number filters, preserving the role's original queryset | The shifted Olist history includes dates after the current date; these filters make a newly placed order findable without paging through that history |
+
+## reviews implementation (24 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| reviews-i1 | Use PyMongo with_transaction with snapshot reads and majority commits; retry the entire MongoDB callback on write conflicts | Concurrent reviews serialize at the product summary without losing either review |
+| reviews-i2 | Preserve the import's 28 significant digit Decimal arithmetic in the MongoDB update pipeline, including intermediate Bayesian operations | Insert/delete round trips return imported averages and scores exactly; counts, sums and histograms remain integer totals |
+| reviews-i3 | New seller products use the same import-fixed Bayesian prior helper as review writes; zero reviews start at m | The prior count C is not a rating and must never seed the score |
+| reviews-i4 | Moderation opens PostgreSQL with its audit row, commits MongoDB, then commits PostgreSQL; log an uncertain final SQL commit | Follows the approved cross-store order without pretending the two databases share an atomic commit |
+| reviews-i5 | Keep moderation fields optional on existing review documents and preserve the strict imported outer validator | Missing taken_down means visible; no data reset or validator rewrite is needed |

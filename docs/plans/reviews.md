@@ -1,6 +1,6 @@
 # reviews: Per-item reviews, rating summaries in one transaction, Bayesian ranking, take-downs
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: about 2
 days · phase 3A (9 to 13 November) · depends on: `catalogue`, `checkout`, `accounts`
 
@@ -54,3 +54,18 @@ page that PLAN.md section 2 promised.
 
 22 October 2026, Phase 1B decision P3 (accepted by Chee Long): take-down audit rows go through the narrow
 owner-owned moderation function instead of a direct app insert; no other contract change.
+
+
+24 October 2026 — Implementation notes (Codex; reviewer: pending (Claude Code)). Built customer create/edit/delete
+for delivered owned lines, snapshot MongoDB transactions with conflict retry, running summaries and latest five,
+Bayesian shop scores, the new-product prior fix, a histogram with paginated English/Portuguese reviews and historical
+labels, scoped seller reviews, and operator take-down/restore through the narrow owner-owned audit function.
+Exit checks 1–3 passed against demo-joash and demo-operator through rendered Django requests; the temporary review
+was deleted and the imported product document returned exactly to its original state. Exit check 4 passed through
+the catalogue's existing Top rated search path in test_reviews.py. Exit check 5 passed: built migrate, applied the
+migration, then ran the full Docker suite (unaltered output in .cache/phase3a/reviews-full-suite.log). The focused
+review checks, Django system and migration drift checks, host docs/packaging checks and scripts/check_docs.py passed.
+Local execution evidence is under .cache/phase3a (ignored), including reviews-exit.log. The existing container-only
+Git-index skips remain visible in the suite output; the host equivalents ran successfully. No contract omissions
+or scope deviations. Existing import precision is preserved explicitly in the update pipeline. Fresh Claude Code
+review and visual inspection remain pending; no push, PR or merge was performed.

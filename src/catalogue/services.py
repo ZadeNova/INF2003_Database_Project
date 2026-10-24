@@ -1,7 +1,6 @@
 """Seller writes keep PostgreSQL open until MongoDB accepts its own fields (catalogue decision c)."""
 import logging
 
-from bson import Decimal128
 from gridfs import GridFS
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -11,6 +10,7 @@ from pymongo.errors import PyMongoError
 from accounts.audit import set_audit_context
 from accounts.models import Seller, User
 from config import mongo
+from reviews.ratings import empty_summary
 from .models import Product
 
 logger = logging.getLogger("mercer.errors")
@@ -69,9 +69,7 @@ def save_product(seller, actor, cleaned, *, pk=None):
                 if pk is None:
                     stats = database.platform_stats.find_one({"_id": "bayesian"})
                     database.product_specs.insert_one({"_id": item.pk, **owned, "latest_reviews": [],
-                        "rating_summary": {"count": 0, "sum": 0, "average": Decimal128("0"),
-                            "distribution": {str(score): 0 for score in range(1, 6)},
-                            "bayesian": stats["C"] if stats else Decimal128("0")}})
+                        "rating_summary": empty_summary(stats)})
                 else:
                     result = database.product_specs.update_one({"_id": item.pk}, {"$set": owned})
                     if result.matched_count != 1:

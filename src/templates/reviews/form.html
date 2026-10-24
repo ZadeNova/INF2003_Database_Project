@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Review your item — Mercer{% endblock %}
+{% block content %}<div class="page account-page catalogue-editor">
+<a href="{% url 'orders:order_detail' line.order_id %}">Back to order</a>
+<div class="page__header"><div><p class="eyebrow">Your delivered item</p><h1 class="page__title">Review {{ line.product.name }}</h1></div></div>
+<section class="panel checkout-panel">
+{% if review.taken_down %}<p>This review is hidden by the operator. {{ review.takedown_reason }}</p>{% endif %}
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="{% if review %}edit{% else %}create{% endif %}">
+{% include "accounts/_form_fields.html" %}<button class="button" type="submit">Save review</button></form>
+{% if review %}<form method="post" class="checkout-payment">{% csrf_token %}<input type="hidden" name="action" value="delete"><button class="button button--outline-neutral" type="submit">Delete review</button></form>{% endif %}
+</section></div>{% endblock %}

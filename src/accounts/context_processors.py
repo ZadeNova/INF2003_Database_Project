@@ -22,6 +22,7 @@ def role_navigation(request):
             links.append(("My products", reverse("catalogue:seller_products"), "catalogue:seller_products"))
             # checkout links
             links.append(("My orders", reverse("orders:seller_orders"), "orders:seller_orders"))
+            links.append(("My reviews", reverse("reviews:seller_reviews"), "reviews:seller_reviews"))
         links.append(("Seller status", reverse("accounts:seller_status"), "accounts:seller_status"))
     elif user.role == User.Role.OPERATOR:
         # checkout links
@@ -31,4 +32,5 @@ def role_navigation(request):
         # catalogue links
         links += [("Products", reverse("catalogue:operator_products"), "catalogue:operator_products"),
                   ("Categories", reverse("catalogue:operator_categories"), "catalogue:operator_categories")]
+        links.append(("Reviews", reverse("reviews:operator_reviews"), "reviews:operator_reviews"))
     return {"nav_links": links}
