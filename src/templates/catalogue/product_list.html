@@ -27,8 +27,9 @@
             {% if page_obj.object_list %}<div class="product-grid">{% for product in page_obj %}{% include "catalogue/_product_card.html" %}{% endfor %}</div>
             {% else %}<div class="empty"><h2>No products found</h2><p>Try a different name, category or filter.</p></div>{% endif %}
             {% include "catalogue/_pager.html" %}
+            {% include "activity/_trending.html" %}
+            {% include "activity/_recent.html" %}
             {% if not searching %}
-            <section class="panel"><h2>Trending</h2><p>Popular picks will appear here soon.</p></section>
             <section class="panel"><h2>Browse categories</h2><nav class="range-nav__links" aria-label="Categories">{% for item in categories %}<a class="chip" href="{% url 'catalogue:category_detail' item.slug %}">{{ item.name_en }}</a>{% endfor %}</nav></section>
             {% endif %}
         </section>

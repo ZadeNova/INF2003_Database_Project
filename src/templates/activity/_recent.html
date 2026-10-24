@@ -1,0 +1,1 @@
+{% if recent_products %}<section class="panel checkout-panel"><h2>Recently viewed</h2><div class="product-grid">{% for product in recent_products %}{% include "catalogue/_product_card.html" %}{% endfor %}</div></section>{% endif %}

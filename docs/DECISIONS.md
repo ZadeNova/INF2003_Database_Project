@@ -193,3 +193,17 @@ Derive the reporting date from the latest imported order placed_at (checkouts wi
 | dashboard-i5 | A calendar-month gap yields no month-on-month percentage, and the chart shows the latest month's leading categories | Comparing with an older observed month would mislabel the change; the full category history stays in the table |
 | dashboard-i6 | Keep analytical SQL importable; the Bayesian counterpart expects the benchmark's future SQL reviews relation and is tested with a statement-local CTE | No review scores are persisted in PostgreSQL by the application; no benchmark implementation is started |
 | dashboard-i7 | Vendor Chart.js 4.5.1 with its source map and MIT licence | The chart works without a runtime CDN and Django's static manifest resolves the upstream source-map reference |
+
+## activity implementation (24 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| activity-i1 | Create events separately from the import's four file-backed collections, with ts/meta time-series options, seconds granularity and a 30-day TTL | No events file is invented for Olist; mongo_setup owns all collection/index setup and refuses incompatible existing options |
+| activity-i2 | Use acknowledged w:1 writes; catch/log MongoDB failures and refuse missing/non-time-series collection writes | Telemetry must not break shopping, and an early request must not silently create ordinary events storage |
+| activity-i3 | Anonymous events contain only the Django session key; authenticated events contain only user_id | Histories stay distinct and events store no query-independent personal information beyond the approved identity |
+| activity-i4 | Resolve ranked/recent IDs through purchasable_product in batches of fifty and continue past withdrawn items | Reads stay explicit and bounded without letting unavailable products consume all visible slots |
+| activity-i5 | Apply the deterministic product-ID sort after the computed rank, sorting by rank rather than extending the views sort | Keeps tied view counts at the same rank; the regression check caught changed ties when the final sort extended the window ordering |
+| activity-i6 | Insights compares non-cancelled units with views over the same rolling 30 days and labels the ratio as units per view | Aggregate totals are not individual purchase attribution and may exceed one unit per view |
+| activity-i7 | seed_activity appends relative-time synthetic views, weighted by imported non-cancelled unit sales, using a synthetic session key | Real browsing data does not exist in Olist; is_generated and the UI label preserve provenance without inventing user histories |
+| activity-i8 (integration fix) | Disable Chart.js automatic colours and set the theme palette before chart construction | The responsive browser check found blue defaults overriding the intended ink palette; both themes now use the design tokens |
+| activity-i9 (integration fix) | Return a committed wishlistChanged event and update all matching visible buttons before the HTMX swap | A product can occur in detail and recently viewed simultaneously; both controls must keep the same action and pressed state |

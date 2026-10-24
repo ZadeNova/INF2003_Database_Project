@@ -357,6 +357,27 @@ Category.icon_name resolves imported category slugs through the catalogue icon m
 the fallback for other categories. This replaces the imported generic card at render time without changing the
 checked source CSVs; Uncategorised keeps the package icon.
 
+### Activity time series
+
+`events` is a MongoDB time-series collection: timeField ts (date), metaField meta (object), granularity seconds,
+expireAfterSeconds 2592000 (30 days). Metadata has type view/search, product_id and category for product views,
+optional category for searches, and exactly one visitor identity: user_id for authenticated requests or session_key
+for anonymous requests. Searches store trimmed query text, capped at 100 characters, outside metadata. Events have
+an explicit is_generated boolean. They contain no copied product name, price, stock or personal profile fields.
+Time-series collections use MongoDB's time-field rules rather than an outer JSON Schema validator. The app builds
+only the two accepted event shapes; setup refuses incompatible time-series options.
+
+Secondary indexes are event_product_time (meta.product_id, ts descending), event_user_time (meta.user_id, ts descending),
+event_session_time (meta.session_key, ts descending), event_type_time (meta.type, ts descending), and event_category_time
+(meta.category, meta.type, ts descending). MongoDB maintains their underlying time-series bucket indexes. The default
+meta/time index is also retained. App readWrite creates them through mongo_setup; no new MongoDB owner is introduced.
+
+Recently viewed groups each visitor's view events by product and sorts by maximum ts. Trending groups the last
+24 hours of views and ranks counts with setWindowFields/rank, then breaks equal-rank ties by product ID. Both resolve
+IDs through the PostgreSQL purchasable view in small batches. Insights joins scoped per-product MongoDB view counts
+with PostgreSQL non-cancelled units over the same rolling 30 days in Python. The seeder's synthetic session and
+is_generated flag do not enter a real visitor's history; generated view contributions are labelled on the panels.
+
 ## Reproducible pipeline
 
 [The approved rule list](plans/olist-import.md#contract) is authoritative. Cleaning reads all raw CSVs as strings,

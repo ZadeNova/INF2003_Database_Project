@@ -244,6 +244,29 @@ docker compose run --rm migrate python manage.py check_specs --repair
 The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
 mismatches remain reported for restoration from the source; the command does not invent missing product content.
 
+## Browsing activity and seller insights
+
+Product detail records a view and catalogue searches record the trimmed query, up to 100 characters. Activity writes
+use MongoDB w:1 and failures are logged without breaking the page. Home and product pages show the last ten distinct
+recent products for the signed-in user or anonymous browser session. The existing Trending panel shows views over
+the last 24 hours, overall or in the selected category, with equal counts sharing a rank. Withdrawn products stay hidden.
+
+For a database imported before activity landed, create the time series once before browsing. A fresh import already
+runs mongo_setup. To populate the demo with labelled browsing events:
+
+```sh
+docker compose run --rm migrate python manage.py mongo_setup
+docker compose run --rm migrate python manage.py seed_activity
+```
+
+The default appends synthetic views weighted by imported sales over the past 30 days relative to seeding time. Use
+`--count` for a smaller demo; rerunning appends another labelled batch. Data carries is_generated and the panels say
+when generated views contribute. Events expire after 30 days. Never treat this synthetic browsing as observed Olist data.
+
+Approved sellers open `/seller/insights/` for their own products' views and non-cancelled units sold in the same rolling
+30-day window. "Units per view" compares the totals; it does not identify which visitor bought an item. No views means
+no ratio, and unavailable MongoDB counts are shown as unavailable while sales can still be read.
+
 ## Operator stock planning
 
 Open `/operator/dashboard/` as an operator. Every panel states the reporting date and its PostgreSQL/MongoDB sources.

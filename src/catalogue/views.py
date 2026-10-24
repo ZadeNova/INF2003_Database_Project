@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_safe
 
 from accounts.models import Seller
+from activity.services import browsing_panels, record_event
 from config import mongo
 from reviews.queries import review_page, seller_rating
 from .forms import SearchForm
@@ -84,6 +85,10 @@ def _listing(request, category=None):
     query.pop("page", None)
     context["query"] = query.urlencode()
     context["filter_chips"] = _filter_chips(context["search_form"], data) if searching else []
+    selected_category = category or core.cleaned_data.get("category")
+    if searching:
+        record_event(request, "search", query=core.cleaned_data.get("q", ""), category=selected_category)
+    context.update(browsing_panels(request, category=selected_category.pk if selected_category else None))
     return render(request, "catalogue/product_list.html", context)
 
 
@@ -107,8 +112,10 @@ def product_detail(request, pk):
     language = "pt" if request.GET.get("lang") == "pt" else "en"
     histogram = [{"score": score, "count": (spec or {}).get("rating_summary", {}).get("distribution", {}).get(str(score), 0)}
                  for score in range(5, 0, -1)]
+    record_event(request, "view", product=product)
     return render(request, "catalogue/product_detail.html", {"product": product, "spec": spec,
-        "reviews_page": page, "review_language": language, "histogram": histogram})
+        "reviews_page": page, "review_language": language, "histogram": histogram,
+        **browsing_panels(request, category=product.category_id)})
 
 
 @require_safe

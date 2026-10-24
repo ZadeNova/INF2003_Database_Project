@@ -32,5 +32,6 @@
         {% for review in reviews_page %}{% include "reviews/_review.html" %}{% empty %}<p>No reviews yet.</p>{% endfor %}
         {% if reviews_page.has_other_pages %}<nav class="pager" aria-label="Review pages">{% if reviews_page.has_previous %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.previous_page_number }}#reviews">Previous</a>{% endif %}<span>Page {{ reviews_page.number }} of {{ reviews_page.paginator.num_pages }}</span>{% if reviews_page.has_next %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.next_page_number }}#reviews">Next</a>{% endif %}</nav>{% endif %}
     </section>
+    {% include "activity/_recent.html" %}
 </div>
 {% endblock %}

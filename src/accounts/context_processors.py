@@ -25,6 +25,7 @@ def role_navigation(request):
             # checkout links
             links.append(("My orders", reverse("orders:seller_orders"), "orders:seller_orders"))
             links.append(("My reviews", reverse("reviews:seller_reviews"), "reviews:seller_reviews"))
+            links.append(("Insights", reverse("activity:insights"), "activity:insights"))
         links.append(("Seller status", reverse("accounts:seller_status"), "accounts:seller_status"))
     elif user.role == User.Role.OPERATOR:
         links.append(("Dashboard", reverse("dashboard:home"), "dashboard:home"))

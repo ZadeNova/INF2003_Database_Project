@@ -1,6 +1,6 @@
 # activity: Activity events in a MongoDB time-series collection (M1)
 
-status: approved
+status: in-progress
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 1 to 1.5 days · phase 3A (9 to 13
 November) · depends on: `catalogue` (product pages, search), `checkout` (purchases for conversion)
 
@@ -46,3 +46,37 @@ conversion equals views and units counted directly on a small fixture; anonymous
 
 21 October 2026, cross-plan review (fresh session); findings applied: the collection joins `mongo_setup` (no MongoDB owner exists); a seller
 scoping test for Insights.
+
+
+24 October 2026 — Implementation notes (Codex; reviewer: pending (Claude Code)). Built the events time-series
+collection with 30-day TTL and product/user/session/type/category time indexes in mongo_setup, acknowledged w:1
+view/search writes with sanitized failure logging, ten distinct recently viewed products, ranked overall/category
+trending in the existing catalogue slot, scoped seller Insights joining views and units over one rolling window,
+and labelled relative-time seed_activity weighted by imported sales. Missing/incompatible event storage cannot
+silently become a regular collection, and it never breaks catalogue rendering. Focused real-database checks passed
+for writes, query trimming/injection literals, anonymous identity, windows/ties, distinct history, nonfatal failure,
+TTL/index options, proportional seeding and seller scoping. Equal-view ranks retain their ties by applying the
+product-ID ordering after the computed rank.
+
+Exit check 1 passed as demo-chee-long: five browsed products appear newest first on home. Exit check 2 passed after
+the default seed_activity command: labelled generated browsing appears in Trending and the demo seller's Insights
+shows views and conversion. Exit check 3 passed: explain executionStats uses event_type_time in the winning
+UNPACK_TS_BUCKET/IXSCAN plan; the unaltered report is .cache/phase3a/activity-trending-plan.json, for report notes.
+Generated seeding and exit evidence are activity-seed.log and activity-exit.log. Desktop and 375px browser checks
+covered the review histogram, Trending, dashboard and Insights, with no document overflow. The dashboard was checked
+in both themes and the temporary browser session/viewport was cleaned up; visual-checks.json records the checks.
+
+Two small integration fixes are carried on this final stacked branch: the dashboard chart now starts with the design
+tokens and disables Chart.js automatic colours; repeated wishlist controls on detail/recent cards consume the server's
+committed HX-Trigger state. Both controls were verified for save and remove in the real browser, including posting
+from the repeated card, and server-event regression assertions were added. The previous workstream plans record
+these follow-ups. These are integration corrections within the four approved features, with no new feature scope.
+
+Exit check 4 passed after rebuilding migrate: the final full Docker suite, including the full-data dashboard check and
+wishlist regression assertions, is recorded verbatim in .cache/phase3a/activity-full-suite.log. A Docker service stop
+interrupted an earlier final rerun after prior complete green runs; its partial output is preserved separately as
+activity-interrupted-final-suite.log and is not counted as a pass. Services were restarted and the complete suite
+reran successfully. Migration drift, Django system checks, host docs/packaging checks and scripts/check_docs.py passed.
+The existing container-only Git-index skips remain visible; their host equivalents passed. No functional omissions or
+remaining blockers were identified. Fresh Claude Code review remains pending on all four local branches. No push,
+PR or merge was performed.

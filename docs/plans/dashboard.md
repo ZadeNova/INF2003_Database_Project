@@ -81,3 +81,5 @@ built migrate and ran the full Docker suite, including the marked full-data prof
 checks passed. The existing container-only Git-index skips are visible; host equivalents passed. No contract omissions
 or deviations beyond approved amendment a. The chosen risk threshold is documented in docs/DECISIONS.md. Fresh Claude
 Code review and visual inspection remain pending. No push, PR or merge was performed.
+
+24 October 2026 — Integration check on activity/events: responsive browser inspection found Chart.js default blue bars in the otherwise working dashboard. The final stacked branch disables automatic chart colours and seeds the design tokens before construction. The 375px chart and table were inspected in both themes with no document overflow or console errors. This small visual integration fix is carried by activity/events; no dashboard data or query behaviour changed.

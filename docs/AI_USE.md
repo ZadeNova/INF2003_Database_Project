@@ -32,3 +32,4 @@ One line per workstream, added at close-out.
 | reviews | Codex | Implemented per-line reviews, transactional summaries and Bayesian ranking, moderation audit, scoped pages and real-database checks | reviewer: pending (Claude Code) |
 | wishlist | Codex | Implemented composite-key saves, trigger-created restock alerts, unseen uniqueness, scoped HTMX pages and cancellation/raw-update checks | reviewer: pending (Claude Code) |
 | dashboard | Codex | Recorded amendment a; implemented materialized sales, restricted refresh, named analytical SQL, as-of panels and independent database checks | reviewer: pending (Claude Code) |
+| activity | Codex | Implemented time-series setup, best-effort events, recent/trending panels, scoped seller conversion, labelled weighted seeding, responsive browser checks, chart palette and repeated-wishlist-control integration fixes and real-database checks | reviewer: pending (Claude Code) |
