@@ -264,6 +264,36 @@ EXECUTE. It fixes table_name to reviews and action to review.takedown/review.res
 requires an operator from transaction-local mercer.actor_id and a nonblank mercer.audit_reason, and records the
 hidden-state transition. PostgreSQL trusts the app's MongoDB change; the app keeps SQL open through the MongoDB commit.
 
+### Dashboard materialization and reporting date
+
+`public.dashboard_as_of()` is a stable, invoker-rights SQL function returning the latest imported order's local
+placed_at date. It joins checkouts with a non-null Olist source ID, so demo orders cannot move the anchor. Runtime
+has EXECUTE; PUBLIC does not. This one function supplies both the dashboard and the sales materialization.
+
+`daily_product_sales` is a materialized view with product_id, day (Singapore date), units (bigint) and revenue
+(numeric(12,2), item value without freight). It is created WITH NO DATA; migrate alone leaves it unpopulated.
+`daily_product_sales_product_day` is its unique B-tree index on (product_id, day). Only orders placed by the reporting
+date enter it; cancellations by that date are excluded, while later cancellations do not erase historical sales.
+A materialized one-row cutoff CTE evaluates the reporting date once per refresh.
+
+`public.refresh_daily_product_sales()` is owner-owned SECURITY DEFINER with search_path public, pg_temp, PUBLIC
+EXECUTE revoked and runtime EXECUTE granted. It serializes refreshes with a transaction advisory lock, performs the
+first population normally and later REFRESH MATERIALIZED VIEW CONCURRENTLY. The importer invokes it after committing
+the verified import; a refresh failure reports that the import committed. The operator can also refresh by POST.
+Runtime keeps SELECT on the view and cannot refresh it directly.
+
+The stock query fills zero-sale calendar days before a 28-row AVG window. Exact integer/numeric cross multiplication
+compares cover with lead time, avoiding rounding at the replenishment boundary. Category revenue uses monthly RANK
+and calendar-aware LAG. Delivery buckets use local calendar-day differences and SQL haversine distance between zip
+centre points; missing geolocation stays null. SQL order rows join one MongoDB mean score per order in Python,
+excluding hidden reviews, copied from_order_review rows and reviews/deliveries after the reporting date. Poor-product
+ratings are another MongoDB aggregation with the same date and moderation boundary.
+
+The named STOCK_PLANNING, CATEGORY_PERFORMANCE, BAYESIAN_RATING and DELAY_BUCKETS SQL definitions live in
+[dashboard/queries.py](../src/dashboard/queries.py). BAYESIAN_RATING is the SQL counterpart for a future isolated
+benchmark review copy; application reviews remain only in MongoDB. Its tests supply statement-local CTE rows without
+creating a SQL review table. The dashboard introduces no benchmark services, loaders or measurements.
+
 ### Normalisation (3NF)
 
 Each base table describes one entity, with a surrogate primary key and explicit source/business candidate keys.

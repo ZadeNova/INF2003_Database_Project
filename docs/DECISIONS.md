@@ -177,3 +177,19 @@ Pillow 13.0.0 is pinned for the upload path after checking the [maintainer relea
 | wishlist-i2 | Add an AFTER UPDATE OF stock trigger alongside product_update_audit, firing only on zero to positive | Seller edits, raw SQL and cancellation restocks share the same database path; both triggers retain their work |
 | wishlist-i3 | Hide non-purchasable products in wishlist/alerts; mark only the displayed page's visible alerts seen on GET, leaving HEAD unchanged | A customer keeps unseen alerts they have not actually opened; hidden products do not leak through the badge |
 | wishlist-i4 | Cache saved product IDs only for the current rendered request | Product cards share one ownership query without introducing a cache service or a second source of truth |
+
+## dashboard amendment a (24 October 2026; confirmed by Chee Long)
+
+Derive the reporting date from the latest imported order placed_at (checkouts with an Olist source ID), through the central dashboard_as_of() SQL function. Demo orders never move this anchor. Every panel excludes events after that local date. Shifted deliveries after the last placed_at remain valid source history and are left unchanged. This supersedes the fixed date in the original dashboard decision a; fixture checks use their own imported date.
+
+## dashboard implementation (24 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| dashboard-i1 | Fill all 28 calendar days, use AVG/SUM windows, compare stock × 28 with lead days × units | Zero-sale days count and replenishment stays exact at the lead-time boundary |
+| dashboard-i2 | Revenue is item value without freight; cancellations are evaluated as of the reporting date | Stock demand and category performance share one historical definition, including later cancellation events |
+| dashboard-i3 | First materialization is a normal refresh, subsequent refreshes are concurrent, serialized by an advisory lock | PostgreSQL cannot refresh an unpopulated view concurrently; the runtime role still receives only the narrow function privilege |
+| dashboard-i4 | Late-delivery share above 20% marks a seller at risk; mean score uses reviewed orders only | Makes the plan's threshold explicit while keeping unreviewed deliveries in the lateness denominator |
+| dashboard-i5 | A calendar-month gap yields no month-on-month percentage, and the chart shows the latest month's leading categories | Comparing with an older observed month would mislabel the change; the full category history stays in the table |
+| dashboard-i6 | Keep analytical SQL importable; the Bayesian counterpart expects the benchmark's future SQL reviews relation and is tested with a statement-local CTE | No review scores are persisted in PostgreSQL by the application; no benchmark implementation is started |
+| dashboard-i7 | Vendor Chart.js 4.5.1 with its source map and MIT licence | The chart works without a runtime CDN and Django's static manifest resolves the upstream source-map reference |

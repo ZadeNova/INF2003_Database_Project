@@ -3137,6 +3137,12 @@ ul.catalogue-counts, .catalogue-counts ul { padding:0; list-style:none; }
 
 
 /* checkout */
+.dashboard-page { overflow-wrap:anywhere; }
+.dashboard-table { width:100%; border-collapse:collapse; min-width:64rem; }
+.dashboard-table th, .dashboard-table td { text-align:left; padding:var(--space-3); border-bottom:1px solid var(--color-border-subtle); vertical-align:top; }
+.dashboard-table th { font-family:var(--font-mono); font-size:1.3rem; }
+.dashboard-table td:not(:first-child) { font-variant-numeric:tabular-nums; }
+.dashboard-chart { position:relative; height:32rem; max-width:100%; margin:var(--space-3) 0; }
 .wishlist-action { margin:var(--space-2) 0; }
 .wishlist-action .button { width:100%; white-space:normal; }
 .review-histogram { display:grid; grid-template-columns:auto minmax(0, 1fr); gap:var(--space-2) var(--space-3); max-width:44rem; margin:var(--space-3) 0; }
