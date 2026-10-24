@@ -69,3 +69,13 @@ Local execution evidence is under .cache/phase3a (ignored), including reviews-ex
 Git-index skips remain visible in the suite output; the host equivalents ran successfully. No contract omissions
 or scope deviations. Existing import precision is preserved explicitly in the update pipeline. Fresh Claude Code
 review and visual inspection remain pending; no push, PR or merge was performed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding reviews R2.
+Seller ratings and My reviews matched seller_id without an index. Added review_seller_date on seller_id ascending,
+answered_at descending through idempotent mongo_setup and documented it in DATA_MODEL.md. The test was added first:
+test_seller_rating_match_uses_seller_date_index_and_only_own_documents explains the seller_rating match with
+executionStats, requires IXSCAN on the named index and checks that documents examined belong only to that seller.
+It also runs mongo_setup twice and compares the actual seller rating count with the fixture. The regression failed
+with a COLLSCAN on the previous implementation.
+Rebuilt migrate and ran all of test_reviews.py successfully; the unaltered output is
+.cache/phase3a-review/reviews-R2-tests.log. No hint is used in the execution-plan assertion.

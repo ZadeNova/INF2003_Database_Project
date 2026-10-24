@@ -2,9 +2,11 @@
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from decimal import Decimal, localcontext
+from io import StringIO
 
 from bson import Decimal128
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import close_old_connections, connection
 from django.http import Http404
 from django.test import Client
@@ -190,6 +192,34 @@ def test_customer_ui_and_seller_scoping_and_operator_roles(graph, mongo_db):
     assert client.get("/operator/reviews/").status_code == 403
     assert client.post(path, {"action": "delete"}).status_code == 302
     assert_summary(mongo_db, item)
+
+
+def test_seller_rating_match_uses_seller_date_index_and_only_own_documents(imported, mongo_db):
+    from reviews.queries import seller_rating
+    for _ in range(2):
+        call_command("mongo_setup", database=mongo_db.name, stdout=StringIO())
+    seller_id = mongo_db.reviews.find_one({})["seller_id"]
+    match = {"seller_id": seller_id, **VISIBLE}
+    expected = list(mongo_db.reviews.find(match))
+    assert 0 < len(expected) < mongo_db.reviews.count_documents({})
+    assert seller_rating(mongo_db, seller_id)["count"] == len(expected)
+    explained = mongo_db.command("explain", {"find": "reviews", "filter": match}, verbosity="executionStats")
+
+    def index_scans(node):
+        if isinstance(node, dict):
+            if node.get("stage") == "IXSCAN":
+                yield node.get("indexName")
+            for child in node.values():
+                yield from index_scans(child)
+        elif isinstance(node, list):
+            for child in node:
+                yield from index_scans(child)
+
+    assert "review_seller_date" in set(index_scans(explained["queryPlanner"]["winningPlan"]))
+    stats = explained["executionStats"]
+    assert stats["nReturned"] == len(expected)
+    assert stats["totalDocsExamined"] == mongo_db.reviews.count_documents({"seller_id": seller_id})
+    assert mongo_db.reviews.index_information()["review_seller_date"]["key"] == [("seller_id", 1), ("answered_at", -1)]
 
 
 def test_imported_display_translation_history_pagination_and_takedown(imported, mongo_db):
