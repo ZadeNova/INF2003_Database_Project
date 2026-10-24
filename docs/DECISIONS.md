@@ -193,6 +193,7 @@ Derive the reporting date from the latest imported order placed_at (checkouts wi
 | dashboard-i5 | A calendar-month gap yields no month-on-month percentage, and the chart shows the latest month's leading categories | Comparing with an older observed month would mislabel the change; the full category history stays in the table |
 | dashboard-i6 | Keep analytical SQL importable; the Bayesian counterpart expects the benchmark's future SQL reviews relation and is tested with a statement-local CTE | No review scores are persisted in PostgreSQL by the application; no benchmark implementation is started |
 | dashboard-i7 | Vendor Chart.js 4.5.1 with its source map and MIT licence | The chart works without a runtime CDN and Django's static manifest resolves the upstream source-map reference |
+| dashboard-i8 (team review decision, 24 October 2026) | Accept a few seconds on the full data for Tier 1 and preload the dashboard before filming; leave caching to the Tier 2 redis workstream | The Python cross-store delay join preserves decision c's single-store ownership. Its measured cost is report material, not authorization to start Tier 2 work |
 
 ## activity implementation (24 October 2026; review pending)
 

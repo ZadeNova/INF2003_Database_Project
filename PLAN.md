@@ -536,6 +536,7 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | On recording day, run seed_activity and place a few demo purchases for the seller's products before filming Insights. Keep the real rolling window because browsing events expire |
+| Recording-day dependency: the dashboard takes a few seconds on the full data | Preload the operator dashboard before filming; accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
 | Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |

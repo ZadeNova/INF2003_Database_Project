@@ -93,3 +93,18 @@ deliveries with three late are flagged, a future delivery cannot qualify a selle
 independent calculation. The existing direct fixture comparison now checks eligibility and ordering too.
 Rebuilt migrate and ran all of test_dashboard.py successfully, including its full-data profile comparison; unaltered
 output is .cache/phase3a-review/dashboard-R1-tests.log. The new regression failed on the previous implementation.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding dashboard R6.
+The review brief reports about 2.7 s per dashboard load, including about 1.6 s for the cross-store delay join, measured
+on the full local data with direct service calls. These are the reviewer's measurements, not a new timing run in this
+fix round. Retained as report material for decision c: accepted for Tier 1, with caching left to the Tier 2 redis
+workstream. No code changed. README.md and PLAN.md now require preloading the dashboard before filming, and
+docs/DECISIONS.md records the accepted tradeoff.
+
+24 October 2026 — Fix-round close-out (Codex). The final migrate build and complete Docker suite passed; unaltered
+outputs are .cache/phase3a-review/final-build.log and final-full-suite.log. The existing container-only Git-index
+skips remain visible; host docs/packaging checks passed (host-docs-packaging-tests.log). scripts/check_docs.py passed
+(check-docs.log). Focused dashboard, reviews and activity results are recorded with their findings above and in the
+corresponding plans. mongo_setup installed the new seller-review index in the local application database. The AI use
+log identifies the Claude Code session that supplied this brief as not fresh. All four Phase 3A workstreams stay in
+review with plans in-progress, pending re-review. The lower branches are unchanged; no push, PR or merge was performed.

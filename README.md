@@ -290,6 +290,9 @@ feature, press "Refresh sales history" once; migrations alone leave the material
 also refreshes after a restock. It uses a restricted owner-owned function, so the web role still has no direct refresh
 privilege. A refresh failure after import is reported as a committed import requiring a refresh retry.
 
+The dashboard takes a few seconds on the full data; preload `/operator/dashboard/` before filming. This is accepted
+for Tier 1. Caching remains in the Tier 2 redis workstream.
+
 Chart.js is pinned to [the upstream 4.5.1 release](https://github.com/chartjs/Chart.js/releases/tag/v4.5.1), with its
 MIT licence beside the vendored distribution. Exact amounts are rendered in the tables; chart coordinates are presentation only.
 
