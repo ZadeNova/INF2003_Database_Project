@@ -6,8 +6,8 @@ are maintained separately in data/derived/olist/templates/categories.json.
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import random
+from pathlib import Path
 
 from olist_common import ROOT, checksums, read_csv, write_csv, write_ndjson
 

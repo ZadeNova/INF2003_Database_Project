@@ -1,18 +1,18 @@
 """Phase 1A reads use PostgreSQL visibility and MongoDB specifications."""
-from io import StringIO
-from datetime import timedelta
 import os
+from datetime import timedelta
+from io import StringIO
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db.models import Count, Max, Q
 from django.test import Client
 
 from accounts.models import Seller
 from catalogue.models import Product
 from orders.models import Order
-from django.db.models import Count, Max, Q
 
 pytestmark=pytest.mark.django_db(transaction=True)
 
@@ -52,14 +52,16 @@ def test_suspended_sellers_products_are_inaccessible(imported):
 
 
 def test_missing_spec_renders_an_explicit_unavailable_state(imported,mongo_db):
-    product=visible();mongo_db.product_specs.delete_one({"_id":product.pk})
+    product=visible()
+    mongo_db.product_specs.delete_one({"_id":product.pk})
     response=Client().get(f"/products/{product.pk}/")
     assert response.status_code == 200 and "Specifications are temporarily unavailable" in response.content.decode()
 
 
 def test_real_mongo_outage_is_a_sanitized_retryable_503(imported,monkeypatch):
     product=visible()
-    monkeypatch.setenv("MONGO_HOST","127.0.0.1");monkeypatch.setenv("MONGO_PORT","1")
+    monkeypatch.setenv("MONGO_HOST","127.0.0.1")
+    monkeypatch.setenv("MONGO_PORT","1")
     response=Client().get(f"/products/{product.pk}/")
     assert response.status_code == 503 and response["Retry-After"] == "5"
     assert "127.0.0.1" not in response.content.decode()
@@ -78,7 +80,8 @@ def test_future_routes_are_404_even_for_authenticated_roles(imported):
         user=get_user_model().objects.filter(role=role).first()
         if user is None:
             user=get_user_model().objects.create_user(username="operator",role="operator")
-        client=Client();client.force_login(user)
+        client=Client()
+        client.force_login(user)
         for route in ("/analytics/","/dashboard/","/products/manage/"):
             assert client.get(route).status_code == 404
 
@@ -189,6 +192,7 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
 def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(imported):
     # seed_demo resets the audit context itself, so a caller's actor and reason never leak into its product changes.
     from django.db import transaction
+
     from accounts.audit import set_audit_context
     from accounts.models import AuditLog
     operator=get_user_model().objects.create_user(username="ctx-operator",role="operator")

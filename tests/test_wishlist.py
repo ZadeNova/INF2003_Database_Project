@@ -1,19 +1,19 @@
 """Composite wishlist keys, trigger-created alerts and scoped UI against real databases."""
-import uuid
 import json
+import uuid
 
+import pytest
+from account_helpers import runtime_connection
+from checkout_helpers import customer, product
 from django.db import IntegrityError, connection, transaction
 from django.http import Http404
 from django.test import Client
-import pytest
 
 from accounts.models import AuditLog
 from catalogue.models import Product
-from orders.services import add_to_cart, cart_review, checkout, change_order_status
+from orders.services import add_to_cart, cart_review, change_order_status, checkout
 from wishlist.models import RestockAlert, WishlistItem
 from wishlist.services import set_saved, unseen_count
-from account_helpers import runtime_connection
-from checkout_helpers import customer, product
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -67,10 +67,12 @@ def test_checkout_cancellation_restock_creates_alert():
     watcher = customer("watcher")
     add_to_cart(buyer, item.pk)
     placed = checkout(buyer, uuid.uuid4(), cart_review(buyer)["fingerprint"])
-    item.refresh_from_db(); assert item.stock == 0
+    item.refresh_from_db()
+    assert item.stock == 0
     set_saved(watcher, item.pk, True)
     change_order_status(buyer, placed.orders.get().pk, "cancel", "Restock trigger exit check")
-    item.refresh_from_db(); assert item.stock == 1
+    item.refresh_from_db()
+    assert item.stock == 1
     assert RestockAlert.objects.get().customer_id == watcher.pk
     assert AuditLog.objects.filter(action="order.cancelled").exists()
     assert AuditLog.objects.filter(table_name="catalogue_product", after__stock=1).exists()
@@ -79,9 +81,13 @@ def test_checkout_cancellation_restock_creates_alert():
 def test_customer_scoping_badge_and_seen_alert_allow_next_restock():
     buyer, other = customer(), customer("other")
     item, private = product(stock=0), product("private", stock=0)
-    set_saved(buyer, item.pk, True); set_saved(other, item.pk, True); set_saved(other, private.pk, True)
-    restock(item, 4); restock(private, 2)
-    client = Client(); client.force_login(buyer)
+    set_saved(buyer, item.pk, True)
+    set_saved(other, item.pk, True)
+    set_saved(other, private.pk, True)
+    restock(item, 4)
+    restock(private, 2)
+    client = Client()
+    client.force_login(buyer)
     page = client.get("/wishlist/?customer_id=" + str(other.pk))
     assert page.status_code == 200
     assert list(page.context["page_obj"].object_list)[0].pk == item.pk
@@ -93,7 +99,8 @@ def test_customer_scoping_badge_and_seen_alert_allow_next_restock():
     alerts = client.get("/alerts/?customer_id=" + str(other.pk))
     assert alerts.status_code == 200 and [a.product_id for a in alerts.context["page_obj"]] == [item.pk]
     assert unseen_count(buyer) == 0 and unseen_count(other) == 2
-    restock(item, 0); restock(item, 7)
+    restock(item, 0)
+    restock(item, 7)
     assert RestockAlert.objects.filter(customer=buyer, product=item).count() == 2
     assert unseen_count(buyer) == 1 and unseen_count(other) == 2
     client.post(f"/wishlist/{item.pk}/remove/")
@@ -104,13 +111,15 @@ def test_customer_scoping_badge_and_seen_alert_allow_next_restock():
 @pytest.mark.parametrize("hidden", ["taken_down", "inactive", "suspended"])
 def test_alerts_and_badge_hide_products_outside_purchasable_view(hidden):
     buyer, item = customer(), product(stock=0)
-    set_saved(buyer, item.pk, True); restock(item, 1)
+    set_saved(buyer, item.pk, True)
+    restock(item, 1)
     if hidden == "suspended":
         from accounts.models import Seller
         Seller.objects.filter(pk=item.seller_id).update(status="suspended")
     else:
         Product.objects.filter(pk=item.pk).update(**({"taken_down": True} if hidden == "taken_down" else {"active": False}))
-    client = Client(); client.force_login(buyer)
+    client = Client()
+    client.force_login(buyer)
     assert unseen_count(buyer) == 0
     page = client.get("/alerts/")
     assert len(page.context["page_obj"].object_list) == 0
@@ -140,7 +149,8 @@ def test_insert_and_delete_injection_parameters_cannot_reach_other_rows(saved):
 
 def test_htmx_buttons_post_only_csrf_roles_and_safe_redirect():
     buyer, item = customer(), product(stock=0)
-    client = Client(); client.force_login(buyer)
+    client = Client()
+    client.force_login(buyer)
     for path in [f"/wishlist/{item.pk}/add/", f"/wishlist/{item.pk}/remove/"]:
         assert client.get(path).status_code == 405
     page = client.post(f"/wishlist/{item.pk}/add/", {"next": "https://evil.example/"}, HTTP_HX_REQUEST="true")
@@ -150,9 +160,11 @@ def test_htmx_buttons_post_only_csrf_roles_and_safe_redirect():
     assert json.loads(page["HX-Trigger"]) == {"wishlistChanged":{"product_id":item.pk,"saved":False}}
     assert b"Save to wishlist" in page.content
     assert Client().post(f"/wishlist/{item.pk}/add/", HTTP_HX_REQUEST="true")["HX-Redirect"] == "/login/"
-    secure = Client(enforce_csrf_checks=True); secure.force_login(buyer)
+    secure = Client(enforce_csrf_checks=True)
+    secure.force_login(buyer)
     assert secure.post(f"/wishlist/{item.pk}/remove/").status_code == 403
-    seller = Client(); seller.force_login(item.seller.user)
+    seller = Client()
+    seller.force_login(item.seller.user)
     assert seller.get("/wishlist/").status_code == 403 and seller.get("/alerts/").status_code == 403
     assert seller.post(f"/wishlist/{item.pk}/add/").status_code == 403
     response = client.post(f"/wishlist/{item.pk}/remove/", {"next": "//evil.example/"})

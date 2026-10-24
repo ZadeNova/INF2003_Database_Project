@@ -1,11 +1,11 @@
 """Customer registration with an optional location, and atomic seller applications."""
 import pytest
+from account_helpers import PASSWORD, make_customer
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, connection
 from django.test import Client
 
 from accounts.models import CustomerProfile, Seller
-from account_helpers import PASSWORD, make_customer
 
 pytestmark = pytest.mark.django_db
 

@@ -1,17 +1,16 @@
 """Fixture-backed facets never count products PostgreSQL has hidden or priced out."""
 import csv
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
-import xml.etree.ElementTree as ET
 
 import pytest
-from bson import Decimal128
 from django.test import Client
 
 from accounts.models import Seller
 from catalogue.icons import CATEGORY_ICONS
 from catalogue.models import Category, Product
-from catalogue.search import candidates, facet_match, visible_products
+from catalogue.search import visible_products
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -173,6 +172,7 @@ def test_category_shop_and_generated_labels_render(imported, mongo_db):
 
 def test_cross_store_any_ids_are_bound_values_not_sql(imported):
     from django.db import DatabaseError, transaction
+
     from catalogue.search import matching_products
 
     item = visible_products().first()

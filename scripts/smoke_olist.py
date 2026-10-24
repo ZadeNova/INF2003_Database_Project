@@ -5,12 +5,12 @@ header is localhost because Docker's service name is not a public allowed host.
 No credentials, cookies or response bodies are printed.
 """
 import argparse
-from http.cookiejar import CookieJar
 import json
 import os
 import re
 import urllib.parse
 import urllib.request
+from http.cookiejar import CookieJar
 
 
 def run(base):

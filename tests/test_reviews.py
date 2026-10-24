@@ -4,25 +4,25 @@ from copy import deepcopy
 from decimal import Decimal, localcontext
 from io import StringIO
 
+import psycopg
+import pytest
+from account_helpers import make_operator, runtime_connection
 from bson import Decimal128
+from checkout_helpers import customer, paid_order, product
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import close_old_connections, connection
 from django.http import Http404
 from django.test import Client
-import psycopg
-import pytest
-from pymongo.errors import DuplicateKeyError, WriteError
+from pymongo.errors import DuplicateKeyError
 
 from accounts.models import AuditLog
-from catalogue.services import save_product
 from catalogue.search import search_page, visible_products
+from catalogue.services import save_product
 from config import mongo
 from orders.models import OrderLine
 from reviews.ratings import bayesian_score, empty_summary
 from reviews.services import NEWEST, VISIBLE, moderate_review, write_review
-from account_helpers import make_operator, runtime_connection
-from checkout_helpers import customer, product, paid_order
 
 pytestmark = pytest.mark.django_db(transaction=True)
 STATS = {"_id": "bayesian", "m": Decimal128("4"), "C": Decimal128("2")}
@@ -78,7 +78,8 @@ def test_undelivered_reviews_are_refused(graph, mongo_db, status):
     line = line_for(buyer, item, status)
     with pytest.raises(ValidationError):
         write_review(buyer, line.pk, "create", {"score": 5})
-    client = Client(); client.force_login(buyer)
+    client = Client()
+    client.force_login(buyer)
     assert client.post(f"/reviews/line/{line.pk}/", {"action": "create", "score": 5}).status_code == 404
     assert mongo_db.reviews.count_documents({}) == 0
 
@@ -94,7 +95,8 @@ def test_other_customer_and_duplicate_and_invalid_scores_are_refused(graph, mong
     write_review(buyer, line.pk, "create", {"score": 5})
     with pytest.raises(ValidationError):
         write_review(buyer, line.pk, "create", {"score": 5})
-    row = mongo_db.reviews.find_one({}); row.pop("_id")
+    row = mongo_db.reviews.find_one({})
+    row.pop("_id")
     with pytest.raises(DuplicateKeyError):
         mongo_db.reviews.insert_one(row)
     assert_summary(mongo_db, item)
@@ -175,7 +177,8 @@ def test_literal_injection_text_and_narrow_audit_function(graph, mongo_db):
 def test_customer_ui_and_seller_scoping_and_operator_roles(graph, mongo_db):
     buyer, item = graph
     line = line_for(buyer, item)
-    client = Client(); client.force_login(buyer)
+    client = Client()
+    client.force_login(buyer)
     path = f"/reviews/line/{line.pk}/"
     assert client.get(path).status_code == 200
     assert client.post(path, {"action": "create", "score": "4", "title": "Only our shop", "text": "Good"}).status_code == 302
@@ -183,7 +186,8 @@ def test_customer_ui_and_seller_scoping_and_operator_roles(graph, mongo_db):
     assert b"4.0 / 5 from 1 review" in page.content and b"Only our shop" in page.content
     assert client.post(path, {"action": "edit", "score": "2", "text": "Changed"}).status_code == 302
     assert_summary(mongo_db, item)
-    seller = Client(); seller.force_login(item.seller.user)
+    seller = Client()
+    seller.force_login(item.seller.user)
     assert b"Changed" in seller.get("/seller/reviews/").content
     other = product("other")
     seller.force_login(other.seller.user)
@@ -280,8 +284,8 @@ def test_bayesian_prior_for_new_product_and_top_rated_path(graph, mongo_db):
 
 
 def test_imported_summary_returns_byte_exact_after_insert_and_delete(imported, mongo_db):
-    from catalogue.models import Product
     from accounts.models import User
+    from catalogue.models import Product
     from orders.models import Order
     order = Order.objects.filter(status="delivered").select_related("checkout").first()
     buyer = User.objects.get(pk=order.checkout.customer_id)

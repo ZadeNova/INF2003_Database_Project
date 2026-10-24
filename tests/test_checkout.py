@@ -1,22 +1,20 @@
 """Atomic checkout, replay, freight and lifecycle behaviour on real databases."""
+import uuid
 from datetime import timedelta
 from decimal import Decimal
-import uuid
 
 import pytest
+from checkout_helpers import customer, product
 from django.core.exceptions import PermissionDenied
+from django.db import connection
 from django.http import Http404
 
-from accounts.models import AuditLog, User, Seller
 from accounts.audit import change_seller_status
+from accounts.models import AuditLog, Seller, User
 from catalogue.models import Product
-from checkout_helpers import customer, product
 from config.olist_import import INVARIANTS, sql_invariants
-from django.db import connection
-from orders.models import CartLine, Checkout, Order, OrderLine, Payment, Refund
-from orders.services import (add_to_cart, set_cart_quantity, remove_from_cart, cart_review,
-                             checkout, change_order_status, CheckoutError, CartChangedError,
-                             InsufficientStockError)
+from orders.models import Checkout, Order, OrderLine, Payment, Refund
+from orders.services import CartChangedError, CheckoutError, InsufficientStockError, add_to_cart, cart_review, change_order_status, checkout, remove_from_cart, set_cart_quantity
 
 pytestmark = pytest.mark.django_db(transaction=True)
 PAYLOAD = "x'); DROP TABLE orders_checkout; --"
@@ -201,7 +199,8 @@ def test_ship_deliver_and_cancel_with_stock_refund_and_audit():
     add_to_cart(buyer,item.pk,3)
     other=buy(buyer).orders.get()
     change_order_status(buyer,other.pk,"cancel",PAYLOAD)
-    item.refresh_from_db();other.refresh_from_db()
+    item.refresh_from_db()
+    other.refresh_from_db()
     assert item.stock == 18 and other.status == "cancelled" and other.cancelled_at
     assert (other.refund.amount,other.refund.reason,other.refund.checkout_id) == (Decimal("36"),PAYLOAD,other.checkout_id)
     audit=AuditLog.objects.get(table_name="orders_order",action="order.cancelled")
@@ -248,25 +247,33 @@ def test_services_scope_cart_order_and_actor_roles():
     buyer,other,item,foreign=customer(),customer("other"),product(),product("foreign")
     line=add_to_cart(buyer,item.pk)
     for operation in (lambda:set_cart_quantity(other,line.pk,2),lambda:remove_from_cart(other,line.pk)):
-        with pytest.raises(Http404):operation()
+        with pytest.raises(Http404):
+            operation()
     order=buy(buyer).orders.get()
     for actor,action,error in [(other,"cancel",Http404),(foreign.seller.user,"ship",Http404),(buyer,"ship",PermissionDenied),
                                 (item.seller.user,"deliver",PermissionDenied)]:
-        with pytest.raises(error):change_order_status(actor,order.pk,action)
-    with pytest.raises(PermissionDenied):add_to_cart(item.seller.user,item.pk)
+        with pytest.raises(error):
+            change_order_status(actor,order.pk,action)
+    with pytest.raises(PermissionDenied):
+        add_to_cart(item.seller.user,item.pk)
     Seller.objects.filter(pk=item.seller_id).update(status="suspended")
-    with pytest.raises(Http404):change_order_status(item.seller.user,order.pk,"ship")
+    with pytest.raises(Http404):
+        change_order_status(item.seller.user,order.pk,"ship")
 
 
 def test_sql_injection_negatives_cover_checkout_replay_and_order_actions():
     buyer,item=customer(),product()
     add_to_cart(buyer,item.pk)
     review=cart_review(buyer)["fingerprint"]
-    with pytest.raises(CheckoutError):checkout(buyer,PAYLOAD,review)
-    with pytest.raises(CartChangedError):checkout(buyer,uuid.uuid4(),PAYLOAD)
+    with pytest.raises(CheckoutError):
+        checkout(buyer,PAYLOAD,review)
+    with pytest.raises(CartChangedError):
+        checkout(buyer,uuid.uuid4(),PAYLOAD)
     order=buy(buyer).orders.get()
-    with pytest.raises(Http404):change_order_status(buyer,PAYLOAD,"cancel")
-    with pytest.raises(CheckoutError):change_order_status(buyer,order.pk,PAYLOAD)
+    with pytest.raises(Http404):
+        change_order_status(buyer,PAYLOAD,"cancel")
+    with pytest.raises(CheckoutError):
+        change_order_status(buyer,order.pk,PAYLOAD)
     assert Order.objects.get(pk=order.pk).status == "paid" and Checkout.objects.count()==1
 
 

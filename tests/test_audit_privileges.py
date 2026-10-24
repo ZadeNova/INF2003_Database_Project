@@ -7,12 +7,12 @@ import os
 
 import psycopg
 import pytest
+from account_helpers import make_operator, make_seller, runtime_connection
 from django.db import connection
 from psycopg import errors, sql
 
 from accounts.models import AuditLog
 from config.privileges import grant_runtime
-from account_helpers import make_operator, make_seller, runtime_connection
 
 pytestmark = pytest.mark.django_db(transaction=True)
 RUNTIME = os.environ["POSTGRES_RUNTIME_USER"]

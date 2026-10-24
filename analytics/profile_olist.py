@@ -1,10 +1,10 @@
 """Reproduce the Olist profile; generate dataset and ledger tables without manual counts."""
 import argparse
+import json
+import sys
 from collections import Counter, defaultdict
 from decimal import Decimal
-import json
 from pathlib import Path
-import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from olist_common import ROOT, ZERO, decimal, delay_scores, read_raw, write_json

@@ -1,0 +1,25 @@
+[tool.ruff]
+line-length = 230
+target-version = "py313"
+extend-exclude = ["**/migrations/**", ".cache", "data", "src/static/vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.coverage.run]
+source = ["${COVERAGE_SOURCE-src}"]
+branch = true
+# These repository paths are mounted beside the application inside migrate, outside src/.
+omit = ["*/migrations/*", "*/tests/*", "/app/scripts/*", "/app/data/*"]
+
+[tool.coverage.report]
+fail_under = 80
+precision = 2
+show_missing = true
+include_namespace_packages = true
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"

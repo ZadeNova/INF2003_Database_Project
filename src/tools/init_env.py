@@ -1,7 +1,7 @@
 """Create the local .env, or add the keys it lacks, without printing secrets or changing existing values."""
 import os
-from pathlib import Path
 import secrets
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 

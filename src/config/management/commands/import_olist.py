@@ -1,19 +1,17 @@
-from pathlib import Path
-from collections import defaultdict
 import json
 import resource
 import time
+from collections import defaultdict
+from pathlib import Path
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, connection, transaction
-from pymongo.errors import PyMongoError
 from psycopg import Error as PsycopgError
+from pymongo.errors import PyMongoError
 
 from config import mongo
-from config.olist_import import (TABLES, COLLECTIONS, IMPORT_LOCK, verify_manifest, ensure_empty,
-                                loading_triggers, copy_table, repair_sequences, insert_documents,
-                                sql_invariants, reconcile)
+from config.olist_import import IMPORT_LOCK, TABLES, copy_table, ensure_empty, insert_documents, loading_triggers, reconcile, repair_sequences, sql_invariants, verify_manifest
 
 
 class Command(BaseCommand):

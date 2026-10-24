@@ -1,10 +1,10 @@
 """Select a deterministic, real raw Olist subset with adversarial cases; never invent rows."""
 import argparse
+import sys
 from collections import defaultdict
 from pathlib import Path
-import sys
 
-from olist_common import ROOT, RAW_FILES, ZERO, decimal, checksums, read_raw, write_csv, write_json
+from olist_common import RAW_FILES, ROOT, ZERO, checksums, decimal, read_raw, write_csv, write_json
 
 sys.path.insert(0, str(ROOT / "analytics"))
 from profile_olist import profile

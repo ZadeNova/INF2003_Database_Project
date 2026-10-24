@@ -1,21 +1,21 @@
 from bson import ObjectId
 from bson.errors import InvalidId
-from gridfs import GridFS
-from gridfs.errors import NoFile
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_safe
+from gridfs import GridFS
+from gridfs.errors import NoFile
 
 from accounts.models import Seller
 from activity.services import browsing_panels, record_event
 from config import mongo
 from reviews.queries import review_page, seller_rating
+
 from .forms import SearchForm
 from .models import Category
-from .search import (PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page,
-                     visible_products)
+from .search import PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page, visible_products
 
 
 def _filter_chips(form, data):

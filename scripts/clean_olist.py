@@ -1,16 +1,14 @@
 """Apply the approved 18 rules before import. Run in the pinned tools service."""
 import argparse
-from collections import Counter, defaultdict
-from decimal import Decimal
 import hashlib
 import json
-from pathlib import Path
 import re
+from collections import Counter, defaultdict
+from decimal import Decimal
+from pathlib import Path
 from statistics import median
 
-from olist_common import (ROOT, RAW_FILES, STATUSES, METHODS, HAND_TRANSLATIONS, ZERO, checksums,
-                          decimal, exact_median, latest_reviews, money, read_raw, timestamp,
-                          write_csv, write_json, write_ndjson)
+from olist_common import HAND_TRANSLATIONS, METHODS, RAW_FILES, ROOT, STATUSES, ZERO, checksums, decimal, exact_median, latest_reviews, money, read_raw, timestamp, write_csv, write_json, write_ndjson
 from translate_reviews import read_translations, text_hash
 
 # Field order is also the COPY contract. Nulls are empty unquoted CSV fields.

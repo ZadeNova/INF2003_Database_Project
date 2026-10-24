@@ -1,8 +1,8 @@
 """Read a bounded raster image and store only a freshly encoded, metadata-free image."""
+import warnings
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-import warnings
 
 from django.core.exceptions import ValidationError
 from PIL import Image, ImageOps, UnidentifiedImageError

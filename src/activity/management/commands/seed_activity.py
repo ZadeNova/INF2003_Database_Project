@@ -1,7 +1,7 @@
 """Synthetic browsing, relative to now, weighted by the real imported unit sales."""
-from datetime import timedelta
 import json
 import random
+from datetime import timedelta
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError

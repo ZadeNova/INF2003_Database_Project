@@ -3,13 +3,13 @@ import itertools
 import threading
 
 import pytest
+from account_helpers import make_operator, make_seller
+from db_helpers import wait_until_blocked
 from django.db import DataError, IntegrityError, connection, transaction
 
 from accounts.audit import StaleAction, change_seller_status, set_audit_context
 from accounts.models import AuditLog, Seller
 from catalogue.models import Category, Product, PurchasableProduct
-from account_helpers import make_operator, make_seller
-from db_helpers import wait_until_blocked
 
 STATUSES = ("pending", "approved", "rejected", "suspended")
 LEGAL = {("pending", "approved"): "approve", ("pending", "rejected"): "reject",
@@ -120,7 +120,8 @@ def test_suspension_hides_products_and_reinstatement_restores_them():
     category = Category.objects.create(slug="example", name_en="Example", name_pt="Exemplo")
     product = Product.objects.create(seller=seller, category=category, name="Lamp", price="10.00", freight="1.00",
                                      stock=3, lead_time_days=2)
-    visible = lambda: PurchasableProduct.objects.filter(pk=product.pk).exists()
+    def visible():
+        return PurchasableProduct.objects.filter(pk=product.pk).exists()
     assert visible()
     change_seller_status(seller.pk, "suspend", operator, "Investigation")
     assert not visible()

@@ -3,12 +3,12 @@
 All purchase amounts come from locked PostgreSQL products. No payment details are retained beyond
 method, instalments and amount. Every order/product write starts with transaction-local audit context.
 """
-from collections import OrderedDict
-from datetime import timedelta
-from decimal import Decimal, InvalidOperation
 import hashlib
 import re
 import uuid
+from collections import OrderedDict
+from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
@@ -18,7 +18,8 @@ from django.utils import timezone
 from accounts.audit import set_audit_context
 from accounts.models import User
 from catalogue.models import Product, PurchasableProduct
-from .models import Cart, CartLine, Checkout, MAX_CART_QUANTITY, Payment
+
+from .models import MAX_CART_QUANTITY, Cart, CartLine, Checkout, Payment
 
 ZERO = Decimal("0.00")
 MAX_MONEY = Decimal("9999999999.99")
@@ -149,7 +150,7 @@ def cart_review(user):
         group["total"] += line.total
     total = sum((group["total"] for group in groups.values()), ZERO)
     return {"cart": cart, "groups": list(groups.values()), "lines": lines, "ready": ready,
-            "total": total, "fingerprint": fingerprint_for((l.product_id, l.quantity, l.product.price, l.product.freight) for l in lines)}
+            "total": total, "fingerprint": fingerprint_for((line.product_id, line.quantity, line.product.price, line.product.freight) for line in lines)}
 
 
 def _payments(choices, total):

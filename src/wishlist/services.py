@@ -5,6 +5,7 @@ from django.http import Http404
 
 from accounts.models import User
 from catalogue.models import PurchasableProduct
+
 from .models import RestockAlert
 
 

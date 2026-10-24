@@ -2,11 +2,11 @@
 import uuid
 
 import pytest
+from checkout_helpers import customer, product
 from django.test import Client
 
 from accounts.audit import change_seller_status
 from accounts.models import AuditLog, User
-from checkout_helpers import customer, product
 from orders.services import add_to_cart, cart_review, change_order_status, checkout
 
 pytestmark = pytest.mark.django_db(transaction=True)

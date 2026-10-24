@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from catalogue.models import Product
 from config import mongo
+
 from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING
 
 BUCKET_LABELS = {
@@ -79,13 +80,15 @@ def delivery_analysis(as_of, database):
     sellers = defaultdict(lambda: {"orders": 0, "late": 0, "scores": []})
     for row in deliveries:
         bucket, seller = buckets[row["bucket"]], sellers[row["seller_id"]]
-        bucket["orders"] += 1; seller["orders"] += 1
+        bucket["orders"] += 1
+        seller["orders"] += 1
         seller["seller_id"], seller["shop_name"] = row["seller_id"], row["shop_name"]
         seller["late"] += int(row["delay_days"] > 0)
         if row["distance_km"] is not None:
             bucket["distances"].append(Decimal(str(row["distance_km"])))
         if row["order_id"] in scores:
-            bucket["scores"].append(scores[row["order_id"]]); seller["scores"].append(scores[row["order_id"]])
+            bucket["scores"].append(scores[row["order_id"]])
+            seller["scores"].append(scores[row["order_id"]])
     for bucket in buckets.values():
         bucket["reviewed_orders"] = len(bucket["scores"])
         bucket["average_score"] = sum(bucket["scores"], Decimal(0)) / len(bucket["scores"]) if bucket["scores"] else None

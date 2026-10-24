@@ -1,5 +1,6 @@
 """Install identical owner/runtime separation in application and pytest databases."""
 import os
+
 from psycopg import sql
 
 # Tables written only by owner-owned SECURITY DEFINER triggers (accounts plan, P2). Runtime may read them;

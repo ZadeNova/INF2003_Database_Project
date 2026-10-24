@@ -1,16 +1,17 @@
 """Seller writes keep PostgreSQL open until MongoDB accepts its own fields (catalogue decision c)."""
 import logging
 
-from gridfs import GridFS
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.http import Http404
+from gridfs import GridFS
 from pymongo.errors import PyMongoError
 
 from accounts.audit import set_audit_context
 from accounts.models import Seller, User
 from config import mongo
 from reviews.ratings import empty_summary
+
 from .models import Product
 
 logger = logging.getLogger("mercer.errors")

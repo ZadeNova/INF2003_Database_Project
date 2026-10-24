@@ -10,6 +10,7 @@ from accounts.mixins import CustomerRequiredMixin, safe_local_path
 from catalogue.models import Product
 from catalogue.search import attach_photos, visible_products
 from config import mongo
+
 from .models import RestockAlert, WishlistItem
 from .services import set_saved, visible_alerts
 

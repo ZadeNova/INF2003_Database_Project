@@ -9,11 +9,11 @@ Usage: python scripts/check_docs.py [--staged] [repository root]
 --staged checks what the next commit would contain (the git index) instead of the files on disk, which is what the
 pre-commit hook needs: a file fixed in the working tree but not staged must not hide a broken link in the commit.
 """
-from pathlib import Path, PurePosixPath
 import posixpath
 import re
 import subprocess
 import sys
+from pathlib import Path, PurePosixPath
 
 ALLOWED_MARKDOWN = {
     "README.md", "AGENTS.md", "CLAUDE.md", "RUBRICS.md", "PLAN.md", "DESIGN.md", "CONTRIBUTIONS.md",

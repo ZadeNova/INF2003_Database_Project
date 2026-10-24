@@ -1,9 +1,9 @@
 """init_env.py completes a .env without changing, printing or replacing what is already there."""
 import json
-from pathlib import Path
 import shlex
 import stat
 import string
+from pathlib import Path
 
 from tools.init_env import complete_env, fill
 

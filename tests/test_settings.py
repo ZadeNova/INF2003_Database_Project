@@ -6,6 +6,7 @@ import sys
 import pytest
 from django.conf import settings
 
+
 @pytest.mark.parametrize("changes, message", [
     ({"DJANGO_SECRET_KEY": ""}, "DJANGO_SECRET_KEY"),
     ({"DJANGO_SECRET_KEY": "short"}, "at least 50"),

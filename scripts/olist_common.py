@@ -1,9 +1,9 @@
 """Shared deterministic file formats and exact arithmetic for the Olist pipeline."""
 import csv
-from datetime import datetime, timedelta
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import hashlib
 import json
+from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from statistics import median
 from zoneinfo import ZoneInfo

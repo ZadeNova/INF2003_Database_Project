@@ -1,4 +1,3 @@
-from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -6,6 +5,7 @@ from django.shortcuts import redirect, render
 from django.views import View
 
 from accounts.mixins import OperatorRequiredMixin
+
 from .forms import DashboardFilters
 from .services import as_of_date, dashboard_data, refresh_sales, sales_populated
 
@@ -13,7 +13,8 @@ from .services import as_of_date, dashboard_data, refresh_sales, sales_populated
 def pager(rows, request, key):
     page = Paginator(rows, 25).get_page(request.GET.get(key))
     def url(number):
-        query = request.GET.copy(); query[key] = str(number)
+        query = request.GET.copy()
+        query[key] = str(number)
         return "?" + query.urlencode() + "#" + key
     return {"page": page, "previous": url(page.previous_page_number()) if page.has_previous() else None,
             "next": url(page.next_page_number()) if page.has_next() else None}

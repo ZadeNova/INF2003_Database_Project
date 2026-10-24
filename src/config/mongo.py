@@ -1,9 +1,10 @@
 """One MongoDB connection policy for Django and offline tools (no Django import)."""
-import os
 import atexit
-from threading import Lock
+import os
 from contextlib import contextmanager
 from contextvars import ContextVar
+from threading import Lock
+
 from pymongo import MongoClient
 
 REPLICA_SET = "rs0"

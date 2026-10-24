@@ -1,10 +1,10 @@
 """Role and seller-status access over every protected URL and action (accounts plan, P1)."""
 import pytest
+from account_helpers import PASSWORD, make_customer, make_operator, make_seller
 from django.test import Client
 
 from accounts.audit import change_seller_status
 from accounts.models import AuditLog, Seller
-from account_helpers import PASSWORD, make_customer, make_operator, make_seller
 
 pytestmark = pytest.mark.django_db
 

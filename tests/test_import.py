@@ -1,23 +1,23 @@
 """COPY import, failure rollback and injection negatives on the real two-store fixture."""
-from io import StringIO
 import csv
 import hashlib
 import json
 import os
-from pathlib import Path
 import shutil
+from io import StringIO
+from pathlib import Path
 
 import psycopg
-from psycopg import sql
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import connection, transaction
+from psycopg import sql
 
 from catalogue.models import Product
-from orders.models import Checkout, Payment, Refund, Order
-from config.olist_import import TABLES, COLLECTIONS, sql_invariants, reconcile
+from config.olist_import import COLLECTIONS, TABLES, reconcile, sql_invariants
+from orders.models import Order, Refund
 
 pytestmark = pytest.mark.django_db(transaction=True)
 SOURCE = Path("/app/tests/fixtures/olist/clean")
@@ -155,7 +155,8 @@ def test_source_path_with_sql_metacharacters_is_only_a_filesystem_path(source,tm
 def test_mongo_reference_failure_rolls_back_both_databases(source,mongo_db):
     path=source/"product_specs.ndjson"
     rows=path.read_text().splitlines()
-    row=json.loads(rows[0]);row["category_id"]=999999
+    row=json.loads(rows[0])
+    row["category_id"]=999999
     rows[0]=json.dumps(row)
     path.write_text("\n".join(rows)+"\n",encoding="utf-8")
     refresh_checksums(source)

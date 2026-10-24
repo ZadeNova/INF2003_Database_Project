@@ -1,7 +1,7 @@
 """Database constraints on real PostgreSQL, including ported idempotency coverage."""
+import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-import uuid
 
 import pytest
 from django.contrib.auth import get_user_model

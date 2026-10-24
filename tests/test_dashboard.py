@@ -1,31 +1,28 @@
 """Independent fixture calculations, time cutoffs and the runtime refresh boundary."""
+import json
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
-import json
 from pathlib import Path
 
-from bson import Decimal128
-from django.core.exceptions import ValidationError
-from django.core.management import call_command
-from django.db import DataError, connection
-from django.test import Client
-from django.utils import timezone
 import psycopg
 import pytest
+from account_helpers import make_operator, runtime_connection
+from checkout_helpers import customer, paid_order, product
+from django.core.exceptions import ValidationError
+from django.core.management import call_command
+from django.db import DataError
+from django.test import Client
+from django.utils import timezone
 
-from accounts.models import User
 from catalogue.models import Product
 from catalogue.search import visible_products
 from dashboard.queries import BAYESIAN_RATING, CATEGORY_PERFORMANCE, DELAY_BUCKETS
-from dashboard.services import (BUCKET_LABELS, as_of_date, category_performance, dashboard_data,
-    delivery_analysis, end_of_day, poor_reviews_pipeline, query_rows, refresh_sales, stock_planning)
+from dashboard.services import BUCKET_LABELS, as_of_date, category_performance, dashboard_data, delivery_analysis, end_of_day, poor_reviews_pipeline, query_rows, refresh_sales, stock_planning
 from orders.models import Order, OrderLine
 from reviews.ratings import bayesian_score, empty_summary
 from reviews.services import write_review
-from account_helpers import make_operator, runtime_connection
-from checkout_helpers import customer, product, paid_order
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -51,7 +48,8 @@ def test_import_refresh_and_fixture_as_of_and_materialized_totals(imported):
 
 
 def test_every_stock_number_and_exact_replenishment_boundary(imported):
-    as_of = as_of_date(); sales = reference_sales(as_of)
+    as_of = as_of_date()
+    sales = reference_sales(as_of)
     expected_ids = set(visible_products().values_list("pk", flat=True))
     rows = stock_planning(as_of)
     assert {r["product_id"] for r in rows} == expected_ids
@@ -73,11 +71,13 @@ def test_every_stock_number_and_exact_replenishment_boundary(imported):
 
 
 def test_category_revenue_units_rank_and_calendar_month_change(imported):
-    as_of = as_of_date(); grouped = defaultdict(lambda: {"units": 0, "revenue": Decimal(0)})
+    as_of = as_of_date()
+    grouped = defaultdict(lambda: {"units": 0, "revenue": Decimal(0)})
     products = Product.objects.in_bulk()
     for (pid, day), value in reference_sales(as_of).items():
         row = grouped[(products[pid].category_id, day.replace(day=1))]
-        row["units"] += value["units"]; row["revenue"] += value["revenue"]
+        row["units"] += value["units"]
+        row["revenue"] += value["revenue"]
     rows = category_performance(as_of)
     assert len(rows) == len(grouped)
     for row in rows:
@@ -95,8 +95,10 @@ def test_category_revenue_units_rank_and_calendar_month_change(imported):
 
 
 def test_demo_orders_do_not_move_anchor_and_future_events_do_not_enter_sales(imported):
-    as_of = as_of_date(); before = category_performance(as_of)
-    item = Product.objects.first(); buyer = customer("later")
+    as_of = as_of_date()
+    before = category_performance(as_of)
+    item = Product.objects.first()
+    buyer = customer("later")
     placed, order = paid_order(buyer, item)
     OrderLine.objects.create(order=order, seller=item.seller, product=item, quantity=100, unit_price=10, freight=2)
     Order.objects.filter(pk=order.pk).update(placed_at=end_of_day(as_of) + timedelta(days=30))
@@ -122,21 +124,26 @@ def reference_deliveries(as_of, database):
         answered = review["answered_at"].replace(tzinfo=dt_timezone.utc)
         if not review.get("taken_down") and not review.get("from_order_review") and answered < end:
             score_groups[review["order_id"]].append(review["score"])
-    buckets = {key: [] for key in BUCKET_LABELS}; sellers = defaultdict(lambda: {"orders": 0, "late": 0, "scores": []})
+    buckets = {key: [] for key in BUCKET_LABELS}
+    sellers = defaultdict(lambda: {"orders": 0, "late": 0, "scores": []})
     orders = Order.objects.filter(status="delivered", delivered_at__lt=end, placed_at__lt=end)
     for order in orders:
         days = (timezone.localdate(order.delivered_at) - timezone.localdate(order.estimated_delivery)).days
         bucket = ("early_over_7" if days < -7 else "early_up_to_7_or_on_time" if days <= 0 else "late_1_to_7" if days <= 7 else "late_8_to_14" if days <= 14 else "late_over_14")
-        seller = sellers[order.seller_id]; seller["orders"] += 1; seller["late"] += int(days > 0)
+        seller = sellers[order.seller_id]
+        seller["orders"] += 1
+        seller["late"] += int(days > 0)
         scores = score_groups.get(order.pk)
         if scores:
             score = Decimal(sum(scores)) / len(scores)
-            buckets[bucket].append(score); seller["scores"].append(score)
+            buckets[bucket].append(score)
+            seller["scores"].append(score)
     return buckets, sellers
 
 
 def test_delay_bucket_scores_and_each_seller_risk_match_direct_calculation(imported, mongo_db):
-    as_of = as_of_date(); expected, seller_values = reference_deliveries(as_of, mongo_db)
+    as_of = as_of_date()
+    expected, seller_values = reference_deliveries(as_of, mongo_db)
     buckets, sellers, excluded = delivery_analysis(as_of, mongo_db)
     for row in buckets:
         values = expected[row["key"]]
@@ -160,7 +167,8 @@ def test_delay_bucket_scores_and_each_seller_risk_match_direct_calculation(impor
 
 
 def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, mongo_db):
-    as_of = as_of_date(); end = end_of_day(as_of)
+    as_of = as_of_date()
+    end = end_of_day(as_of)
     buyer = customer("risk-buyer")
     items = [product(name) for name in ["risk-small", "risk-boundary", "risk-tie", "risk-covered"]]
     for item, (count, late) in zip(items, [(9, 9), (10, 3), (10, 3), (10, 2)]):
@@ -188,7 +196,8 @@ def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, m
     assert [row["seller_id"] for row in data["seller_rows"]] == expected
     assert data["seller_excluded_count"] == sum(value["orders"] < 10 for value in direct.values())
     assert data["seller_min_orders"] == 10
-    client = Client(); client.force_login(make_operator())
+    client = Client()
+    client.force_login(make_operator())
     response = client.get("/operator/dashboard/")
     assert response.status_code == 200
     assert b"At least 10 delivered orders" in response.content
@@ -198,7 +207,8 @@ def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, m
 
 
 def test_all_five_half_open_delay_boundaries_and_future_delivery_cutoff(imported):
-    as_of = as_of_date(); end = end_of_day(as_of)
+    as_of = as_of_date()
+    end = end_of_day(as_of)
     order = Order.objects.filter(status="delivered", delivered_at__lt=end).first()
     delivered = end - timedelta(days=10)
     for delay, expected in [(-8,"early_over_7"),(-7,"early_up_to_7_or_on_time"),(0,"early_up_to_7_or_on_time"),
@@ -211,7 +221,8 @@ def test_all_five_half_open_delay_boundaries_and_future_delivery_cutoff(imported
 
 
 def test_poor_review_pipeline_excludes_later_and_hidden_reviews(imported, mongo_db):
-    as_of = as_of_date(); end = end_of_day(as_of)
+    as_of = as_of_date()
+    end = end_of_day(as_of)
     buyer, item = customer(), product("poor")
     stats = mongo_db.platform_stats.find_one({"_id":"bayesian"})
     mongo_db.product_specs.insert_one({"_id":item.pk,"category_id":item.category_id,"description":"Poor example",
@@ -277,7 +288,9 @@ def test_runtime_refresh_function_but_not_direct_refresh_and_public_revocation(i
 
 
 def test_operator_dashboard_all_panels_and_roles_and_refresh_csrf(imported):
-    operator = make_operator(); client = Client(); client.force_login(operator)
+    operator = make_operator()
+    client = Client()
+    client.force_login(operator)
     response = client.get("/operator/dashboard/")
     assert response.status_code == 200 and response.context["as_of"] == as_of_date()
     for title in [b"Replenishment priorities",b"Category performance",b"Delivery delay and review score",b"Seller delivery risk",b"Products with poor reviews"]:
@@ -285,10 +298,13 @@ def test_operator_dashboard_all_panels_and_roles_and_refresh_csrf(imported):
     assert response.content.count(b"As of 24 October 2026") == 5
     assert client.post("/operator/dashboard/refresh/",{"view":"x; DROP TABLE orders_order"}).status_code == 302
     assert client.get("/operator/dashboard/refresh/").status_code == 405
-    secure = Client(enforce_csrf_checks=True); secure.force_login(operator)
+    secure = Client(enforce_csrf_checks=True)
+    secure.force_login(operator)
     assert secure.post("/operator/dashboard/refresh/").status_code == 403
-    client.force_login(customer("customer")); assert client.get("/operator/dashboard/").status_code == 403
-    client.force_login(Product.objects.first().seller.user); assert client.get("/operator/dashboard/").status_code == 403
+    client.force_login(customer("customer"))
+    assert client.get("/operator/dashboard/").status_code == 403
+    client.force_login(Product.objects.first().seller.user)
+    assert client.get("/operator/dashboard/").status_code == 403
     assert Client().get("/operator/dashboard/").status_code == 302
     client.force_login(operator)
     for field in ["category","seller"]:
@@ -308,5 +324,6 @@ def test_full_data_delay_pattern_matches_profile_within_tolerance(mongo_db):
         assert row["average_score"] is not None
         assert abs(row["average_score"] - Decimal(expected[row["key"]]["average"])) <= Decimal("0.05")
     averages = [r["average_score"] for r in actual]
-    pattern = lambda values: [a > b for a,b in zip(values, values[1:])]
+    def pattern(values):
+        return [a > b for a,b in zip(values, values[1:])]
     assert pattern(averages) == pattern([Decimal(expected[key]["average"]) for key in BUCKET_LABELS])

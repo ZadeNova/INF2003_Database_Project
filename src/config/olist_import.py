@@ -1,9 +1,8 @@
 """Load committed clean files only. No cleaning, translation or generation here."""
-from collections import Counter
-from contextlib import contextmanager
 import csv
 import hashlib
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 from bson import json_util
@@ -13,7 +12,7 @@ from django.db import connection
 from psycopg import sql
 from psycopg.pq import TransactionStatus
 
-from accounts.models import CustomerProfile, Seller, Geolocation
+from accounts.models import CustomerProfile, Geolocation, Seller
 from catalogue.models import Category, Product
 from orders.models import Checkout, Order, OrderLine, Payment, Refund
 

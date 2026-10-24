@@ -5,8 +5,8 @@ from django.core.management.base import BaseCommand, CommandError
 from gridfs import GridFS
 from pymongo.errors import PyMongoError
 
-from config import mongo
 from catalogue.models import Product
+from config import mongo
 
 
 class Command(BaseCommand):
