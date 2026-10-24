@@ -1,6 +1,6 @@
 # dashboard: Stock planning, demand forecast, category performance, delivery delay against review score
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 2 to 3 days · phase 3A (9 to 13
 November) · depends on: `olist-import`, `checkout`, `accounts` (operator console)
 

@@ -1,6 +1,6 @@
 # activity: Activity events in a MongoDB time-series collection (M1)
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 1 to 1.5 days · phase 3A (9 to 13
 November) · depends on: `catalogue` (product pages, search), `checkout` (purchases for conversion)
 

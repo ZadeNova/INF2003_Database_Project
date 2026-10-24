@@ -1,6 +1,6 @@
 # reviews: Per-item reviews, rating summaries in one transaction, Bayesian ranking, take-downs
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: about 2
 days · phase 3A (9 to 13 November) · depends on: `catalogue`, `checkout`, `accounts`
 

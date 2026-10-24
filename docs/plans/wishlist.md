@@ -1,6 +1,6 @@
 # wishlist: Wishlist and restock alerts
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: about 1 day · phase 3A (9 to 13
 November) · depends on: `olist-import`, `catalogue` (product pages), `checkout` (cancellation restocks)
 
