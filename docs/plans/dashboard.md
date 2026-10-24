@@ -1,6 +1,6 @@
 # dashboard: Stock planning, demand forecast, category performance, delivery delay against review score
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: 2 to 3 days · phase 3A (9 to 13
 November) · depends on: `olist-import`, `checkout`, `accounts` (operator console)
 
@@ -81,3 +81,30 @@ built migrate and ran the full Docker suite, including the marked full-data prof
 checks passed. The existing container-only Git-index skips are visible; host equivalents passed. No contract omissions
 or deviations beyond approved amendment a. The chosen risk threshold is documented in docs/DECISIONS.md. Fresh Claude
 Code review and visual inspection remain pending. No push, PR or merge was performed.
+
+24 October 2026 — Integration check on activity/events: responsive browser inspection found Chart.js default blue bars in the otherwise working dashboard. The final stacked branch disables automatic chart colours and seeds the design tokens before construction. The 375px chart and table were inspected in both themes with no document overflow or console errors. This small visual integration fix is carried by activity/events; no dashboard data or query behaviour changed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding dashboard R1.
+The risk list included sellers with too little delivery history. The fix requires at least ten delivered orders within
+the as-of window, so a small sample cannot dominate the risk list. Eligible sellers sort at risk first, then by late
+share descending and seller ID; the panel states the minimum and the number excluded. Tests were added before code:
+test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note proves that nine late deliveries are excluded, ten
+deliveries with three late are flagged, a future delivery cannot qualify a seller, and ordering/count/note match an
+independent calculation. The existing direct fixture comparison now checks eligibility and ordering too.
+Rebuilt migrate and ran all of test_dashboard.py successfully, including its full-data profile comparison; unaltered
+output is .cache/phase3a-review/dashboard-R1-tests.log. The new regression failed on the previous implementation.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding dashboard R6.
+The review brief reports about 2.7 s per dashboard load, including about 1.6 s for the cross-store delay join, measured
+on the full local data with direct service calls. These are the reviewer's measurements, not a new timing run in this
+fix round. Retained as report material for decision c: accepted for Tier 1, with caching left to the Tier 2 redis
+workstream. No code changed. README.md and PLAN.md now require preloading the dashboard before filming, and
+docs/DECISIONS.md records the accepted tradeoff.
+
+24 October 2026 — Fix-round close-out (Codex). The final migrate build and complete Docker suite passed; unaltered
+outputs are .cache/phase3a-review/final-build.log and final-full-suite.log. The existing container-only Git-index
+skips remain visible; host docs/packaging checks passed (host-docs-packaging-tests.log). scripts/check_docs.py passed
+(check-docs.log). Focused dashboard, reviews and activity results are recorded with their findings above and in the
+corresponding plans. mongo_setup installed the new seller-review index in the local application database. The AI use
+log identifies the Claude Code session that supplied this brief as not fresh. All four Phase 3A workstreams stay in
+review with plans in-progress, pending re-review. The lower branches are unchanged; no push, PR or merge was performed.

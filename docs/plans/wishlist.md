@@ -1,6 +1,6 @@
 # wishlist: Wishlist and restock alerts
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: about 1 day · phase 3A (9 to 13
 November) · depends on: `olist-import`, `catalogue` (product pages), `checkout` (cancellation restocks)
 
@@ -58,3 +58,5 @@ unaltered command evidence is in .cache/phase3a/wishlist-full-suite.log and wish
 container-only Git-index skips remain visible and the host equivalents passed. No contract omissions or scope
 deviations; only the visible displayed alerts page is marked seen, and HEAD is read-only. Fresh Claude Code review
 and visual inspection remain pending. No push, PR or merge was performed.
+
+24 October 2026 — Integration check on activity/events: recently viewed can repeat the detail product. Responsive browser testing found that only the clicked wishlist button changed. The final stacked branch now returns the saved state through HX-Trigger and updates every visible control for that product. Both save and remove were verified through both copies in the real browser; header regression checks cover the server event. This small integration fix is carried by activity/events.

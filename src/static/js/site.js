@@ -214,4 +214,20 @@
         }
     });
 
+    // A product can appear in both detail and recently viewed. The response supplies the committed
+    // state; keep every visible control for that product consistent before HTMX swaps its fragment.
+    document.body.addEventListener("wishlistChanged", function (event) {
+        var detail = event.detail || {};
+        if (typeof detail.saved !== "boolean") return;
+        document.querySelectorAll(".wishlist-action").forEach(function (form) {
+            if (form.dataset.productId !== String(detail.product_id)) return;
+            var action = detail.saved ? form.dataset.removeUrl : form.dataset.addUrl;
+            form.action = action;
+            form.setAttribute("hx-post", action);
+            var button = form.querySelector("button");
+            button.textContent = detail.saved ? "Remove from wishlist" : "Save to wishlist";
+            button.setAttribute("aria-pressed", String(detail.saved));
+            if (window.htmx) window.htmx.process(form);
+        });
+    });
 }());

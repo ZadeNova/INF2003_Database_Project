@@ -244,6 +244,33 @@ docker compose run --rm migrate python manage.py check_specs --repair
 The repair flag removes specs whose products no longer exist, including their photos. Missing specs or category
 mismatches remain reported for restoration from the source; the command does not invent missing product content.
 
+## Browsing activity and seller insights
+
+Product detail records a view and catalogue searches record the trimmed query, up to 100 characters. Activity writes
+use MongoDB w:1 and failures are logged without breaking the page. Home and product pages show the last ten distinct
+recent products for the signed-in user or anonymous browser session. The existing Trending panel shows views over
+the last 24 hours, overall or in the selected category, with equal counts sharing a rank. Withdrawn products stay hidden.
+
+For a database imported before activity landed, create the time series once before browsing. A fresh import already
+runs mongo_setup. To populate the demo with labelled browsing events:
+
+```sh
+docker compose run --rm migrate python manage.py mongo_setup
+docker compose run --rm migrate python manage.py seed_activity
+```
+
+The default appends synthetic views weighted by imported sales over the past 30 days relative to seeding time. Use
+`--count` for a smaller demo; rerunning appends another labelled batch. Data carries is_generated and the panels say
+when generated views contribute. Events expire after 30 days. Never treat this synthetic browsing as observed Olist data.
+
+Approved sellers open `/seller/insights/` for their own products' views and non-cancelled units sold in the same rolling
+30-day window. "Units per view" compares the totals; it does not identify which visitor bought an item. No views means
+no ratio, and unavailable MongoDB counts are shown as unavailable while sales can still be read.
+
+On recording day, run the seed_activity command above and place a few demo purchases for the seller's products
+before filming Insights. Its rolling sales window becomes near-empty after the imported data ends. Keep the real
+last-30-days window: browsing events expire, so anchoring Insights to the imported history would not preserve views.
+
 ## Operator stock planning
 
 Open `/operator/dashboard/` as an operator. Every panel states the reporting date and its PostgreSQL/MongoDB sources.
@@ -254,13 +281,17 @@ The stock table averages demand over 28 complete calendar dates, including zero-
 than lead time. Filter it by category or seller number. Category tables show monthly revenue, units, rank and
 month-on-month change; the locally bundled Chart.js chart shows the latest month's leading categories. Revenue is
 item value without freight. Delivery panels join PostgreSQL delivery dates and zip-centre distances with one MongoDB
-score per order, excluding copied order reviews. More than 20% late deliveries marks a seller at risk. The poor-review
+score per order, excluding copied order reviews. Seller risk requires at least ten delivered orders by the reporting
+date; more than 20% late marks a seller at risk. The panel states how many smaller samples it excludes. The poor-review
 panel lists products averaging at most two stars from at least five reviews.
 
 `import_olist` refreshes daily product sales after the verified import commits. For a database imported before this
 feature, press "Refresh sales history" once; migrations alone leave the materialized view unpopulated. The button
 also refreshes after a restock. It uses a restricted owner-owned function, so the web role still has no direct refresh
 privilege. A refresh failure after import is reported as a committed import requiring a refresh retry.
+
+The dashboard takes a few seconds on the full data; preload `/operator/dashboard/` before filming. This is accepted
+for Tier 1. Caching remains in the Tier 2 redis workstream.
 
 Chart.js is pinned to [the upstream 4.5.1 release](https://github.com/chartjs/Chart.js/releases/tag/v4.5.1), with its
 MIT licence beside the vendored distribution. Exact amounts are rendered in the tables; chart coordinates are presentation only.

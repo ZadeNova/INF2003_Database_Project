@@ -1,6 +1,6 @@
 # reviews: Per-item reviews, rating summaries in one transaction, Bayesian ranking, take-downs
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, ideally the other agent · estimate: about 2
 days · phase 3A (9 to 13 November) · depends on: `catalogue`, `checkout`, `accounts`
 
@@ -69,3 +69,22 @@ Local execution evidence is under .cache/phase3a (ignored), including reviews-ex
 Git-index skips remain visible in the suite output; the host equivalents ran successfully. No contract omissions
 or scope deviations. Existing import precision is preserved explicitly in the update pipeline. Fresh Claude Code
 review and visual inspection remain pending; no push, PR or merge was performed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding reviews R2.
+Seller ratings and My reviews matched seller_id without an index. Added review_seller_date on seller_id ascending,
+answered_at descending through idempotent mongo_setup and documented it in DATA_MODEL.md. The test was added first:
+test_seller_rating_match_uses_seller_date_index_and_only_own_documents explains the seller_rating match with
+executionStats, requires IXSCAN on the named index and checks that documents examined belong only to that seller.
+It also runs mongo_setup twice and compares the actual seller rating count with the fixture. The regression failed
+with a COLLSCAN on the previous implementation.
+Rebuilt migrate and ran all of test_reviews.py successfully; the unaltered output is
+.cache/phase3a-review/reviews-R2-tests.log. No hint is used in the execution-plan assertion.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding reviews R4.
+Removed the optional historical-label assertion. The real-database display test now uses an existing review on an
+undelivered order or inserts one on a new paid order line if missing, then always checks the review's historical
+state and the rendered product-page label. It selects the page containing that review. Parameterized runs cover
+both retained fixture history and a fixture with that history removed, so the fallback is exercised too. The
+missing-history variant failed before the fixture fallback was added; no application code change was needed.
+Ran all of test_reviews.py successfully with both variants; the unaltered result is
+.cache/phase3a-review/reviews-R4-tests.log.

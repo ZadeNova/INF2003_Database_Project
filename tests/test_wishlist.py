@@ -1,5 +1,6 @@
 """Composite wishlist keys, trigger-created alerts and scoped UI against real databases."""
 import uuid
+import json
 
 from django.db import IntegrityError, connection, transaction
 from django.http import Http404
@@ -144,6 +145,10 @@ def test_htmx_buttons_post_only_csrf_roles_and_safe_redirect():
         assert client.get(path).status_code == 405
     page = client.post(f"/wishlist/{item.pk}/add/", {"next": "https://evil.example/"}, HTTP_HX_REQUEST="true")
     assert page.status_code == 200 and b"Remove from wishlist" in page.content
+    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged":{"product_id":item.pk,"saved":True}}
+    page = client.post(f"/wishlist/{item.pk}/remove/", HTTP_HX_REQUEST="true")
+    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged":{"product_id":item.pk,"saved":False}}
+    assert b"Save to wishlist" in page.content
     assert Client().post(f"/wishlist/{item.pk}/add/", HTTP_HX_REQUEST="true")["HX-Redirect"] == "/login/"
     secure = Client(enforce_csrf_checks=True); secure.force_login(buyer)
     assert secure.post(f"/wishlist/{item.pk}/remove/").status_code == 403

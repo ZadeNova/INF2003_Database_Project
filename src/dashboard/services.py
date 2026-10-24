@@ -15,6 +15,7 @@ BUCKET_LABELS = {
     "late_1_to_7": "Late by up to 7 days", "late_8_to_14": "Late by more than 7 to 14 days", "late_over_14": "Late by more than 14 days",
 }
 LATE_RISK_THRESHOLD = Decimal("0.20")
+LATE_RISK_MIN_ORDERS = 10
 
 
 def as_of_date():
@@ -90,23 +91,27 @@ def delivery_analysis(as_of, database):
         bucket["average_score"] = sum(bucket["scores"], Decimal(0)) / len(bucket["scores"]) if bucket["scores"] else None
         bucket["distance_km"] = sum(bucket["distances"], Decimal(0)) / len(bucket["distances"]) if bucket["distances"] else None
         del bucket["scores"], bucket["distances"]
-    for seller in sellers.values():
+    eligible = [seller for seller in sellers.values() if seller["orders"] >= LATE_RISK_MIN_ORDERS]
+    for seller in eligible:
         seller["late_share"] = Decimal(seller["late"]) / seller["orders"]
         seller["late_percent"] = seller["late_share"] * 100
         seller["average_score"] = sum(seller["scores"], Decimal(0)) / len(seller["scores"]) if seller["scores"] else None
         seller["at_risk"] = seller["late_share"] > LATE_RISK_THRESHOLD
         del seller["scores"]
-    return list(buckets.values()), sorted(sellers.values(), key=lambda s: (-s["late_share"], s["seller_id"]))
+    return (list(buckets.values()),
+            sorted(eligible, key=lambda s: (not s["at_risk"], -s["late_share"], s["seller_id"])),
+            len(sellers) - len(eligible))
 
 
 def dashboard_data(as_of, category=None, seller=None):
     with mongo.client() as client:
         database = client[mongo.database_name()]
-        buckets, sellers = delivery_analysis(as_of, database)
+        buckets, sellers, excluded = delivery_analysis(as_of, database)
         poor = list(database.reviews.aggregate(poor_reviews_pipeline(end_of_day(as_of))))
     # Review history may include retired products; operators can still inspect their names.
     products = Product.objects.in_bulk([row["_id"] for row in poor])
     poor = [{"product": products[row["_id"]], "count": row["count"], "average": row["average"].to_decimal()}
             for row in poor if row["_id"] in products]
     return {"stock_rows": stock_planning(as_of, category, seller), "category_rows": category_performance(as_of),
-            "delay_rows": buckets, "seller_rows": sellers, "poor_rows": poor}
+            "delay_rows": buckets, "seller_rows": sellers, "poor_rows": poor,
+            "seller_min_orders": LATE_RISK_MIN_ORDERS, "seller_excluded_count": excluded}

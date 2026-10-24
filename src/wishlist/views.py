@@ -1,3 +1,5 @@
+import json
+
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -33,8 +35,11 @@ class WishlistActionView(CustomerRequiredMixin, View):
         set_saved(request.user, pk, saved)
         if request.headers.get("HX-Request") == "true":
             item = get_object_or_404(Product, pk=pk)
-            return render(request, "wishlist/_button.html", {"product": item,
+            response = render(request, "wishlist/_button.html", {"product": item,
                 "wishlist_next": safe_local_path(request, request.POST.get("next"))})
+            response["HX-Trigger"] = json.dumps({"wishlistChanged": {"product_id": pk,
+                "saved": WishlistItem.objects.filter(customer=request.user, product_id=pk).exists()}})
+            return response
         return redirect(safe_local_path(request, request.POST.get("next")) or "wishlist:list")
 
 

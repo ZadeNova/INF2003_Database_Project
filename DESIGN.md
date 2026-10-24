@@ -216,6 +216,11 @@ its reporting date and sources. Replenishment and risk use written amber badges.
 theme's ink and grid colours, has no animation, and retains exact values in the adjacent table. Wide tables scroll
 inside their region; the canvas stays inside its panel on phones. Filters and refresh are separate labelled controls.
 
+Trending fills the catalogue's existing panel and uses the same product grid, with written rank/view counts and a
+generated-activity label where applicable. Recently viewed uses the same grid on home and product pages. Seller
+Insights reuses the contained dashboard table and pager; missing view counts are written as unavailable, and the
+units-per-view label explains what the comparison means.
+
 ## Motion, themes and interaction
 
 Motion is crisp and mechanical. Use the easing/duration tokens; do not introduce springs, bounce, blur or stagger.

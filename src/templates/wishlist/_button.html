@@ -1,7 +1,7 @@
 {% load wishlist_tags %}
 {% if user.is_authenticated and user.role == 'customer' %}{% is_saved product as saved %}
 {% if saved %}{% url 'wishlist:remove' product.pk as action %}{% else %}{% url 'wishlist:add' product.pk as action %}{% endif %}
-<form method="post" action="{{ action }}" hx-post="{{ action }}" hx-swap="outerHTML" class="wishlist-action">
+<form method="post" action="{{ action }}" hx-post="{{ action }}" hx-swap="outerHTML" class="wishlist-action" data-product-id="{{ product.pk }}" data-add-url="{% url 'wishlist:add' product.pk %}" data-remove-url="{% url 'wishlist:remove' product.pk %}">
 {% csrf_token %}<input type="hidden" name="next" value="{{ wishlist_next|default:request.get_full_path }}">
 <button class="button button--outline-neutral" type="submit" aria-pressed="{{ saved|yesno:'true,false' }}">{% if saved %}Remove from wishlist{% else %}Save to wishlist{% endif %}</button></form>
 {% endif %}

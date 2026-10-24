@@ -6,7 +6,7 @@ from config.mongo_schema import setup
 
 
 class Command(BaseCommand):
-    help = "Idempotently create Phase 1A MongoDB collections, validators and indexes with readWrite."
+    help = "Idempotently create marketplace collections, validators, activity time series and indexes with readWrite."
 
     def add_arguments(self, parser):
         parser.add_argument("--database", default=None, help="Configured app database or its test_ database only")

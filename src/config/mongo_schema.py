@@ -38,7 +38,8 @@ VALIDATORS = {
 INDEXES = {
     "reviews": [IndexModel([("order_line_id", ASCENDING)], unique=True, name="review_order_line_unique"),
                 IndexModel([("olist_review_id", ASCENDING)], name="review_olist_source"),
-                IndexModel([("product_id", ASCENDING), ("answered_at", DESCENDING)], name="review_product_date")],
+                IndexModel([("product_id", ASCENDING), ("answered_at", DESCENDING)], name="review_product_date"),
+                IndexModel([("seller_id", ASCENDING), ("answered_at", DESCENDING)], name="review_seller_date")],
     "product_specs": [IndexModel([("category_id", ASCENDING)], name="spec_category"),
                       # Wildcard indexing includes future template fields and becomes multikey for array values.
                       IndexModel([("attributes.$**", ASCENDING)], name="spec_attributes"),
@@ -46,6 +47,28 @@ INDEXES = {
                       IndexModel([("photo_file_id", ASCENDING)], name="spec_photo_file")],
     "category_templates": [IndexModel([("category_id", ASCENDING)], unique=True, name="template_category_unique")],
 }
+
+EVENT_TTL_SECONDS = 30 * 24 * 60 * 60
+EVENT_INDEXES = [
+    IndexModel([("meta.product_id", ASCENDING), ("ts", DESCENDING)], name="event_product_time"),
+    IndexModel([("meta.user_id", ASCENDING), ("ts", DESCENDING)], name="event_user_time"),
+    IndexModel([("meta.session_key", ASCENDING), ("ts", DESCENDING)], name="event_session_time"),
+    IndexModel([("meta.type", ASCENDING), ("ts", DESCENDING)], name="event_type_time"),
+    IndexModel([("meta.category", ASCENDING), ("meta.type", ASCENDING), ("ts", DESCENDING)], name="event_category_time"),
+]
+
+
+def setup_events(database):
+    if "events" not in database.list_collection_names():
+        database.create_collection("events", timeseries={"timeField": "ts", "metaField": "meta", "granularity": "seconds"},
+                                   expireAfterSeconds=EVENT_TTL_SECONDS)
+    options = database.events.options()
+    if (options.get("timeseries", {}).get("timeField") != "ts" or
+        options.get("timeseries", {}).get("metaField") != "meta" or
+        options.get("timeseries", {}).get("granularity") != "seconds" or
+        options.get("expireAfterSeconds") != EVENT_TTL_SECONDS):
+        raise ValueError("events: existing time-series options differ; use an explicitly approved schema migration")
+    database.events.create_indexes(EVENT_INDEXES)
 
 
 def setup(database):
@@ -59,3 +82,4 @@ def setup(database):
                 raise ValueError(f"{name}: existing validator differs; reset the local databases or use an explicitly approved schema migration")
         if name in INDEXES:
             database[name].create_indexes(INDEXES[name])
+    setup_events(database)

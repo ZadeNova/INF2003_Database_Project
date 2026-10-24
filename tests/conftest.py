@@ -26,10 +26,10 @@ def mongo_test_database():
 def mongo_db(mongo_test_database):
     # Never touch the application collections during pytest.
     with mongo.using_database(mongo_test_database.name):
-        for name in (*COLLECTIONS, "photos.files", "photos.chunks"):
+        for name in (*COLLECTIONS, "events", "photos.files", "photos.chunks"):
             mongo_test_database[name].delete_many({})
         yield mongo_test_database
-        for name in (*COLLECTIONS, "photos.files", "photos.chunks"):
+        for name in (*COLLECTIONS, "events", "photos.files", "photos.chunks"):
             mongo_test_database[name].delete_many({})
 
 

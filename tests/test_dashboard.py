@@ -137,13 +137,19 @@ def reference_deliveries(as_of, database):
 
 def test_delay_bucket_scores_and_each_seller_risk_match_direct_calculation(imported, mongo_db):
     as_of = as_of_date(); expected, seller_values = reference_deliveries(as_of, mongo_db)
-    buckets, sellers = delivery_analysis(as_of, mongo_db)
+    buckets, sellers, excluded = delivery_analysis(as_of, mongo_db)
     for row in buckets:
         values = expected[row["key"]]
         assert row["reviewed_orders"] == len(values)
         average = sum(values, Decimal(0)) / len(values) if values else None
         assert row["average_score"] == average
-    assert len(sellers) == len(seller_values)
+    eligible = {sid: value for sid, value in seller_values.items() if value["orders"] >= 10}
+    assert {row["seller_id"] for row in sellers} == set(eligible)
+    assert excluded == len(seller_values) - len(eligible)
+    expected_order = sorted(eligible, key=lambda sid: (
+        not (Decimal(eligible[sid]["late"]) / eligible[sid]["orders"] > Decimal("0.20")),
+        -Decimal(eligible[sid]["late"]) / eligible[sid]["orders"], sid))
+    assert [row["seller_id"] for row in sellers] == expected_order
     for row in sellers:
         value = seller_values[row["seller_id"]]
         assert row["orders"] == value["orders"]
@@ -151,6 +157,44 @@ def test_delay_bucket_scores_and_each_seller_risk_match_direct_calculation(impor
         assert row["at_risk"] == (row["late_share"] > Decimal("0.20"))
         assert row["average_score"] == (sum(value["scores"], Decimal(0)) / len(value["scores"]) if value["scores"] else None)
     assert all(r["distance_km"] is None or 0 <= r["distance_km"] <= 21000 for r in buckets)
+
+
+def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, mongo_db):
+    as_of = as_of_date(); end = end_of_day(as_of)
+    buyer = customer("risk-buyer")
+    items = [product(name) for name in ["risk-small", "risk-boundary", "risk-tie", "risk-covered"]]
+    for item, (count, late) in zip(items, [(9, 9), (10, 3), (10, 3), (10, 2)]):
+        for index in range(count):
+            _, order = paid_order(buyer, item, status="delivered")
+            delivered = end - timedelta(days=2)
+            Order.objects.filter(pk=order.pk).update(placed_at=delivered - timedelta(days=2),
+                delivered_at=delivered, estimated_delivery=delivered - timedelta(days=int(index < late)))
+    # A delivery after the reporting date cannot push the small seller over the minimum.
+    _, future = paid_order(buyer, items[0], status="delivered")
+    Order.objects.filter(pk=future.pk).update(placed_at=end - timedelta(days=4),
+        delivered_at=end, estimated_delivery=end - timedelta(days=1))
+    data = dashboard_data(as_of)
+    rows = {row["seller_id"]: row for row in data["seller_rows"]}
+    assert items[0].seller_id not in rows
+    assert rows[items[1].seller_id]["orders"] == 10
+    assert rows[items[1].seller_id]["late_share"] == Decimal("0.30")
+    assert rows[items[1].seller_id]["at_risk"]
+    assert not rows[items[3].seller_id]["at_risk"]
+    _, direct = reference_deliveries(as_of, mongo_db)
+    eligible = {sid: value for sid, value in direct.items() if value["orders"] >= 10}
+    expected = sorted(eligible, key=lambda sid: (
+        not (Decimal(eligible[sid]["late"]) / eligible[sid]["orders"] > Decimal("0.20")),
+        -Decimal(eligible[sid]["late"]) / eligible[sid]["orders"], sid))
+    assert [row["seller_id"] for row in data["seller_rows"]] == expected
+    assert data["seller_excluded_count"] == sum(value["orders"] < 10 for value in direct.values())
+    assert data["seller_min_orders"] == 10
+    client = Client(); client.force_login(make_operator())
+    response = client.get("/operator/dashboard/")
+    assert response.status_code == 200
+    assert b"At least 10 delivered orders" in response.content
+    note = f"{data['seller_excluded_count']} sellers with fewer deliveries are excluded."
+    assert note.encode() in response.content
+    assert items[0].seller.shop_name.encode() not in response.content
 
 
 def test_all_five_half_open_delay_boundaries_and_future_delivery_cutoff(imported):
@@ -258,7 +302,7 @@ def test_full_data_delay_pattern_matches_profile_within_tolerance(mongo_db):
     if not (source / "checksums.txt").exists() or not profile.exists():
         pytest.skip("Full Olist files are local-only; fixture calculations run in every suite")
     call_command("import_olist",source=source,stdout=StringIO())
-    actual, _ = delivery_analysis(as_of_date(), mongo_db)
+    actual, _, _ = delivery_analysis(as_of_date(), mongo_db)
     expected = json.loads(profile.read_text())["delivery_delay_scores"]
     for row in actual:
         assert row["average_score"] is not None

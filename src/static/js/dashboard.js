@@ -4,11 +4,14 @@
     var source = document.getElementById("category-chart-data");
     if (!canvas || !source || !window.Chart) return;
     var data = JSON.parse(source.textContent);
+    var initialStyle = getComputedStyle(document.documentElement);
     var chart = new Chart(canvas, {
         type: "bar",
-        data: {labels: data.labels, datasets: [{label: "Revenue (SGD)", data: data.revenue.map(Number), borderWidth: 2}]},
+        data: {labels: data.labels, datasets: [{label: "Revenue (SGD)", data: data.revenue.map(Number), borderWidth: 2,
+            backgroundColor: initialStyle.getPropertyValue("--color-text-secondary").trim(),
+            borderColor: initialStyle.getPropertyValue("--color-text-primary").trim()}]},
         options: {responsive: true, maintainAspectRatio: false, animation: false,
-            plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true}}}
+            plugins: {colors: {enabled: false}, legend: {display: false}}, scales: {y: {beginAtZero: true}}}
     });
     function theme() {
         var style = getComputedStyle(document.documentElement);
