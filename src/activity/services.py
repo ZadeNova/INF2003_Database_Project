@@ -6,6 +6,7 @@ import logging
 
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.crypto import salted_hmac
 from pymongo.errors import PyMongoError
 from pymongo.write_concern import WriteConcern
 
@@ -23,7 +24,9 @@ def visitor(request, *, create=False):
         return {"user_id": request.user.pk}
     if not request.session.session_key and create:
         request.session.create()
-    return {"session_key": request.session.session_key} if request.session.session_key else None
+    if not request.session.session_key:
+        return None
+    return {"session_key": salted_hmac("mercer.activity.visitor", request.session.session_key).hexdigest()}
 
 
 def record_event(request, event_type, *, product=None, query="", category=None):

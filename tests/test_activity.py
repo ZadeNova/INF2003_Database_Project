@@ -9,6 +9,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client
 from django.utils import timezone
+from django.utils.crypto import salted_hmac
 import pytest
 
 from activity.services import EVENT_WRITE_CONCERN, browsing_panels, seller_insights, trending_pipeline
@@ -64,16 +65,28 @@ def test_product_view_and_search_write_once_with_trimmed_literal_query(mongo_db)
     assert mongo_db.events.count_documents({"meta.type":"view"}) == 1
 
 
-def test_anonymous_identity_is_session_only_and_separate_from_logged_in_history(mongo_db):
-    item = product(); anonymous = Client()
+def test_anonymous_identity_is_keyed_hash_and_histories_remain_separate(mongo_db):
+    item, other = product(), product("other-anonymous")
+    anonymous, second = Client(), Client()
     assert anonymous.get(f"/products/{item.pk}/").status_code == 200
     row = mongo_db.events.find_one({})
-    assert row["meta"]["session_key"] == anonymous.session.session_key
+    raw_key = anonymous.session.session_key
+    assert row["meta"]["session_key"] != raw_key
+    assert row["meta"]["session_key"] == salted_hmac("mercer.activity.visitor", raw_key).hexdigest()
     assert "user_id" not in row["meta"]
-    page = anonymous.get("/products/")
+    page = anonymous.get("/products/", {"q": "private visitor"})
     assert [p.pk for p in page.context["recent_products"]] == [item.pk]
-    second = Client().get("/products/")
-    assert second.context["recent_products"] == []
+    assert second.get("/products/").context["recent_products"] == []
+    assert second.get(f"/products/{other.pk}/").status_code == 200
+    assert [p.pk for p in second.get("/products/").context["recent_products"]] == [other.pk]
+    assert [p.pk for p in anonymous.get("/products/").context["recent_products"]] == [item.pk]
+    rows = list(mongo_db.events.find({}))
+    assert all("user_id" not in r["meta"] for r in rows)
+    assert {r["meta"]["session_key"] for r in rows} == {
+        salted_hmac("mercer.activity.visitor", raw_key).hexdigest(),
+        salted_hmac("mercer.activity.visitor", second.session.session_key).hexdigest()}
+    stored = json.dumps(rows, default=str)
+    assert raw_key not in stored and second.session.session_key not in stored
     buyer = customer(); anonymous.force_login(buyer)
     assert anonymous.get("/products/").context["recent_products"] == []
 
@@ -180,6 +193,7 @@ def test_seed_activity_weighted_by_real_sales_labelled_and_relative_to_now(mongo
     rows = list(mongo_db.events.find({}))
     assert len(rows) == 10000 and all(r["is_generated"] is True for r in rows)
     assert all("user_id" not in r["meta"] for r in rows)
+    assert {r["meta"]["session_key"] for r in rows} == {"generated-demo-activity"}
     from datetime import timezone as dt_timezone
     assert all(start-timedelta(days=30) <= r["ts"].replace(tzinfo=dt_timezone.utc) <= timezone.now() for r in rows)
     counts = Counter(r["meta"]["product_id"] for r in rows)

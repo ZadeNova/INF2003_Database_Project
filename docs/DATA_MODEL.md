@@ -362,7 +362,10 @@ checked source CSVs; Uncategorised keeps the package icon.
 `events` is a MongoDB time-series collection: timeField ts (date), metaField meta (object), granularity seconds,
 expireAfterSeconds 2592000 (30 days). Metadata has type view/search, product_id and category for product views,
 optional category for searches, and exactly one visitor identity: user_id for authenticated requests or session_key
-for anonymous requests. Searches store trimmed query text, capped at 100 characters, outside metadata. Events have
+for anonymous requests. Anonymous session_key is the hexadecimal keyed hash from Django salted_hmac with salt
+mercer.activity.visitor and the application secret, never the raw Django session key; recently viewed uses the same
+hash. The seed_activity synthetic label remains generated-demo-activity. Searches store trimmed query text, capped
+at 100 characters, outside metadata. Events have
 an explicit is_generated boolean. They contain no copied product name, price, stock or personal profile fields.
 Time-series collections use MongoDB's time-field rules rather than an outer JSON Schema validator. The app builds
 only the two accepted event shapes; setup refuses incompatible time-series options.

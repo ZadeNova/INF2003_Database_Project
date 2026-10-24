@@ -80,3 +80,14 @@ reran successfully. Migration drift, Django system checks, host docs/packaging c
 The existing container-only Git-index skips remain visible; their host equivalents passed. No functional omissions or
 remaining blockers were identified. Fresh Claude Code review remains pending on all four local branches. No push,
 PR or merge was performed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding activity R3.
+Anonymous metadata held a raw Django session key. Writes and recently viewed now use the same salted_hmac hex digest
+with the fixed mercer.activity.visitor salt in the existing meta.session_key field; authenticated user IDs and the
+seed_activity synthetic label are unchanged. Updated the event model documentation. Tests were adjusted before code:
+test_anonymous_identity_is_keyed_hash_and_histories_remain_separate checks view/search storage contains neither raw
+session key, both visitors retain their own recently viewed products, and login does not inherit anonymous history.
+The weighted seeding test now also asserts the unchanged synthetic label. The identity regression failed against
+the previous raw-key implementation.
+Rebuilt migrate and ran all of test_activity.py successfully; unaltered output is
+.cache/phase3a-review/activity-R3-tests.log. No collection/index change or seeder rewrite was needed.
