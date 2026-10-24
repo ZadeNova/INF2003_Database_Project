@@ -79,3 +79,12 @@ It also runs mongo_setup twice and compares the actual seller rating count with 
 with a COLLSCAN on the previous implementation.
 Rebuilt migrate and ran all of test_reviews.py successfully; the unaltered output is
 .cache/phase3a-review/reviews-R2-tests.log. No hint is used in the execution-plan assertion.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding reviews R4.
+Removed the optional historical-label assertion. The real-database display test now uses an existing review on an
+undelivered order or inserts one on a new paid order line if missing, then always checks the review's historical
+state and the rendered product-page label. It selects the page containing that review. Parameterized runs cover
+both retained fixture history and a fixture with that history removed, so the fallback is exercised too. The
+missing-history variant failed before the fixture fallback was added; no application code change was needed.
+Ran all of test_reviews.py successfully with both variants; the unaltered result is
+.cache/phase3a-review/reviews-R4-tests.log.

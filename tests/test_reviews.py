@@ -222,17 +222,34 @@ def test_seller_rating_match_uses_seller_date_index_and_only_own_documents(impor
     assert mongo_db.reviews.index_information()["review_seller_date"]["key"] == [("seller_id", 1), ("answered_at", -1)]
 
 
-def test_imported_display_translation_history_pagination_and_takedown(imported, mongo_db):
+@pytest.mark.parametrize("without_historical", [False, True])
+def test_imported_display_translation_history_pagination_and_takedown(imported, mongo_db, without_historical):
     historical = mongo_db.reviews.find_one({"text_pt": {"$ne": ""}})
     line = OrderLine.objects.select_related("order__checkout", "product").get(pk=historical["order_line_id"])
     # Imported undelivered history must remain visible and labelled.
     from orders.models import Order
     undelivered = set(Order.objects.exclude(status="delivered").values_list("pk", flat=True))
+    if without_historical:
+        mongo_db.reviews.delete_many({"order_id": {"$in": list(undelivered)}})
     row = mongo_db.reviews.find_one({"order_id": {"$in": list(undelivered)}})
-    if row:
-        from reviews.queries import review_page
-        assert review_page(mongo_db, {"order_line_id": row["order_line_id"]}, 1).object_list[0]["historical"]
+    if row is None:
+        pending = line_for(line.order.checkout.customer, line.product, status="paid")
+        row = {**historical, "_id": pending.pk, "order_line_id": pending.pk, "order_id": pending.order_id,
+            "checkout_id": pending.order.checkout_id, "product_id": pending.product_id, "seller_id": pending.seller_id,
+            "customer_id": pending.order.checkout.customer_id, "olist_review_id": None}
+        mongo_db.reviews.insert_one(row)
+    assert row is not None
+    assert Order.objects.get(pk=row["order_id"]).status != "delivered"
+    from reviews.queries import review_page
+    assert review_page(mongo_db, {"order_line_id": row["order_line_id"]}, 1).object_list[0]["historical"]
     from catalogue.models import Product
+    Product.objects.filter(pk=row["product_id"]).update(active=True)
+    ordered = list(mongo_db.reviews.find({"product_id": row["product_id"], **VISIBLE}).sort(NEWEST))
+    number = next(index for index, review in enumerate(ordered) if review["_id"] == row["_id"]) // 10 + 1
+    page = Client().get(f"/products/{row['product_id']}/", {"page": number})
+    assert page.status_code == 200
+    assert any(review["line_id"] == row["order_line_id"] and review["historical"] for review in page.context["reviews_page"])
+    assert b"Historical review (order not delivered)" in page.content
     Product.objects.filter(pk=line.product_id).update(active=True)
     page = Client().get(f"/products/{line.product_id}/?lang=pt")
     assert page.status_code == 200 and b"Portuguese original" in page.content
