@@ -83,3 +83,13 @@ or deviations beyond approved amendment a. The chosen risk threshold is document
 Code review and visual inspection remain pending. No push, PR or merge was performed.
 
 24 October 2026 — Integration check on activity/events: responsive browser inspection found Chart.js default blue bars in the otherwise working dashboard. The final stacked branch disables automatic chart colours and seeds the design tokens before construction. The 375px chart and table were inspected in both themes with no document overflow or console errors. This small visual integration fix is carried by activity/events; no dashboard data or query behaviour changed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding dashboard R1.
+The risk list included sellers with too little delivery history. The fix requires at least ten delivered orders within
+the as-of window, so a small sample cannot dominate the risk list. Eligible sellers sort at risk first, then by late
+share descending and seller ID; the panel states the minimum and the number excluded. Tests were added before code:
+test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note proves that nine late deliveries are excluded, ten
+deliveries with three late are flagged, a future delivery cannot qualify a seller, and ordering/count/note match an
+independent calculation. The existing direct fixture comparison now checks eligibility and ordering too.
+Rebuilt migrate and ran all of test_dashboard.py successfully, including its full-data profile comparison; unaltered
+output is .cache/phase3a-review/dashboard-R1-tests.log. The new regression failed on the previous implementation.

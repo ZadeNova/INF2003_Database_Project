@@ -277,7 +277,8 @@ The stock table averages demand over 28 complete calendar dates, including zero-
 than lead time. Filter it by category or seller number. Category tables show monthly revenue, units, rank and
 month-on-month change; the locally bundled Chart.js chart shows the latest month's leading categories. Revenue is
 item value without freight. Delivery panels join PostgreSQL delivery dates and zip-centre distances with one MongoDB
-score per order, excluding copied order reviews. More than 20% late deliveries marks a seller at risk. The poor-review
+score per order, excluding copied order reviews. Seller risk requires at least ten delivered orders by the reporting
+date; more than 20% late marks a seller at risk. The panel states how many smaller samples it excludes. The poor-review
 panel lists products averaging at most two stars from at least five reviews.
 
 `import_olist` refreshes daily product sales after the verified import commits. For a database imported before this
