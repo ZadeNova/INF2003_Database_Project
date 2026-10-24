@@ -267,6 +267,10 @@ Approved sellers open `/seller/insights/` for their own products' views and non-
 30-day window. "Units per view" compares the totals; it does not identify which visitor bought an item. No views means
 no ratio, and unavailable MongoDB counts are shown as unavailable while sales can still be read.
 
+On recording day, run the seed_activity command above and place a few demo purchases for the seller's products
+before filming Insights. Its rolling sales window becomes near-empty after the imported data ends. Keep the real
+last-30-days window: browsing events expire, so anchoring Insights to the imported history would not preserve views.
+
 ## Operator stock planning
 
 Open `/operator/dashboard/` as an operator. Every panel states the reporting date and its PostgreSQL/MongoDB sources.

@@ -535,6 +535,7 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Benchmark development or Claude Code review is left until the end | Build workloads alongside features and review each batch before any commit; first correctness-complete B1 to B6 pass by 30 Oct |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
+| Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | On recording day, run seed_activity and place a few demo purchases for the seller's products before filming Insights. Keep the real rolling window because browsing events expire |
 | Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |

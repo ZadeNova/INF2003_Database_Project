@@ -91,3 +91,11 @@ The weighted seeding test now also asserts the unchanged synthetic label. The id
 the previous raw-key implementation.
 Rebuilt migrate and ran all of test_activity.py successfully; unaltered output is
 .cache/phase3a-review/activity-R3-tests.log. No collection/index change or seeder rewrite was needed.
+
+24 October 2026 — Review (Claude Code; session that wrote the Codex brief, not a fresh session), finding activity R5.
+Team decision: keep Insights' real rolling 30-day window. The review brief reports 7,691 imported orders in that
+window at review time, 114 on 25 November and none after 27 November. These are the reviewer's reported figures,
+not a new measurement in this fix round. Events expire after 30 days, so an imported-date anchor cannot keep the
+browsing side available. Before filming on recording day, run seed_activity and place a few demo purchases for the
+seller's products. Recorded the decision, README demo step and PLAN.md recording-day dependency. No code changed;
+test_insights_views_units_ratio_and_seller_scoping already checks the rolling window and passed in the R3 module run.
