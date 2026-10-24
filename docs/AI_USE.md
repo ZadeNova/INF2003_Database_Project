@@ -30,3 +30,4 @@ One line per workstream, added at close-out.
 | catalogue amendments f/j | Codex | Recorded the approved stock-photo deferral; rewrote the Mercer design system and CSS, added removable filter chips, and checked responsive layouts, contrast and the existing GridFS upload flow | Claude Code review: CHANGES REQUESTED, no blockers; Claude Code fix round DG1-DG3 (DG4 local data; DG5-DG6 optional); Chee Long approved the design on 23 October 2026; see [review notes](plans/catalogue.md#review-notes) |
 
 | reviews | Codex | Implemented per-line reviews, transactional summaries and Bayesian ranking, moderation audit, scoped pages and real-database checks | reviewer: pending (Claude Code) |
+| wishlist | Codex | Implemented composite-key saves, trigger-created restock alerts, unseen uniqueness, scoped HTMX pages and cancellation/raw-update checks | reviewer: pending (Claude Code) |

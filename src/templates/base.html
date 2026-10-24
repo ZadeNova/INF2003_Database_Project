@@ -50,7 +50,7 @@
 
             <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation">
                 {% for label, url, view_name in nav_links %}
-                <a href="{{ url }}"{% if request.resolver_match.view_name == view_name %} aria-current="page"{% endif %}>{{ label }}</a>
+                <a href="{{ url }}"{% if request.resolver_match.view_name == view_name %} aria-current="page"{% endif %}>{{ label }}{% if view_name == 'wishlist:alerts' and restock_unseen %} <span class="badge badge--neutral" aria-label="{{ restock_unseen }} unseen restock alerts">{{ restock_unseen }}</span>{% endif %}</a>
                 {% endfor %}
             </nav>
 

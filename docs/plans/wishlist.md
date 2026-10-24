@@ -1,6 +1,6 @@
 # wishlist: Wishlist and restock alerts
 
-status: approved
+status: in-progress
 plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · estimate: about 1 day · phase 3A (9 to 13
 November) · depends on: `olist-import`, `catalogue` (product pages), `checkout` (cancellation restocks)
 
@@ -44,3 +44,17 @@ alerts; the trigger fires for a raw `UPDATE` in `psql`, not only through the app
 
 21 October 2026, cross-plan review (fresh session); findings applied: relies on the `NULLIF` actor rule and the demo sold-out product; uses the
 purchasable view.
+
+
+24 October 2026 — Implementation notes (Codex; reviewer: pending (Claude Code)). Built the composite-key wishlist,
+HTMX save/remove buttons, scoped wishlist and paginated alerts, neutral header badge, partial unseen unique index
+and stock transition trigger alongside product_update_audit. Focused checks passed for raw runtime UPDATE,
+zero/positive transitions, repeated restocks, checkout cancellation, customer ownership, withdrawn visibility,
+CSRF, injection negatives, composite identity and the two triggers together. Exit check 1 passed with demo-jun-keat
+and the real demo seller's edit form; the badge and alerts page updated, opening marked the alert seen, and the
+original sold-out stock was restored. Exit check 2's schema documentation is updated. The migrate image build,
+migration/drift checks, required full Docker suite, host docs/packaging checks and scripts/check_docs.py passed;
+unaltered command evidence is in .cache/phase3a/wishlist-full-suite.log and wishlist-exit.log (ignored). Existing
+container-only Git-index skips remain visible and the host equivalents passed. No contract omissions or scope
+deviations; only the visible displayed alerts page is marked seen, and HEAD is read-only. Fresh Claude Code review
+and visual inspection remain pending. No push, PR or merge was performed.

@@ -33,7 +33,7 @@ CSRF_TRUSTED_ORIGINS = [v.strip() for v in ENVIRON.get("DJANGO_CSRF_TRUSTED_ORIG
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
     "django.contrib.messages", "django.contrib.staticfiles",
-    "config", "accounts", "catalogue", "orders", "reviews",
+    "config", "accounts", "catalogue", "orders", "reviews", "wishlist",
 ]
 MIDDLEWARE = [
     "config.middleware.DatabaseUnavailableMiddleware",
@@ -58,6 +58,7 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates",
         "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages",
         "accounts.context_processors.role_navigation",
+        "wishlist.context_processors.alerts_badge",
     ]}}]
 from config.database import connection_parameters
 try:
