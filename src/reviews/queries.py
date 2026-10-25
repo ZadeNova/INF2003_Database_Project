@@ -2,6 +2,7 @@ from django.core.paginator import Paginator
 
 from catalogue.models import Product
 from orders.models import Order
+
 from .ratings import bayesian_score
 from .services import NEWEST, VISIBLE
 

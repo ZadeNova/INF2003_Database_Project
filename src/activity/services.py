@@ -1,8 +1,8 @@
 """Best-effort activity writes and bounded, explicit cross-store reads."""
+import logging
 from datetime import timedelta
 from decimal import Decimal
 from itertools import islice
-import logging
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -127,7 +127,8 @@ def seller_insights(seller, *, now=None):
             views = {row["_id"]: row for row in client[mongo.database_name()].events.aggregate(conversion_pipeline(ids, now))}
     except PyMongoError:
         logger.warning("activity.insights_unavailable")
-        views = {}; unavailable = True
+        views = {}
+        unavailable = True
     # Both seller predicates matter: never aggregate another seller's orders or products.
     units = dict(OrderLine.objects.filter(seller=seller, product__seller=seller, product_id__in=ids,
         order__placed_at__gte=now-timedelta(days=30), order__placed_at__lte=now).exclude(order__status="cancelled")

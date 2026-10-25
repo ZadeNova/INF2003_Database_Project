@@ -48,6 +48,22 @@ The contract is [ci](plans/ci.md); these are the implementation choices behind s
 |---|---|---|
 | ci-i9 | Pass mongosh credentials with `--username=...` and `--password=...` in startup and healthcheck commands; retry new `token_urlsafe` secrets beginning with `-`, preserving token size and alphabet and all existing `.env` values | A dash-leading password was parsed as an option, intermittently preventing MongoDB from becoming healthy. Attached arguments also support existing credentials; regenerating a stored credential would not update the database user |
 
+## CI stage 2 implementation choices (25 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i10 | Pin the additional tools in src/requirements-dev.txt, including the runtime file; keep existing pytest pins in runtime. Build migrate from a dev stage with its own image, and web explicitly from runtime | Coverage and quality/browser tools belong to the owner test runner and host CI, while runtime web keeps its limited role and dependency set. Release ages were checked through PyPI against the two-week cutoff |
+| ci-i11 | Extract translation pins into a normal requirements file plus an Argos-only file installed with --no-deps; audit that actual minimal environment. Chee Long approved the sole setuptools upgrade to 84.1.0 on 25 October | The initial unchanged pin had fixable advisories, including [GHSA-h35f-9h28-mq5c](https://github.com/advisories/GHSA-h35f-9h28-mq5c) and [GHSA-xmj3-9gf7-h52w](https://github.com/advisories/GHSA-xmj3-9gf7-h52w). This approved security exception changes that component only; Argos and the unused Torch/Stanza dependency boundary stay unchanged |
+| ci-i12 | Ruff E/F/I with line length 230; exclude migrations, data, cache and vendored static files | The longest existing Python line measured 229 characters. Import ordering, unused imports and required statement/name corrections satisfy lint; statement splitting preserves the AST. Stage 3 revisits formatting after freeze |
+| ci-i13 | Run the full suite once with branch data; keep XML/HTML artifacts and derive a line-only CoverageData file for coverage report --fail-under=80 | Coverage's ordinary branch report combines line and branch totals. The public data API preserves the original report while enforcing the approved line-only denominator, including unexecuted namespace files |
+| ci-i14 | One owned, expiring TOML exception file; audit unfiltered results before applying any --ignore-vuln flags | Expired, future-dated and overlong exceptions fail. A newly available fix invalidates an exception immediately; strict collection rejects unaudited packages. The committed file starts empty |
+| ci-i15 | One serial Chromium job against runtime web; independent accounts/orders and a third checkout shop created through the real approval UI; failure-only artifacts retained seven days | The small fixture has only two established public shops. Browser processes receive demo logins only; traces and console output redact credentials. The manual forced-failure canary proves artifact creation without a permanently failing test |
+| ci-i16 | Keep the database/browser jobs on ubuntu-22.04 and host/quality on ubuntu-24.04, all with explicit timeouts; use separate Compose project names and retain local timing evidence in the CI plan | MongoDB needs the existing kernel guard. Local measured durations inform the owner's runner-minute budget; hosted required-job and canary checks still await PR/main runs. No billing, protection or repository setting is changed |
+
+Upload-artifact v7.0.2 was checked through GitHub's release and tag APIs: its release predates the cutoff and the
+workflow pins its verified commit. The [workflow](../.github/workflows/ci.yml) is the home for action SHAs, job names,
+runner versions, timeouts and artifact retention. The [CI plan](plans/ci.md#review-notes) holds the generated local results.
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |

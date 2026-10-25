@@ -11,7 +11,8 @@ from django.urls import reverse
 @pytest.mark.django_db
 def test_health_is_safe_and_has_no_database_queries(client,django_assert_num_queries):
     with django_assert_num_queries(0):
-        response=client.get(reverse("health"));head=client.head(reverse("health"))
+        response=client.get(reverse("health"))
+        head=client.head(reverse("health"))
     assert response.status_code == head.status_code == 200
     assert response.json() == {"status":"ok"}
     assert response["Cache-Control"] == "no-store" and not head.content and not response.cookies
@@ -33,7 +34,8 @@ def test_health_validates_host(client):
 
 @pytest.mark.django_db
 def test_database_readiness_command():
-    output=StringIO();call_command("check_database",stdout=output)
+    output=StringIO()
+    call_command("check_database",stdout=output)
     assert output.getvalue().strip() == '{"postgresql": "ok", "mongodb": "ok", "migrations": "applied"}'
 
 
@@ -44,7 +46,8 @@ def test_database_failure_is_sanitized(postgres_unavailable):
 
 @pytest.mark.django_db
 def test_mongodb_failure_is_sanitized(monkeypatch):
-    monkeypatch.setenv("MONGO_HOST","127.0.0.1");monkeypatch.setenv("MONGO_PORT","1")
+    monkeypatch.setenv("MONGO_HOST","127.0.0.1")
+    monkeypatch.setenv("MONGO_PORT","1")
     with pytest.raises(CommandError,match=r"^MongoDB unavailable\.$"):
         call_command("check_database")
 

@@ -2,13 +2,13 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from account_helpers import make_operator, make_seller
 from django.db import transaction
 from django.test import Client
 from django.utils.html import strip_tags
 
 from accounts.audit import change_seller_status, set_audit_context
 from accounts.models import AuditLog, Seller
-from account_helpers import make_operator, make_seller
 
 pytestmark = pytest.mark.django_db
 

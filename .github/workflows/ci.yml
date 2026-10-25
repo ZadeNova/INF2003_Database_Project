@@ -1,4 +1,4 @@
-# CI stage 1 (docs/plans/ci.md): real-database checks on every pull request and push to main.
+# CI stages 1 and 2 (docs/plans/ci.md): real databases, quality gates and the browser demo.
 # No repository secrets: init_env.py generates throwaway credentials for each run. Never print .env or
 # `docker compose config`. Every Compose call names this run's own project, because compose.yaml hard-codes
 # `name: mercer`, and teardown removes only that project.
@@ -8,6 +8,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_browser_failure:
+        description: Fail the browser canary to verify retained, redacted artifacts
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -25,6 +32,7 @@ jobs:
     timeout-minutes: 45
     env:
       COMPOSE_PROJECT_NAME: mercer-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      MONGO_PORT: "0"
     steps:
       - name: Check the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13)
         run: |
@@ -67,8 +75,23 @@ jobs:
           docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
           docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py seed_demo
 
-      - name: Full Django suite
-        run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate pytest -q -rs -p no:cacheprovider /app/tests
+      - name: Full Django suite with line coverage gate and branch reports
+        run: |
+          mkdir -p coverage-reports
+          chmod a+rwx coverage-reports
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm \
+            --volume "$PWD/coverage-reports:/reports" migrate \
+            python /app/scripts/coverage_suite.py --output /reports
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            coverage-reports/coverage.xml
+            coverage-reports/htmlcov/
+          retention-days: 7
 
       - name: Analytics pipeline tests
         run: docker compose -p "$COMPOSE_PROJECT_NAME" --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
@@ -113,3 +136,105 @@ jobs:
           print(f"host tests: {suite.get('tests')} run, {skipped} skipped")
           sys.exit(1 if skipped else 0)
           PY
+
+  quality:
+    name: Python lint and dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Install the pinned development dependencies
+        run: python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
+      - name: Ruff lint (E, F, I)
+        run: python -m ruff check src tests scripts analytics
+      - name: Audit app, development, tools and minimal translation environments
+        run: python scripts/audit_requirements.py
+
+  browser:
+    name: Chromium demo story (runtime web)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      COMPOSE_PROJECT_NAME: mercer-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_PORT: "8011"
+      MONGO_PORT: "0"
+      FORCE_BROWSER_FAILURE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_browser_failure && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Check the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13)
+        run: |
+          kernel="$(uname -r)"
+          echo "Runner kernel: $kernel"
+          IFS=. read -r major minor patch _ <<< "${kernel%%-*}"
+          patch="${patch%%[!0-9]*}"
+          version=$(( major * 1000000 + minor * 1000 + ${patch:-0} ))
+          if [ "$version" -ge 6019000 ] && [ "$version" -le 7000013 ]; then
+            echo "::error::Kernel $kernel is incompatible with the pinned MongoDB; do not skip database checks."
+            exit 1
+          fi
+      - name: Generate, mask and export only demo login secrets
+        run: |
+          python src/tools/init_env.py
+          grep -E '^[A-Z_]*(PASSWORD|SECRET_KEY)=.' .env | cut -d= -f2- | while IFS= read -r value; do echo "::add-mask::$value"; done
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          names = {"DEMO_CUSTOMER_PASSWORD", "DEMO_SELLER_PASSWORD", "DEMO_OPERATOR_PASSWORD"}
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              for line in Path(".env").read_text().splitlines():
+                  key, separator, value = line.partition("=")
+                  if separator and key in names:
+                      output.write(f"{key}={value}\n")
+          PY
+      - name: Build owner dev image and runtime web image
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" build migrate web
+      - name: Start real databases and migrate as owner
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate
+      - name: Import the fixture and seed independent demo journeys
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py seed_demo
+          docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py seed_activity --count 2000
+      - name: Start runtime web and wait for health
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 web
+      - name: Install pinned browser tools and Chromium
+        run: |
+          python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Run the serial Chromium demo story
+        run: |
+          args=()
+          if [ "$FORCE_BROWSER_FAILURE" = "true" ]; then args+=(--force-browser-failure); fi
+          python -m scripts.browser_suite --base-url "http://127.0.0.1:$APP_PORT" \
+            --output test-results "${args[@]}"
+      - name: Sanitize retained browser artifacts
+        id: browser_artifacts
+        if: failure()
+        run: |
+          python scripts/sanitize_browser_artifacts.py test-results
+          echo 'safe=true' >> "$GITHUB_OUTPUT"
+      - name: Upload browser failure traces and screenshots
+        if: failure() && steps.browser_artifacts.outputs.safe == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 7
+      - name: Service logs on failure (no credentials are logged)
+        if: failure()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo web
+      - name: Tear down this browser project's containers and volumes only
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans

@@ -1,15 +1,14 @@
 """Customer, seller and operator pages, CSRF and object ownership using real PostgreSQL."""
-from decimal import Decimal
 import uuid
 
 import pytest
+from checkout_helpers import customer, product
 from django.test import Client
 from django.urls import reverse
 
-from accounts.models import User, Seller
+from accounts.models import Seller, User
 from catalogue.models import Product
-from checkout_helpers import customer, product
-from orders.models import Checkout, Order, Refund, Payment
+from orders.models import Checkout, Order, Payment, Refund
 from orders.services import add_to_cart, cart_review, checkout
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -176,7 +175,8 @@ def test_mutations_are_post_only_and_need_csrf(name):
 
 def test_review_payment_needs_csrf_and_anonymous_htmx_gets_login_redirect():
     buyer=customer()
-    client=Client(enforce_csrf_checks=True);client.force_login(buyer)
+    client=Client(enforce_csrf_checks=True)
+    client.force_login(buyer)
     assert client.post(reverse("orders:review"),{}).status_code==403
     response=Client().post(reverse("orders:cart_add",args=[1]),HTTP_HX_REQUEST="true")
     assert response.status_code==200 and response.headers["HX-Redirect"]==reverse("accounts:login")

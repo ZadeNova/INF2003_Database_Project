@@ -2,13 +2,13 @@
 import os
 
 import pytest
+from account_helpers import make_seller, runtime_connection
 from django.db import connection, transaction
 from psycopg import errors
 
 from accounts.audit import set_audit_context
 from accounts.models import AuditLog
 from catalogue.models import Category, Product
-from account_helpers import make_seller, runtime_connection
 
 pytestmark = pytest.mark.django_db(transaction=True)
 

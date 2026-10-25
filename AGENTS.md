@@ -121,6 +121,7 @@ Docker Desktop (or Docker Engine) with Compose 2.20 or later, from the repositor
 ```
 python src/tools/init_env.py                                    # writes .env, or adds keys a newer version needs
 docker compose up --build                                       # app at http://127.0.0.1:8000/
+docker compose build migrate web                               # rebuild dev runner and runtime web
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_settings.py   # one module
 docker compose --profile tools run --rm tools pytest -q -p no:cacheprovider analytics/tests
@@ -129,10 +130,19 @@ python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py te
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
 database; `web` holds only the runtime role. The image copies `src/` at build time and `migrate` mounts `tests/`: run
-`docker compose build migrate` after changing app code. The benchmark commands are added here when they land.
+`docker compose build migrate web` after changing app code. `migrate` targets the dev stage and its own `-app-dev`
+image; `web` targets runtime and its `-app` image. Existing pytest pins stay in requirements.txt; additional quality
+and browser tools live in requirements-dev.txt. The benchmark commands are added here when they land.
 
-CI (`.github/workflows/ci.yml`, stage 1 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
+CI (`.github/workflows/ci.yml`, stages 1–2 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
 `main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,
-the host Git-index/packaging tests (which must not skip) and `scripts/check_docs.py`. To reproduce a run locally, use
+the host Git-index/packaging tests (which must not skip), `scripts/check_docs.py`, Ruff E/F/I, dependency audit and
+serial Chromium journeys. The full suite runs once through scripts/coverage_suite.py: branch reports are retained,
+but only line coverage is gated at 80%. Include namespace files; omit migrations and the external repository mounts.
+Browser tests drive runtime web only. Use `python -m scripts.browser_suite --env-file <private env> --base-url
+http://127.0.0.1:<port>` after importing and seeding an isolated project. It exports demo logins only; never pass
+owner credentials to browser tests. Trace/screenshot capture is failure-only, with redaction before upload. The
+manual failure canary is opt-in; a hosted failed run and useful artifacts are still an exit check.
+To reproduce a run locally, use
 the README's "Continuous integration" commands; they use their own Compose project (`-p`), never `mercer`, so teardown
-cannot touch your data. Do not print `.env` or `docker compose config` in CI.
+cannot touch your data. Do not print `.env` or `docker compose config` in CI. Stage 3's formatter stays deferred.

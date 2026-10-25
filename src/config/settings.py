@@ -2,7 +2,10 @@
 import os
 import re
 from pathlib import Path
+
 from django.core.exceptions import ImproperlyConfigured
+
+from config.database import connection_parameters
 
 ENVIRON = os.environ
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -60,7 +63,6 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates",
         "accounts.context_processors.role_navigation",
         "wishlist.context_processors.alerts_badge",
     ]}}]
-from config.database import connection_parameters
 try:
     database = connection_parameters(environ=ENVIRON)
 except ValueError as error:

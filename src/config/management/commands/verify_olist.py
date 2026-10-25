@@ -1,7 +1,6 @@
 """Re-run import invariants and compare raw/imported delivery-delay findings."""
-from collections import defaultdict
-from decimal import Decimal
 import json
+from decimal import Decimal
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError

@@ -1,9 +1,9 @@
 """Only real PostgreSQL and MongoDB. Deliberate outages use refused TCP connections."""
+import json
+import os
 from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
-import json
-import os
 from pathlib import Path
 
 import pytest

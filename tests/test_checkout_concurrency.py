@@ -1,14 +1,14 @@
 """Twenty genuinely separate PostgreSQL connections contend for five units, ten consecutive runs."""
-from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from django.db import connections, connection
-
 from checkout_helpers import customer, product
+from django.db import connection, connections
+
 from orders.models import Checkout, OrderLine, Payment
-from orders.services import add_to_cart, cart_review, checkout, InsufficientStockError
+from orders.services import InsufficientStockError, add_to_cart, cart_review, checkout
 
 pytestmark=pytest.mark.django_db(transaction=True)
 

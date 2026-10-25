@@ -1,5 +1,6 @@
 """One connection policy for Django and offline PostgreSQL tools (no Django import)."""
 import os
+
 from psycopg import ProgrammingError
 from psycopg.conninfo import conninfo_to_dict
 

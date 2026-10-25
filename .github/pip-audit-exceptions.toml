@@ -1,0 +1,3 @@
+# Only advisories without a fix may be excepted. Each entry needs id, reason, owner,
+# added and expires (TOML dates); expires must be within fourteen days of added.
+exceptions = []

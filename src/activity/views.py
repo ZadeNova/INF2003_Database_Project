@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views import View
 
 from accounts.mixins import SellerRequiredMixin
+
 from .services import seller_insights
 
 

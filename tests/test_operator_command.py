@@ -1,14 +1,13 @@
 """Operators are created only by management tooling with an environment password (accounts decision d)."""
-from io import StringIO
 import os
+from io import StringIO
 
 import pytest
+from account_helpers import make_customer, make_seller
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client
-
-from account_helpers import make_customer, make_seller
 
 pytestmark = pytest.mark.django_db
 

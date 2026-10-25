@@ -1,8 +1,8 @@
 """Each rule of scripts/check_docs.py catches its case and leaves a clean tree alone."""
 import importlib.util
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 

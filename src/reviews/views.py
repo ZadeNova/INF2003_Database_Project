@@ -7,6 +7,7 @@ from django.views import View
 from accounts.mixins import CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin
 from catalogue.models import Product
 from config import mongo
+
 from .forms import ModerationForm, ReviewForm
 from .queries import review_page
 from .services import customer_line, moderate_review, write_review

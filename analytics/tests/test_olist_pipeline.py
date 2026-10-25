@@ -1,21 +1,16 @@
 """The real deterministic fixture exercises every approved cleaning rule."""
+import json
 from collections import Counter, defaultdict
 from decimal import Decimal
-import json
 from pathlib import Path
-import shutil
-import sys
 
 import pytest
-
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts"))
 from clean_olist import clean, validate
 from generate_content import generate
-from olist_common import (RAW_FILES, STATUSES, ZERO, checksums, decimal, exact_median,
-                          latest_reviews, money, read_csv, read_raw, timestamp)
+from olist_common import RAW_FILES, STATUSES, ZERO, checksums, decimal, exact_median, latest_reviews, money, read_csv, read_raw, timestamp
 from translate_reviews import read_translations, text_hash
 
+ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests/fixtures/olist"
 FX = ROOT / "data/derived/olist/fx.json"
 TEMPLATES = ROOT / "data/derived/olist/templates/categories.json"
@@ -304,6 +299,7 @@ def test_translation_hashes_are_verified_and_preserve_originals():
     (8,"late_8_to_14"),(14,"late_8_to_14"),(15,"late_over_14")])
 def test_delivery_delay_bucket_boundaries_are_nonoverlapping(days,bucket):
     from datetime import datetime, timedelta
+
     from olist_common import delay_bucket
     estimated=datetime(2018,8,1)
     assert delay_bucket((estimated+timedelta(days=days)).isoformat(),estimated.isoformat()) == bucket

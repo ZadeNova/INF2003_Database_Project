@@ -12,9 +12,8 @@ import csv
 import hashlib
 import importlib.metadata
 import json
-import os
-from pathlib import Path
 import urllib.request
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_URL = "https://argos-net.com/v1/translate-pt_en-1_9.argosmodel"
@@ -85,8 +84,8 @@ def main():
         return
     if importlib.metadata.version("argostranslate") != ARGOS_VERSION:
         parser.error(f"requires argostranslate=={ARGOS_VERSION} in the translation environment")
-    from argostranslate import package
     import ctranslate2
+    from argostranslate import package
     model_sha = hashlib.sha256(args.model.read_bytes()).hexdigest()
     manifest_path = args.output.with_suffix(".model.json")
     manifest = {"argos_version": ARGOS_VERSION, "model_version": MODEL_VERSION,

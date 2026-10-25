@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, override_settings
-from django.urls import reverse, path
+from django.urls import path, reverse
 
 from config.jsonlog import JsonFormatter
 

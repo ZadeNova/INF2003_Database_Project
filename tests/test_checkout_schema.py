@@ -1,15 +1,16 @@
 """Lifecycle, deferred money and audit protections exercised on real PostgreSQL."""
 import os
+
 import pytest
-from django.db import connection, IntegrityError, transaction
+from account_helpers import runtime_connection
+from checkout_helpers import customer, paid_order, product
+from django.db import IntegrityError, connection, transaction
 from django.utils import timezone
 from psycopg import errors
 
 from accounts.audit import set_audit_context
 from accounts.models import AuditLog
-from account_helpers import runtime_connection
-from checkout_helpers import customer, product, paid_order
-from orders.models import Checkout, Order, Payment, Refund, Cart, CartLine
+from orders.models import Cart, CartLine, Checkout, Order, Payment, Refund
 
 pytestmark = pytest.mark.django_db(transaction=True)
 STATUSES = list(Order.Status.values)

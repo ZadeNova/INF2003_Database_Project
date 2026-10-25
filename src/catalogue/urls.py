@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import operator_views, seller_views, views
 
 app_name = "catalogue"

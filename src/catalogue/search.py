@@ -1,11 +1,11 @@
 """PostgreSQL chooses purchasable candidates; one MongoDB facet counts only those candidates."""
-from decimal import Decimal
 import math
+from decimal import Decimal
 
 from bson import Decimal128
+from django.core.paginator import Paginator
 from django.db.models import BooleanField, FloatField
 from django.db.models.expressions import RawSQL
-from django.core.paginator import Paginator
 
 from .models import Product, PurchasableProduct
 

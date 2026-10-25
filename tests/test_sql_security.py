@@ -1,9 +1,7 @@
 """Dynamic SQL identifiers are psycopg Identifiers, values are bound parameters."""
-from io import StringIO
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.core.management import call_command
 from django.db import ProgrammingError, connection, transaction
 
 from accounts.models import CustomerProfile

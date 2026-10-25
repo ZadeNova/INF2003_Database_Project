@@ -1,9 +1,11 @@
 """Real PostgreSQL graph builders shared by checkout tests."""
 from decimal import Decimal
-from django.utils import timezone
+
 from django.db import transaction
+from django.utils import timezone
+
 from accounts.audit import set_audit_context
-from accounts.models import User, Seller, CustomerProfile
+from accounts.models import CustomerProfile, Seller, User
 from catalogue.models import Category, Product
 from orders.models import Checkout, Order, Payment, Refund
 

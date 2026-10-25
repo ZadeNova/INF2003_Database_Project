@@ -1,24 +1,23 @@
 """Seller CRUD, real cross-store failures, raster uploads, moderation and live category options."""
+import json
 from copy import deepcopy
 from io import BytesIO, StringIO
-import json
 
+import pytest
+from account_helpers import make_customer, make_operator, make_seller
 from bson import Decimal128
-from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from gridfs import GridFS
 from PIL import Image, PngImagePlugin
 from pymongo.errors import ConnectionFailure, WriteError
-import pytest
 
 from accounts.models import AuditLog
 from catalogue.models import Category, Product
 from catalogue.seller_forms import ProductForm
 from catalogue.services import save_product
-from account_helpers import make_customer, make_operator, make_seller
 
 pytestmark = pytest.mark.django_db(transaction=True)
 

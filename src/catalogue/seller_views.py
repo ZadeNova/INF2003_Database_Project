@@ -6,6 +6,7 @@ from django.views import View
 
 from accounts.mixins import SellerRequiredMixin
 from config import mongo
+
 from .models import Category, Product
 from .seller_forms import ProductForm
 from .services import deactivate_product, save_product

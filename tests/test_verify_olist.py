@@ -1,6 +1,6 @@
 """The comparison uses real imported history, not mocked database results."""
-from io import StringIO
 import json
+from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -40,7 +40,8 @@ def test_comparison_success_uses_an_independent_retained_raw_population(imported
             bucket=next(k for k,matches in bounds if matches)
             groups[bucket].append(int(latest[order["order_id"]]["review_score"]))
     profile={"delivery_delay_scores":{k:{"count":len(v),"average":str(Decimal(sum(v))/len(v))} for k,v in groups.items()}}
-    path=tmp_path/"retained-raw-profile.json";path.write_text(json.dumps(profile))
+    path=tmp_path/"retained-raw-profile.json"
+    path.write_text(json.dumps(profile))
     output=StringIO()
     call_command("verify_olist",source=root/"clean",profile=path,stdout=output)
     result=json.loads(output.getvalue())

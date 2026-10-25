@@ -183,3 +183,90 @@ belongs on an empty volume only. CS3 drops "implementation awaiting review" from
 continuous-integration commands in the separate project `mercer-review-final` (since removed): build, owner
 migrations, the drift check, the fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) and
 the pipeline tests all passed; the host Git-index/packaging tests passed without skips.
+
+25 October 2026 — Implementation notes (Codex; reviewer: pending (Claude Code)). Stage 2 is implemented on
+ci/stage-2-quality-browser from the merged Phase 3A main. Added a separately tagged dev image for migrate, pinned
+development dependencies, Ruff E/F/I configuration and the required import/statement/name corrections, a single
+coverage run with a line-only gate and original branch artifacts, strict audits with expiring exception metadata,
+and serial Chromium journeys against runtime web. Browser tests are excluded from Django collection and do not
+inherit its owner database fixtures. Demo passwords and authentication cookies are redacted from retained traces
+and console output; upload is conditional on successful sanitization.
+
+The baseline was measured before application lint changes, using real PostgreSQL and replica-set MongoDB in the
+isolated mercer-ci2-baseline-20261024 project. Its original branch data is retained; the unexecuted namespace helper
+tools/collect_static.py is included in the complete source denominator. The final configuration includes namespace
+files from the outset. Gate policy tests use real CoverageData and exercise a fully covered line report whose
+combined branch percentage is below the threshold, plus a failing line report and exception expiry/fix guards.
+
+Chee Long approved one scope amendment on 25 October: upgrade only translation setuptools to the verified fixed
+release, since the unchanged pin failed on advisories with fixes. Other translation pins and Argos --no-deps remain
+as specified. The exception file remains empty. Decisions ci-i10–ci-i16 record the implementation choices.
+
+The fixture exposes only two established public shops. The checkout journey creates a third shop through the real
+application/approval/product UI, so it does not depend on the photo journey running first. Each journey uses its own
+new account/order where possible; stock and visible-alert preconditions are established through the UI. The canary
+is normal on ordinary runs and deliberately fails only with the explicit flag. Local results and elapsed job times
+are generated below from the reproduction logs; this is not hosted stage 2 acceptance. PR/main required jobs and a
+hosted forced-failure run with useful artifacts still await review/push. Stage 3 and benchmark checks are deferred;
+ci and PLAN.md section 14 remain in progress. No push, PR, merge, billing or repository-setting change was made.
+
+<!-- stage-2-local-results:start -->
+Local verification below was generated from the saved command outputs and JSON timing records on 25 October 2026.
+Evidence is retained in the ignored .cache/ci-stage2 folder for the fresh local review.
+
+| Check | Observed output or generated metric |
+|---|---|
+| Before-change baseline | `624 passed, 4 skipped in 433.30s (0:07:13)`; complete src line coverage **93.36%** |
+| Final full suite, one coverage run | `635 passed, 4 skipped in 387.46s (0:06:27)` |
+| Line-only gate | **93.33%**, 2729/2924 statements covered; threshold passed |
+| Branch report, informational | **83.28%**, 533/640 branches covered; original XML/HTML retained |
+| Pipeline | `39 passed in 2.98s` |
+| Chromium normal run | `8 passed in 41.07s` |
+| Forced canary, expected exit 1 | `1 failed, 7 deselected in 2.19s`; 1 valid trace ZIP and 1 PNG screenshot; generated-secret scan passed |
+| Ruff | `All checks passed!` |
+| Host tests | `28 passed in 2.82s`; `host tests: 28 run, 0 skipped` |
+| Documentation | `check_docs: ok` |
+| Workflow validation | actionlint exited 0 with no findings |
+| Translation image | Build and offline Argos/CTranslate2/SentencePiece import check passed with the approved setuptools pin |
+
+Dependency audit output (the extra Argos file covers its intentionally separate no-deps installation):
+
+```text
+src\requirements.txt: 17 dependencies, 0 advisories, 0 with fixes
+src\requirements-dev.txt: 51 dependencies, 0 advisories, 0 with fixes
+analytics\requirements.txt: 11 dependencies, 0 advisories, 0 with fixes
+scripts\translation-requirements.txt: 6 dependencies, 0 advisories, 0 with fixes
+scripts\translation-argos-requirements.txt: 1 dependencies, 0 advisories, 0 with fixes
+```
+
+| Local job reproduction | Elapsed seconds, including setup | Workflow timeout (minutes) |
+|---|---:|---:|
+| databases | 428.44 | 45 |
+| host | 38.36 | 10 |
+| quality | 122.43 | 15 |
+| browser | 173.80 | 25 |
+
+These local job reproductions total 12.72 minutes. The browser measurement includes an extra local
+forced-canary invocation and artifact inspection; an ordinary workflow run omits that invocation. Measurements used
+Windows Python 3.13.7, Linux Docker databases, warm image-build caches, fresh host virtual environments and a fresh
+Chromium download. Windows installed Chromium without Linux-only system dependencies; the hosted workflow uses
+--with-deps on Ubuntu. Checkout, hosted runner setup and artifact-upload time are not measured. These are local
+observations, not hosted duration or billing claims; the owner budget remains at most 2,000 Linux runner-minutes.
+
+The first host harness attempt reported `9 failed, 19 passed in 2.97s` because its temporary trees were under the ignored
+.cache directory and inherited the parent Git repository. Rerunning unchanged tests with a short system-temp
+directory outside the checkout produced the final host result above. README now uses that setup. The four
+Git-index-only skips in the Git-free migrate image are covered by the zero-skip host run.
+
+Fresh owner migrations, drift checking, fixture import, seed_demo and seed_activity completed successfully.
+Runtime-image inspection confirmed the added dev tools are absent. Both final Compose projects were torn down,
+including their volumes; the mercer project was not used. Earlier development browser failures were corrected
+before the fresh final run. No test was weakened or skipped to obtain these results.
+
+Still pending: fresh Claude Code review, then owner-authorized PR/main hosted runs and a hosted forced browser
+failure whose artifact is inspected. Stage 2 acceptance remains open until those hosted checks pass. The owner
+must require these job names: Django suite, migrations and pipeline tests (real PostgreSQL and MongoDB);
+Documentation check and host Git-index/packaging tests; Python lint and dependency audit; Chromium demo story
+(runtime web). Repository protection and billing were not changed. Stage 3 formatting and benchmark gates remain
+outside this implementation.
+<!-- stage-2-local-results:end -->

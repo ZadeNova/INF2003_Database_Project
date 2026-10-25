@@ -16,8 +16,7 @@ from orders.models import Order
 
 from .audit import AUDIT_LABELS, SELLER_ACTIONS, StaleAction, allowed_actions, change_seller_status
 from .forms import AuditFilterForm, CustomerCreationForm, ReasonForm, SellerApplicationForm
-from .mixins import (AnySellerMixin, CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin,
-                     landing_url, safe_local_path)
+from .mixins import AnySellerMixin, CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin, landing_url, safe_local_path
 from .models import AuditLog, CustomerProfile, Seller, User
 
 

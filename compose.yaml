@@ -58,7 +58,9 @@ services:
       retries: 30
       start_period: 10s
   web:
-    build: src
+    build:
+      context: src
+      target: runtime
     # Named after the project (COMPOSE_PROJECT_NAME) so a second clone does not overwrite this build.
     image: ${COMPOSE_PROJECT_NAME:-mercer}-app
     environment:
@@ -82,12 +84,15 @@ services:
       start_period: 10s
   # Runs as the owner role: migrations, and (with another command) the importer and pytest.
   migrate:
-    build: src
-    image: ${COMPOSE_PROJECT_NAME:-mercer}-app
+    build:
+      context: src
+      target: dev
+    image: ${COMPOSE_PROJECT_NAME:-mercer}-app-dev
     environment:
       <<: *app-environment
       POSTGRES_USER: ${POSTGRES_OWNER_USER:?Run python src/tools/init_env.py first}
       POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?Run python src/tools/init_env.py first}
+      COVERAGE_SOURCE: /app
       # Only the role tests use these, to prove what the runtime role may not do.
       POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
       POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
@@ -103,6 +108,7 @@ services:
     volumes:
       - ./tests:/app/tests:ro,z
       - ./compose.yaml:/app/compose.yaml:ro,z
+      - ./pyproject.toml:/app/pyproject.toml:ro,z
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
     restart: "no"

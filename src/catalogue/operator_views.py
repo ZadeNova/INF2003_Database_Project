@@ -7,6 +7,7 @@ from django.views import View
 
 from accounts.mixins import OperatorRequiredMixin
 from config import mongo
+
 from .models import Category, Product
 from .seller_forms import TemplateAttributeForm
 from .services import moderate_product

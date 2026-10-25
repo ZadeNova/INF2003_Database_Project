@@ -9,11 +9,11 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import never_cache
 
-from accounts.mixins import CustomerRequiredMixin, SellerRequiredMixin, OperatorRequiredMixin
-from .forms import PaymentForm, OrderFilterForm
+from accounts.mixins import CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin
+
+from .forms import OrderFilterForm, PaymentForm
 from .models import Checkout, Order, OrderLine
-from .services import (CheckoutError, add_to_cart, set_cart_quantity, remove_from_cart,
-                       cart_review, checkout, change_order_status)
+from .services import CheckoutError, add_to_cart, cart_review, change_order_status, checkout, remove_from_cart, set_cart_quantity
 
 
 @method_decorator(never_cache, name="dispatch")

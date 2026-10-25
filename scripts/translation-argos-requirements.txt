@@ -1,0 +1,2 @@
+# Deliberately installed with --no-deps; the image uses the minimal engine above.
+argostranslate==1.9.6

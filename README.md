@@ -20,7 +20,7 @@ are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), a
 - Docker Desktop (Windows, macOS) or Docker Engine (Linux) with Compose 2.20 or later, using Linux containers. Start
   Docker Desktop first and wait until it reports the engine is running.
 - Python 3.8 or later on the host, only for `src/tools/init_env.py` and the documentation check. The application runs in
-  Docker. On Linux and macOS the command may be `python3`.
+  Docker. Host quality and browser checks use Python 3.13 and `src/requirements-dev.txt`. On Linux and macOS the command may be `python3`.
 - Git. Free ports 8000 (the app) and 27017 (MongoDB, bound to 127.0.0.1); change `APP_PORT` or `MONGO_PORT` in `.env`.
 
 ## Set up and run (fresh clone)
@@ -57,8 +57,8 @@ docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_he
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
 database; `web` holds only the runtime role. The tests use the real databases, never mocks or SQLite. `tests/` is
 mounted along with read-only `compose.yaml` for startup regression checks, but the image copies `src/` at build time,
-so run `docker compose build migrate` after changing application
-code. Test counts are not written here; the run prints them. The app image has no Git, so its four Git-index-only
+so run `docker compose build migrate web` after changing application
+code. `migrate` uses the dev image; `web` uses the runtime image. Test counts are not written here; the run prints them. The app image has no Git, so its four Git-index-only
 documentation tests are also run on the host with Python/pytest and Git:
 
 ```sh
@@ -71,30 +71,104 @@ checks operate only on temporary documentation trees and submission archives.
 
 ### Continuous integration
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every pull request and every push to `main` on
-GitHub-hosted runners (`databases` on `ubuntu-22.04`, `host` on `ubuntu-24.04`), with no repository secrets: each run generates throwaway credentials with
-`init_env.py`. The `databases` job checks the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13), builds the images,
-waits for healthy databases, migrates as the owner, runs the drift check, imports the committed Olist fixture with
-`seed_demo`, then runs the full suite and the pipeline tests; it always removes only its own Compose project. The
-`host` job runs `scripts/check_docs.py` and the host Git-index/packaging tests, and fails if any of them skip.
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, with a manual
+`workflow_dispatch` entry for the failure-artifact canary. It needs no repository secrets. `databases` and `browser`
+use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubuntu-24.04`. Every job has a timeout.
 
-To reproduce the `databases` job locally, use a separate project name so nothing touches the `mercer` project or its
-volumes. If the main stack is running, first move the host ports, for example `export APP_PORT=8011 MONGO_PORT=27028`. In Git Bash, prefix
-commands that pass container paths with `MSYS_NO_PATHCONV=1`.
+| Job | Checks |
+|---|---|
+| `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
+| `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
+| `quality` | Ruff E/F/I and audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
+| `browser` | One serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
+
+The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
+data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
+[audit wrapper](scripts/audit_requirements.py) rejects expired exceptions and any advisory with a fix, including
+an advisory whose exception was valid before a fix appeared. Exception metadata lives in
+[.github/pip-audit-exceptions.toml](.github/pip-audit-exceptions.toml). The Argos file is audited without installing
+its deliberately unused Torch/Stanza dependency tree.
+
+To reproduce stage 2 from the repository root, activate a Python 3.13 virtual environment and install
+`src/requirements-dev.txt`. The following commands use Bash (Git Bash on Windows). The private environment below
+does not change the main stack's `.env`. `dc` always supplies the explicit isolated project and environment file.
 
 ```sh
-docker compose -p mercer-ci-local build migrate
-docker compose -p mercer-ci-local up --detach --wait db mongo
-docker compose -p mercer-ci-local run --rm migrate
-docker compose -p mercer-ci-local run --rm migrate python manage.py makemigrations --check --dry-run
-docker compose -p mercer-ci-local run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
-docker compose -p mercer-ci-local run --rm migrate python manage.py seed_demo
-docker compose -p mercer-ci-local run --rm migrate pytest -q -rs -p no:cacheprovider /app/tests
-docker compose -p mercer-ci-local --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
-docker compose -p mercer-ci-local --profile tools down --volumes --remove-orphans
+python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
+mkdir -p .cache/ci-local
+python - <<'PY'
+import sys
+sys.path.insert(0, "src")
+from tools.init_env import complete_env
+complete_env(".cache/ci-local/environment.env", ".env.example")
+PY
+export CI_ENV_FILE="$PWD/.cache/ci-local/environment.env"
+export MONGO_PORT=0 APP_PORT=8011
+export MSYS_NO_PATHCONV=1
+dc() { docker compose --env-file "$CI_ENV_FILE" -p "$COMPOSE_PROJECT_NAME" "$@"; }
 ```
 
-The last command deletes only the `mercer-ci-local` project's containers and volumes.
+Database job, including coverage and pipeline tests:
+
+```sh
+export COMPOSE_PROJECT_NAME=mercer-ci-databases-local
+dc build migrate
+dc --profile tools build tools
+dc up --detach --wait --wait-timeout 300 db mongo
+dc run --rm migrate
+dc run --rm migrate python manage.py makemigrations --check --dry-run
+dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+dc run --rm migrate python manage.py seed_demo
+mkdir -p coverage-reports
+chmod a+rwx coverage-reports
+dc run --rm --volume "$PWD/coverage-reports:/reports" migrate python /app/scripts/coverage_suite.py --output /reports
+dc --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
+dc --profile tools down --volumes --remove-orphans
+```
+
+Quality and host checks need no databases:
+
+```sh
+python -m ruff check src tests scripts analytics
+python scripts/audit_requirements.py
+python scripts/check_docs.py
+CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
+python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py
+python - <<'PY'
+from xml.etree import ElementTree
+suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")
+assert int(suite.get("skipped", 0)) == 0, "Host checks must not skip"
+PY
+```
+
+Keep the host test temporary repositories outside this checkout: Git would otherwise inherit its ignore rules.
+The short system-temp path also avoids Windows path-length failures.
+
+Browser job, with a fresh project. Chromium's Linux system dependencies use `--with-deps`; on Windows use
+`python -m playwright install chromium`. The wrapper exports only the three demo logins to the test process,
+filters database credentials, and redacts console output. Parent Django database fixtures are excluded by
+`--confcutdir`; the browser subtree is excluded from the Docker Django suite.
+
+```sh
+export COMPOSE_PROJECT_NAME=mercer-ci-browser-local
+dc build migrate web
+dc up --detach --wait --wait-timeout 300 db mongo
+dc run --rm migrate
+dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+dc run --rm migrate python manage.py seed_demo
+dc run --rm migrate python manage.py seed_activity --count 2000
+dc up --detach --wait --wait-timeout 300 web
+python -m playwright install --with-deps chromium
+python -m scripts.browser_suite --env-file "$CI_ENV_FILE" --base-url "http://127.0.0.1:$APP_PORT" --output test-results
+dc down --volumes --remove-orphans
+```
+
+For a local artifact check, before teardown run the same browser wrapper with
+`--force-browser-failure --canary-only`; a failing canary is the expected result. Normal runs leave this off.
+Failures retain a trace and screenshot; passwords and authentication cookies are redacted before upload. The
+workflow uploads only sanitized failure artifacts, retained for seven days. To prove hosted behavior, manually
+dispatch the reviewed workflow with `force_browser_failure: true` and inspect its failed browser job's artifacts.
+Local results do not replace that hosted exit check. Stage 3's formatter and benchmark checks remain deferred.
 
 ## Configuration
 
@@ -107,13 +181,14 @@ needs without changing existing ones. `.env` is git-ignored: never commit it or 
 | `DJANGO_DEBUG` | `true` turns debug on; off by default |
 | `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated; keep `127.0.0.1` for the container health check |
 | `APP_PORT`, `MONGO_PORT` | Host ports (127.0.0.1 only) |
+| `COVERAGE_SOURCE` | Coverage source directory: defaults to src on the host; migrate sets /app to match its image layout |
 | `POSTGRES_DB` | Database name |
 | `POSTGRES_OWNER_USER`, `POSTGRES_OWNER_PASSWORD` | Owner role: owns the database; runs migrations, the importer and pytest |
 | `POSTGRES_RUNTIME_USER`, `POSTGRES_RUNTIME_PASSWORD` | Runtime role used by `web`: reads and writes rows, no DDL, DROP or TRUNCATE |
 | `POSTGRES_ADMIN_PASSWORD` | Bootstrap superuser, given only to the `db` service |
 | `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
 | `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
-| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Generated demo secrets; passed only to migrate for seed_demo/tests; required with no fallback |
+| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Generated demo secrets for seeding and tests; CI exports only these login values to host browser tests, masks them, and filters database credentials; required with no fallback |
 
 Credentials are set up on an empty volume only: editing `.env` does not rotate an existing database password.
 
@@ -123,8 +198,8 @@ Credentials are set up on an empty volume only: editing `.env` does not rotate a
 |---|---|
 | `db` | PostgreSQL 18; creates the owner and runtime roles on first start (`src/docker/10-roles.sh`) |
 | `mongo` | MongoDB 9.0 as the single-node replica set `rs0` with authentication (`src/docker/mongo-start.sh`); healthy once the set and the application user exist. The app connects with `replicaSet=rs0`; tools on the host need `directConnection=true` |
-| `migrate` | Owner role: migrations, mongo_setup, import_olist, verify_olist, seed_demo and pytest; data mounted read-only |
-| `web` | Django on Gunicorn as the runtime role, on 127.0.0.1 only |
+| `migrate` | Owner role and dev image (`-app-dev`): migrations, import, seeding, pytest and coverage; data/configuration mounted read-only |
+| `web` | Runtime image (`-app`) and PostgreSQL runtime role; Gunicorn on 127.0.0.1 only, without the dev tools |
 | `tools` | Optional tools profile; pinned offline profiling, cleaning, generation and pipeline tests; only working directories mounted, with raw source read-only and no .env mount |
 | `translation` | Optional isolated translation profile; pinned Argos package/tokenizer and CTranslate2 inference; offline at runtime, raw source read-only, no .env mount |
 

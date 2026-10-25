@@ -1,7 +1,7 @@
 from io import StringIO
 
-from bson import Decimal128
 import pytest
+from bson import Decimal128
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from pymongo.errors import DuplicateKeyError, WriteError
@@ -27,7 +27,8 @@ def test_setup_is_idempotent_with_readwrite_on_the_real_test_database(mongo_db):
 
 @pytest.mark.parametrize("field", list(spec()))
 def test_spec_missing_outer_field_is_rejected(mongo_db,field):
-    document=spec();document.pop(field)
+    document=spec()
+    document.pop(field)
     # MongoDB generates _id if omitted, so the server-generated ObjectId is
     # rejected by the product-ID identity rule as well.
     with pytest.raises(WriteError) as error:

@@ -1,5 +1,6 @@
 """Build static files without application secrets or database access."""
 from pathlib import Path
+
 import django
 from django.conf import settings
 from django.core.management import call_command
