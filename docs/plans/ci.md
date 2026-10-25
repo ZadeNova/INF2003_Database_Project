@@ -270,3 +270,34 @@ Documentation check and host Git-index/packaging tests; Python lint and dependen
 (runtime web). Repository protection and billing were not changed. Stage 3 formatting and benchmark gates remain
 outside this implementation.
 <!-- stage-2-local-results:end -->
+
+26 October 2026 — Claude Code review and hosted stage 2 exit verification (Codex). Claude Code independently reviewed
+46731ad: **APPROVE, no blocking findings**, with isolated real-database, browser, quality and artifact checks.
+The reviewed head was merged unchanged through [PR #20](https://github.com/ZadeNova/INF2003_Database_Project/pull/20).
+The [PR run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40209429862) and [main run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40210271108) passed every job.
+The [forced-failure run on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40211006571) reported `1 failed, 7 passed in 39.46s`:
+only test_failure_artifact_canary failed; the seven journeys passed and the other jobs succeeded.
+
+| GitHub job | PR | Main | Forced failure |
+|---|---|---|---|
+| Django suite, migrations and pipeline tests (real PostgreSQL and MongoDB) | success (9m27s) | success (8m4s) | success (7m10s) |
+| Documentation check and host Git-index/packaging tests | success (27s) | success (19s) | success (21s) |
+| Python lint and dependency audit | success (53s) | success (47s) | success (56s) |
+| Chromium demo story (runtime web) | success (4m8s) | success (3m24s) | failure (2m54s) |
+
+Job results and durations above were generated from GitHub's completed-run metadata.
+The sanitize and upload steps succeeded. The browser-failure artifact's API creation/expiry metadata confirms
+seven-day retention. Its downloaded trace ZIP opened and passed checksum checks; the PNG screenshot verified.
+Trace entries contained redaction markers for the login password, session and CSRF cookies. No Cookie or
+Set-Cookie value survived. Hosted generated secrets were unavailable outside the run, so inspection checked
+the redaction markers rather than claiming a scan against unknown secrets. The downloaded folder was deleted.
+
+**Stage 2's exit check passed on GitHub.** Stage 3 remains: the ruff format gate after the 30 October freeze.
+The CI plan stays in-progress and PLAN.md section 14 stays in progress. The owner must still require the four
+job names above in Settings → Branches for main; this task did not change protection or repository settings.
+
+Claude Code's non-blocking follow-ups, for stage 3 or later:
+
+- Choose the Ruff line length when the formatter lands: 230 currently allows isort to join imports onto roughly 200-character lines.
+- The dashboard browser journey asserts the fixture date "24 October 2026"; update that assertion if the fixture is regenerated.
+- Remove the leading blank line in src/dashboard/views.py with the formatting work.
