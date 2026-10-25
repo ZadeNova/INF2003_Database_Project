@@ -425,6 +425,8 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 | **4 Freeze** | 30 Oct to 4 Nov | **30 Oct application feature freeze** and full integration review; fresh-install verification; fixes and affected reruns only, plus `ci` stage 3 (the deferred `ruff format` gate), with 2 to 4 Nov reserved as contingency | none | Full suite and demo pass; the manual works on a clean machine; Claude Code reviews completed before commits; unresolved failures remain visible |
 | **5 Ship** | 2 to 29 Nov | Report, slides, video (all five, names on screen, under 10 minutes), final user manual and packaging; professor check-in and Tier 2 decision on 8 Nov | `deliverables`: report outline with page budget, scripted presentation and theory map appendix; Tier 2 plans only if earned | Report at 10 pages; final manual passes on a clean machine; zip checked by the packager; target submission 28 Nov (deadline 29 Nov, 23:30) |
 
+**26 October 2026: Phase 3A exit check passed.** Every Tier 1 application feature is merged and [CI is green on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40210271108).
+
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
 27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
 day, Erfan assigns `wishlist` or `activity` to another member under its approved plan. Do not shorten database tests,

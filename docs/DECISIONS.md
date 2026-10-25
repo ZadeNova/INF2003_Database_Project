@@ -48,7 +48,7 @@ The contract is [ci](plans/ci.md); these are the implementation choices behind s
 |---|---|---|
 | ci-i9 | Pass mongosh credentials with `--username=...` and `--password=...` in startup and healthcheck commands; retry new `token_urlsafe` secrets beginning with `-`, preserving token size and alphabet and all existing `.env` values | A dash-leading password was parsed as an option, intermittently preventing MongoDB from becoming healthy. Attached arguments also support existing credentials; regenerating a stored credential would not update the database user |
 
-## CI stage 2 implementation choices (25 October 2026; review pending)
+## CI stage 2 implementation choices (25 October 2026; reviewed by Claude Code)
 
 | ID | Decision | Why |
 |---|---|---|
