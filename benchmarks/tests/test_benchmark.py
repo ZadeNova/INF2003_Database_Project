@@ -11,6 +11,7 @@ from benchmarks import db
 from benchmarks.canonical import canonical
 from benchmarks.harness import golden_files, query_run
 from benchmarks.reference.compute import generate
+from benchmarks.report import report
 from benchmarks.results import Recorder
 from benchmarks.source import sha256
 from benchmarks.state import isolated_run, verify_initial, verify_manifest
@@ -156,3 +157,15 @@ def test_golden_schema_and_source_checksums_are_recordable(provenance):
     path = Path("/app/benchmarks/golden/fixture/checksums.txt")
     assert len(sha256(path)) == 64
     assert hashlib.sha256(path.read_bytes()).hexdigest() == sha256(path)
+
+
+def test_report_preserves_success_and_failure_with_different_diagnostic_fields(tmp_path):
+    recorder = Recorder(tmp_path, "correctness", {})
+    recorder.record("B6", "postgres", "read_committed", 2, 1, "demonstration", [{"latency_ns": 1}], 1, True,
+                    {"expected_stock": 9, "observed_stock": 9, "retries": 0})
+    recorder.record("B6", "mongo", "transaction", 2, 1, "demonstration", [{"latency_ns": 0, "error": "DeliberateFailure"}], 0, False,
+                    {"exception_class": "DeliberateFailure", "restored": True})
+    report(tmp_path)
+    states = list(csv.DictReader((tmp_path / "report/B6-states.csv").open()))
+    assert [row["status"] for row in states] == ["passed", "failed"]
+    assert "FAILED" in (tmp_path / "report/B6.svg").read_text()

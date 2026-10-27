@@ -18,7 +18,8 @@ def table(path, rows):
         path.write_text("")
         return
     with path.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
+        fields = list(dict.fromkeys(key for row in rows for key in row))
+        writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -91,6 +92,17 @@ def report(directory):
             [(r["engine"] + "/" + r["variant"] + " c=" + r["clients"], r["ratio"], r["status"]) for r in rendered], "x")
     table(destination / "ratios.csv", ratios)
     table(destination / "amendment-j.csv", noise(rows))
+    table(destination / "matrix-evidence.csv", [
+        {"criterion": criterion, "postgres_sources": pg, "mongo_sources": mongo, "run_evidence": evidence}
+        for criterion, pg, mongo, evidence in (
+            ("Data modelling", "docs/DATA_MODEL.md;src/orders/models.py", "docs/DATA_MODEL.md;benchmarks/load.py;src/config/mongo_schema.py", "provenance.json"),
+            ("Integrity", "src/orders/migration_sql.py;src/wishlist/migrations/0001_wishlist_restock.py", "src/config/mongo_schema.py;src/reviews/services.py", "raw.jsonl;report/B3-states.csv"),
+            ("Transactions and consistency", "src/orders/services.py;benchmarks/workloads/b3.py;benchmarks/workloads/b6.py", "src/reviews/services.py;benchmarks/workloads/b3.py;benchmarks/workloads/b6.py", "report/B3-states.csv;report/B6-states.csv"),
+            ("Schema evolution", "src/catalogue/migrations/0001_initial.py", "src/catalogue/services.py;src/config/mongo_schema.py", "provenance.json"),
+            ("Query expressiveness", "src/dashboard/queries.py;src/dashboard/migrations/0001_daily_product_sales.py", "benchmarks/workloads/b2.py;src/activity/services.py", "plans/;report/B2a.csv;report/B2b.csv;report/B2c.csv;report/B2d.csv"),
+            ("Security", "src/docker/10-roles.sh;src/config/privileges.py", "src/docker/mongo-start.sh;src/docker/bench-mongo-start.sh", "provenance.json"),
+            ("Storage and indexing", "benchmarks/load.py;benchmarks/workloads/b4.py;benchmarks/workloads/b5.py", "benchmarks/load.py;benchmarks/workloads/b4.py;benchmarks/workloads/b5.py", "plans/;storage.csv"),
+        )])
     raw = directory / "raw.jsonl"
     opener = raw.open if raw.exists() else lambda **kwargs: gzip.open(str(raw) + ".gz", "rt", **kwargs)
     checks, demonstrations, races = [], [], []
