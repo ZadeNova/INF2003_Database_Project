@@ -40,7 +40,7 @@ def svg(path, title, bars, unit):
             length, text = 0, "FAILED" if status == "failed" else "correctness only"
         parts.append(f'<text x="{485+length:.2f}" y="{y+17}" font-size="12">{html.escape(text)}</text>')
     parts.append('</g></svg>')
-    path.write_text("\n".join(parts) + "\n", encoding="utf-8")
+    path.write_text("\n".join(parts) + "\n", encoding="utf-8", newline="\n")
 
 
 def noise(rows):

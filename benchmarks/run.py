@@ -112,7 +112,7 @@ def main():
     name = f"{stamp}_{commit[:8]}{'-dirty' if dirty else ''}_{args.label}"
     output = ROOT / "benchmarks" / "results" / name
     output.mkdir(parents=True, exist_ok=False)
-    (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n")
+    (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n", newline="\n")
     if not host["vm_meets_plan"]:
         print(f"VM below plan minimum: {host['docker_vm']['NCPU']} CPUs, {host['docker_vm']['MemTotal']} bytes; trial/correctness evidence only.", flush=True)
         if args.final:
@@ -127,7 +127,7 @@ def main():
                           "--only", args.only, "--operations", str(args.operations), "--label", args.label, "--output", "/app/benchmarks/results/" + name]
         # Tee exact printed output into a file without swallowing live progress.
         process = subprocess.Popen(arguments, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        with (output / "console.txt").open("w", encoding="utf-8") as stream:
+        with (output / "console.txt").open("w", encoding="utf-8", newline="\n") as stream:
             for line in process.stdout:
                 print(line, end="", flush=True)
                 stream.write(line)
@@ -142,12 +142,12 @@ def main():
     samples = [json.loads(line) for line in (output / "stats.jsonl").read_text().splitlines()]
     host["sampled_containers"] = sorted({row["Name"] for row in samples})
     host["resource_sample_count"] = len(samples)
-    (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n")
+    (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n", newline="\n")
     provenance_file = output / "provenance.json"
     if provenance_file.exists():
         provenance = json.loads(provenance_file.read_text())
         provenance.update(host=host, final=args.final)
-        provenance_file.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n")
+        provenance_file.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", newline="\n")
     raw = output / "raw.jsonl"
     if raw.exists() and raw.stat().st_size > 5 * 1024 * 1024:
         with raw.open("rb") as source, gzip.open(str(raw) + ".gz", "wb") as target:
