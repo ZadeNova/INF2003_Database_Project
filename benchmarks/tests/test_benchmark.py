@@ -169,3 +169,22 @@ def test_report_preserves_success_and_failure_with_different_diagnostic_fields(t
     states = list(csv.DictReader((tmp_path / "report/B6-states.csv").open()))
     assert [row["status"] for row in states] == ["passed", "failed"]
     assert "FAILED" in (tmp_path / "report/B6.svg").read_text()
+
+
+def test_real_mongo_plan_preserves_compound_index_key_order(database, tmp_path):
+    plan = database.command("explain", {"find": "reviews", "filter": {"product_id": 1}, "hint": "review_product_date"}, verbosity="executionStats")
+    recorder = Recorder(tmp_path, "correctness", {})
+    recorder.plan("compound", plan)
+    saved = json.loads((tmp_path / "plans/compound.json").read_text())
+
+    def patterns(value):
+        if isinstance(value, dict):
+            return ([list(value["keyPattern"])] if "keyPattern" in value else []) + [p for child in value.values() for p in patterns(child)]
+        if isinstance(value, list):
+            return [p for child in value for p in patterns(child)]
+        return []
+
+    assert patterns(plan) == patterns(saved)
+    assert ["product_id", "answered_at"] in patterns(saved)
+    index = next(row for row in b4.index_catalogue(database)["mongo"]["reviews"] if row["name"] == "review_product_date")
+    assert index["key_sequence"] == [("product_id", 1), ("answered_at", -1)]

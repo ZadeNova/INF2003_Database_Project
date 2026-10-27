@@ -53,7 +53,8 @@ class Recorder:
         target = self.directory / "plans"
         target.mkdir(exist_ok=True)
         from bson import json_util
-        (target / (name + ".json")).write_text(json_util.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        # Compound index keyPattern objects carry semantic field order in MongoDB explain output.
+        (target / (name + ".json")).write_text(json_util.dumps(data, indent=2) + "\n", encoding="utf-8")
 
     def finish(self):
         self._write_provenance()
