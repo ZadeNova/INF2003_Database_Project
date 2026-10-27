@@ -27,6 +27,17 @@ Approved by Chee Long before implementation, so unattended builds do not invent 
 | catalogue-amendment-j (approved by Chee Long, 23 October 2026) | Defer the 15 featured stock photos (D11/D12 and f4-f8): revisit after Phase 3A only if time allows before the 30 October freeze, otherwise drop them. Every product shows an icon card unless its seller uploaded a photo; exit check 5 verifies icon fallbacks and seller photos served from GridFS | GridFS is already demonstrated by seller photo upload (exit check 2); the photos were the slowest, owner-blocked part of amendment f; the design rewrite affects the presentation grade |
 | catalogue-amendment-f (design direction chosen by Chee Long, 23 October 2026) | Mercer evolves VoiceBox into its own system (same tokens, square 2px-bordered surfaces, accessibility, dark-mode and motion rules; blog-only parts removed), keeps the red accent and its placements, and lays products out 4 per row on desktop, 3 on tablet and 2 on phones | Keeps the contrast-checked, dark-mode and motion work already built, the lowest-risk path before the 30 October freeze; see [catalogue amendment f](plans/catalogue.md) |
 
+## Benchmark outcomes, benchmark scope and featured photos (27 October 2026)
+
+Approved by Chee Long before the benchmark build. Details are in [benchmark](plans/benchmark.md) (amendments f to j)
+and [catalogue](plans/catalogue.md) (amendment k).
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-amendments-f-i | Each workload states its question, tested decision and expectation, committed before the final runs; fairness rules (idiomatic models, equal index effort, explicit equal durability, B3 with USER triggers off plus a separate run with the app's triggers, stated limits); a comparison matrix beyond speed; a fixed write-up with generated charts and tables | The rubric's top bands grade analysis, conclusions, implications and a rigorous SQL-to-NoSQL comparison (presentation part iii, required); the method alone produced numbers without conclusions |
+| benchmark-amendment-j | Cut the HTTP load script; keep per-request database timing; defer the generator until the first correctness pass shows B1 or B4 differences inside the no-op baseline's noise | Neither part earns Tier 1 marks (performance analysis is optional); the benchmark starts after Phase 3A, so the saved time goes to graded work |
+| catalogue-amendment-k | Drop the 15 featured stock photos (D11/D12, f4-f8); the demo seller uploads a few photos live | Amendment j's condition after Phase 3A: no time before the freeze; the photos show no database feature and each needs an owner licence check |
+
 ## ci stage 1 implementation (22 October 2026; reviewed, hosted runs passed)
 
 The contract is [ci](plans/ci.md); these are the implementation choices behind stage 1.

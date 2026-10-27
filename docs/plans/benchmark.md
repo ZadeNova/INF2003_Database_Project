@@ -27,8 +27,8 @@ separate `BENCH_*` credentials: the harness uses the PostgreSQL bench owner/data
 AGENTS.md with bench setup/commands when implemented. Derive PostgreSQL bench schema from app migrations plus
 bench-only EAV/JSONB tables, so B3/B6 exercise real constraints. Load identical checksummed files, IDs, values and
 attributes into both engines. The app has no `is_generated`: only bench databases carry that flag and receive
-generator output. Build and checksum-test the seeded CSV/NDJSON generator with valid FKs/money; commit its code,
-configuration and checksums, not generated datasets. Tier 1 measures retained base Olist; scaled runs remain Tier 2
+generator output. The seeded CSV/NDJSON generator (valid FKs/money; code, configuration and checksums committed, not
+generated datasets) is deferred by amendment j: build it only if its condition is met. Tier 1 measures retained base Olist; scaled runs remain Tier 2
 `durability`.
 
 **Golden outputs (BM2).** An engine-independent reference implementation computes expected results from the shared
@@ -45,7 +45,7 @@ Save dated JSON-lines results/CSV summaries under `benchmarks/results/`, with er
 checksums, commit, CPU/cores, RAM, OS, Docker version, image digests, driver/library versions and Docker Desktop VM
 settings. Report ratios as headlines, absolute latency as detail, plus modelling/consistency/constraint tradeoffs.
 
-The Python HTTP script separately measures product list/detail and search as they land. Django `execute_wrapper`
+The HTTP load script is cut (amendment j). Django `execute_wrapper`
 and PyMongo `CommandListener` add database time/count to existing JSON request logs and `Server-Timing`, without
 another app container. CI adds correctness-only gates as workloads and isolated bench services become available.
 
@@ -107,8 +107,8 @@ turns `benchmarks/results/` into each output's chart or table; no figure or numb
 report's results and discussion.
 
 **Exit check.** Reproduce B1–B6, the applicable client/run matrix, plans, storage metrics, resource/provenance records
-and driver/HTTP distinction on the designated machine. Check generator determinism and database restoration after
-success and failure. Deliberately corrupt a result or violate an invariant: the run must be recorded as failed with
+and per-request database timing on the designated machine. Check database restoration after success and failure,
+and generator determinism if amendment j's condition built it. Deliberately corrupt a result or violate an invariant: the run must be recorded as failed with
 no accepted timing (BM4). Each workload's expectation (amendment f) was committed before its final run; the durability
 settings and trigger state (amendment g) are recorded with every result; the generated charts and tables exist for
 every output; the matrix (amendment h) cites evidence for every cell. No B7, failover, backup drill or other Tier 2/3
@@ -123,24 +123,28 @@ Chee Long accepted these decisions on 22 October 2026; plan approved the same da
 | placement | Dedicated `bench` profile, services and credentials described above (BM1) |
 | a | Final runs on Chee Long's Windows laptop with Docker Desktop: plugged in, high-performance power plan, other apps closed; record specs |
 | b | Each engine: 2 CPUs/2 GB, PostgreSQL `shared_buffers` 512 MB, WiredTiger cache 0.75 GB. Load client in its own limited container, limits recorded. Explicit cache settings recorded; Docker Desktop VM at least 8 GB RAM/6 CPUs |
-| c | Full retained Olist base, every attribute represented in EAV and JSONB; generator built and checksum-tested; scaled runs only in Tier 2 |
+| c | Full retained Olist base, every attribute represented in EAV and JSONB; generator deferred by amendment j; scaled runs only in Tier 2 |
 | d | Seeded fixed parameter sets per workload (B1 selective to broad); one untimed warm-up pass, then five measured runs with fixed operation counts per client count. Report median across runs of per-run p50, p95 and throughput, with their ranges. Count retries separately; latency runs from first attempt to success. After mutating B3/B6 runs, restore PostgreSQL from a template database and MongoDB from NDJSON or a dump, including after failures; verify initial state before every run. Warm-up must leave that initial logical state intact; rewarm restored databases. Warm-cache measurement only |
-| e | Python harness in its own container, psycopg 3/PyMongo at app versions, one thread per client, `perf_counter_ns`, no-op overhead baseline, Python HTTP load script, raw JSON-lines output and CSV summary |
+| e | Python harness in its own container, psycopg 3/PyMongo at app versions, one thread per client, `perf_counter_ns`, no-op overhead baseline (HTTP load script cut by amendment j), raw JSON-lines output and CSV summary |
 
-**Outcome amendments (proposed 24 October 2026; awaiting the plan owner's approval).** These fill the gap between
+**Outcome amendments (proposed 24 October 2026; approved by Chee Long, 27 October 2026).** These fill the gap between
 the method, which the contract already fixes, and what the rubric grades: analysis, conclusions, implications and a
 rigorous SQL-to-NoSQL comparison ([RUBRICS.md](../../RUBRICS.md) section 5, presentation part iii).
 
-| ID | Proposed decision | Why |
+| ID | Decision | Why |
 |---|---|---|
 | f | Each workload states its question, the Mercer decision it tests and an expected outcome, committed before the final runs. In B3 the headline disables USER triggers on the bench tables only, keeping keys and checks, and a second run with the app's triggers is reported separately | Results become conclusions; committing expectations first shows they were not fitted to the data. The app's audit and money triggers would otherwise charge PostgreSQL for work MongoDB never does |
 | g | Fairness rules: idiomatic models, equal index effort, equal durability settings recorded explicitly, stated limits | Neither default durability nor a table-shaped MongoDB model would survive a marker's question |
 | h | A comparison matrix beyond speed, with evidence per cell | Part iii is required; performance (part iv) is optional |
 | i | A fixed write-up per result and generated charts and tables | Methods, results, conclusions and implications stated the same way for every workload; no hand-typed numbers |
 
-**Open question for the plan owner (not part of f to i).** B1 runs over 34,211 products with two or three attributes
-each. If the first pass shows B1 or B4 differences inside the no-op baseline's noise, decide whether a 10× generator
-run for B1, B4 and B5 moves into Tier 1; until then scaled runs stay Tier 2 (decision c).
+**Scope amendment j (approved by Chee Long, 27 October 2026).** Cut the Python HTTP load script; driver-level timing
+is the comparison, and per-request database timing (`execute_wrapper`, `CommandListener`, `Server-Timing`) stays.
+Defer the generator: B1 runs over 34,211 products with two or three attributes each, so build the generator only if
+the first correctness pass shows B1 or B4 differences inside the no-op baseline's noise. The plan owner then decides
+whether a 10× run for B1, B4 and B5 moves into Tier 1; until then scaled runs stay Tier 2 (decision c). Why: neither
+part earns Tier 1 marks (performance analysis is optional; the comparison is required), and both cost time the
+benchmark no longer has after Phase 3A.
 
 ## Review notes
 

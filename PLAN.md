@@ -161,7 +161,7 @@ and counted. The full rule list is in `docs/plans/olist-import.md`.
 |---|---|
 | Category names | Olist's own English translation table; the two missing names translated by hand; products without a category go into "Uncategorised" |
 | Product names and descriptions | Generated from templates: English category plus generated attributes |
-| Product images | Every product shows an icon card (the category icon from the existing sprite, covering all 74 imported categories, plus the product name; D10) unless its seller uploaded a photo, served from MongoDB GridFS. The 15 featured stock photos (D11, D12) are deferred by catalogue amendment j: revisit after Phase 3A only if time allows before the 30 October freeze, otherwise drop them |
+| Product images | Every product shows an icon card (the category icon from the existing sprite, covering all 74 imported categories, plus the product name; D10) unless its seller uploaded a photo, served from MongoDB GridFS. The 15 featured stock photos (D11, D12) are dropped (catalogue amendment k) |
 | Catalogue size | Seller-products in at least two distinct orders after cleaning (about 13.6k) are active and browsable; the rest (about 20k, mostly sold once in two years) are delisted: inactive, hidden from the shop, kept for order history, analytics and the benchmark (D13). Products created in the app are active |
 | List price | Derived from real order prices (median per seller-owned product) |
 | Shared products | Olist products sold by several sellers are split into one product per seller (32,951 become 34,448); each keeps Olist's id in a non-unique source column; counted in the cleaning ledger |
@@ -271,8 +271,8 @@ Tier 1 measures base Olist; generated rows/flags stay in bench databases and sca
 - Timed driver workloads: 1/10/50 clients, one untimed warm-up, five fixed-operation measured runs; report median
   per-run p50/p95/throughput and ranges, errors and retries. B5 records storage; B6 is a correctness demonstration
   outside that matrix, recording throughput/retries. Reset/warm-cache and latency accounting live in benchmark.md.
-- Engine comparison timed **at the driver level**; HTTP end-to-end timings reported separately, from a new local load
-  script written in `benchmark` (the old AWS harness is deleted in `foundation`).
+- Engine comparison timed **at the driver level**. The separate HTTP load script is cut ([benchmark](docs/plans/benchmark.md)
+  amendment j); per-request database timing (below) shows the database share of each request.
 - Query plans captured beside timings: `EXPLAIN (ANALYZE, BUFFERS)` and MongoDB `explain("executionStats")`.
 - `docker stats` sampled every second during each run (CPU and memory per container).
 - **Headline results as ratios** (more portable across machines), absolute milliseconds as detail.
@@ -421,7 +421,7 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 | **2A Checkout** | 25 to 26 Oct, after `accounts` | `checkout`; benchmark correctness cases for B3/B6 as checkout lands | none | Buy from three sellers in one checkout, ship, deliver, cancel with refund; stock, payments, permissions and retries pass their tests |
 | **2B Catalogue** | 26 to 27 Oct, after `accounts` | `catalogue`; benchmark B1 cases | none | **27 Oct core-demo checkpoint:** buy, ship and deliver end to end; seller CRUD with photo upload; faceted search and schema evolution; full workstream exit checks pass |
 | **3A Features** | 28 to 29 Oct | `wishlist`, `dashboard`, `reviews`, `activity`; complete `ci` (Chee Long), including Playwright demo tests and quality gates | none | Every Tier 1 application feature works end to end; CI green on `main` |
-| **3B Benchmark** | 25 Oct to 1 Nov; final measurements 31 Oct to 1 Nov | Build the harness alongside features after import; load isolated `bench` databases; B1 to B6 with golden outputs, query plans, `docker stats`, per-request timing and the local HTTP load script | none; approved plan required before implementation | First correctness-complete B1 to B6 pass by 30 Oct; by **1 Nov**, applicable repeated runs at 1/10/50 clients and the separate B6 correctness demonstration, with plans, hardware/configuration and raw outputs saved on the designated machine (section 7) |
+| **3B Benchmark** | 25 Oct to 1 Nov; final measurements 31 Oct to 1 Nov | Build the harness alongside features after import; load isolated `bench` databases; B1 to B6 with golden outputs, query plans, `docker stats` and per-request timing (HTTP load script cut, generator deferred: benchmark amendment j) | none; approved plan required before implementation | First correctness-complete B1 to B6 pass by 30 Oct; by **1 Nov**, applicable repeated runs at 1/10/50 clients and the separate B6 correctness demonstration, with plans, hardware/configuration and raw outputs saved on the designated machine (section 7) |
 | **4 Freeze** | 30 Oct to 4 Nov | **30 Oct application feature freeze** and full integration review; fresh-install verification; fixes and affected reruns only, plus `ci` stage 3 (the deferred `ruff format` gate), with 2 to 4 Nov reserved as contingency | none | Full suite and demo pass; the manual works on a clean machine; Claude Code reviews completed before commits; unresolved failures remain visible |
 | **5 Ship** | 2 to 29 Nov | Report, slides, video (all five, names on screen, under 10 minutes), final user manual and packaging; professor check-in and Tier 2 decision on 8 Nov | `deliverables`: report outline with page budget, scripted presentation and theory map appendix; Tier 2 plans only if earned | Report at 10 pages; final manual passes on a clean machine; zip checked by the packager; target submission 28 Nov (deadline 29 Nov, 23:30) |
 
@@ -447,13 +447,13 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `foundation` | Repo conversion, AWS removal, MongoDB in Compose, latest versions pinned, docs consolidation and check | none | 1 | done |
 | `olist-import` | **Olist profile, cleaning, schema (ER diagram, 3NF), import, adaptations, users** | `foundation` | 1 | done |
 | `accounts` | Three roles, seller registration and approval, operator console (approve, reject, suspend or reinstate sellers, audit log) | `olist-import` | 1 | done |
-| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and seller-uploaded photos in GridFS (featured stock photos deferred by amendment j), seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | done |
+| `catalogue` | Catalogue, specifications in MongoDB, faceted search, schema-evolution demo (category attribute templates), shop pages, icon cards and seller-uploaded photos in GridFS (featured stock photos dropped by amendment k), seller product CRUD with photo upload and audit trigger, `DESIGN.md` rewrite | `olist-import`, `accounts` | 1 | done |
 | `checkout` | Cart across sellers, checkout split into one order per seller, simulated payment, order lifecycle (seller ships, operator delivers), cancellation with refund | `olist-import`, `accounts` | 1 | done |
 | `activity` | Activity events in MongoDB: recently viewed, trending now, seller conversion (M1) | `catalogue`, `checkout` | 1 | done |
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | done |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | done |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | done |
-| `benchmark` | Benchmark harness (B1 to B6), generator, per-request timing, protocol; build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
+| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | in progress |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
@@ -478,8 +478,7 @@ a workstream changes state, and keep each plan file as short as its contract all
   including all 576 payment mismatches and the 20 orders after August 2018 (D9, R2, R5); latest review per order, reviews
   of undelivered orders kept (R3); bigint ids with Olist ids as source columns (R6); cleaning in a script before import.
 - **Catalogue:** every product shows an icon card (D10) unless its seller uploaded a photo, served from GridFS. The
-  featured stock photos (D11/D12) are deferred by amendment j: revisit after Phase 3A only if time allows before the
-  30 October freeze, otherwise drop them. Active catalogue = seller-products in at least two orders (D13); rich
+  featured stock photos (D11/D12) are dropped (catalogue amendment k, 27 October 2026). Active catalogue = seller-products in at least two orders (D13); rich
   attribute templates for the top 15 categories.
 - **Roles and orders:** customer, seller and operator in Tier 1 with row-level security in Tier 2 (D14 to D16); one
   checkout with one order per seller and payments on the checkout (D17); "seller" as the single term (D18); a custom user
