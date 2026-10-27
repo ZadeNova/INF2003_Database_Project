@@ -172,6 +172,8 @@ jobs:
           grep -E '^[A-Z_]*(PASSWORD|SECRET_KEY)=.' .env | cut -d= -f2- | while IFS= read -r value; do echo "::add-mask::$value"; done
       - name: Build and start isolated bench services
         run: |
+          mkdir -p benchmarks/results
+          chmod a+rwx benchmarks/results
           docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench build bench-runner
           docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench up --detach --wait --wait-timeout 300 bench-db bench-mongo
       - name: Load the committed fixture and run real-database benchmark tests

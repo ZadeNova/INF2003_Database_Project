@@ -233,6 +233,7 @@ From the root (host Python 3.13, standard library only; all database drivers run
 
 ```sh
 python src/tools/init_env.py
+python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
 docker compose -p mercer-bench-local --profile bench build bench-runner
 docker compose -p mercer-bench-local --profile bench up --detach --wait bench-db bench-mongo
 docker compose -p mercer-bench-local --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
@@ -258,6 +259,7 @@ accepted timing. No scale-up generator is built; the owner decides after reading
 Use a different fixture project for benchmark tests:
 
 ```sh
+python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
 docker compose -p mercer-bench-fixture --profile bench build bench-runner
 docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
 docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
@@ -271,6 +273,8 @@ Regenerate independent golden CSVs with
 `python -m benchmarks.reference.compute --source data/derived/olist/clean --output benchmarks/golden/full`.
 The reference never imports a database driver. Its committed output schema fixes decimal scales and Python
 ROUND_HALF_EVEN, and its CSVs have stable LF newlines across Windows and Linux.
+The results-directory permission command lets the container's UID write on Linux; it affects only benchmark
+evidence. The host runner creates writable run directories and replaces container-owned provenance atomically.
 
 Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_pg_queries/db_mongo_ms/db_mongo_commands
 in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.

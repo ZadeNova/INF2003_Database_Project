@@ -2,12 +2,13 @@
 import csv
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
-ZONE = ZoneInfo("Asia/Singapore")
+# All retained dates are after 1982: Singapore is UTC+08 without DST. A fixed offset also lets the
+# standard-library host tools run on Windows without a separate IANA tzdata package.
+ZONE = timezone(timedelta(hours=8), "Asia/Singapore")
 SEED = 82
 
 

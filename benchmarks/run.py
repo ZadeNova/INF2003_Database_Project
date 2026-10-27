@@ -11,7 +11,8 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
+
+from benchmarks.source import ZONE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -107,11 +108,12 @@ def main():
     if args.final and dirty:
         parser.error("Final measurements require a clean committed tree")
     host = collect_host(args.project)
-    host.update(commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZoneInfo("Asia/Singapore")).isoformat())
-    stamp = datetime.now(ZoneInfo("Asia/Singapore")).strftime("%Y-%m-%dT%H%M%S")
+    host.update(commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZONE).isoformat())
+    stamp = datetime.now(ZONE).strftime("%Y-%m-%dT%H%M%S")
     name = f"{stamp}_{commit[:8]}{'-dirty' if dirty else ''}_{args.label}"
     output = ROOT / "benchmarks" / "results" / name
     output.mkdir(parents=True, exist_ok=False)
+    output.chmod(0o777)  # The Linux runner UID differs from the host user's UID; only this evidence directory is shared.
     (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n", newline="\n")
     if not host["vm_meets_plan"]:
         print(f"VM below plan minimum: {host['docker_vm']['NCPU']} CPUs, {host['docker_vm']['MemTotal']} bytes; trial/correctness evidence only.", flush=True)
@@ -147,7 +149,9 @@ def main():
     if provenance_file.exists():
         provenance = json.loads(provenance_file.read_text())
         provenance.update(host=host, final=args.final)
-        provenance_file.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", newline="\n")
+        temporary = provenance_file.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", newline="\n")
+        temporary.replace(provenance_file)  # Directory permission permits replacing a file written by the container UID.
     raw = output / "raw.jsonl"
     if raw.exists() and raw.stat().st_size > 5 * 1024 * 1024:
         with raw.open("rb") as source, gzip.open(str(raw) + ".gz", "wb") as target:
