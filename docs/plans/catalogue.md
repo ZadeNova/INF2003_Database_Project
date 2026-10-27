@@ -19,7 +19,7 @@ databases; the operator evolves category attributes live and takes products down
 |---|---|
 | Shop pages | Home (featured products; "trending" slot filled later by `activity`), category pages, product detail, seller shop page. Only products in the `purchasable_product` view (from `olist-import`) are shown. Generated names and descriptions carry a small "generated" label (AGENTS.md rule 9). Product detail = PostgreSQL product + MongoDB spec (description, attributes, rating summary, latest five reviews) + photo or icon card |
 | Icon cards (D10) | Category → icon map covering all 74 categories, many to one (about 25 to 30 icons in `src/static/img/icons.svg`, adding what is missing); the card shows icon and name; alt text is the name |
-| Featured photos (D11, D12; deferred by amendment j) | On hold until after Phase 3A, only if time allows before the 30 October freeze; otherwise dropped. Every product shows an icon card unless its seller uploaded a photo |
+| Featured photos (D11, D12; dropped by amendment k) | Dropped after Phase 3A (amendment k). Every product shows an icon card unless its seller uploaded a photo |
 | Search and facets (decision a) | One search page, entered with a category or a name query (with neither, the home page shows featured and trending instead). **PostgreSQL first:** the candidate ids from the `purchasable_product` view, narrowed by category, price range and the name query (`pg_trgm`, decision b; see the note below), at most about 2k for a category. **MongoDB second:** a `$facet` pipeline over `product_specs` with `_id` in those candidates, filtering by attributes and rating, returning the matching ids plus counts per rating band and attribute value, so counts only ever include buyable products. **Ordering:** for price or newest, PostgreSQL sorts and paginates the matching ids with `WHERE id = ANY(%s)`; for "Top rated", the pipeline sorts by `rating_summary.bayesian` and returns one page of ids, which PostgreSQL then fetches |
 | Specifications | `$jsonSchema` on outer fields only (from `olist-import`); the app validates `attributes` against the category's template. A wildcard index on `attributes.$**` used by the facets (amendment i), created by adding it to `mongo_setup` (`olist-import`) |
 | Schema evolution demo | Operator page to add an attribute to a category template (name, type, allowed values). Sellers can then fill it, and the facets show it, with no migration and no `collMod`. The report contrasts this with the `ALTER TABLE` the same change needs in PostgreSQL |
@@ -34,7 +34,7 @@ finds "Hose Nozzle" despite the typo, and `ILIKE '%nozz%'` can use an index inst
 on the trigrams of `product.name` makes both fast. The report shows `EXPLAIN` with and without it.
 
 **Out of scope:** reviews UI and Bayesian ranking (`reviews`); trending and recently viewed (`activity`); wishlist
-buttons (`wishlist`); featured stock photos (amendment j); full-text search (`search`, Tier 2).
+buttons (`wishlist`); featured stock photos (dropped, amendment k); full-text search (`search`, Tier 2).
 
 **Tests:** facet counts match a direct count on the fixture and never include products outside the purchasable view; generated names and descriptions show the label; filters combine correctly across MongoDB and PostgreSQL; a
 suspended seller's or delisted product never appears; a seller cannot edit another's product (scoping); a failed
@@ -72,6 +72,7 @@ injection negatives on search parameters.
 | h | Benchmark case B1 is not built in this workstream | `benchmark` owns it on its separate bench databases; PLAN.md section 13 only aligns the timing |
 | i | The attribute index is a wildcard index on `attributes.$**` (approved by Chee Long, 23 October 2026, replacing "multikey index") | It also covers attributes the operator adds later. The imported attributes are scalars, so explain reports `isMultiKey: false`; the report calls it a wildcard index (multikey-capable for arrays) and does not claim a multikey demonstration |
 | j | The 15 featured stock photos (D11, D12; amendment f decisions f4-f8) are deferred: picked up after Phase 3A only if time allows before the 30 October freeze, otherwise dropped. Exit check 5 becomes "every product without an uploaded photo shows an icon card; seller-uploaded photos load from GridFS" (approved by Chee Long, 23 October 2026) | GridFS is already demonstrated by seller photo upload (exit check 2); the photos were the slowest, owner-blocked part of amendment f; the design rewrite is what affects the presentation grade |
+| k | The 15 featured stock photos (D11, D12; amendment f decisions f4-f8) are dropped. Every product keeps its icon card unless its seller uploaded a photo; for the demo, the demo seller uploads two or three photos live, which also shows GridFS. Exit check 5 is unchanged (approved by Chee Long, 27 October 2026) | Amendment j's condition: Phase 3A closed on 26 October, and the time before the 30 October freeze goes to the benchmark. The photos show no database feature (GridFS is already shown by seller uploads), and each needs an owner licence check |
 
 **Amendment f plan (approved by Chee Long, 23 October 2026).** Design direction chosen by Chee Long on
 23 October 2026 (f1 to f4); f5 to f8 and the work order were approved the same day:
@@ -81,11 +82,11 @@ injection negatives on search parameters.
 | f1 | Evolve VoiceBox into Mercer's own system: same tokens, square 2px-bordered surfaces, accessibility fixes and motion rules; blog-only parts (pull quotes, bylines, avatars, 56px display) go | Keeps the contrast-checked, dark-mode and motion work already built; lowest risk before the 30 October freeze |
 | f2 | Keep the red accent (`#EF4444`, `#B91C1C` where read) and its eleven placements | Already contrast-checked in both themes |
 | f3 | Product grid: 4 per row on desktop, 3 on tablet, 2 on phones | Room for name, price, stock and the labels without truncation |
-| f4 — on hold (amendment j) | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
-| f5 — on hold (amendment j) | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
-| f6 — on hold (amendment j) | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
-| f7 — on hold (amendment j) | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
-| f8 — on hold (amendment j) | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
+| f4 — dropped (amendment k) | Photos only from Wikimedia Commons under CC0, public domain, CC BY or CC BY-SA, each verified on its file page | Every manifest row is checkable; "openly licensed" holds literally |
+| f5 — dropped (amendment k) | The featured set is the import's `featured` flag (most units sold in each of the 15 largest categories by units), not recomputed | Committed by the reproducible cleaning script; ranking by order lines would swap two products (Watches gifts, Telephony) |
+| f6 — dropped (amendment k) | Generated names are generic ("Woven Bed bath table 99A478"), so each photo shows the category item described by the product's generated attributes (for example a queen-size geometric linen sheet) | The only product detail that exists; the page labels it "Illustrative photo" |
+| f7 — dropped (amendment k) | `manifest.csv` columns: file, product_id, title, source_url, author, licence, licence_url, changes. Images are resized to at most 1200 px and re-encoded by the existing upload path (metadata removed, at most 2 MB); no cropping, so changes read "resized, re-encoded" | Satisfies CC BY/BY-SA attribution and change notice without turning a BY-SA photo into a derivative |
+| f8 — dropped (amendment k) | `load_photos` stores the credit (author, licence, source) in the GridFS file's metadata; the detail page shows "Illustrative photo · author · licence" with links; cards show "Illustrative photo"; seller uploads carry no credit | The credit belongs to the photo, one store; idempotent: rerunning replaces each product's photo and deletes the old file |
 
 **Work, in order** (branch `catalogue/design-photos`; revised by amendment j, approved by Chee Long,
 23 October 2026):
@@ -290,3 +291,6 @@ fixture import, `seed_demo`, the full suite (only the Git-index tests skipped) a
 revised by amendment j. The plan is done and catalogue is marked done in PLAN.md section 14; Phase 2B closes when
 `catalogue/design-photos` merges to `main`. Follow-ups CG7, CG10 and CG11, the optional DG5 and DG6, and the deferred
 featured photos (amendment j) remain open.
+
+27 October 2026, amendment k (Chee Long): the deferred featured photos are dropped rather than revisited, as amendment
+j allowed once Phase 3A closed. No code changes; the demo uses live seller uploads instead.

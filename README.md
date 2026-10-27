@@ -295,7 +295,7 @@ price, rating and category options. Newest, price and top-rated ordering keep fi
 Category pages use `/products/category/<slug>/`; public shops use `/products/shops/<id>/`.
 The detail page combines price and stock from PostgreSQL with descriptions, ratings and recent reviews from MongoDB.
 Generated fields remain labelled. Products show category icon cards unless their seller uploaded a photo, served from
-GridFS. Featured stock photos are deferred by [catalogue amendment j](docs/plans/catalogue.md).
+GridFS. Featured stock photos were dropped by [catalogue amendment k](docs/plans/catalogue.md).
 
 
 ### Seller products and category options

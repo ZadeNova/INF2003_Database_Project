@@ -170,7 +170,7 @@ spacing as the grid.
 
 Desktop detail pages place media on the left and purchase information on the right; phones stack them. The media
 shows the category icon unless the seller uploaded a photo, served through the existing GridFS view. Contain uploaded
-photos without cropping, and keep product-name alternative text. Featured stock photos are deferred by amendment j.
+photos without cropping, and keep product-name alternative text. Featured stock photos were dropped (catalogue amendment k).
 
 The information column holds category, product name, shop, mono price, shipping, stock, lead time, quantity/add action,
 description, attribute definition list, rating summary and the generated-content notice. Latest reviews follow below;
