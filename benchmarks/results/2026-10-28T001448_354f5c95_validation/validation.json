@@ -1,0 +1,20 @@
+{
+  "commit": "354f5c95c893df7a1d785e336f0fcccbce390bb1",
+  "scope": "Local validation; hosted CI and fresh Claude Code review pending",
+  "full_suite": [
+    "637 passed, 4 skipped in 433.61s (0:07:13)",
+    "TOTAL                                              2968    196    642     88  91.58%",
+    "TOTAL                                              2968    196  93.40%"
+  ],
+  "benchmark_tests": "28 passed in 8.01s",
+  "host_tests": "28 passed in 1.98s",
+  "ruff": "All checks passed!",
+  "check_docs": "check_docs: ok",
+  "ci_local": {
+    "scope": "local reproduction, cached build; excludes hosted upload and teardown",
+    "exit_code": 0,
+    "duration_seconds": 50.7279558
+  },
+  "latest_source_commit": "8d0806bd155d8944b8d233be6db5e5b1af1c0553",
+  "evidence_audit": "passed: raw hashes, failed timing exclusion, initial/restore checks, index restoration and SVG syntax"
+}

@@ -1,0 +1,262 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "attributes.collection": {
+              "$eq": "everyday"
+            }
+          },
+          "indexFilterSet": false,
+          "queryHash": "50F4D1AE",
+          "planCacheShapeHash": "50F4D1AE",
+          "planCacheKey": "6702AF01",
+          "optimizationTimeMillis": 2,
+          "optimizationTimeMicros": 2697,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "transformBy": {
+              "_id": 1
+            },
+            "inputStage": {
+              "stage": "FETCH",
+              "filter": {
+                "attributes.collection": {
+                  "$eq": "everyday"
+                }
+              },
+              "nss": "bench.products",
+              "inputStage": {
+                "stage": "IXSCAN",
+                "nss": "bench.products",
+                "keyPattern": {
+                  "_id": 1
+                },
+                "indexName": "_id_",
+                "isMultiKey": false,
+                "isUnique": true,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                  "_id": [
+                    "[MinKey, MaxKey]"
+                  ]
+                }
+              }
+            }
+          },
+          "rejectedPlans": [
+            {
+              "isCached": false,
+              "stage": "SORT",
+              "sortPattern": {
+                "_id": 1
+              },
+              "memLimit": 104857600,
+              "type": "simple",
+              "inputStage": {
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "_id": 1
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "nss": "bench.products",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "bench.products",
+                    "keyPattern": {
+                      "$_path": 1,
+                      "attributes.collection": 1
+                    },
+                    "indexName": "spec_attributes",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "$_path": [],
+                      "attributes.collection": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "$_path": [
+                        "[\"attributes.collection\", \"attributes.collection\"]"
+                      ],
+                      "attributes.collection": [
+                        "[\"everyday\", \"everyday\"]"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 2879,
+          "executionTimeMillis": 35,
+          "executionTimeMicros": 35938,
+          "totalKeysExamined": 34211,
+          "totalDocsExamined": 34211,
+          "executionStages": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "nReturned": 2879,
+            "executionTimeMillisEstimate": 12,
+            "works": 34212,
+            "advanced": 2879,
+            "needTime": 31332,
+            "needYield": 0,
+            "saveState": 10,
+            "restoreState": 9,
+            "isEOF": 1,
+            "transformBy": {
+              "_id": 1
+            },
+            "inputStage": {
+              "stage": "FETCH",
+              "filter": {
+                "attributes.collection": {
+                  "$eq": "everyday"
+                }
+              },
+              "nReturned": 2879,
+              "executionTimeMillisEstimate": 12,
+              "works": 34212,
+              "advanced": 2879,
+              "needTime": 31332,
+              "needYield": 0,
+              "saveState": 10,
+              "restoreState": 9,
+              "isEOF": 1,
+              "nss": "bench.products",
+              "docsExamined": 34211,
+              "alreadyHasObj": 0,
+              "inputStage": {
+                "stage": "IXSCAN",
+                "nReturned": 34211,
+                "executionTimeMillisEstimate": 11,
+                "works": 34212,
+                "advanced": 34211,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 10,
+                "restoreState": 9,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "keyPattern": {
+                  "_id": 1
+                },
+                "indexName": "_id_",
+                "isMultiKey": false,
+                "isUnique": true,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                  "_id": [
+                    "[MinKey, MaxKey]"
+                  ]
+                },
+                "keysExamined": 34211,
+                "seeks": 1,
+                "dupsTested": 0,
+                "dupsDropped": 0,
+                "peakTrackedMemBytes": 0
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 2879,
+      "executionTimeMillisEstimate": 35
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 2879,
+      "executionTimeMillisEstimate": 35,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "633D6B94B44728316AC862632A38C1FF177CA47014E5F005C6A2D2CE18F43983",
+  "serverInfo": {
+    "host": "2c6f9c61a79a",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.collection": "everyday"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1793118180,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "ZNen0SdFrCmZ3rTWl3gJNlQLP8M=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701372602249379849
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1793118180,
+      "i": 1
+    }
+  }
+}

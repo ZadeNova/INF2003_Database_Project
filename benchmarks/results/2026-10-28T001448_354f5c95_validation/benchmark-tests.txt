@@ -1,0 +1,12 @@
+ Container mercer-bench-fixture-codex-bench-db-1 Starting 
+ Container mercer-bench-fixture-codex-bench-mongo-1 Starting 
+ Container mercer-bench-fixture-codex-bench-db-1 Started 
+ Container mercer-bench-fixture-codex-bench-mongo-1 Started 
+ Container mercer-bench-fixture-codex-bench-mongo-1 Waiting 
+ Container mercer-bench-fixture-codex-bench-db-1 Waiting 
+ Container mercer-bench-fixture-codex-bench-db-1 Healthy 
+ Container mercer-bench-fixture-codex-bench-mongo-1 Healthy 
+ Container mercer-bench-fixture-codex-bench-runner-run-ead478f1d7d6 Creating 
+ Container mercer-bench-fixture-codex-bench-runner-run-ead478f1d7d6 Created 
+............................                                             [100%]
+28 passed in 8.01s

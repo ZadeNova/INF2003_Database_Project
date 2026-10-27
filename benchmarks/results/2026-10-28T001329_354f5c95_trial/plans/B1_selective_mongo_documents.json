@@ -1,0 +1,290 @@
+{
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "i": 1,
+        "t": 1793117620
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "JVp9k8KkGssz6s+keeILDB8oXV8=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701372602249379849
+    }
+  },
+  "command": {
+    "$db": "bench",
+    "aggregate": "products",
+    "allowDiskUse": true,
+    "cursor": {},
+    "maxTimeMS": 120000,
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.power": "USB"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ]
+  },
+  "explainVersion": "1",
+  "ok": 1.0,
+  "operationTime": {
+    "$timestamp": {
+      "i": 1,
+      "t": 1793117620
+    }
+  },
+  "peakTrackedMemBytes": 8280,
+  "queryShapeHash": "AFB1457454C2B43663F904AC07E95DB63DBF020B1A236487EF1099B84D9813F9",
+  "serverInfo": {
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196",
+    "host": "2c6f9c61a79a",
+    "port": 27017,
+    "version": "9.0.4"
+  },
+  "serverParameters": {
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0
+  },
+  "stages": [
+    {
+      "$cursor": {
+        "executionStats": {
+          "executionStages": {
+            "advanced": 180,
+            "executionTimeMillisEstimate": 0,
+            "inputStage": {
+              "advanced": 180,
+              "executionTimeMillisEstimate": 0,
+              "inputStage": {
+                "advanced": 180,
+                "alreadyHasObj": 0,
+                "docsExamined": 180,
+                "executionTimeMillisEstimate": 0,
+                "inputStage": {
+                  "advanced": 180,
+                  "direction": "forward",
+                  "dupsDropped": 0,
+                  "dupsTested": 0,
+                  "executionTimeMillisEstimate": 0,
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.power\", \"attributes.power\"]"
+                    ],
+                    "attributes.power": [
+                      "[\"USB\", \"USB\"]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isEOF": 1,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.power": 1
+                  },
+                  "keysExamined": 180,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.power": []
+                  },
+                  "nReturned": 180,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "nss": "bench.products",
+                  "peakTrackedMemBytes": 0,
+                  "restoreState": 4,
+                  "saveState": 5,
+                  "seeks": 1,
+                  "stage": "IXSCAN",
+                  "works": 181
+                },
+                "isEOF": 1,
+                "nReturned": 180,
+                "needTime": 0,
+                "needYield": 0,
+                "nss": "bench.products",
+                "restoreState": 4,
+                "saveState": 5,
+                "stage": "FETCH",
+                "works": 181
+              },
+              "isEOF": 1,
+              "nReturned": 180,
+              "needTime": 0,
+              "needYield": 0,
+              "restoreState": 4,
+              "saveState": 5,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "works": 181
+            },
+            "isCached": true,
+            "isEOF": 1,
+            "memLimit": 104857600,
+            "nReturned": 180,
+            "needTime": 181,
+            "needYield": 0,
+            "peakTrackedMemBytes": 8280,
+            "restoreState": 4,
+            "saveState": 5,
+            "sortPattern": {
+              "_id": 1
+            },
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "spilledRecords": 0,
+            "spills": 0,
+            "stage": "SORT",
+            "totalDataSizeSorted": 8280,
+            "type": "simple",
+            "usedDisk": false,
+            "works": 362
+          },
+          "executionSuccess": true,
+          "executionTimeMicros": 1141,
+          "executionTimeMillis": 1,
+          "nReturned": 180,
+          "totalDocsExamined": 180,
+          "totalKeysExamined": 180
+        },
+        "queryPlanner": {
+          "cursorType": "regular",
+          "indexFilterSet": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxIndexedOrSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "namespace": "bench.products",
+          "optimizationTimeMicros": 874,
+          "optimizationTimeMillis": 0,
+          "parsedQuery": {
+            "attributes.power": {
+              "$eq": "USB"
+            }
+          },
+          "planCacheKey": "35C45890",
+          "planCacheShapeHash": "AAF4927E",
+          "prunedSimilarIndexes": false,
+          "queryHash": "AAF4927E",
+          "rejectedPlans": [
+            {
+              "inputStage": {
+                "filter": {
+                  "attributes.power": {
+                    "$eq": "USB"
+                  }
+                },
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  },
+                  "indexName": "_id_",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": true,
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            }
+          ],
+          "winningPlan": {
+            "inputStage": {
+              "inputStage": {
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.power\", \"attributes.power\"]"
+                    ],
+                    "attributes.power": [
+                      "[\"USB\", \"USB\"]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.power": 1
+                  },
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.power": []
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            },
+            "isCached": true,
+            "memLimit": 104857600,
+            "sortPattern": {
+              "_id": 1
+            },
+            "stage": "SORT",
+            "type": "simple"
+          }
+        }
+      },
+      "executionTimeMillisEstimate": 1,
+      "nReturned": 180
+    },
+    {
+      "$project": {
+        "_id": false,
+        "product_id": "$_id"
+      },
+      "executionTimeMillisEstimate": 1,
+      "expressionEvaluationPeakMemoryBytes": 0,
+      "nReturned": 180
+    }
+  ]
+}

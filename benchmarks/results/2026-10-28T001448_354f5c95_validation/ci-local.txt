@@ -1,0 +1,238 @@
+ Image mercer-ci-bench-codex-app-dev Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 617B 0.1s done
+#1 DONE 0.1s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 762B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 DONE 2.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 274B 0.0s done
+#5 DONE 0.0s
+
+#6 [runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#6 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 10.12kB 0.0s done
+#7 DONE 0.0s
+
+#8 [runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#8 CACHED
+
+#9 [dev 1/2] COPY requirements-dev.txt .
+#9 CACHED
+
+#10 [runtime 3/6] COPY requirements.txt .
+#10 CACHED
+
+#11 [runtime 2/6] WORKDIR /app
+#11 CACHED
+
+#12 [runtime 5/6] COPY . .
+#12 CACHED
+
+#13 [runtime 6/6] RUN python tools/collect_static.py
+#13 CACHED
+
+#14 [dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#14 CACHED
+
+#15 exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:fcc2d62ac763988c9ff7fd6c59564ef37eb49a5a3d0bab4a16be2a4b2dfd9158 0.0s done
+#15 exporting config sha256:caa5e5b4e28536f755628d4fad35d1d7c064f15f66f4c5f4239418160d10cbdd 0.0s done
+#15 exporting attestation manifest sha256:2bd53bf1b73d2e0aa72223d2c40570deda3536aa38903707c47e91ecefff2ad7 0.0s done
+#15 exporting manifest list sha256:1ebd74d9af805841a0a97a7d573fe69e1c957d2625a239a166331834cd7b7523 0.0s done
+#15 naming to docker.io/library/mercer-ci-bench-codex-app-dev:latest done
+#15 unpacking to docker.io/library/mercer-ci-bench-codex-app-dev:latest done
+#15 DONE 0.1s
+
+#16 resolving provenance for metadata file
+#16 DONE 0.0s
+ Image mercer-ci-bench-codex-app-dev Built 
+ Volume mercer-ci-bench-codex_bench_postgres_data Creating 
+ Volume mercer-ci-bench-codex_bench_mongo_keyfile Creating 
+ Network mercer-ci-bench-codex_default Creating 
+ Volume mercer-ci-bench-codex_bench_mongo_data Creating 
+ Volume mercer-ci-bench-codex_bench_postgres_data Creating 
+ Volume mercer-ci-bench-codex_bench_mongo_keyfile Creating 
+ Volume mercer-ci-bench-codex_bench_mongo_data Creating 
+ Network mercer-ci-bench-codex_default Creating 
+ Volume mercer-ci-bench-codex_bench_mongo_keyfile Created 
+ Volume mercer-ci-bench-codex_bench_mongo_keyfile Created 
+ Volume mercer-ci-bench-codex_bench_postgres_data Created 
+ Volume mercer-ci-bench-codex_bench_postgres_data Created 
+ Volume mercer-ci-bench-codex_bench_mongo_data Created 
+ Volume mercer-ci-bench-codex_bench_mongo_data Created 
+ Network mercer-ci-bench-codex_default Created 
+ Network mercer-ci-bench-codex_default Created 
+ Container mercer-ci-bench-codex-bench-db-1 Creating 
+ Container mercer-ci-bench-codex-bench-mongo-1 Creating 
+ Container mercer-ci-bench-codex-bench-db-1 Created 
+ Container mercer-ci-bench-codex-bench-mongo-1 Created 
+ Container mercer-ci-bench-codex-bench-mongo-1 Starting 
+ Container mercer-ci-bench-codex-bench-db-1 Starting 
+ Container mercer-ci-bench-codex-bench-mongo-1 Started 
+ Container mercer-ci-bench-codex-bench-db-1 Started 
+ Container mercer-ci-bench-codex-bench-db-1 Waiting 
+ Container mercer-ci-bench-codex-bench-mongo-1 Waiting 
+ Container mercer-ci-bench-codex-bench-db-1 Healthy 
+ Container mercer-ci-bench-codex-bench-mongo-1 Healthy 
+ Container mercer-ci-bench-codex-bench-db-1 Running 
+ Container mercer-ci-bench-codex-bench-mongo-1 Running 
+ Container mercer-ci-bench-codex-bench-mongo-1 Waiting 
+ Container mercer-ci-bench-codex-bench-db-1 Waiting 
+ Container mercer-ci-bench-codex-bench-mongo-1 Healthy 
+ Container mercer-ci-bench-codex-bench-db-1 Healthy 
+ Container mercer-ci-bench-codex-bench-runner-run-d1b23a36e621 Creating 
+ Container mercer-ci-bench-codex-bench-runner-run-d1b23a36e621 Created 
+Operations to perform:
+  Apply all migrations: accounts, auth, catalogue, contenttypes, dashboard, orders, reviews, sessions, wishlist
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_audit_log... OK
+  Applying catalogue.0001_initial... OK
+  Applying catalogue.0002_product_search_audit... OK
+  Applying orders.0001_initial... OK
+  Applying orders.0002_checkout... OK
+  Applying dashboard.0001_daily_product_sales... OK
+  Applying reviews.0001_moderation_audit... OK
+  Applying sessions.0001_initial... OK
+  Applying wishlist.0001_wishlist_restock... OK
+Checksums and CSV headers verified.
+MongoDB collections, validators and indexes ready.
+PostgreSQL users: 1099 rows
+PostgreSQL customers: 998 rows
+PostgreSQL sellers: 101 rows
+PostgreSQL categories: 74 rows
+PostgreSQL products: 118 rows
+PostgreSQL checkouts: 980 rows
+PostgreSQL orders: 1002 rows
+PostgreSQL order_lines: 1042 rows
+PostgreSQL payments: 1028 rows
+PostgreSQL refunds: 5 rows
+PostgreSQL geolocation: 20 rows
+PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows.
+MongoDB reviews: 1028 documents
+MongoDB product_specs: 118 documents
+MongoDB platform_stats: 1 documents
+MongoDB category_templates: 74 documents
+Cross-store references and ledger row counts reconciled.
+Daily product sales refreshed.
+Olist import complete in 0.598 seconds.
+Import metrics: {"duration_seconds": 0.598, "output_counts": {"categories": 74, "category_templates": 74, "checkouts": 980, "customers": 998, "geolocation": 20, "order_lines": 1042, "orders": 1002, "payments": 1028, "platform_stats": 1, "product_specs": 118, "products": 118, "refunds": 5, "reviews": 1028, "sellers": 101, "users": 1099}, "process_peak_rss_kib": 76548, "source": "/app/fixtures/olist/clean"}
+{"files": {"categories.csv": "3c821fc000be3c767a673b56a2156d43a21a5712ab900eefdf880b84fe5055a0", "category_templates.ndjson": "7b73dbc6c64c0092d5ddd3060540fa33177abc7cca4096f2604c64b6ce3ba004", "checkouts.csv": "c079ee8d010dc5ef39adbfbb85dd947819cd6286df8cdd92be6bc3511ba56d9c", "cleaning_ledger.json": "59badb9f135b6e7a0b5705a55f458b1598d1a6f92fa7e153bd2c68e976003ca7", "customers.csv": "771230333f5dfe93c97990c9952cf1fa7f027f3e0251793e10486725be6e9ed8", "geolocation.csv": "c186079a47b027fa01a94281111375ee30ea6acb929cace1681d83b3b1a8d03e", "order_lines.csv": "ac30514a75a7e15eb3d6004ce691be8225b8ae7fe3262f1f1fb4e92c4628fd45", "orders.csv": "52897bff83faba60cf9ad388e2e02b69283168ae54a864c48929b23b53574f1b", "payments.csv": "c1cfcdde52875eb2369ace8d5349ecfe85cf45116f0834465d3183d960b195ea", "platform_stats.ndjson": "7573cf489b9445d2260cbc7070fee1ae8df1914a9ee06206f665e351b89cea03", "product_specs.ndjson": "e4ff18fb97ce277e259bb522b9ac74c16bdf8cf922fd84d9b97cd9c4558f5bab", "products.csv": "a3fbbaae7b511207630b7031cc8ca117dc18b2dea207e29a60c2600b23f2f1ca", "refunds.csv": "ed7541ae10ee022016659ad9a4aec46915444ef0005d0a37bb949eaa770115f2", "reviews.ndjson": "37486521c855e60e02cde259b36a5bc0f439ad29914dbaa913a1c6446380daf7", "sellers.csv": "dc918596f973de6b60e9d810de0c5d9184d49cfae0aae667d6b3367117dd3f9e", "users.csv": "8d83efdbd0178ec508a4f1ba7c31d0f542aa0fbf12cb476477c0fcb5473c6139"}, "load": "passed", "manifest_sha256": "d361d608a5171ec3e40ab13ac6a207b1dff61938befe7394e8da1ded006f68d6", "source": "/app/fixtures/olist/clean"}
+ Container mercer-ci-bench-codex-bench-db-1 Running 
+ Container mercer-ci-bench-codex-bench-mongo-1 Running 
+ Container mercer-ci-bench-codex-bench-db-1 Waiting 
+ Container mercer-ci-bench-codex-bench-mongo-1 Waiting 
+ Container mercer-ci-bench-codex-bench-mongo-1 Healthy 
+ Container mercer-ci-bench-codex-bench-db-1 Healthy 
+ Container mercer-ci-bench-codex-bench-runner-run-28a74b09184f Creating 
+ Container mercer-ci-bench-codex-bench-runner-run-28a74b09184f Created 
+..........................                                               [100%]
+26 passed in 8.45s
+VM below plan minimum: 12 CPUs, 8280399872 bytes; trial/correctness evidence only.
+ Container mercer-ci-bench-codex-bench-db-1 Running 
+ Container mercer-ci-bench-codex-bench-mongo-1 Running 
+ Container mercer-ci-bench-codex-bench-mongo-1 Waiting 
+ Container mercer-ci-bench-codex-bench-db-1 Waiting 
+ Container mercer-ci-bench-codex-bench-db-1 Healthy 
+ Container mercer-ci-bench-codex-bench-mongo-1 Healthy 
+ Container mercer-ci-bench-codex-load-client Creating 
+ Container mercer-ci-bench-codex-load-client Created 
+baseline python/noop clients=1 run=0 correctness: passed
+B1_selective postgres/eav clients=1 run=0 correctness: passed
+B1_selective postgres/jsonb clients=1 run=0 correctness: passed
+B1_selective mongo/documents clients=1 run=0 correctness: passed
+B1_broad postgres/eav clients=1 run=0 correctness: passed
+B1_broad postgres/jsonb clients=1 run=0 correctness: passed
+B1_broad mongo/documents clients=1 run=0 correctness: passed
+B1_boolean postgres/eav clients=1 run=0 correctness: passed
+B1_boolean postgres/jsonb clients=1 run=0 correctness: passed
+B1_boolean mongo/documents clients=1 run=0 correctness: passed
+B1_range postgres/eav clients=1 run=0 correctness: passed
+B1_range postgres/jsonb clients=1 run=0 correctness: passed
+B1_range mongo/documents clients=1 run=0 correctness: passed
+B1_two postgres/eav clients=1 run=0 correctness: passed
+B1_two postgres/jsonb clients=1 run=0 correctness: passed
+B1_two mongo/documents clients=1 run=0 correctness: passed
+B1_three postgres/eav clients=1 run=0 correctness: passed
+B1_three postgres/jsonb clients=1 run=0 correctness: passed
+B1_three mongo/documents clients=1 run=0 correctness: passed
+B2a postgres/live clients=1 run=0 correctness: passed
+B2a postgres/view clients=1 run=0 correctness: passed
+B2b postgres/live clients=1 run=0 correctness: passed
+B2b postgres/view clients=1 run=0 correctness: passed
+B2c postgres/live clients=1 run=0 correctness: passed
+B2d postgres/live clients=1 run=0 correctness: passed
+B2refresh postgres/refresh clients=1 run=0 correctness: passed
+B2a mongo/live clients=1 run=0 correctness: passed
+B2b mongo/live clients=1 run=0 correctness: passed
+B2c mongo/live clients=1 run=0 correctness: passed
+B2d mongo/live clients=1 run=0 correctness: passed
+B4_bench_jsonb_age_months postgres/before clients=1 run=0 correctness: passed
+B4_bench_jsonb_age_months postgres/after clients=1 run=0 correctness: passed
+B4_bench_jsonb_age_months postgres/restore clients=1 run=0 invariant: passed
+B4_bench_eav_text postgres/before clients=1 run=0 correctness: passed
+B4_bench_eav_text postgres/after clients=1 run=0 correctness: passed
+B4_bench_eav_text postgres/restore clients=1 run=0 invariant: passed
+B4_bench_eav_bool postgres/before clients=1 run=0 correctness: passed
+B4_bench_eav_bool postgres/after clients=1 run=0 correctness: passed
+B4_bench_eav_bool postgres/restore clients=1 run=0 invariant: passed
+B4_bench_jsonb_gin postgres/before clients=1 run=0 correctness: passed
+B4_bench_jsonb_gin postgres/after clients=1 run=0 correctness: passed
+B4_bench_jsonb_gin postgres/restore clients=1 run=0 invariant: passed
+B4_review_product_date mongo/before clients=1 run=0 correctness: passed
+B4_review_product_date mongo/after clients=1 run=0 correctness: passed
+B4_review_product_date mongo/restore clients=1 run=0 invariant: passed
+B4_spec_attributes mongo/before clients=1 run=0 correctness: passed
+B4_spec_attributes mongo/after clients=1 run=0 correctness: passed
+B4_spec_attributes mongo/restore clients=1 run=0 invariant: passed
+B4_bench_product_visible mongo/before clients=1 run=0 correctness: passed
+B4_bench_product_visible mongo/after clients=1 run=0 correctness: passed
+B4_bench_product_visible mongo/restore clients=1 run=0 invariant: passed
+B5 both/footprint clients=0 run=0 storage: passed
+B3 postgres/triggers_off clients=1 run=0 correctness: passed
+B3 postgres/triggers_off clients=10 run=0 correctness: passed
+B3 postgres/triggers_off clients=50 run=0 correctness: passed
+B3 postgres/triggers_on clients=1 run=0 correctness: passed
+B3 postgres/triggers_on clients=10 run=0 correctness: passed
+B3 postgres/triggers_on clients=50 run=0 correctness: passed
+B3 mongo/snapshot clients=1 run=0 correctness: passed
+B3 mongo/snapshot clients=10 run=0 correctness: passed
+B3 mongo/snapshot clients=50 run=0 correctness: passed
+B6 postgres/read_committed clients=2 run=1 demonstration: passed
+B6 postgres/for_update clients=2 run=1 demonstration: passed
+B6 postgres/serializable clients=2 run=1 demonstration: passed
+B6 mongo/read_modify_write clients=2 run=1 demonstration: passed
+B6 mongo/transaction clients=2 run=1 demonstration: passed
+B6 mongo/atomic_inc clients=2 run=1 demonstration: passed
+{"amendment_j": [], "outputs": ["B1_boolean", "B1_broad", "B1_range", "B1_selective", "B1_three", "B1_two", "B2a", "B2b", "B2c", "B2d", "B2refresh", "B3", "B4_bench_eav_bool", "B4_bench_eav_text", "B4_bench_jsonb_age_months", "B4_bench_jsonb_gin", "B4_bench_product_visible", "B4_review_product_date", "B4_spec_attributes", "B5", "B6", "baseline"], "report": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-10-28T000540_51bb9c23-dirty_ci-local\\report"}
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-10-28T000540_51bb9c23-dirty_ci-local", "commit": "51bb9c2386898fb1ca32d3757da45b99cb76ebff-dirty", "exit_code": 0, "duration_seconds": 19.350150399957784}

@@ -225,9 +225,23 @@ raw evidence verifies restoration. Fixture tests also exercise restores after co
 and preserve real database constraints and injection checks. The full Django suite and line-coverage gate passed
 after updating its exact request-log field assertion for the new counters. Fresh Claude Code review remains pending.
 
-The amendment-j trial will be linked here when completed. The target date remains unchanged. Final measurements,
-hosted CI duration, owner decisions about the generator and the
-comparison-matrix write-up remain outstanding. The measured Docker VM memory is below the approved minimum;
+The [full-data trial](../../benchmarks/results/2026-10-28T001329_354f5c95_trial/summary.csv) passes every baseline,
+B1 and B4 check. Its generated [amendment-j evaluation](../../benchmarks/results/2026-10-28T001329_354f5c95_trial/report/amendment-j.csv)
+puts every parameter set/client count and index case outside the prescribed noise threshold. The generator condition
+was not met; no generator or scaled run was built. The target date remains unchanged.
+
+[Verified untimed plans](../../benchmarks/results/2026-10-28T002302_8d0806bd-dirty_plans-verified/summary.csv)
+repeat the read and index checks after preserving MongoDB compound-key order in serialized plans and adding an
+explicit ordered key sequence to catalogue evidence. This changes evidence encoding, not timed operations.
+The [validation handoff](../../benchmarks/results/2026-10-28T001448_354f5c95_validation/validation.json)
+links exact local test output and coverage reports; its run-index.csv lists every retained directory/commit and
+workload variant status. [Local CI reproduction](../../benchmarks/results/2026-10-28T001448_354f5c95_validation/ci-duration.json)
+passed from a fresh fixture project with a cached build; hosted duration remains unmeasured because the branch
+was not pushed. Keep the new job optional until fresh review and a hosted run pass, then consider adding it to the ruleset.
+
+Final designated-machine measurements, fresh Claude Code review, hosted CI and the deliverables' comparison-matrix
+verdict/prose remain outstanding. Generated matrix-evidence.csv files provide the source/result mapping. The measured
+Docker VM memory is below the approved minimum;
 local trial results cannot be final measurements. B5 reports the agreed representations separately, whose
 projected fields differ (notably full MongoDB review text versus SQL rating columns); do not infer equal-payload
 total-storage claims from them. The B4 compound-index case is a fixed selective example, not the full B2 rating query.
