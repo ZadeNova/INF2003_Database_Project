@@ -12,6 +12,7 @@ coverage.xml
 coverage-reports/
 htmlcov/
 test-results/
+benchmarks/results/.state/
 
 # Local overnight implementation handoff
 PROGRESS-catalogue.md

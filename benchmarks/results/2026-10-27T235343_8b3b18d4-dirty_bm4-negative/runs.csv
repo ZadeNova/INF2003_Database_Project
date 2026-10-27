@@ -1,0 +1,3 @@
+output,engine,variant,clients,run,phase,seed,status,accepted,operations,errors,retries,p50_ms,p95_ms,throughput_ops_s
+BM4_corrupted_result,postgres,expected_failure,1,1,measured,82,failed,False,1,1,0,,,
+BM4_violated_invariant,mongo,expected_failure,10,1,measured,82,failed,False,50,0,47,,,

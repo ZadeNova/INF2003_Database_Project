@@ -1,6 +1,6 @@
 # benchmark: Correctness-gated PostgreSQL and MongoDB comparison
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementer: Chee Long · Phase 3B (25 October to 1 November 2026)
 · depends on: `olist-import` for harness/loaders; `catalogue`, `reviews`, `dashboard`, `checkout` for full acceptance
 
@@ -200,3 +200,30 @@ reset/cache state, latency and error accounting, how run statistics aggregate in
 22 October 2026, fix round: BM1–BM9, provenance/schedule risk and placement/a–e decisions applied; draft retained.
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
+
+## Implementation notes (27 October 2026)
+
+Built the isolated bench services/credentials, unchanged-migration/import loading, typed EAV/JSONB and idiomatic
+documents, independent exact golden outputs, all workloads, guarded resets, raw/summary/provenance/plan evidence,
+resource sampler, CSV/SVG generation, request database timing and the optional fixture CI job. Implementation
+choices are [benchmark-i1–i14](../DECISIONS.md#benchmark-implementation-27-october-2026-review-pending).
+
+The initial [fixture pass](../../benchmarks/results/2026-10-27T233711_8b3b18d4-dirty_fixture-first-pass/summary.csv)
+passed all checks. The initial [full-data attempt](../../benchmarks/results/2026-10-27T234225_8b3b18d4-dirty_full-first-pass/summary.csv)
+retains its cancelled unindexed rating operation and failed plan, with no accepted timings. B4 now uses the
+independent single-product rating golden for that index example; B2c still checks the complete output. Windows
+terminal escapes in the initial resource stream were corrected before subsequent recorded passes; those earlier
+development streams are incomplete and are not measurement evidence.
+
+[BM4 negative evidence](../../benchmarks/results/2026-10-27T235343_8b3b18d4-dirty_bm4-negative/summary.csv)
+records both a corrupted result and a violated real stock invariant as failed, with null accepted timing; its
+raw evidence verifies restoration. Fixture tests also exercise restores after committed writes and forced failures,
+and preserve real database constraints and injection checks. The full Django run is being completed after updating
+its exact request-log field assertion for the new counters. Fresh Claude Code review remains pending.
+
+The correctness-complete full-data pass and amendment-j trial will be linked here when completed. The target
+date remains unchanged. Final measurements, hosted CI duration, owner decisions about the generator and the
+comparison-matrix write-up remain outstanding. The measured Docker VM memory is below the approved minimum;
+local trial results cannot be final measurements. B5 reports the agreed representations separately, whose
+projected fields differ (notably full MongoDB review text versus SQL rating columns); do not infer equal-payload
+total-storage claims from them. The B4 compound-index case is a fixed selective example, not the full B2 rating query.

@@ -1,0 +1,262 @@
+{
+  "application_caches": "none",
+  "buffer_state": "warm",
+  "clients": [
+    1,
+    10,
+    50
+  ],
+  "evidence_limitations": [
+    "Initial Windows resource stream could not parse terminal escape suffixes; no resource samples were retained."
+  ],
+  "files": {
+    "categories.csv": "3c821fc000be3c767a673b56a2156d43a21a5712ab900eefdf880b84fe5055a0",
+    "category_templates.ndjson": "7b73dbc6c64c0092d5ddd3060540fa33177abc7cca4096f2604c64b6ce3ba004",
+    "checkouts.csv": "48e86b62531cf69907e7745b02ff2ad5519e6c6e41926c1ca000696a22e0deb2",
+    "cleaning_ledger.json": "fb633f7b80ea9e517a593cd1a421e3e0f74fdf5fa1c9b4f27852ae4a4628ecb6",
+    "customers.csv": "5d481d647417666250993642f62637229be18dfb0e003bab504d81b296f0243a",
+    "geolocation.csv": "d0ddab332c325e8d174fcf8ddd7a43eae18a78ad46e019e0da3d9e74e2ca5312",
+    "order_lines.csv": "8f3dbc63071491a1f1f123d3dd40994303bf74c99ee0fb03501a1b8ef17815fc",
+    "orders.csv": "8d5fd925e8722c43dbbc23b5d1c7158642cef8ca797b6a20e28fef1092a8c656",
+    "payments.csv": "e62eec323a4526b65e441930ae1157f89e767cb3f6b472ac675e5d982288121c",
+    "platform_stats.ndjson": "94dbe2d8f90ce9bfa9c407d60004cbd85cd9961112146fa58acb7e43d854e9e2",
+    "product_specs.ndjson": "8d09c5d2ca1bc231a02af3d7ae630177082cbbe5a874e1381f375f38d4968db2",
+    "products.csv": "d3828943eb67837569b8446dd2f21f0d7ba1c453cf42a5d02bcd05c78a8540e3",
+    "refunds.csv": "d1be25e48d1d5326aafcea4f170d516ac14c79389a1ec8c5ca4ca0f0b195744d",
+    "reviews.ndjson": "79c09f4b73f15a561ef5eacbf872e6d8d34c7ffb315d4eae7e9e9796de99afdd",
+    "sellers.csv": "53f21480c02e2ac350e73c35c33ef11dcc0448c73ad78914881f533a79679ea1",
+    "users.csv": "96a0c38251eeaa679992011adf65ef6a38236351bc9af5a62b4b44577d52ca41"
+  },
+  "final": false,
+  "fixed_b3_buyers": 50,
+  "golden_checksums": {
+    "B1_boolean.csv": "fd7eb1dc6b5b4cbe174ad2d9f11ffe679e668db0db0e6db97b2a364c25cb04f5",
+    "B1_broad.csv": "d5071e37fc0caceb54e6162ef9d334a05f85111bca00748b7e01795d06cf0ac0",
+    "B1_range.csv": "233f368c7ff4c415ebfaaa9f5dbfb7100b362d0dda815f3d19247af3b8daf1b7",
+    "B1_selective.csv": "62c558e32ef5c4970ccf24c3cc0fdd1c8b91a2113c157c1cc727dfa5e29c679e",
+    "B1_three.csv": "c2adcb7ed47ed4e547de8856e40822b378163e17962c7bf70f2ea9eedd240fc1",
+    "B1_two.csv": "203e75fc11c54eedc8195ede0f7323cdbb50ecf187499f5ae130df59145a76f0",
+    "B2a.csv": "57da886463a280c40d0d7d76143d686ed73745e73887779c41242b03bd2b9d4f",
+    "B2b.csv": "7545ba5de5a24eb19b99040654c3329232f95ad9f84d47c7a344548d6ce548e4",
+    "B2c.csv": "c70eb88de48f0f4bd6d2a85b887e8c037f6755fd70bbecb140c3b7655abf917f",
+    "B2d.csv": "4fed98d048d8ba0f4cba267e39996d5594cddd7dc2177337ee20557a8e6144f6",
+    "parameters.json": "73169689847e2cf56b1438677d2a00367405450d282ecb10d782c61d2d87148b",
+    "source.json": "da00f79df7814113efb8ffc4e8bce150a9cb60ab2c87263d5d10061cd588e0ee"
+  },
+  "host": {
+    "commit": "8b3b18d46012d04a05556665f253ef7759694bc1-dirty",
+    "containers": [
+      {
+        "image": "postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+        "image_digests": [
+          "postgres@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8"
+        ],
+        "limits": {
+          "Memory": 2147483648,
+          "MemorySwap": 2147483648,
+          "NanoCpus": 2000000000,
+          "ShmSize": 536870912
+        },
+        "name": "/mercer-bench-full-codex-bench-db-1"
+      },
+      {
+        "image": "mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+        "image_digests": [
+          "mongo@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8"
+        ],
+        "limits": {
+          "Memory": 2147483648,
+          "MemorySwap": 2147483648,
+          "NanoCpus": 2000000000,
+          "ShmSize": 67108864
+        },
+        "name": "/mercer-bench-full-codex-bench-mongo-1"
+      }
+    ],
+    "docker_version": {
+      "Client": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "Thu Sep  3 21:53:38 2026",
+        "Context": "desktop-linux",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "88096ef",
+        "GoVersion": "go1.26.8",
+        "Os": "windows",
+        "Version": "29.8.0"
+      },
+      "Server": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "2026-09-03T21:51:20.000000000+00:00",
+        "Components": [
+          {
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "amd64",
+              "BuildTime": "Thu Sep  3 21:51:20 2026",
+              "Experimental": "false",
+              "GitCommit": "3ce5872",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            },
+            "Name": "Engine",
+            "Version": "29.8.0"
+          },
+          {
+            "Details": {
+              "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+            },
+            "Name": "containerd",
+            "Version": "v2.3.5"
+          },
+          {
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            },
+            "Name": "runc",
+            "Version": "1.5.1"
+          },
+          {
+            "Details": {
+              "GitCommit": "de40ad0"
+            },
+            "Name": "docker-init",
+            "Version": "0.19.0"
+          }
+        ],
+        "GitCommit": "3ce5872",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Platform": {
+          "Name": "Docker Desktop 4.92.0 (240144)"
+        },
+        "Version": "29.8.0"
+      }
+    },
+    "docker_vm": {
+      "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+      "MemTotal": 8280399872,
+      "NCPU": 12,
+      "OperatingSystem": "Docker Desktop (containerized)"
+    },
+    "duration_seconds": 966.510528499959,
+    "exit_code": 1,
+    "final": false,
+    "hardware": {
+      "cpu": {
+        "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+        "NumberOfCores": 6,
+        "NumberOfLogicalProcessors": 12
+      },
+      "ram": 17084600320
+    },
+    "mongo_server_readback": {
+      "cache_bytes": 805306368,
+      "default_write_concern": {
+        "$clusterTime": {
+          "clusterTime": {
+            "$timestamp": "7701373461242839041"
+          },
+          "signature": {
+            "hash": "nyrLkQQuwsWg4SbZnzhFUNtj5TA=",
+            "keyId": {
+              "high": 1793115540,
+              "low": 9,
+              "unsigned": false
+            }
+          }
+        },
+        "defaultReadConcern": {
+          "level": "local"
+        },
+        "defaultReadConcernSource": "implicit",
+        "defaultWriteConcern": {
+          "w": "majority",
+          "wtimeout": 0
+        },
+        "defaultWriteConcernSource": "implicit",
+        "localUpdateWallClockTime": "2026-10-27T15:42:24.853Z",
+        "ok": 1,
+        "operationTime": {
+          "$timestamp": "7701373461242839041"
+        }
+      },
+      "majority_journal_default": true,
+      "options": {
+        "net": {
+          "bindIp": "*"
+        },
+        "replication": {
+          "replSet": "rs0"
+        },
+        "security": {
+          "keyFile": "/keyfile/mongo.key"
+        },
+        "storage": {
+          "wiredTiger": {
+            "engineConfig": {
+              "cacheSizeGB": 0.75
+            }
+          }
+        }
+      }
+    },
+    "os": "Windows-10-10.0.19045-SP0",
+    "project": "mercer-bench-full-codex",
+    "runner_actual_limits": {
+      "Memory": 2147483648,
+      "MemorySwap": 2147483648,
+      "NanoCpus": 2000000000,
+      "ShmSize": 67108864
+    },
+    "runner_limits": {
+      "cpus": 2,
+      "memory_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648
+    },
+    "started_at": "2026-10-27T23:42:25.000276+08:00",
+    "vm_meets_plan": false
+  },
+  "implementation_base_commit": "8b3b18d46012d04a05556665f253ef7759694bc1-dirty",
+  "label": "full-first-pass",
+  "libraries": {
+    "Django": "5.2.17",
+    "psycopg": "3.3.5",
+    "pymongo": "4.19.0"
+  },
+  "manifest_sha256": "66d35208ee62a541419da00710c5b85f2518068897a539a46b1e6c02bb57a29e",
+  "measured_runs": 5,
+  "mode": "correctness",
+  "operations": 50,
+  "output_schema_sha256": "a8f14575b1fa26ced33e2084aa89c184871e8ec8c223ba7f0b0feda983c37b2b",
+  "raw_sha256": "830a210fe797d749e3d72f230883b26362541e1e664bce6649df0694241d6db8",
+  "seed": 82,
+  "settings": {
+    "mongo_transaction_read_concern": {
+      "level": "snapshot"
+    },
+    "mongo_version": "9.0.4",
+    "mongo_write_concern": {
+      "j": true,
+      "w": "majority"
+    },
+    "postgres": {
+      "fsync": "on",
+      "full_page_writes": "on",
+      "server_version": "18.6 (Debian 18.6-1.pgdg12+2)",
+      "shared_buffers": "512MB",
+      "synchronous_commit": "on"
+    }
+  },
+  "source": "/app/data/derived/olist/clean",
+  "telemetry": "disabled",
+  "throughput_includes": "connection setup and correctness validation",
+  "trigger_policy": "B3 PostgreSQL USER off headline and USER on separate; internal FK triggers always enabled"
+}

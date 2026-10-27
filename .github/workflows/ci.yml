@@ -151,9 +151,66 @@ jobs:
       - name: Install the pinned development dependencies
         run: python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
       - name: Ruff lint (E, F, I)
-        run: python -m ruff check src tests scripts analytics
+        run: python -m ruff check .
       - name: Audit app, development, tools and minimal translation environments
         run: python scripts/audit_requirements.py
+
+  benchmark:
+    name: Benchmark fixture correctness (optional ruleset check)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: mercer-ci-bench-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Start duration record and generate private credentials
+        run: |
+          echo "BENCH_JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          python3 src/tools/init_env.py
+          grep -E '^[A-Z_]*(PASSWORD|SECRET_KEY)=.' .env | cut -d= -f2- | while IFS= read -r value; do echo "::add-mask::$value"; done
+      - name: Build and start isolated bench services
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench build bench-runner
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench up --detach --wait --wait-timeout 300 bench-db bench-mongo
+      - name: Load the committed fixture and run real-database benchmark tests
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+      - name: Correctness only (no accepted timing)
+        run: python3 -m benchmarks.run --project "$COMPOSE_PROJECT_NAME" --source /app/fixtures/olist/clean --golden fixture --mode correctness --label ci-fixture
+      - name: Record job duration
+        if: always()
+        run: |
+          mkdir -p .cache/benchmark-ci
+          python3 - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          Path('.cache/benchmark-ci/duration.json').write_text(json.dumps({'duration_seconds': time.time() - int(os.environ['BENCH_JOB_START'])}))
+          PY
+      - name: Upload all benchmark evidence, including failed checks
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-fixture-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmarks/results/*/host.json
+            benchmarks/results/*/provenance.json
+            benchmarks/results/*/raw.jsonl*
+            benchmarks/results/*/summary.csv
+            benchmarks/results/*/runs.csv
+            benchmarks/results/*/storage.csv
+            benchmarks/results/*/stats.jsonl
+            benchmarks/results/*/console.txt
+            benchmarks/results/*/plans/
+            benchmarks/results/*/report/
+            .cache/benchmark-ci/duration.json
+          include-hidden-files: true
+          retention-days: 7
+      - name: Tear down this benchmark project's containers and volumes only
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench down --volumes --remove-orphans
 
   browser:
     name: Chromium demo story (runtime web)

@@ -1,0 +1,289 @@
+{
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "i": 1,
+        "t": 1793115740
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "nyrLkQQuwsWg4SbZnzhFUNtj5TA=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701372602249379849
+    }
+  },
+  "command": {
+    "$db": "bench",
+    "aggregate": "products",
+    "allowDiskUse": true,
+    "cursor": {},
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.outdoor": true
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ]
+  },
+  "explainVersion": "1",
+  "ok": 1.0,
+  "operationTime": {
+    "$timestamp": {
+      "i": 1,
+      "t": 1793115740
+    }
+  },
+  "peakTrackedMemBytes": 69552,
+  "queryShapeHash": "FE4AC5259CF051FEE04F911569CF02288ED2E938A7AD9B61C15E280AAA9AE470",
+  "serverInfo": {
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196",
+    "host": "2c6f9c61a79a",
+    "port": 27017,
+    "version": "9.0.4"
+  },
+  "serverParameters": {
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0
+  },
+  "stages": [
+    {
+      "$cursor": {
+        "executionStats": {
+          "executionStages": {
+            "advanced": 1512,
+            "executionTimeMillisEstimate": 0,
+            "inputStage": {
+              "advanced": 1512,
+              "executionTimeMillisEstimate": 0,
+              "inputStage": {
+                "advanced": 1512,
+                "alreadyHasObj": 0,
+                "docsExamined": 1512,
+                "executionTimeMillisEstimate": 0,
+                "inputStage": {
+                  "advanced": 1512,
+                  "direction": "forward",
+                  "dupsDropped": 0,
+                  "dupsTested": 0,
+                  "executionTimeMillisEstimate": 0,
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.outdoor\", \"attributes.outdoor\"]"
+                    ],
+                    "attributes.outdoor": [
+                      "[true, true]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isEOF": 1,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.outdoor": 1
+                  },
+                  "keysExamined": 1512,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.outdoor": []
+                  },
+                  "nReturned": 1512,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "nss": "bench.products",
+                  "peakTrackedMemBytes": 0,
+                  "restoreState": 7,
+                  "saveState": 8,
+                  "seeks": 1,
+                  "stage": "IXSCAN",
+                  "works": 1513
+                },
+                "isEOF": 1,
+                "nReturned": 1512,
+                "needTime": 0,
+                "needYield": 0,
+                "nss": "bench.products",
+                "restoreState": 7,
+                "saveState": 8,
+                "stage": "FETCH",
+                "works": 1513
+              },
+              "isEOF": 1,
+              "nReturned": 1512,
+              "needTime": 0,
+              "needYield": 0,
+              "restoreState": 7,
+              "saveState": 8,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "works": 1513
+            },
+            "isCached": false,
+            "isEOF": 1,
+            "memLimit": 104857600,
+            "nReturned": 1512,
+            "needTime": 1513,
+            "needYield": 0,
+            "peakTrackedMemBytes": 69552,
+            "restoreState": 7,
+            "saveState": 8,
+            "sortPattern": {
+              "_id": 1
+            },
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "spilledRecords": 0,
+            "spills": 0,
+            "stage": "SORT",
+            "totalDataSizeSorted": 69552,
+            "type": "simple",
+            "usedDisk": false,
+            "works": 3026
+          },
+          "executionSuccess": true,
+          "executionTimeMicros": 4800,
+          "executionTimeMillis": 4,
+          "nReturned": 1512,
+          "totalDocsExamined": 1512,
+          "totalKeysExamined": 1512
+        },
+        "queryPlanner": {
+          "cursorType": "regular",
+          "indexFilterSet": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxIndexedOrSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "namespace": "bench.products",
+          "optimizationTimeMicros": 4022,
+          "optimizationTimeMillis": 4,
+          "parsedQuery": {
+            "attributes.outdoor": {
+              "$eq": true
+            }
+          },
+          "planCacheKey": "F3C92ECA",
+          "planCacheShapeHash": "DA8F080C",
+          "prunedSimilarIndexes": false,
+          "queryHash": "DA8F080C",
+          "rejectedPlans": [
+            {
+              "inputStage": {
+                "filter": {
+                  "attributes.outdoor": {
+                    "$eq": true
+                  }
+                },
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  },
+                  "indexName": "_id_",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": true,
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            }
+          ],
+          "winningPlan": {
+            "inputStage": {
+              "inputStage": {
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.outdoor\", \"attributes.outdoor\"]"
+                    ],
+                    "attributes.outdoor": [
+                      "[true, true]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.outdoor": 1
+                  },
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.outdoor": []
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            },
+            "isCached": false,
+            "memLimit": 104857600,
+            "sortPattern": {
+              "_id": 1
+            },
+            "stage": "SORT",
+            "type": "simple"
+          }
+        }
+      },
+      "executionTimeMillisEstimate": 2,
+      "nReturned": 1512
+    },
+    {
+      "$project": {
+        "_id": false,
+        "product_id": "$_id"
+      },
+      "executionTimeMillisEstimate": 2,
+      "expressionEvaluationPeakMemoryBytes": 0,
+      "nReturned": 1512
+    }
+  ]
+}

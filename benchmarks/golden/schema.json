@@ -1,0 +1,7 @@
+{
+  "B1": {"columns": {"product_id": "int"}, "sort": ["product_id"]},
+  "B2a": {"columns": {"category_id": "int", "month": "date", "units": "int", "revenue": "decimal:2", "revenue_rank": "int", "change_percent": "decimal:6"}, "sort": ["month", "revenue_rank", "category_id"]},
+  "B2b": {"columns": {"product_id": "int", "daily_demand": "decimal:6", "days_cover": "decimal:6", "replenish": "bool"}, "sort": ["product_id"]},
+  "B2c": {"columns": {"entity": "str", "entity_id": "int", "review_count": "int", "score_sum": "int", "bayesian": "decimal:6"}, "sort": ["entity", "entity_id"]},
+  "B2d": {"columns": {"bucket": "str", "orders": "int", "reviewed_orders": "int", "average_score": "decimal:6"}, "sort": ["bucket"]}
+}

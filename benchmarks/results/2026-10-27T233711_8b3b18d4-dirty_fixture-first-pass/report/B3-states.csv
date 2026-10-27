@@ -1,0 +1,10 @@
+engine,variant,clients,run,phase,status,retries,successes,refusals,stock,orders,initial_verified,restored
+postgres,triggers_off,1,0,correctness,passed,0,10,40,0,10,True,True
+postgres,triggers_off,10,0,correctness,passed,0,10,40,0,10,True,True
+postgres,triggers_off,50,0,correctness,passed,0,10,40,0,10,True,True
+postgres,triggers_on,1,0,correctness,passed,0,10,40,0,10,True,True
+postgres,triggers_on,10,0,correctness,passed,0,10,40,0,10,True,True
+postgres,triggers_on,50,0,correctness,passed,0,10,40,0,10,True,True
+mongo,snapshot,1,0,correctness,passed,0,10,40,0,10,True,True
+mongo,snapshot,10,0,correctness,passed,59,10,40,0,10,True,True
+mongo,snapshot,50,0,correctness,passed,167,10,40,0,10,True,True

@@ -81,6 +81,7 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 | `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
 | `quality` | Ruff E/F/I and audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
 | `browser` | One serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
+| `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 
 The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
 data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
@@ -168,12 +169,15 @@ For a local artifact check, before teardown run the same browser wrapper with
 Failures retain a trace and screenshot; passwords and authentication cookies are redacted before upload. The
 workflow uploads only sanitized failure artifacts, retained for seven days. To prove hosted behavior, manually
 dispatch the reviewed workflow with `force_browser_failure: true` and inspect its failed browser job's artifacts.
-Local results do not replace that hosted exit check. Stage 3's formatter and benchmark checks remain deferred.
+Local results do not replace that hosted exit check. Stage 3's formatter remains deferred; the separate benchmark
+fixture job is described below and is not a required ruleset check.
 
 ## Configuration
 
 `src/tools/init_env.py` creates `.env` from [.env.example](.env.example) and, run again later, adds keys a newer version
 needs without changing existing ones. `.env` is git-ignored: never commit it or paste resolved Compose output.
+After updating to the benchmark harness, rerun `python src/tools/init_env.py` even for ordinary app startup:
+Compose validates required `BENCH_*` interpolation before filtering profiles, so older environments fail until completed.
 
 | Variable | Purpose |
 |---|---|
@@ -189,6 +193,12 @@ needs without changing existing ones. `.env` is git-ignored: never commit it or 
 | `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
 | `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
 | `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Generated demo secrets for seeding and tests; CI exports only these login values to host browser tests, masks them, and filters database credentials; required with no fallback |
+| `BENCH_DB` | Fixed `bench`; the harness refuses any other database or host |
+| `BENCH_ADMIN_PASSWORD` | Isolated PostgreSQL bootstrap secret; only bench-db receives it |
+| `BENCH_OWNER_USER`, `BENCH_OWNER_PASSWORD` | Separate benchmark owner, with CREATEDB and pg_checkpoint for templates/checkpoints |
+| `BENCH_RUNTIME_USER`, `BENCH_RUNTIME_PASSWORD` | Separate runtime role needed by unchanged app migrations; the harness uses the owner |
+| `BENCH_MONGO_ROOT_USER`, `BENCH_MONGO_ROOT_PASSWORD` | Isolated replica-set bootstrap; host runner uses docker exec for server-setting readback without exposing credentials |
+| `BENCH_MONGO_USER`, `BENCH_MONGO_PASSWORD` | Separate MongoDB user with readWrite on bench only |
 
 Credentials are set up on an empty volume only: editing `.env` does not rotate an existing database password.
 
@@ -202,9 +212,68 @@ Credentials are set up on an empty volume only: editing `.env` does not rotate a
 | `web` | Runtime image (`-app`) and PostgreSQL runtime role; Gunicorn on 127.0.0.1 only, without the dev tools |
 | `tools` | Optional tools profile; pinned offline profiling, cleaning, generation and pipeline tests; only working directories mounted, with raw source read-only and no .env mount |
 | `translation` | Optional isolated translation profile; pinned Argos package/tokenizer and CTranslate2 inference; offline at runtime, raw source read-only, no .env mount |
+| `bench-db` | Optional bench profile; same PostgreSQL digest, separate roles/data, explicit durability, 512 MB shared buffers and 512 MB shared memory, no published port |
+| `bench-mongo` | Optional bench profile; same MongoDB digest, separate single-node replica set and keyfile, 0.75 GiB WiredTiger cache, readWrite on bench only, no published port |
+| `bench-runner` | Optional bench profile; app dev image and matching drivers, source mounts read-only and results writable; no Docker socket. Each of these three services has 2 CPUs, 2 GiB memory and no extra swap |
 
 Both database images are pinned by digest in [compose.yaml](compose.yaml); the reasons are in
 [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## Benchmark (isolated databases)
+
+The approved [benchmark contract](docs/plans/benchmark.md) owns the method and final-run machine. Use explicit
+projects; the runner rejects `mercer`. Budget at least six VM CPUs and eight GiB of Docker memory, plus initial image
+downloads. Each load and correctness pass can take several minutes on a laptop; the full repeated matrix takes
+longer. Actual load/run durations and peak resources are emitted in the retained console/provenance/stats evidence,
+not maintained as prose estimates. Run trials with other heavy workloads stopped. The runner labels an undersized VM
+and refuses `--final` there or on a dirty tree. Warm database buffers are intentional; application caches and telemetry
+are disabled.
+
+From the root (host Python 3.13, standard library only; all database drivers run in the container):
+
+```sh
+python src/tools/init_env.py
+docker compose -p mercer-bench-local --profile bench build bench-runner
+docker compose -p mercer-bench-local --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-local --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
+python -m benchmarks.run --project mercer-bench-local --mode measure --only baseline,B1,B4 --label trial
+```
+
+For final repeated measurements the owner runs measure mode without `--only`, adding `--final --label final`, after
+review, on the designated machine. The loader requires empty destinations; to reload, explicitly tear down only
+the named benchmark project with `docker compose -p mercer-bench-local --profile bench down --volumes` and repeat.
+Never remove application volumes. PostgreSQL mutation runs use bench_run cloned from bench_template; MongoDB restores
+checksummed NDJSON in ignored benchmarks/results/.state. Both baselines are checked before and after each mutation,
+including failed attempts. B4 restores the original index catalogue in a finally block.
+
+The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
+CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
+driver versions and container limits. Database time measures the operation through cursor consumption; throughput
+also includes connection setup and correctness validation. Regenerate every chart/table with
+`python -m benchmarks.report benchmarks/results/<run-directory>`. Report files are CSV/SVG, with ratios and absolute
+latencies; amendment-j.csv evaluates noise per B1 parameter set/client count and B4 index. Failed checks have no
+accepted timing. No scale-up generator is built; the owner decides after reading that table.
+
+Use a different fixture project for benchmark tests:
+
+```sh
+docker compose -p mercer-bench-fixture --profile bench build bench-runner
+docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+python -m benchmarks.run --project mercer-bench-fixture --source /app/fixtures/olist/clean --golden fixture --mode correctness --label fixture
+docker compose -p mercer-bench-fixture --profile bench down --volumes
+```
+
+Regenerate independent golden CSVs with
+`python -m benchmarks.reference.compute --source tests/fixtures/olist/clean --output benchmarks/golden/fixture` and
+`python -m benchmarks.reference.compute --source data/derived/olist/clean --output benchmarks/golden/full`.
+The reference never imports a database driver. Its committed output schema fixes decimal scales and Python
+ROUND_HALF_EVEN, and its CSVs have stable LF newlines across Windows and Linux.
+
+Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_pg_queries/db_mongo_ms/db_mongo_commands
+in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.
 
 ## Load Olist and demo accounts
 

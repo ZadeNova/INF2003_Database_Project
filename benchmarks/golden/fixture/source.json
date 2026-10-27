@@ -1,0 +1,23 @@
+{
+  "as_of": "2026-10-24",
+  "files": {
+    "categories.csv": "3c821fc000be3c767a673b56a2156d43a21a5712ab900eefdf880b84fe5055a0",
+    "category_templates.ndjson": "7b73dbc6c64c0092d5ddd3060540fa33177abc7cca4096f2604c64b6ce3ba004",
+    "checkouts.csv": "c079ee8d010dc5ef39adbfbb85dd947819cd6286df8cdd92be6bc3511ba56d9c",
+    "cleaning_ledger.json": "59badb9f135b6e7a0b5705a55f458b1598d1a6f92fa7e153bd2c68e976003ca7",
+    "customers.csv": "771230333f5dfe93c97990c9952cf1fa7f027f3e0251793e10486725be6e9ed8",
+    "geolocation.csv": "c186079a47b027fa01a94281111375ee30ea6acb929cace1681d83b3b1a8d03e",
+    "order_lines.csv": "ac30514a75a7e15eb3d6004ce691be8225b8ae7fe3262f1f1fb4e92c4628fd45",
+    "orders.csv": "52897bff83faba60cf9ad388e2e02b69283168ae54a864c48929b23b53574f1b",
+    "payments.csv": "c1cfcdde52875eb2369ace8d5349ecfe85cf45116f0834465d3183d960b195ea",
+    "platform_stats.ndjson": "7573cf489b9445d2260cbc7070fee1ae8df1914a9ee06206f665e351b89cea03",
+    "product_specs.ndjson": "e4ff18fb97ce277e259bb522b9ac74c16bdf8cf922fd84d9b97cd9c4558f5bab",
+    "products.csv": "a3fbbaae7b511207630b7031cc8ca117dc18b2dea207e29a60c2600b23f2f1ca",
+    "refunds.csv": "ed7541ae10ee022016659ad9a4aec46915444ef0005d0a37bb949eaa770115f2",
+    "reviews.ndjson": "37486521c855e60e02cde259b36a5bc0f439ad29914dbaa913a1c6446380daf7",
+    "sellers.csv": "dc918596f973de6b60e9d810de0c5d9184d49cfae0aae667d6b3367117dd3f9e",
+    "users.csv": "8d83efdbd0178ec508a4f1ba7c31d0f542aa0fbf12cb476477c0fcb5473c6139"
+  },
+  "manifest_sha256": "d361d608a5171ec3e40ab13ac6a207b1dff61938befe7394e8da1ded006f68d6",
+  "seed": 82
+}

@@ -209,6 +209,28 @@ Pillow 13.0.0 is pinned for the upload path after checking the [maintainer relea
 
 Derive the reporting date from the latest imported order placed_at (checkouts with an Olist source ID), through the central dashboard_as_of() SQL function. Demo orders never move this anchor. Every panel excludes events after that local date. Shifted deliveries after the last placed_at remain valid source history and are left unchanged. This supersedes the fixed date in the original dashboard decision a; fixture checks use their own imported date.
 
+## benchmark implementation (27 October 2026; review pending)
+
+Implementation choices supplied and authorised by Chee Long for [benchmark](plans/benchmark.md); the plan's
+precommitted expectations remain unchanged.
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-i1 | Keep harness, workloads, standard-library reference, golden outputs, tests, results and host runner in benchmarks; no Markdown beneath it | One reproducible package with evidence formats accepted by the documentation contract |
+| benchmark-i2 | Dedicated bench profile, matching pinned images, separate BENCH credentials/volumes, no ports/socket, two CPU/two GiB limits with no extra swap on engines and runner; checkpoint grant only to bench owner | Isolation, equal resources and explicit durability without changing app grants. Existing environments must rerun init_env because required interpolation precedes profile filtering |
+| benchmark-i3 | Run unchanged app migrations/importer first, add typed EAV/JSONB and bench reviews, then idiomatic MongoDB products/orders; persist both manifests, vacuum/checkpoint, create a template and checksum NDJSON restore files | The same verified data and real app constraints underpin every workload |
+| benchmark-i4 | Pure-Python oracle over clean files; commit fixture/full CSVs and byte checksums, explicit ID ordering, Singapore days, decimal scales and ROUND_HALF_EVEN; preserve LF/exact bytes with Git attributes | Independent correctness and cross-platform reproducibility; neither engine supplies the oracle |
+| benchmark-i5 | Seeded selective/broad one-to-three scalar predicates including string, boolean and integer range; typed EAV EXISTS, JSONB GIN/range expressions and MongoDB wildcard; reject operators supplied as values | Comparable flexible-attribute models, with parameterised SQL and scalar-only MongoDB inputs |
+| benchmark-i6 | Import the four app SQL texts; shadow sales with a live CTE, prove equality with the view, and separate view/refresh outputs; equivalent rank/shift/calendar-window and lookup pipelines | Live work is compared with live work; B2d excludes copied order reviews and averages per-order scores before buckets |
+| benchmark-i7 | Fifty buyers at each concurrency, conditional decrement and balanced order/payment writes; PostgreSQL USER triggers off headline and on separately; MongoDB snapshot transactions, majority journaled writes and counted retries | Equivalent minimal operations, real keys/checks and an explicit trigger-cost comparison |
+| benchmark-i8 | Deterministic barrier demonstrations for lost updates and protected alternatives, outside the timing matrix; put FOR UPDATE's barrier before the locking read | Both workers can reach the barrier without a lock/barrier deadlock; serialization/write-conflict retries must occur |
+| benchmark-i9 | Save each B4 before/after plan, restore the complete index catalogue in finally, and record B5 physical data/index bytes beside cache sizes | Reversible index evidence and model/storage costs. The full-data unindexed all-product rating lookup was cancelled and retained as failed; the compound-index example uses fixed product 1 with an independently generated B2c_index golden. B2c still checks all entities |
+| benchmark-i10 | Correctness mode accepts no timings; measure mode retains a warm-up and five fixed-operation runs, raw operations and median/range summaries; host records hardware/settings/digests/limits and streams Docker samples | Failed results remain visible with null accepted timing; exact measured operation boundaries and throughput overhead are recorded |
+| benchmark-i11 | Request-local ContextVar counters, Django execute_wrapper and one PyMongo listener per created client; JSON fields and Server-Timing only | Per-request database share without query text, values, command bodies or telemetry infrastructure |
+| benchmark-i12 | Full and fixture correctness passes followed by a labelled baseline/B1/B4 trial; generate the prescribed per-parameter/index noise comparison; no generator | The owner evaluates amendment j using evidence before any scope promotion |
+| benchmark-i13 | Standard-library report generator emits CSV tables and standalone SVG charts, ratios with absolute metrics and visible failures | Every figure comes from retained results; no plotting dependency or hand-typed benchmark table |
+| benchmark-i14 | Real-database fixture tests for reference determinism, manifest refusal, CTE/view equality, injection, races/anomalies, restoration and BM4; optional fixture correctness CI job with duration artifact | Reproducible gates without changing required checks; hosted duration and fresh Claude Code review remain pending until the branch is published by its owner |
+
 ## dashboard implementation (24 October 2026; review pending)
 
 | ID | Decision | Why |

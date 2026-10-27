@@ -132,7 +132,20 @@ Tests run in the `migrate` service because it holds the PostgreSQL owner role, w
 database; `web` holds only the runtime role. The image copies `src/` at build time and `migrate` mounts `tests/`: run
 `docker compose build migrate web` after changing app code. `migrate` targets the dev stage and its own `-app-dev`
 image; `web` targets runtime and its `-app` image. Existing pytest pins stay in requirements.txt; additional quality
-and browser tools live in requirements-dev.txt. The benchmark commands are added here when they land.
+and browser tools live in requirements-dev.txt.
+
+Benchmark commands use explicitly isolated projects and the bench profile. Run init_env.py again after updating;
+Compose requires the new BENCH_* keys even when that profile is off. See the [README benchmark procedure](README.md#benchmark-isolated-databases)
+for full-data loading, measurements and teardown. The fixture tests use their own fixture-loaded project:
+
+```
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
+python -m benchmarks.run --project mercer-bench-local --mode measure --only baseline,B1,B4 --label trial
+python -m benchmarks.report benchmarks/results/<run-directory>
+```
+
+The benchmark fixture CI job is optional in the ruleset; its duration and all failures are retained as artifacts.
 
 CI (`.github/workflows/ci.yml`, stages 1–2 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
 `main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,
