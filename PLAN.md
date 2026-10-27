@@ -427,6 +427,11 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 
 **26 October 2026: Phase 3A exit check passed.** Every Tier 1 application feature is merged and [CI is green on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40210271108).
 
+**28 October 2026: Phase 3B first correctness-complete pass landed before the 30 October target.**
+[Local full-data B1–B6 evidence](benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv)
+passes every workload and variant, with plans and restoration evidence. Fresh review and the designated-machine
+final measurements remain; section 14 keeps the workstream in progress.
+
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
 27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
 day, Erfan assigns `wishlist` or `activity` to another member under its approved plan. Do not shorten database tests,

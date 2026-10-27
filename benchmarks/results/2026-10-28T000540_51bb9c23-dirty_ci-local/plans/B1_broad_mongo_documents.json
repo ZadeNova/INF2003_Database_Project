@@ -1,0 +1,290 @@
+{
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "i": 120,
+        "t": 1793117134
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "zdCbsQKN7E9CQorsiqJFdKFBZMs=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701379366822871048
+    }
+  },
+  "command": {
+    "$db": "bench",
+    "aggregate": "products",
+    "allowDiskUse": true,
+    "cursor": {},
+    "maxTimeMS": 120000,
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.size": "queen"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ]
+  },
+  "explainVersion": "1",
+  "ok": 1.0,
+  "operationTime": {
+    "$timestamp": {
+      "i": 120,
+      "t": 1793117134
+    }
+  },
+  "peakTrackedMemBytes": 690,
+  "queryShapeHash": "86A44BFF3243F8F1629B2B1AA3CB04A78492AD1D838FE0355BE32EFA71CCAD10",
+  "serverInfo": {
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196",
+    "host": "4434610df695",
+    "port": 27017,
+    "version": "9.0.4"
+  },
+  "serverParameters": {
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0
+  },
+  "stages": [
+    {
+      "$cursor": {
+        "executionStats": {
+          "executionStages": {
+            "advanced": 15,
+            "executionTimeMillisEstimate": 0,
+            "inputStage": {
+              "advanced": 15,
+              "executionTimeMillisEstimate": 0,
+              "inputStage": {
+                "advanced": 15,
+                "alreadyHasObj": 0,
+                "docsExamined": 15,
+                "executionTimeMillisEstimate": 0,
+                "inputStage": {
+                  "advanced": 15,
+                  "direction": "forward",
+                  "dupsDropped": 0,
+                  "dupsTested": 0,
+                  "executionTimeMillisEstimate": 0,
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.size\", \"attributes.size\"]"
+                    ],
+                    "attributes.size": [
+                      "[\"queen\", \"queen\"]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isEOF": 1,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.size": 1
+                  },
+                  "keysExamined": 15,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.size": []
+                  },
+                  "nReturned": 15,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "nss": "bench.products",
+                  "peakTrackedMemBytes": 0,
+                  "restoreState": 2,
+                  "saveState": 3,
+                  "seeks": 1,
+                  "stage": "IXSCAN",
+                  "works": 16
+                },
+                "isEOF": 1,
+                "nReturned": 15,
+                "needTime": 0,
+                "needYield": 0,
+                "nss": "bench.products",
+                "restoreState": 2,
+                "saveState": 3,
+                "stage": "FETCH",
+                "works": 16
+              },
+              "isEOF": 1,
+              "nReturned": 15,
+              "needTime": 0,
+              "needYield": 0,
+              "restoreState": 2,
+              "saveState": 3,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "works": 16
+            },
+            "isCached": false,
+            "isEOF": 1,
+            "memLimit": 104857600,
+            "nReturned": 15,
+            "needTime": 16,
+            "needYield": 0,
+            "peakTrackedMemBytes": 690,
+            "restoreState": 2,
+            "saveState": 3,
+            "sortPattern": {
+              "_id": 1
+            },
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "spilledRecords": 0,
+            "spills": 0,
+            "stage": "SORT",
+            "totalDataSizeSorted": 690,
+            "type": "simple",
+            "usedDisk": false,
+            "works": 33
+          },
+          "executionSuccess": true,
+          "executionTimeMicros": 498,
+          "executionTimeMillis": 0,
+          "nReturned": 15,
+          "totalDocsExamined": 15,
+          "totalKeysExamined": 15
+        },
+        "queryPlanner": {
+          "cursorType": "regular",
+          "indexFilterSet": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxIndexedOrSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "namespace": "bench.products",
+          "optimizationTimeMicros": 319,
+          "optimizationTimeMillis": 0,
+          "parsedQuery": {
+            "attributes.size": {
+              "$eq": "queen"
+            }
+          },
+          "planCacheKey": "0FD0BA36",
+          "planCacheShapeHash": "5478B7DA",
+          "prunedSimilarIndexes": false,
+          "queryHash": "5478B7DA",
+          "rejectedPlans": [
+            {
+              "inputStage": {
+                "filter": {
+                  "attributes.size": {
+                    "$eq": "queen"
+                  }
+                },
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  },
+                  "indexName": "_id_",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": true,
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            }
+          ],
+          "winningPlan": {
+            "inputStage": {
+              "inputStage": {
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.size\", \"attributes.size\"]"
+                    ],
+                    "attributes.size": [
+                      "[\"queen\", \"queen\"]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.size": 1
+                  },
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.size": []
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            },
+            "isCached": false,
+            "memLimit": 104857600,
+            "sortPattern": {
+              "_id": 1
+            },
+            "stage": "SORT",
+            "type": "simple"
+          }
+        }
+      },
+      "executionTimeMillisEstimate": 0,
+      "nReturned": 15
+    },
+    {
+      "$project": {
+        "_id": false,
+        "product_id": "$_id"
+      },
+      "executionTimeMillisEstimate": 0,
+      "expressionEvaluationPeakMemoryBytes": 0,
+      "nReturned": 15
+    }
+  ]
+}

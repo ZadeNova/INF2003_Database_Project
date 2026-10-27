@@ -1,0 +1,290 @@
+{
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "i": 1,
+        "t": 1793116886
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "kX9Hl57is5lKEy6J8J2NCxaIcLs=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701369621542076425
+    }
+  },
+  "command": {
+    "$db": "bench",
+    "aggregate": "products",
+    "allowDiskUse": true,
+    "cursor": {},
+    "maxTimeMS": 120000,
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.wireless": true
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ]
+  },
+  "explainVersion": "1",
+  "ok": 1.0,
+  "operationTime": {
+    "$timestamp": {
+      "i": 1,
+      "t": 1793116886
+    }
+  },
+  "peakTrackedMemBytes": 368,
+  "queryShapeHash": "F66ED7B3E5F0C8107B79BE15FA63E77E87EC0E05F1DE945A133C839CBAFBBF57",
+  "serverInfo": {
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196",
+    "host": "5a42b7296209",
+    "port": 27017,
+    "version": "9.0.4"
+  },
+  "serverParameters": {
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0
+  },
+  "stages": [
+    {
+      "$cursor": {
+        "executionStats": {
+          "executionStages": {
+            "advanced": 8,
+            "executionTimeMillisEstimate": 0,
+            "inputStage": {
+              "advanced": 8,
+              "executionTimeMillisEstimate": 0,
+              "inputStage": {
+                "advanced": 8,
+                "alreadyHasObj": 0,
+                "docsExamined": 8,
+                "executionTimeMillisEstimate": 0,
+                "inputStage": {
+                  "advanced": 8,
+                  "direction": "forward",
+                  "dupsDropped": 0,
+                  "dupsTested": 0,
+                  "executionTimeMillisEstimate": 0,
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.wireless\", \"attributes.wireless\"]"
+                    ],
+                    "attributes.wireless": [
+                      "[true, true]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isEOF": 1,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.wireless": 1
+                  },
+                  "keysExamined": 8,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.wireless": []
+                  },
+                  "nReturned": 8,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "nss": "bench.products",
+                  "peakTrackedMemBytes": 0,
+                  "restoreState": 2,
+                  "saveState": 3,
+                  "seeks": 1,
+                  "stage": "IXSCAN",
+                  "works": 9
+                },
+                "isEOF": 1,
+                "nReturned": 8,
+                "needTime": 0,
+                "needYield": 0,
+                "nss": "bench.products",
+                "restoreState": 2,
+                "saveState": 3,
+                "stage": "FETCH",
+                "works": 9
+              },
+              "isEOF": 1,
+              "nReturned": 8,
+              "needTime": 0,
+              "needYield": 0,
+              "restoreState": 2,
+              "saveState": 3,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "works": 9
+            },
+            "isCached": false,
+            "isEOF": 1,
+            "memLimit": 104857600,
+            "nReturned": 8,
+            "needTime": 9,
+            "needYield": 0,
+            "peakTrackedMemBytes": 368,
+            "restoreState": 2,
+            "saveState": 3,
+            "sortPattern": {
+              "_id": 1
+            },
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "spilledRecords": 0,
+            "spills": 0,
+            "stage": "SORT",
+            "totalDataSizeSorted": 368,
+            "type": "simple",
+            "usedDisk": false,
+            "works": 19
+          },
+          "executionSuccess": true,
+          "executionTimeMicros": 460,
+          "executionTimeMillis": 0,
+          "nReturned": 8,
+          "totalDocsExamined": 8,
+          "totalKeysExamined": 8
+        },
+        "queryPlanner": {
+          "cursorType": "regular",
+          "indexFilterSet": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxIndexedOrSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "namespace": "bench.products",
+          "optimizationTimeMicros": 287,
+          "optimizationTimeMillis": 0,
+          "parsedQuery": {
+            "attributes.wireless": {
+              "$eq": true
+            }
+          },
+          "planCacheKey": "6528DDEB",
+          "planCacheShapeHash": "C5ACC8F7",
+          "prunedSimilarIndexes": false,
+          "queryHash": "C5ACC8F7",
+          "rejectedPlans": [
+            {
+              "inputStage": {
+                "filter": {
+                  "attributes.wireless": {
+                    "$eq": true
+                  }
+                },
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  },
+                  "indexName": "_id_",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": true,
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            }
+          ],
+          "winningPlan": {
+            "inputStage": {
+              "inputStage": {
+                "inputStage": {
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.wireless\", \"attributes.wireless\"]"
+                    ],
+                    "attributes.wireless": [
+                      "[true, true]"
+                    ]
+                  },
+                  "indexName": "spec_attributes",
+                  "indexVersion": 2,
+                  "isMultiKey": false,
+                  "isPartial": false,
+                  "isSparse": false,
+                  "isUnique": false,
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.wireless": 1
+                  },
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.wireless": []
+                  },
+                  "nss": "bench.products",
+                  "stage": "IXSCAN"
+                },
+                "nss": "bench.products",
+                "stage": "FETCH"
+              },
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              }
+            },
+            "isCached": false,
+            "memLimit": 104857600,
+            "sortPattern": {
+              "_id": 1
+            },
+            "stage": "SORT",
+            "type": "simple"
+          }
+        }
+      },
+      "executionTimeMillisEstimate": 0,
+      "nReturned": 8
+    },
+    {
+      "$project": {
+        "_id": false,
+        "product_id": "$_id"
+      },
+      "executionTimeMillisEstimate": 0,
+      "expressionEvaluationPeakMemoryBytes": 0,
+      "nReturned": 8
+    }
+  ]
+}

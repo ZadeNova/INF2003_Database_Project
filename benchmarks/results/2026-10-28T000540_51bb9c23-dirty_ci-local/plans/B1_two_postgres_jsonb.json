@@ -1,0 +1,82 @@
+{
+  "QUERY PLAN": [
+    {
+      "Execution Time": 0.073,
+      "Plan": {
+        "Actual Loops": 1,
+        "Actual Rows": 3.0,
+        "Actual Startup Time": 0.052,
+        "Actual Total Time": 0.053,
+        "Async Capable": false,
+        "Disabled": false,
+        "Local Dirtied Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Written Blocks": 0,
+        "Node Type": "Sort",
+        "Parallel Aware": false,
+        "Plan Rows": 2,
+        "Plan Width": 8,
+        "Plans": [
+          {
+            "Actual Loops": 1,
+            "Actual Rows": 3.0,
+            "Actual Startup Time": 0.014,
+            "Actual Total Time": 0.025,
+            "Alias": "bench_attribute_jsonb",
+            "Async Capable": false,
+            "Disabled": false,
+            "Filter": "(attributes @> '{\"pattern\": \"striped\", \"material\": \"cotton\"}'::jsonb)",
+            "Local Dirtied Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Written Blocks": 0,
+            "Node Type": "Seq Scan",
+            "Parallel Aware": false,
+            "Parent Relationship": "Outer",
+            "Plan Rows": 2,
+            "Plan Width": 8,
+            "Relation Name": "bench_attribute_jsonb",
+            "Rows Removed by Filter": 115,
+            "Shared Dirtied Blocks": 0,
+            "Shared Hit Blocks": 2,
+            "Shared Read Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Startup Cost": 0.0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Total Cost": 3.48
+          }
+        ],
+        "Shared Dirtied Blocks": 0,
+        "Shared Hit Blocks": 5,
+        "Shared Read Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Sort Key": [
+          "product_id"
+        ],
+        "Sort Method": "quicksort",
+        "Sort Space Type": "Memory",
+        "Sort Space Used": 25,
+        "Startup Cost": 3.48,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Total Cost": 3.49
+      },
+      "Planning": {
+        "Local Dirtied Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Written Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Hit Blocks": 181,
+        "Shared Read Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.47,
+      "Triggers": []
+    }
+  ]
+}
