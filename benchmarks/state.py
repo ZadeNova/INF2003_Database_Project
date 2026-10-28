@@ -2,8 +2,10 @@
 import hashlib
 import json
 from contextlib import contextmanager
+from datetime import datetime, timezone
 
 from bson import json_util
+from pymongo import IndexModel
 
 from benchmarks import db
 from benchmarks.load import STATE_ROOT, batches
@@ -30,23 +32,51 @@ def mongo_digest(collection):
 def restore_mongo(database, provenance):
     source = STATE_ROOT / provenance["manifest_sha256"]
     checksums = json.loads((source / "checksums.json").read_text())
-    for name in ("products", "orders"):
-        path = source / (name + ".ndjson")
-        if sha256(path) != checksums[path.name]:
+    for name, expected in checksums.items():
+        if sha256(source / name) != expected:
             raise ValueError("Restore snapshot checksum mismatch")
+    metadata = json_util.loads((source / "collections.json").read_text())
+    database.meta.update_one({"_id": "state"}, {"$inc": {"restores_since_load": 1}, "$set": {"restoration_in_progress": True}})
     for name in ("products", "orders"):
-        database[name].delete_many({})
+        database[name].drop()
+        database.create_collection(name, **metadata[name]["options"])
         with (source / (name + ".ndjson")).open(encoding="utf-8") as stream:
             for batch in batches(json_util.loads(line) for line in stream):
                 database[name].insert_many(batch)
+        # Match a fresh load: insert in source-ID order first, then bulk-build secondary indexes.
+        indexes = [IndexModel(index["key"], **{k: v for k, v in index.items() if k not in {"key", "ns"}})
+                   for index in metadata[name]["indexes"] if index["name"] != "_id_"]
+        if indexes:
+            database[name].create_indexes(indexes)
+    verify_mongo(database, provenance)
+    database.meta.update_one({"_id": "state"}, {"$set": {"restoration_in_progress": False, "physical_state_changed_at": datetime.now(timezone.utc)}})
 
 
-def verify_initial(database, provenance):
+def restores_since_load(database):
+    state = database.meta.find_one({"_id": "state"})
+    if state is None or state.get("restoration_in_progress"):
+        raise ValueError("Missing load state or incomplete restoration; reload this project")
+    return state["restores_since_load"]
+
+
+def verify_mongo(database, provenance):
     source = STATE_ROOT / provenance["manifest_sha256"]
     checksums = json.loads((source / "checksums.json").read_text())
+    metadata = json_util.loads((source / "collections.json").read_text())
     for name in ("products", "orders"):
         if mongo_digest(database[name]) != checksums[name + ".ndjson"]:
             raise ValueError("MongoDB baseline differs from snapshot")
+        actual = [{**dict(index), "key": [list(pair) for pair in index["key"].items()]} for index in database[name].list_indexes()]
+        if sorted(actual, key=lambda i: i["name"]) != sorted(metadata[name]["indexes"], key=lambda i: i["name"]):
+            raise ValueError("MongoDB index catalogue differs from snapshot")
+        if database[name].options() != metadata[name]["options"]:
+            raise ValueError("MongoDB collection options differ from snapshot")
+    return True
+
+
+def verify_initial(database, provenance):
+    restores_since_load(database)
+    verify_mongo(database, provenance)
     # PostgreSQL's template clone has identical physical contents. Check the data that these workloads mutate.
     with db.pg() as base, db.pg("bench_run") as run:
         for statement in (

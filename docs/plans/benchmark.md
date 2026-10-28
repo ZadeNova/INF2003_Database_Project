@@ -203,45 +203,39 @@ reset/cache state, latency and error accounting, how run statistics aggregate in
 
 ## Implementation notes (27–28 October 2026)
 
-Built the isolated bench services/credentials, unchanged-migration/import loading, typed EAV/JSONB and idiomatic
-documents, independent exact golden outputs, all workloads, guarded resets, raw/summary/provenance/plan evidence,
-resource sampler, CSV/SVG generation, request database timing and the optional fixture CI job. Implementation
-choices are [benchmark-i1–i14](../DECISIONS.md#benchmark-implementation-27-october-2026-review-pending).
+The isolated services, checksummed loader and independent golden outputs, B1–B6, request timing and generated
+CSV/SVG evidence are implemented. Decisions are in [benchmark-i1–i20](../DECISIONS.md#benchmark-implementation-27-october-2026-review-pending).
 
 **28 October 2026: the first correctness-complete full-data pass landed before the 30 October target.**
-The [full-data B1–B6 pass](../../benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv)
-and [fixture pass](../../benchmarks/results/2026-10-28T000130_e23a4df4-dirty_fixture-correctness/summary.csv)
-pass every workload and variant, including both PostgreSQL trigger modes, every concurrency case, all isolation
-strategies and index/storage checks. Each mutating run verifies restoration in its raw evidence.
-The initial [full-data attempt](../../benchmarks/results/2026-10-27T234225_8b3b18d4-dirty_full-first-pass/summary.csv)
-retains its cancelled unindexed rating operation and failed plan, with no accepted timings. B4 now uses the
-independent single-product rating golden for that index example; B2c still checks the complete output. Windows
-terminal escapes in the initial resource stream were corrected before subsequent recorded passes; those earlier
-development streams are incomplete and are not measurement evidence.
+The [cited first pass](../../benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv) remains the
+historical correctness record. Its B5 MongoDB figures are superseded: delete/reinsert restoration retained
+WiredTiger free space, so they depended on restoration history. The [old trial](../../benchmarks/results/2026-10-28T001329_354f5c95_trial/summary.csv)
+is superseded for timing/noise analysis: connection preparation and repeated canonicalisation overlapped other
+clients' timed operations, and a Python no-op measured harness overhead rather than database round-trip noise.
+Retained directories containing -dirty and the old validation coverage.json were removed; Git history preserves them.
 
-[BM4 negative evidence](../../benchmarks/results/2026-10-28T000750_51bb9c23-dirty_bm4-verified/summary.csv)
-records both a corrupted result and a violated real stock invariant as failed, with null accepted timing; its
-raw evidence verifies restoration. Fixture tests also exercise restores after committed writes and forced failures,
-and preserve real database constraints and injection checks. The full Django suite and line-coverage gate passed
-after updating its exact request-log field assertion for the new counters. Fresh Claude Code review remains pending.
+### Authorised fix round (28 October 2026)
 
-The [full-data trial](../../benchmarks/results/2026-10-28T001329_354f5c95_trial/summary.csv) passes every baseline,
-B1 and B4 check. Its generated [amendment-j evaluation](../../benchmarks/results/2026-10-28T001329_354f5c95_trial/report/amendment-j.csv)
-puts every parameter set/client count and index case outside the prescribed noise threshold. The generator condition
-was not met; no generator or scaled run was built. The target date remains unchanged.
+Claude Code reviewed abc006c in a fresh session by running the full Django suite, migration drift, fixture and
+fresh full-data correctness including BM4, Ruff, host tests and documentation checks. Correctness gates, independent
+golden outputs, logical restores and PostgreSQL B4 plans passed. The requested fixes concern storage state, client
+measurement, the amendment-j baseline, a hinted broad-query comparison, result hygiene and CI artifacts/kernel guard.
 
-[Verified untimed plans](../../benchmarks/results/2026-10-28T002302_8d0806bd-dirty_plans-verified/summary.csv)
-repeat the read and index checks after preserving MongoDB compound-key order in serialized plans and adding an
-explicit ordered key sequence to catalogue evidence. This changes evidence encoding, not timed operations.
-The [validation handoff](../../benchmarks/results/2026-10-28T001448_354f5c95_validation/validation.json)
-links exact local test output and coverage reports; its run-index.csv lists every retained directory/commit and
-workload variant status. [Local CI reproduction](../../benchmarks/results/2026-10-28T001448_354f5c95_validation/ci-duration.json)
-passed from a fresh fixture project with a cached build; hosted duration remains unmeasured because the branch
-was not pushed. Keep the new job optional until fresh review and a hosted run pass, then consider adding it to the ruleset.
+MongoDB restoration now drops/recreates each mutated collection with its checksummed validator and ordered index
+catalogue, inserts documents before bulk-building secondary indexes and verifies digest/options/index equality.
+Persistent restore state prevents B5 from measuring after any restore. B5 executes before mutations; physical probes
+wait for an automatic checkpoint after a load/restore. Two-cycle storage checks use the stated allocation tolerance.
 
-Final designated-machine measurements, fresh Claude Code review, hosted CI and the deliverables' comparison-matrix
-verdict/prose remain outstanding. Generated matrix-evidence.csv files provide the source/result mapping. The measured
-Docker VM memory is below the approved minimum;
-local trial results cannot be final measurements. B5 reports the agreed representations separately, whose
-projected fields differ (notably full MongoDB review text versus SQL rating columns); do not infer equal-payload
-total-storage claims from them. The B4 compound-index case is a fixed selective example, not the full B2 rating query.
+Every client connects and pings before a readiness barrier. Each first result is canonicalised against golden before
+a shared timing barrier; later fetched rows are checked by equality. Counts are fixed per client, with B3's original
+buyer count retained. The Python no-op remains an overhead baseline; SELECT 1 and MongoDB ping supply the engine
+round-trip noise baselines. Per-run CPU attribution and client_saturated flags keep constrained client results visible
+without headline ratios. B1 broad keeps its planner choice; documents_hinted separately shows spec_attributes.
+
+New evidence is being collected on the committed fix head in fresh projects and will be linked here on completion.
+The CI job now checks the kernel, reloads after mutating tests and uploads only the current printed run directory.
+The 28 October PLAN.md date line and original target dates stay unchanged. This workstream remains in progress for
+Claude Code's fix re-check, hosted CI and the designated-machine final measurements. No generator, scaled run,
+HTTP load script, Tier 2/3 work or CI formatter stage is included. Machine memory remains the owner's setting.
+B5 reports the agreed representations separately: MongoDB reviews include text while SQL bench reviews contain
+the analytical columns. These are not equal-payload total-storage claims.

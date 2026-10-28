@@ -13,6 +13,8 @@ coverage-reports/
 htmlcov/
 test-results/
 benchmarks/results/.state/
+# Generated run directories stay untracked until their evidence is reviewed and explicitly force-added.
+benchmarks/results/*/
 
 # Local overnight implementation handoff
 PROGRESS-catalogue.md

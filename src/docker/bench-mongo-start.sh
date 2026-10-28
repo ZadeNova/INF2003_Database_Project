@@ -32,4 +32,4 @@ initialise() {
 }
 initialise &
 
-exec gosu mongodb mongod --wiredTigerCacheSizeGB 0.75 --replSet rs0 --keyFile "$KEY" --bind_ip_all
+exec gosu mongodb mongod --syncdelay 60 --wiredTigerCacheSizeGB 0.75 --replSet rs0 --keyFile "$KEY" --bind_ip_all

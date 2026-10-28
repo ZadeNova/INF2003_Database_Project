@@ -146,6 +146,10 @@ python -m benchmarks.report benchmarks/results/<run-directory>
 ```
 
 The benchmark fixture CI job is optional in the ruleset; its duration and all failures are retained as artifacts.
+Benchmark tests require a freshly loaded fixture project. Reload before a correctness run that includes B5,
+because B5 refuses any earlier restore. Recorded reruns use --require-clean; generated run directories are ignored
+until explicitly staged with `git add -f -- benchmarks/results/<run-directory>`. See the README for per-client
+operation counts, the storage checkpoint wait, round-trip baselines and client CPU flags.
 
 CI (`.github/workflows/ci.yml`, stages 1–2 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
 `main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,

@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from benchmarks.resources import annotate
 from benchmarks.source import ZONE
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -96,17 +97,18 @@ def main():
     parser.add_argument("--golden", choices=("full", "fixture"), default="full")
     parser.add_argument("--mode", choices=("correctness", "measure"), required=True)
     parser.add_argument("--only", default="baseline,B1,B2,B3,B4,B5,B6")
-    parser.add_argument("--operations", type=int, default=50)
+    parser.add_argument("--operations-per-client", type=int, default=5)
     parser.add_argument("--label", default="correctness")
     parser.add_argument("--final", action="store_true")
+    parser.add_argument("--require-clean", action="store_true")
     args = parser.parse_args()
     dc = compose(args.project)
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("Label must be lowercase letters, digits and hyphens")
     commit = command(["git", "rev-parse", "HEAD"])
     dirty = bool(command(["git", "status", "--porcelain"]))
-    if args.final and dirty:
-        parser.error("Final measurements require a clean committed tree")
+    if (args.final or args.require_clean) and dirty:
+        parser.error("This run requires a clean committed tree")
     host = collect_host(args.project)
     host.update(commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZONE).isoformat())
     stamp = datetime.now(ZONE).strftime("%Y-%m-%dT%H%M%S")
@@ -115,6 +117,7 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     output.chmod(0o777)  # The Linux runner UID differs from the host user's UID; only this evidence directory is shared.
     (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n", newline="\n")
+    print(json.dumps({"results": str(output), "commit": host["commit"], "state": "started"}), flush=True)
     if not host["vm_meets_plan"]:
         print(f"VM below plan minimum: {host['docker_vm']['NCPU']} CPUs, {host['docker_vm']['MemTotal']} bytes; trial/correctness evidence only.", flush=True)
         if args.final:
@@ -126,7 +129,7 @@ def main():
     try:
         arguments = dc + ["run", "--rm", "--name", args.project + "-load-client", "bench-runner", "python", "-m", "benchmarks.harness",
                           "--source", args.source, "--golden", "/app/benchmarks/golden/" + args.golden, "--mode", args.mode,
-                          "--only", args.only, "--operations", str(args.operations), "--label", args.label, "--output", "/app/benchmarks/results/" + name]
+                          "--only", args.only, "--operations-per-client", str(args.operations_per_client), "--label", args.label, "--output", "/app/benchmarks/results/" + name]
         # Tee exact printed output into a file without swallowing live progress.
         process = subprocess.Popen(arguments, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         with (output / "console.txt").open("w", encoding="utf-8", newline="\n") as stream:
@@ -138,6 +141,7 @@ def main():
                     host["runner_actual_limits"] = {key: actual[key] for key in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")}
         result = process.wait()
     finally:
+        time.sleep(1.1)  # Retain the sample interval covering the final, potentially sub-second timed window.
         stop.set()
         sampler.join(timeout=10)
     host.update(duration_seconds=time.perf_counter() - started, exit_code=result)
@@ -153,6 +157,7 @@ def main():
         temporary.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", newline="\n")
         temporary.replace(provenance_file)  # Directory permission permits replacing a file written by the container UID.
     raw = output / "raw.jsonl"
+    annotate(output)
     if raw.exists() and raw.stat().st_size > 5 * 1024 * 1024:
         with raw.open("rb") as source, gzip.open(str(raw) + ".gz", "wb") as target:
             import shutil

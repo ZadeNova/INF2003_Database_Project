@@ -4,6 +4,7 @@ import itertools
 import json
 import os
 from collections import defaultdict
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -113,6 +114,8 @@ def build_models(source, database, provenance):
     # Missing taken_down is visible in app documents; the partial-index example uses a bench-normalised flag.
     database.reviews.update_many({"taken_down": {"$exists": False}}, {"$set": {"taken_down": False}})
     database.meta.insert_one({"_id": "source", **provenance})
+    database.meta.insert_one({"_id": "state", "restores_since_load": 0, "restoration_in_progress": False,
+                              "physical_state_changed_at": datetime.now(timezone.utc)})
     snapshot(database, provenance)
 
 
@@ -126,6 +129,13 @@ def snapshot(database, provenance):
             for doc in database[name].find().sort("_id", 1):
                 stream.write(json_util.dumps(doc, json_options=json_util.CANONICAL_JSON_OPTIONS, sort_keys=True) + "\n")
         files[path.name] = sha256(path)
+    metadata = {}
+    for name in ("products", "orders"):
+        metadata[name] = {"options": database[name].options(),
+                          "indexes": [{**dict(index), "key": list(index["key"].items())} for index in database[name].list_indexes()]}
+    path = target / "collections.json"
+    path.write_text(json_util.dumps(metadata, json_options=json_util.CANONICAL_JSON_OPTIONS) + "\n", encoding="utf-8")
+    files[path.name] = sha256(path)
     (target / "checksums.json").write_text(json.dumps(files, sort_keys=True))
 
 

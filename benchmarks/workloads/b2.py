@@ -96,4 +96,10 @@ def queries(as_of, stats):
               {"$group": {"_id": "$bucket", "orders": {"$sum": 1}, "reviewed_orders": {"$sum": {"$cond": [{"$ne": ["$score", None]}, 1, 0]}}, "average_score": {"$avg": "$score"}}},
               {"$project": {"_id": 0, "bucket": "$_id", "orders": 1, "reviewed_orders": 1, "average_score": 1}}]
     result.append(Query("B2d", "mongo", "live", collection="orders", pipeline=delays, golden="B2d"))
+    # Deterministic driver row order makes later results comparable by plain equality, without canonicalisation.
+    sorts = {"B2a": {"month": 1, "revenue_rank": 1, "category_id": 1}, "B2b": {"product_id": 1},
+             "B2c": {"entity": 1, "entity_id": 1}, "B2d": {"bucket": 1}}
+    for query in result:
+        if query.engine == "mongo":
+            query.pipeline.append({"$sort": sorts[query.output]})
     return result

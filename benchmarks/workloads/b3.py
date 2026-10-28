@@ -1,7 +1,6 @@
 """Fifty buyers and ten units, on real app constraints, with two PostgreSQL trigger variants."""
 import time
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import nullcontext
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -9,6 +8,7 @@ from bson import Decimal128
 from psycopg import sql
 
 from benchmarks import db
+from benchmarks.concurrency import PreparedRun
 
 TABLES = ("catalogue_product", "orders_checkout", "orders_order", "orders_orderline", "orders_payment")
 
@@ -49,47 +49,65 @@ def race(engine, clients, triggers, database):
     database.products.update_one({"_id": product["id"]}, {"$set": {"stock": 10}})
     assert database.products.find_one({"_id": product["id"]})["stock"] == 10
 
-    def worker(buyers):
+    prepared = PreparedRun(clients)
+
+    def worker(worker_id):
+        try:
+            resource = db.pg("bench_run") if engine == "postgres" else db.mongo()
+            with resource as conn:
+                if engine == "postgres":
+                    conn.execute("SELECT 1").fetchone()
+                else:
+                    conn.command("ping")
+                ready_at = prepared.connected()
+                prepared.begin()
+                return buy_all(conn, worker_id, ready_at)
+        except BaseException:
+            prepared.abort()
+            raise
+
+    def buy_all(conn, worker_id, ready_at):
         records = []
-        with db.pg("bench_run") if engine == "postgres" else nullcontext() as conn:
-            for buyer in buyers:
-                started = time.perf_counter_ns()
-                retries, error, success = 0, None, False
-                try:
-                    if engine == "postgres":
-                        with conn.transaction():
-                            row = conn.execute("UPDATE catalogue_product SET stock=stock-1 WHERE id=%s AND stock>=1 RETURNING id", [product["id"]]).fetchone()
-                            if row:
-                                checkout = conn.execute("INSERT INTO orders_checkout(customer_id,placed_at,total,idempotency_key) VALUES (%s,%s,%s,%s) RETURNING id",
-                                                        [customer, now, product["price"], uuid4()]).fetchone()["id"]
-                                order = conn.execute("""INSERT INTO orders_order(checkout_id,seller_id,status,items,freight,total,placed_at,paid_at,estimated_delivery)
-                                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-                                     [checkout, product["seller_id"], "paid", product["price"], 0, product["price"], now, now, now]).fetchone()["id"]
-                                conn.execute("INSERT INTO orders_orderline(order_id,seller_id,product_id,quantity,unit_price,freight) VALUES (%s,%s,%s,%s,%s,%s)",
-                                             [order, product["seller_id"], product["id"], 1, product["price"], 0])
-                                conn.execute("INSERT INTO orders_payment(checkout_id,sequence,method,instalments,amount) VALUES (%s,%s,%s,%s,%s)",
-                                             [checkout, 1, "voucher", 1, product["price"]])
-                                success = True
-                    else:
-                        def buy(session):
-                            changed = database.products.update_one({"_id": product["id"], "stock": {"$gte": 1}}, {"$inc": {"stock": -1}}, session=session)
-                            if not changed.modified_count:
-                                return False
-                            database.orders.insert_one({"_id": "race-" + str(buyer), "seller_id": product["seller_id"], "paid_amount": Decimal128(product["price"]),
-                                "lines": [{"product_id": product["id"], "quantity": 1, "unit_price": Decimal128(product["price"]), "freight": Decimal128("0")}],
-                                "bench_run": True}, session=session)
-                            return True
-                        success, retries = mongo_transaction(database, buy)
-                except Exception as exc:
-                    error = type(exc).__name__
-                records.append({"latency_ns": time.perf_counter_ns() - started, "retries": retries, "error": error, "success": success})
-        return records
+        for buyer in range(worker_id, 50, clients):
+            wall_started = time.time_ns()
+            started = time.perf_counter_ns()
+            retries, error, success = 0, None, False
+            try:
+                if engine == "postgres":
+                    with conn.transaction():
+                        row = conn.execute("UPDATE catalogue_product SET stock=stock-1 WHERE id=%s AND stock>=1 RETURNING id", [product["id"]]).fetchone()
+                        if row:
+                            checkout = conn.execute("INSERT INTO orders_checkout(customer_id,placed_at,total,idempotency_key) VALUES (%s,%s,%s,%s) RETURNING id",
+                                                    [customer, now, product["price"], uuid4()]).fetchone()["id"]
+                            order = conn.execute("""INSERT INTO orders_order(checkout_id,seller_id,status,items,freight,total,placed_at,paid_at,estimated_delivery)
+                                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                                 [checkout, product["seller_id"], "paid", product["price"], 0, product["price"], now, now, now]).fetchone()["id"]
+                            conn.execute("INSERT INTO orders_orderline(order_id,seller_id,product_id,quantity,unit_price,freight) VALUES (%s,%s,%s,%s,%s,%s)",
+                                         [order, product["seller_id"], product["id"], 1, product["price"], 0])
+                            conn.execute("INSERT INTO orders_payment(checkout_id,sequence,method,instalments,amount) VALUES (%s,%s,%s,%s,%s)",
+                                         [checkout, 1, "voucher", 1, product["price"]])
+                            success = True
+                else:
+                    def buy(session):
+                        changed = conn.products.update_one({"_id": product["id"], "stock": {"$gte": 1}}, {"$inc": {"stock": -1}}, session=session)
+                        if not changed.modified_count:
+                            return False
+                        conn.orders.insert_one({"_id": "race-" + str(buyer), "seller_id": product["seller_id"], "paid_amount": Decimal128(product["price"]),
+                            "lines": [{"product_id": product["id"], "quantity": 1, "unit_price": Decimal128(product["price"]), "freight": Decimal128("0")}],
+                            "bench_run": True}, session=session)
+                        return True
+                    success, retries = mongo_transaction(conn, buy)
+            except Exception as exc:
+                error = type(exc).__name__
+            records.append({"latency_ns": time.perf_counter_ns() - started, "retries": retries, "error": error, "success": success,
+                            "worker": worker_id, "started_at_ns": wall_started, "ended_at_ns": time.time_ns(), "connection_ready_at_ns": ready_at})
+        return records, time.perf_counter_ns()
 
     # Each worker retains its connection; the same fifty buyers run at every concurrency.
-    started = time.perf_counter_ns()
     with ThreadPoolExecutor(max_workers=clients) as pool:
-        records = [record for group in pool.map(worker, [range(i, 50, clients) for i in range(clients)]) for record in group]
-    elapsed = time.perf_counter_ns() - started
+        groups = list(pool.map(worker, range(clients)))
+    records = [record for group, finished in groups for record in group]
+    elapsed = max(finished for group, finished in groups) - prepared.started_ns
     successes = sum(row["success"] for row in records)
     refusals = sum(not row["success"] and row["error"] is None for row in records)
     if engine == "postgres":

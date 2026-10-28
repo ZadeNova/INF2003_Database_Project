@@ -238,23 +238,40 @@ docker compose -p mercer-bench-local --profile bench build bench-runner
 docker compose -p mercer-bench-local --profile bench up --detach --wait bench-db bench-mongo
 docker compose -p mercer-bench-local --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
 python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
-python -m benchmarks.run --project mercer-bench-local --mode measure --only baseline,B1,B4 --label trial
+docker compose -p mercer-bench-trial --profile bench build bench-runner
+docker compose -p mercer-bench-trial --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-trial --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+python -m benchmarks.run --project mercer-bench-trial --require-clean --mode measure --only baseline,B1,B4 --operations-per-client 5 --label trial
 ```
 
 For final repeated measurements the owner runs measure mode without `--only`, adding `--final --label final`, after
 review, on the designated machine. The loader requires empty destinations; to reload, explicitly tear down only
 the named benchmark project with `docker compose -p mercer-bench-local --profile bench down --volumes` and repeat.
 Never remove application volumes. PostgreSQL mutation runs use bench_run cloned from bench_template; MongoDB restores
-checksummed NDJSON in ignored benchmarks/results/.state. Both baselines are checked before and after each mutation,
-including failed attempts. B4 restores the original index catalogue in a finally block.
+checksummed NDJSON in ignored benchmarks/results/.state. Each restored MongoDB collection is dropped and recreated
+with its validator and ordered index catalogue; secondary indexes are bulk-built after inserting the documents.
+Both baselines and index catalogues are checked before and after each mutation, including failed attempts.
+B5 runs first and refuses any project with a nonzero restores_since_load counter. Storage probes wait for the
+explicit automatic checkpoint interval plus a margin; the round-trip client needs no extra database privilege.
+B4 restores the original index catalogue in a finally block.
 
 The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
 CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
-driver versions and container limits. Database time measures the operation through cursor consumption; throughput
-also includes connection setup and correctness validation. Regenerate every chart/table with
+driver versions and container limits. All workers connect and ping before a barrier; each first result is
+canonicalised against golden before a second barrier releases timing. Later results use plain fetched-row equality.
+The default is five measured operations per client at every concurrency, plus one untimed reference operation per
+worker; B3 keeps fifty buyers. Throughput excludes setup, initial canonicalisation and teardown. The Python no-op
+measures harness overhead; SELECT 1 and MongoDB ping provide the per-engine round-trip noise baselines.
+Per-run CPU is the median of the one-second Docker runner intervals overlapping its timed window, so short runs
+have coarse attribution. Runs at or above 180% runner CPU remain visible with client_saturated=true and contribute
+no headline ratio; summary.csv keeps their metrics and report tables mark them as not headline. Regenerate every chart/table with
 `python -m benchmarks.report benchmarks/results/<run-directory>`. Report files are CSV/SVG, with ratios and absolute
 latencies; amendment-j.csv evaluates noise per B1 parameter set/client count and B4 index. Failed checks have no
-accepted timing. No scale-up generator is built; the owner decides after reading that table.
+accepted timing. B1 broad retains the planner-chosen MongoDB plan as the headline; documents_hinted separately
+uses spec_attributes with the same golden. No scale-up generator is built; the owner decides after reading that table.
+New result directories are ignored while collecting evidence so subsequent runs can use the same clean commit.
+After inspecting them, stage only the intended directories with `git add -f -- benchmarks/results/<run-directory>`.
+Use --require-clean for recorded reruns; it refuses uncommitted source changes.
 
 Use a different fixture project for benchmark tests:
 
@@ -264,6 +281,9 @@ docker compose -p mercer-bench-fixture --profile bench build bench-runner
 docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
 docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
 docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+docker compose -p mercer-bench-fixture --profile bench down --volumes
+docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
 python -m benchmarks.run --project mercer-bench-fixture --source /app/fixtures/olist/clean --golden fixture --mode correctness --label fixture
 docker compose -p mercer-bench-fixture --profile bench down --volumes
 ```
@@ -273,6 +293,11 @@ Regenerate independent golden CSVs with
 `python -m benchmarks.reference.compute --source data/derived/olist/clean --output benchmarks/golden/full`.
 The reference never imports a database driver. Its committed output schema fixes decimal scales and Python
 ROUND_HALF_EVEN, and its CSVs have stable LF newlines across Windows and Linux.
+Tests require a freshly loaded fixture project; their restores invalidate B5's freshness counter, so the example
+reloads before the separate correctness pass. The optional CI job does the same, checks the MongoDB kernel range,
+and uploads only the directory printed by its current runner invocation. --only B5,B5restore on a fresh project
+records a fresh footprint plus two restore cycles in storage-restores.csv. The stated storage tolerance is 10%
+with a 64 KiB allocation floor per collection and metric; physical storage probes wait for automatic checkpoints.
 The results-directory permission command lets the container's UID write on Linux; it affects only benchmark
 evidence. The host runner creates writable run directories and replaces container-owned provenance atomically.
 

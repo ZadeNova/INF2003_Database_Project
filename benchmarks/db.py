@@ -1,9 +1,10 @@
 """Bench-only connections, durable writes and guarded reset boundaries."""
 import os
+import time
 from contextlib import contextmanager
 
 import psycopg
-from psycopg import sql
+from psycopg import errors, sql
 from psycopg.rows import dict_row
 from pymongo import MongoClient
 from pymongo.read_concern import ReadConcern
@@ -41,8 +42,19 @@ def recreate(name, template):
     if (name, template) not in {("bench_run", "bench_template"), ("bench_template", "bench")}:
         raise ValueError("Unapproved reset target")
     with pg("postgres") as conn:
-        conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
-        conn.execute(sql.SQL("CREATE DATABASE {} TEMPLATE {}").format(sql.Identifier(name), sql.Identifier(template)))
+        if conn.execute("SELECT 1 FROM pg_database WHERE datname=%s", [name]).fetchone():
+            conn.execute(sql.SQL("ALTER DATABASE {} ALLOW_CONNECTIONS false").format(sql.Identifier(name)))
+        deadline = time.monotonic() + 30
+        while True:
+            try:
+                conn.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(name)))
+                break
+            except errors.ObjectInUse:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(.1)
+        conn.execute(sql.SQL("CREATE DATABASE {} TEMPLATE {} ALLOW_CONNECTIONS {}").format(
+            sql.Identifier(name), sql.Identifier(template), sql.SQL("false" if name == "bench_template" else "true")))
 
 
 def settings(database):

@@ -5,6 +5,7 @@ import pytest
 
 from benchmarks import db
 from benchmarks.state import verify_manifest
+from benchmarks.workloads.b5 import mongo_footprint
 
 
 @pytest.fixture(scope="session")
@@ -25,3 +26,9 @@ def database(source):
 @pytest.fixture
 def provenance(database, source):
     return verify_manifest(database, source)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fresh_storage(database):
+    assert database.meta.find_one({"_id": "state"})["restores_since_load"] == 0, "Start tests on a freshly loaded fixture project"
+    return mongo_footprint(database)

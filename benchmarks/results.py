@@ -39,7 +39,10 @@ class Recorder:
     def record(self, output, engine, variant, clients, run, phase, records, elapsed_ns, passed, evidence=None):
         check = assess(records, passed, mode=self.mode, phase=phase, elapsed_ns=elapsed_ns)
         base = {"output": output, "engine": engine, "variant": variant, "clients": clients, "run": run, "phase": phase, "seed": 82}
-        self.rows.append({**base, **check})
+        starts = [r["started_at_ns"] for r in records if r.get("started_at_ns") is not None]
+        ends = [r["ended_at_ns"] for r in records if r.get("ended_at_ns") is not None]
+        self.rows.append({**base, **check, "window_start_ns": min(starts) if starts else None, "window_end_ns": max(ends) if ends else None,
+                          "runner_cpu_median_percent": None, "client_saturated": None})
         self.failed |= check["status"] == "failed"
         with (self.directory / "raw.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps({"kind": "check", **base, **check, "evidence": evidence}, default=str, sort_keys=True) + "\n")
@@ -73,10 +76,14 @@ def summarize(directory, rows):
             continue
         key = tuple(row[k] for k in ("output", "engine", "variant", "clients"))
         groups.setdefault(key, []).append(row)
-    fields = ["output", "engine", "variant", "clients", "status", "accepted_runs", "failed_runs", "retries", "errors"]
+    fields = ["output", "engine", "variant", "clients", "status", "accepted_runs", "failed_runs", "retries", "errors",
+              "runner_cpu_median_percent", "runner_cpu_median_percent_min", "runner_cpu_median_percent_max",
+              "client_saturated_runs", "client_saturated", "headline", "not_headline_reason"]
     metrics = ("p50_ms", "p95_ms", "throughput_ops_s")
     fields += [key + suffix for key in metrics for suffix in ("", "_min", "_max")]
-    with (Path(directory) / "summary.csv").open("w", newline="", encoding="utf-8") as stream:
+    summary_path = Path(directory) / "summary.csv"
+    temporary = summary_path.with_suffix(".csv.tmp")
+    with temporary.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         for key, group in sorted(groups.items()):
@@ -85,7 +92,15 @@ def summarize(directory, rows):
             result = dict(zip(fields[:4], key))
             result.update(status="failed" if failed else "passed", accepted_runs=len(accepted), failed_runs=failed,
                           retries=sum(row["retries"] for row in group), errors=sum(row["errors"] for row in group))
+            cpus = [row["runner_cpu_median_percent"] for row in accepted if row.get("runner_cpu_median_percent") is not None]
+            saturated = sum(row.get("client_saturated") is True for row in accepted)
+            reason = ("failed_check" if failed else "no_accepted_timing" if not accepted else "client_saturated" if saturated else
+                      "client_cpu_unavailable" if len(cpus) != len(accepted) else "hinted_comparison" if key[2] == "documents_hinted" else "")
+            result.update(runner_cpu_median_percent=statistics.median(cpus) if cpus else "",
+                          runner_cpu_median_percent_min=min(cpus) if cpus else "", runner_cpu_median_percent_max=max(cpus) if cpus else "",
+                          client_saturated_runs=saturated, client_saturated=bool(saturated), headline=not reason, not_headline_reason=reason)
             for metric in metrics:
                 values = [row[metric] for row in accepted if row[metric] is not None]
                 result.update({metric: statistics.median(values) if values else "", metric + "_min": min(values) if values else "", metric + "_max": max(values) if values else ""})
             writer.writerow(result)
+    temporary.replace(summary_path)

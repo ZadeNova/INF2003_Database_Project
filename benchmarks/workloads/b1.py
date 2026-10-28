@@ -1,5 +1,6 @@
 """Three idiomatic attribute representations with scalar-only bound values."""
 import re
+from dataclasses import replace
 
 from psycopg.types.json import Jsonb
 
@@ -37,4 +38,7 @@ def queries(parameter):
     jsonb = Query(output, "postgres", "jsonb", "SELECT product_id FROM bench_attribute_jsonb WHERE " + " AND ".join(parts) + " ORDER BY product_id", values, golden=output)
     match = {"attributes." + key: value if operation == "eq" else {"$gte": value} for key, operation, value in predicates}
     mongo = Query(output, "mongo", "documents", pipeline=[{"$match": match}, {"$sort": {"_id": 1}}, {"$project": {"_id": 0, "product_id": "$_id"}}], golden=output)
-    return [eav, jsonb, mongo]
+    result = [eav, jsonb, mongo]
+    if parameter["name"] == "broad":
+        result.append(replace(mongo, variant="documents_hinted", hint="spec_attributes"))
+    return result

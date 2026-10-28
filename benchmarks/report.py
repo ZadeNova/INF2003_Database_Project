@@ -7,6 +7,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from benchmarks.resources import annotate
+
 
 def read_csv(path):
     with Path(path).open(newline="", encoding="utf-8") as stream:
@@ -38,7 +40,7 @@ def svg(path, title, bars, unit):
             parts.append(f'<rect x="475" y="{y}" width="{length:.2f}" height="23" fill="#357b89"/>')
             text = f"{float(value):.6g} {unit}"
         else:
-            length, text = 0, "FAILED" if status == "failed" else "correctness only"
+            length, text = 0, "FAILED" if status == "failed" else "NOT HEADLINE" if "not headline" in label else "correctness only"
         parts.append(f'<text x="{485+length:.2f}" y="{y+17}" font-size="12">{html.escape(text)}</text>')
     parts.append('</g></svg>')
     path.write_text("\n".join(parts) + "\n", encoding="utf-8", newline="\n")
@@ -46,23 +48,33 @@ def svg(path, title, bars, unit):
 
 def noise(rows):
     groups = defaultdict(list)
-    baseline = {row["clients"]: row for row in rows if row["output"] == "baseline" and row["p50_ms"] and row["status"] == "passed"}
+    baseline = {(row["engine"], row["clients"]): row for row in rows if row["output"] == "baseline_roundtrip" and row["p50_ms"] and row["status"] == "passed"}
     for row in rows:
         if row["output"].startswith(("B1_", "B4_")) and row["p50_ms"] and row["status"] == "passed":
-            groups[row["output"], row["clients"]].append(row)
+            if row["variant"] != "documents_hinted":
+                groups[row["output"], row["clients"]].append(row)
+            if row["output"] == "B1_broad" and row["variant"] != "documents":
+                groups["B1_broad_hinted", row["clients"]].append(row)
     result = []
     for (output, clients), group in sorted(groups.items()):
-        if len(group) < 2 or clients not in baseline:
+        if len(group) < 2:
             continue
         fast, slow = min(group, key=lambda r: float(r["p50_ms"])), max(group, key=lambda r: float(r["p50_ms"]))
+        engines = sorted({fast["engine"], slow["engine"]})
+        if any((engine, clients) not in baseline for engine in engines):
+            continue
         gap = float(slow["p50_ms"]) - float(fast["p50_ms"])
-        base = baseline[clients]
-        baseline_noise = float(base["p95_ms"]) - float(base["p50_ms"])
+        bases = [baseline[engine, clients] for engine in engines]
+        baseline_noise = max(float(base["p95_ms"]) - float(base["p50_ms"]) for base in bases)
+        baseline_used = "+".join(base["engine"] + "/" + base["variant"] for base in bases)
         fast_range = float(fast["p50_ms_max"]) - float(fast["p50_ms_min"])
         threshold = max(baseline_noise, fast_range)
+        saturated = any(str(r.get("client_saturated", "")).lower() == "true" for r in group + bases)
         result.append({"output": output, "clients": clients, "fastest": fast["engine"] + "/" + fast["variant"], "slowest": slow["engine"] + "/" + slow["variant"],
                        "fastest_p50_ms": fast["p50_ms"], "slowest_p50_ms": slow["p50_ms"], "gap_ms": gap,
-                       "baseline_p95_minus_p50_ms": baseline_noise, "fastest_p50_range_ms": fast_range, "threshold_ms": threshold, "inside_noise": "yes" if gap <= threshold else "no"})
+                       "baseline_used": baseline_used, "baseline_p95_minus_p50_ms": baseline_noise, "fastest_p50_range_ms": fast_range,
+                       "threshold_ms": threshold, "inside_noise": "yes" if gap <= threshold else "no",
+                       "client_saturated": saturated, "headline": not saturated and all(r.get("runner_cpu_median_percent") for r in group + bases)})
     return result
 
 
@@ -70,6 +82,7 @@ def report(directory):
     directory = Path(directory)
     destination = directory / "report"
     destination.mkdir(exist_ok=True)
+    annotate(directory)
     rows = read_csv(directory / "summary.csv")
     outputs = defaultdict(list)
     for row in rows:
@@ -78,18 +91,20 @@ def report(directory):
     for output, group in outputs.items():
         rendered = []
         for row in group:
-            comparable = [r for r in group if r["clients"] == row["clients"] and r["p50_ms"] and r["status"] == "passed" and r["variant"] != "restore"]
+            comparable = [r for r in group if r["clients"] == row["clients"] and r["p50_ms"] and r["status"] == "passed"
+                          and r["variant"] != "restore" and str(r.get("headline", "")).lower() == "true"]
             fastest = min((float(r["p50_ms"]) for r in comparable), default=0)
             before = next((r for r in comparable if r["variant"] == "before"), None)
             pg_live = next((r for r in comparable if r["engine"] == "postgres" and r["variant"] == "live"), None)
-            value = float(row["p50_ms"]) if row["p50_ms"] and row["status"] == "passed" else None
+            value = float(row["p50_ms"]) if row["p50_ms"] and row["status"] == "passed" and str(row.get("headline", "")).lower() == "true" else None
             ratio = (float(before["p50_ms"]) / value if before and value else float(pg_live["p50_ms"]) / value if pg_live and value else value / fastest if value and fastest else None)
             enriched = {**row, "ratio": ratio, "ratio_basis": "before/variant" if before else "postgres_live/variant" if pg_live else "variant/fastest"}
             rendered.append(enriched)
             ratios.append(enriched)
         table(destination / (output + ".csv"), rendered)
         svg(destination / (output + ".svg"), output + " ratios (see CSV for ranges and absolute ms)",
-            [(r["engine"] + "/" + r["variant"] + " c=" + r["clients"], r["ratio"], r["status"]) for r in rendered], "x")
+            [(r["engine"] + "/" + r["variant"] + " c=" + r["clients"] + (" (not headline)" if r.get("not_headline_reason") else ""),
+              r["ratio"], r["status"]) for r in rendered], "x")
     table(destination / "ratios.csv", ratios)
     table(destination / "amendment-j.csv", noise(rows))
     table(destination / "matrix-evidence.csv", [
@@ -133,6 +148,8 @@ def report(directory):
         table(destination / "B5.csv", storage)
         svg(destination / "B5.svg", "B5 physical data and indexes (different representations; see model contract)",
             [(row["engine"] + "/" + row["representation"] + "/" + kind, float(row[kind + "_bytes"]), "passed") for row in storage for kind in ("data", "index")], "bytes")
+    if (directory / "storage-restores.csv").exists():
+        table(destination / "B5-restores.csv", read_csv(directory / "storage-restores.csv"))
     print(json.dumps({"report": str(destination), "outputs": sorted(outputs), "amendment_j": noise(rows)}, sort_keys=True))
 
 

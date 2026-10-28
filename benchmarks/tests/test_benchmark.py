@@ -8,14 +8,14 @@ import psycopg
 import pytest
 
 from benchmarks import db
-from benchmarks.canonical import canonical
+from benchmarks.canonical import canonical, csv_bytes
 from benchmarks.harness import golden_files, query_run
 from benchmarks.reference.compute import generate
-from benchmarks.report import report
+from benchmarks.report import noise, report
 from benchmarks.results import Recorder
 from benchmarks.source import sha256
-from benchmarks.state import isolated_run, verify_initial, verify_manifest
-from benchmarks.workloads import b1, b2, b3, b4, b6
+from benchmarks.state import isolated_run, restore_mongo, restores_since_load, verify_initial, verify_manifest, verify_mongo
+from benchmarks.workloads import b1, b2, b3, b4, b5, b6
 
 
 def test_reference_determinism_and_committed_outputs(source, tmp_path):
@@ -88,6 +88,7 @@ def test_b3_real_constraints_and_race(database, provenance, engine, triggers, cl
         records, elapsed, passed, invariants = b3.race(engine, clients, triggers, database)
         assert passed, invariants
         assert len(records) == 50 and elapsed > 0
+        assert min(row["started_at_ns"] for row in records) >= max(row["connection_ready_at_ns"] for row in records)
         assert (invariants["successes"], invariants["refusals"], invariants["stock"], invariants["orders"]) == (10, 40, 0, 10)
         if engine == "postgres":
             assert all(row["tgenabled"] == ("O" if triggers else "D") for row in invariants["trigger_state"])
@@ -188,3 +189,69 @@ def test_real_mongo_plan_preserves_compound_index_key_order(database, tmp_path):
     assert ["product_id", "answered_at"] in patterns(saved)
     index = next(row for row in b4.index_catalogue(database)["mongo"]["reviews"] if row["name"] == "review_product_date")
     assert index["key_sequence"] == [("product_id", 1), ("answered_at", -1)]
+
+
+def test_drop_restore_storage_matches_fresh_load_after_two_cycles(database, provenance, fresh_storage):
+    fresh = {r["representation"]: r for r in fresh_storage if r["representation"] in {"products", "orders"}}
+    for _ in range(2):
+        restore_mongo(database, provenance)
+        assert verify_mongo(database, provenance)
+        for row in b5.mongo_footprint(database):
+            if row["representation"] not in fresh:
+                continue
+            for key in ("data_bytes", "index_bytes"):
+                tolerance = max(b5.STORAGE_ABSOLUTE_TOLERANCE, fresh[row["representation"]][key] * b5.STORAGE_RELATIVE_TOLERANCE)
+                assert abs(row[key] - fresh[row["representation"]][key]) <= tolerance, (row, fresh, tolerance)
+    assert restores_since_load(database) >= 2
+    with pytest.raises(ValueError, match="no restore since load"):
+        b5.footprint(database)
+
+
+@pytest.mark.parametrize("output,engine", [("B1_selective", "postgres"), ("B1_selective", "mongo"), ("B2c", "mongo")])
+def test_prepared_clients_and_fixed_operations(database, provenance, output, engine):
+    expected, parameters, source, hashes = golden_files("/app/benchmarks/golden/fixture", provenance)
+    if output.startswith("B1"):
+        query = next(q for q in b1.queries(parameters[0]) if q.engine == engine)
+    else:
+        from datetime import date
+        query = next(q for q in b2.queries(date.fromisoformat(source["as_of"]), database.platform_stats.find_one({"_id": "bayesian"})) if q.output == output and q.engine == engine)
+    records, elapsed, passed = query_run(query, 3, 5, expected)
+    assert passed and elapsed > 0 and len(records) == 15
+    assert all(sum(r["worker"] == worker for r in records) == 5 for worker in range(3))
+    assert min(r["started_at_ns"] for r in records) >= max(r["validated_at_ns"] for r in records)
+
+
+def test_hinted_broad_uses_same_golden_and_attribute_index(database, provenance):
+    expected, parameters, source, hashes = golden_files("/app/benchmarks/golden/fixture", provenance)
+    broad = next(p for p in parameters if p["name"] == "broad")
+    variants = [q for q in b1.queries(broad) if q.engine == "mongo"]
+    assert {q.variant for q in variants} == {"documents", "documents_hinted"}
+    for query in variants:
+        with query.open() as operation:
+            assert csv_bytes(query.golden, operation()) == expected[query.golden]
+    hinted = next(q for q in variants if q.hint)
+    assert "spec_attributes" in json.dumps(hinted.explain(), default=str)
+
+
+def test_saturated_run_stays_visible_but_is_not_headline(database, tmp_path):
+    from benchmarks.query import Query
+    records, elapsed, passed = query_run(Query("baseline_roundtrip", "postgres", "select1", "SELECT 1 AS one"), 2, 5, {})
+    recorder = Recorder(tmp_path, "measure", {})
+    recorder.record("baseline_roundtrip", "postgres", "select1", 2, 1, "measured", records, elapsed, passed)
+    (tmp_path / "stats.jsonl").write_text(json.dumps({"Name": "mercer-bench-test-load-client", "time_ns": max(r["ended_at_ns"] for r in records) + 1, "CPUPerc": "190%"}) + "\n")
+    report(tmp_path)
+    row = next(csv.DictReader((tmp_path / "summary.csv").open()))
+    assert row["status"] == "passed" and row["client_saturated"] == "True" and row["headline"] == "False"
+    assert row["runner_cpu_median_percent"] == "190.0"
+    assert "not headline" in (tmp_path / "report/baseline_roundtrip.svg").read_text()
+
+
+def test_noise_uses_engine_round_trips_and_ignores_python_noop():
+    def row(output, engine, variant, p50, p95):
+        return {"output": output, "engine": engine, "variant": variant, "clients": "1", "status": "passed",
+                "p50_ms": str(p50), "p95_ms": str(p95), "p50_ms_min": str(p50), "p50_ms_max": str(p50 + .2)}
+    rows = [row("baseline", "python", "noop", .0001, .0002), row("baseline_roundtrip", "postgres", "select1", 1, 2),
+            row("baseline_roundtrip", "mongo", "ping", 1, 6), row("B1_selective", "postgres", "eav", 1, 2), row("B1_selective", "mongo", "documents", 4, 5)]
+    result = noise(rows)[0]
+    assert result["threshold_ms"] == 5 and result["inside_noise"] == "yes"
+    assert result["baseline_used"] == "mongo/ping+postgres/select1"

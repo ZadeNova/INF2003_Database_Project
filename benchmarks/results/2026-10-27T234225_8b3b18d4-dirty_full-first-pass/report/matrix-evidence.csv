@@ -1,8 +1,0 @@
-criterion,postgres_sources,mongo_sources,run_evidence
-Data modelling,docs/DATA_MODEL.md;src/orders/models.py,docs/DATA_MODEL.md;benchmarks/load.py;src/config/mongo_schema.py,provenance.json
-Integrity,src/orders/migration_sql.py;src/wishlist/migrations/0001_wishlist_restock.py,src/config/mongo_schema.py;src/reviews/services.py,raw.jsonl;report/B3-states.csv
-Transactions and consistency,src/orders/services.py;benchmarks/workloads/b3.py;benchmarks/workloads/b6.py,src/reviews/services.py;benchmarks/workloads/b3.py;benchmarks/workloads/b6.py,report/B3-states.csv;report/B6-states.csv
-Schema evolution,src/catalogue/migrations/0001_initial.py,src/catalogue/services.py;src/config/mongo_schema.py,provenance.json
-Query expressiveness,src/dashboard/queries.py;src/dashboard/migrations/0001_daily_product_sales.py,benchmarks/workloads/b2.py;src/activity/services.py,plans/;report/B2a.csv;report/B2b.csv;report/B2c.csv;report/B2d.csv
-Security,src/docker/10-roles.sh;src/config/privileges.py,src/docker/mongo-start.sh;src/docker/bench-mongo-start.sh,provenance.json
-Storage and indexing,benchmarks/load.py;benchmarks/workloads/b4.py;benchmarks/workloads/b5.py,benchmarks/load.py;benchmarks/workloads/b4.py;benchmarks/workloads/b5.py,plans/;storage.csv
