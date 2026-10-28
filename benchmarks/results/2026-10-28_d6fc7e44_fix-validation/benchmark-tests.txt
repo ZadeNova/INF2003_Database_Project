@@ -1,0 +1,10 @@
+ Container mercer-bench-fix-tests-bench-mongo-1 Running 
+ Container mercer-bench-fix-tests-bench-db-1 Running 
+ Container mercer-bench-fix-tests-bench-mongo-1 Waiting 
+ Container mercer-bench-fix-tests-bench-db-1 Waiting 
+ Container mercer-bench-fix-tests-bench-db-1 Healthy 
+ Container mercer-bench-fix-tests-bench-mongo-1 Healthy 
+ Container mercer-bench-fix-tests-bench-runner-run-b67f03f88feb Creating 
+ Container mercer-bench-fix-tests-bench-runner-run-b67f03f88feb Created 
+...................................                                      [100%]
+35 passed in 208.80s (0:03:28)

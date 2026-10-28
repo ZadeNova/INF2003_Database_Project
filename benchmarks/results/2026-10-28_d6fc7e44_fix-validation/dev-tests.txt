@@ -1,0 +1,92 @@
+ Container mercer-bench-fix-dev-bench-mongo-1 Running 
+ Container mercer-bench-fix-dev-bench-db-1 Running 
+ Container mercer-bench-fix-dev-bench-db-1 Waiting 
+ Container mercer-bench-fix-dev-bench-mongo-1 Waiting 
+ Container mercer-bench-fix-dev-bench-db-1 Healthy 
+ Container mercer-bench-fix-dev-bench-mongo-1 Healthy 
+ Container mercer-bench-fix-dev-bench-runner-run-05967f00d659 Creating 
+ Container mercer-bench-fix-dev-bench-runner-run-05967f00d659 Created 
+.............F..............F......                                      [100%]
+=================================== FAILURES ===================================
+_____________ test_b3_real_constraints_and_race[postgres-True-50] ______________
+
+database = Database(MongoClient(host=['bench-mongo:27017'], document_class=dict, tz_aware=False, connect=True, authsource='admin'...erselectiontimeoutms=3000, replicaset='rs0', w='majority', journal=True, retryreads=False, retrywrites=False), 'bench')
+provenance = {'manifest_sha256': 'd361d608a5171ec3e40ab13ac6a207b1dff61938befe7394e8da1ded006f68d6', 'source': '/app/fixtures/olist...d92be6bc3511ba56d9c', 'cleaning_ledger.json': '59badb9f135b6e7a0b5705a55f458b1598d1a6f92fa7e153bd2c68e976003ca7', ...}}
+engine = 'postgres', triggers = True, clients = 50
+
+    @pytest.mark.parametrize("engine,triggers,clients", [("postgres", False, 50), ("postgres", True, 50), ("mongo", True, 50)])
+    def test_b3_real_constraints_and_race(database, provenance, engine, triggers, clients):
+        evidence = {}
+>       with isolated_run(database, provenance, evidence):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+benchmarks/tests/test_benchmark.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+benchmarks/state.py:95: in isolated_run
+    db.recreate("bench_run", "bench_template")
+benchmarks/db.py:44: in recreate
+    conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x79ca2e7f7890>
+query = Composed([SQL('DROP DATABASE IF EXISTS '), Identifier('bench_run'), SQL(' WITH (FORCE)')])
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied to terminate process
+E           DETAIL:  Only roles with privileges of the role whose process is being terminated or with privileges of the "pg_signal_backend" role may terminate this process.
+
+/usr/local/lib/python3.13/site-packages/psycopg/connection.py:300: InsufficientPrivilege
+________ test_drop_restore_storage_matches_fresh_load_after_two_cycles _________
+
+database = Database(MongoClient(host=['bench-mongo:27017'], document_class=dict, tz_aware=False, connect=True, authsource='admin'...erselectiontimeoutms=3000, replicaset='rs0', w='majority', journal=True, retryreads=False, retrywrites=False), 'bench')
+provenance = {'manifest_sha256': 'd361d608a5171ec3e40ab13ac6a207b1dff61938befe7394e8da1ded006f68d6', 'source': '/app/fixtures/olist...d92be6bc3511ba56d9c', 'cleaning_ledger.json': '59badb9f135b6e7a0b5705a55f458b1598d1a6f92fa7e153bd2c68e976003ca7', ...}}
+fresh_storage = [{'engine': 'mongo', 'representation': 'products', 'data_bytes': 24576, 'index_bytes': 61440, ...}, {'engine': 'mongo'...ytes': 98304, ...}, {'engine': 'mongo', 'representation': 'reviews', 'data_bytes': 188416, 'index_bytes': 352256, ...}]
+
+    def test_drop_restore_storage_matches_fresh_load_after_two_cycles(database, provenance, fresh_storage):
+        fresh = {r["representation"]: r for r in fresh_storage if r["representation"] in {"products", "orders"}}
+        for _ in range(2):
+            restore_mongo(database, provenance)
+            assert verify_mongo(database, provenance)
+            for row in b5.mongo_footprint(database):
+                if row["representation"] not in fresh:
+                    continue
+                for key in ("data_bytes", "index_bytes"):
+                    tolerance = max(b5.STORAGE_ABSOLUTE_TOLERANCE, fresh[row["representation"]][key] * b5.STORAGE_RELATIVE_TOLERANCE)
+>                   assert abs(row[key] - fresh[row["representation"]][key]) <= tolerance, (row, fresh, tolerance)
+E                   AssertionError: ({'engine': 'mongo', 'representation': 'orders', 'data_bytes': 4096, 'index_bytes': 61440, ...}, {'products': {'engine.....}, 'orders': {'engine': 'mongo', 'representation': 'orders', 'data_bytes': 90112, 'index_bytes': 98304, ...}}, 65536)
+E                   assert 86016 <= 65536
+E                    +  where 86016 = abs((4096 - 90112))
+
+benchmarks/tests/test_benchmark.py:204: AssertionError
+=========================== short test summary info ============================
+FAILED benchmarks/tests/test_benchmark.py::test_b3_real_constraints_and_race[postgres-True-50]
+FAILED benchmarks/tests/test_benchmark.py::test_drop_restore_storage_matches_fresh_load_after_two_cycles
+2 failed, 33 passed in 12.65s
+

@@ -232,7 +232,31 @@ buyer count retained. The Python no-op remains an overhead baseline; SELECT 1 an
 round-trip noise baselines. Per-run CPU attribution and client_saturated flags keep constrained client results visible
 without headline ratios. B1 broad keeps its planner choice; documents_hinted separately shows spec_attributes.
 
-New evidence is being collected on the committed fix head in fresh projects and will be linked here on completion.
+The requested reruns used clean commit d6fc7e44 in separate freshly loaded projects:
+
+- [Full-data correctness](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv), including the
+  [fresh footprint](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/storage.csv) and
+  [two-restore physical audit](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/storage-restores.csv).
+- [Fixture correctness](../../benchmarks/results/2026-10-28T225800_d6fc7e44_fix-fixture/summary.csv).
+- [BM4](../../benchmarks/results/2026-10-28T230000_d6fc7e44_fix-bm4/summary.csv): both deliberate failures were retained
+  with no accepted timing.
+- [Trial](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/summary.csv), with no prior mutating run;
+  [amendment-j evaluation](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/report/amendment-j.csv)
+  identifies the engine round-trip baseline, gap, threshold and noise/headline flags for each comparison.
+
+All requested workload variants passed their correctness gates; use the generated
+[variant status](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/variant-status.csv) and
+[run index](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/run-index.csv) for the complete record.
+The product-visible B4 comparison falls inside the trial's noise threshold. Read every amendment-j verdict alongside
+its headline flag: the [saturated summary rows](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/client-saturated.csv)
+remain visible, with [individual run CPU evidence](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/client-saturated-runs.csv).
+One-second sampling gives coarse attribution for short windows, including neighbouring preparation work; saturation
+in any accepted run excludes the summary row from headline ratios. No generator decision is implemented.
+The [broad-query plan comparison](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/b1-broad-plans.csv)
+records the full-data planner's _id_ scan and the hinted spec_attributes scan separately, against identical golden rows.
+The [generated handoff](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/handoff.txt) includes exact affected-test
+results, fresh storage, per-variant status and the retained limitations. Raw evidence checksums, operation counts,
+barriers and correctness/timing gates were [audited](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/evidence-checks.txt).
 The CI job now checks the kernel, reloads after mutating tests and uploads only the current printed run directory.
 The 28 October PLAN.md date line and original target dates stay unchanged. This workstream remains in progress for
 Claude Code's fix re-check, hosted CI and the designated-machine final measurements. No generator, scaled run,

@@ -1,0 +1,255 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "attributes.size": {
+              "$eq": "queen"
+            }
+          },
+          "indexFilterSet": false,
+          "queryHash": "5478B7DA",
+          "planCacheShapeHash": "5478B7DA",
+          "planCacheKey": "0FD0BA36",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 119,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": true,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.size": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.size": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.size\", \"attributes.size\"]"
+                    ],
+                    "attributes.size": [
+                      "[\"queen\", \"queen\"]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 15,
+          "executionTimeMillis": 0,
+          "executionTimeMicros": 372,
+          "totalKeysExamined": 15,
+          "totalDocsExamined": 15,
+          "executionStages": {
+            "isCached": true,
+            "stage": "SORT",
+            "nReturned": 15,
+            "executionTimeMillisEstimate": 0,
+            "works": 32,
+            "advanced": 15,
+            "needTime": 16,
+            "needYield": 0,
+            "saveState": 2,
+            "restoreState": 1,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 690,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 690,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 15,
+              "executionTimeMillisEstimate": 0,
+              "works": 16,
+              "advanced": 15,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 2,
+              "restoreState": 1,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nReturned": 15,
+                "executionTimeMillisEstimate": 0,
+                "works": 16,
+                "advanced": 15,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 2,
+                "restoreState": 1,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 15,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 15,
+                  "executionTimeMillisEstimate": 0,
+                  "works": 16,
+                  "advanced": 15,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 2,
+                  "restoreState": 1,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.size": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.size": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.size\", \"attributes.size\"]"
+                    ],
+                    "attributes.size": [
+                      "[\"queen\", \"queen\"]"
+                    ]
+                  },
+                  "keysExamined": 15,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 15,
+      "executionTimeMillisEstimate": 0
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 15,
+      "executionTimeMillisEstimate": 0,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "86A44BFF3243F8F1629B2B1AA3CB04A78492AD1D838FE0355BE32EFA71CCAD10",
+  "peakTrackedMemBytes": 690,
+  "serverInfo": {
+    "host": "d771904a62d2",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.size": "queen"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "hint": "spec_attributes",
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1793199536,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "JqiXcTQMG6/52+zCyi8AJ9AE8OM=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701733061674663945
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1793199536,
+      "i": 1
+    }
+  }
+}

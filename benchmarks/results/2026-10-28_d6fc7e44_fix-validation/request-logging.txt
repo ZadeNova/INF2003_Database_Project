@@ -1,0 +1,10 @@
+ Container mercer-bench-fix-app-db-1 Running 
+ Container mercer-bench-fix-app-mongo-1 Running 
+ Container mercer-bench-fix-app-mongo-1 Waiting 
+ Container mercer-bench-fix-app-db-1 Waiting 
+ Container mercer-bench-fix-app-db-1 Healthy 
+ Container mercer-bench-fix-app-mongo-1 Healthy 
+ Container mercer-bench-fix-app-migrate-run-f6ba271fbf50 Creating 
+ Container mercer-bench-fix-app-migrate-run-f6ba271fbf50 Created 
+.....................                                                    [100%]
+21 passed in 3.08s
