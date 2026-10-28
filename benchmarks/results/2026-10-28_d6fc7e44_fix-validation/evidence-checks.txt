@@ -1,0 +1,4 @@
+fix-full: clean commit, raw SHA-256, timing/correctness gates, client counts and barriers verified
+fix-fixture: clean commit, raw SHA-256, timing/correctness gates, client counts and barriers verified
+fix-bm4: clean commit, raw SHA-256, timing/correctness gates, client counts and barriers verified
+fix-trial: clean commit, raw SHA-256, timing/correctness gates, client counts and barriers verified

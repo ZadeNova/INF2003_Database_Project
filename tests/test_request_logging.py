@@ -55,7 +55,7 @@ def test_a_request_produces_exactly_one_line_with_the_documented_fields(logs):
 
     (line,) = logs.request_lines()
     assert set(line) == {"ts", "level", "logger", "message", "request_id", "method", "path", "status",
-                         "duration_ms", "user_id"}
+                         "duration_ms", "user_id", "db_pg_ms", "db_pg_queries", "db_mongo_ms", "db_mongo_commands"}
     assert (line["method"], line["path"], line["status"], line["level"]) == ("GET", "/products/", 200, "INFO")
     assert isinstance(line["duration_ms"], float) and line["duration_ms"] >= 0
     assert line["user_id"] is None
@@ -81,6 +81,26 @@ def test_health_probes_are_not_logged_at_info(logs):
     Client().get("/health/")
 
     assert logs.request_lines() == []
+
+
+def test_request_without_queries_has_zero_database_timings(logs):
+    response = Client().get("/health/")
+    assert response["Server-Timing"] == "pg;dur=0.000, mongo;dur=0.000"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_product_detail_reports_both_real_databases_without_query_text(imported, logs):
+    from catalogue.models import Product
+    product = Product.objects.filter(active=True, taken_down=False, seller__status="approved").first()
+    response = Client().get(f"/products/{product.pk}/")
+    line = logs.request_lines()[-1]
+    assert response.status_code == 200
+    assert line["db_pg_queries"] > 0 and line["db_pg_ms"] > 0
+    assert line["db_mongo_commands"] > 0 and line["db_mongo_ms"] > 0
+    assert "pg;dur=" in response["Server-Timing"] and "mongo;dur=" in response["Server-Timing"]
+    assert not any(text in logs.raw for text in ("SELECT ", "FROM catalogue", "find", "pipeline", "parameters"))
+    # A following zero-query request cannot inherit the previous request's counters.
+    assert Client().get("/health/")["Server-Timing"] == "pg;dur=0.000, mongo;dur=0.000"
 
 
 @pytest.mark.parametrize("incoming", ["short", "x" * 65, 'abcdefgh\n{"forged":true}'])

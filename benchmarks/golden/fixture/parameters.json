@@ -1,0 +1,77 @@
+[
+  {
+    "name": "selective",
+    "predicates": [
+      [
+        "care",
+        "eq",
+        "hand wash"
+      ]
+    ]
+  },
+  {
+    "name": "broad",
+    "predicates": [
+      [
+        "size",
+        "eq",
+        "queen"
+      ]
+    ]
+  },
+  {
+    "name": "boolean",
+    "predicates": [
+      [
+        "wireless",
+        "eq",
+        true
+      ]
+    ]
+  },
+  {
+    "name": "range",
+    "predicates": [
+      [
+        "age_months",
+        "gte",
+        6
+      ]
+    ]
+  },
+  {
+    "name": "two",
+    "predicates": [
+      [
+        "material",
+        "eq",
+        "cotton"
+      ],
+      [
+        "pattern",
+        "eq",
+        "striped"
+      ]
+    ]
+  },
+  {
+    "name": "three",
+    "predicates": [
+      [
+        "material",
+        "eq",
+        "cotton"
+      ],
+      [
+        "pattern",
+        "eq",
+        "striped"
+      ],
+      [
+        "size",
+        "eq",
+        "single"
+      ]
+    ]
+  }
+]

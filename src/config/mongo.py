@@ -7,6 +7,8 @@ from threading import Lock
 
 from pymongo import MongoClient
 
+from config.db_timing import command_listener
+
 REPLICA_SET = "rs0"
 _database = ContextVar("mongo_database", default=None)
 _clients = {}
@@ -43,7 +45,7 @@ def client(*, environ=None, direct=False):
     key = (os.getpid(), tuple(sorted(options.items())))
     with _clients_lock:
         if key not in _clients:
-            _clients[key] = MongoClient(**options)
+            _clients[key] = MongoClient(**options, event_listeners=[command_listener])
         pooled = _clients[key]
     yield pooled
 

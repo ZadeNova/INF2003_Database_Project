@@ -1,0 +1,370 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "$and": [
+              {
+                "attributes.material": {
+                  "$eq": "cotton"
+                }
+              },
+              {
+                "attributes.pattern": {
+                  "$eq": "striped"
+                }
+              }
+            ]
+          },
+          "indexFilterSet": false,
+          "queryHash": "728778DC",
+          "planCacheShapeHash": "728778DC",
+          "planCacheKey": "18971149",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 270,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": true,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "attributes.material": {
+                    "$eq": "cotton"
+                  }
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.pattern": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.pattern": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.pattern\", \"attributes.pattern\"]"
+                    ],
+                    "attributes.pattern": [
+                      "[\"striped\", \"striped\"]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": [
+            {
+              "isCached": false,
+              "stage": "SORT",
+              "sortPattern": {
+                "_id": 1
+              },
+              "memLimit": 104857600,
+              "type": "simple",
+              "inputStage": {
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "_id": 1
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "attributes.pattern": {
+                      "$eq": "striped"
+                    }
+                  },
+                  "nss": "bench.products",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "bench.products",
+                    "keyPattern": {
+                      "$_path": 1,
+                      "attributes.material": 1
+                    },
+                    "indexName": "spec_attributes",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "$_path": [],
+                      "attributes.material": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "$_path": [
+                        "[\"attributes.material\", \"attributes.material\"]"
+                      ],
+                      "attributes.material": [
+                        "[\"cotton\", \"cotton\"]"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "$and": [
+                    {
+                      "attributes.material": {
+                        "$eq": "cotton"
+                      }
+                    },
+                    {
+                      "attributes.pattern": {
+                        "$eq": "striped"
+                      }
+                    }
+                  ]
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "indexName": "_id_",
+                  "isMultiKey": false,
+                  "isUnique": true,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 3,
+          "executionTimeMillis": 0,
+          "executionTimeMicros": 430,
+          "totalKeysExamined": 6,
+          "totalDocsExamined": 6,
+          "executionStages": {
+            "isCached": true,
+            "stage": "SORT",
+            "nReturned": 3,
+            "executionTimeMillisEstimate": 0,
+            "works": 12,
+            "advanced": 3,
+            "needTime": 7,
+            "needYield": 0,
+            "saveState": 3,
+            "restoreState": 2,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 138,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 138,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 3,
+              "executionTimeMillisEstimate": 0,
+              "works": 7,
+              "advanced": 3,
+              "needTime": 3,
+              "needYield": 0,
+              "saveState": 3,
+              "restoreState": 2,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "attributes.material": {
+                    "$eq": "cotton"
+                  }
+                },
+                "nReturned": 3,
+                "executionTimeMillisEstimate": 0,
+                "works": 7,
+                "advanced": 3,
+                "needTime": 3,
+                "needYield": 0,
+                "saveState": 3,
+                "restoreState": 2,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 6,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 6,
+                  "executionTimeMillisEstimate": 0,
+                  "works": 7,
+                  "advanced": 6,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 3,
+                  "restoreState": 2,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.pattern": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.pattern": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.pattern\", \"attributes.pattern\"]"
+                    ],
+                    "attributes.pattern": [
+                      "[\"striped\", \"striped\"]"
+                    ]
+                  },
+                  "keysExamined": 6,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 3,
+      "executionTimeMillisEstimate": 1
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 3,
+      "executionTimeMillisEstimate": 1,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "159781254746C96DE32AEFEB7F2DD56E0652AD1F762D1DD669E0592CB2636D3C",
+  "peakTrackedMemBytes": 276,
+  "serverInfo": {
+    "host": "d771904a62d2",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.material": "cotton",
+          "attributes.pattern": "striped"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1793199536,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "JqiXcTQMG6/52+zCyi8AJ9AE8OM=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7701733061674663945
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1793199536,
+      "i": 1
+    }
+  }
+}

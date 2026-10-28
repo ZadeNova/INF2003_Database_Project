@@ -1,0 +1,9 @@
+ Container mercer-bench-fix-dev-bench-db-1 Running 
+ Container mercer-bench-fix-dev-bench-mongo-1 Running 
+ Container mercer-bench-fix-dev-bench-mongo-1 Waiting 
+ Container mercer-bench-fix-dev-bench-db-1 Waiting 
+ Container mercer-bench-fix-dev-bench-db-1 Healthy 
+ Container mercer-bench-fix-dev-bench-mongo-1 Healthy 
+ Container mercer-bench-fix-dev-bench-runner-run-0161a45372d9 Creating 
+ Container mercer-bench-fix-dev-bench-runner-run-0161a45372d9 Created 
+All checks passed!

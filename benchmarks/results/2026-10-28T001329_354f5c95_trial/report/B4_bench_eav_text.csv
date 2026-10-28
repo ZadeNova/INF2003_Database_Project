@@ -1,0 +1,4 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B4_bench_eav_text,postgres,after,1,passed,5,0,0,0,0.644533,0.553328,0.872943,1.837392,1.80199,1.988999,168.52162917813146,149.4970768836557,170.67372737049848,6.641419446327806,before/variant
+B4_bench_eav_text,postgres,before,1,passed,5,0,0,0,4.280614,4.051202,4.522226,5.80119,5.583479,6.316915,103.25710281344834,99.43122950374351,106.0723132296741,1.0,before/variant
+B4_bench_eav_text,postgres,restore,1,passed,0,0,0,0,,,,,,,,,,,before/variant

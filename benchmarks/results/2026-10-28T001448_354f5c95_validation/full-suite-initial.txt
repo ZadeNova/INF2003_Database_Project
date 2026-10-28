@@ -1,0 +1,235 @@
+ Container mercer-bench-app-codex-db-1 Running 
+ Container mercer-bench-app-codex-mongo-1 Running 
+ Container mercer-bench-app-codex-mongo-1 Waiting 
+ Container mercer-bench-app-codex-db-1 Waiting 
+ Container mercer-bench-app-codex-mongo-1 Healthy 
+ Container mercer-bench-app-codex-db-1 Healthy 
+ Container mercer-bench-app-codex-migrate-run-257fe34dd93a Creating 
+ Container mercer-bench-app-codex-migrate-run-257fe34dd93a Created 
+........................................................................ [ 11%]
+F....................................................................... [ 22%]
+........................................................................ [ 33%]
+........................................................................ [ 44%]
+........................................................................ [ 56%]
+........................................................................ [ 67%]
+........................................................................ [ 78%]
+................................................ssss.................... [ 89%]
+.................................................................        [100%]
+=================================== FAILURES ===================================
+_____ test_a_request_produces_exactly_one_line_with_the_documented_fields ______
+
+logs = <test_request_logging.Captured object at 0x74e3d7e21e80>
+
+    def test_a_request_produces_exactly_one_line_with_the_documented_fields(logs):
+        response = Client().get(reverse("catalogue:product_list"))
+    
+        (line,) = logs.request_lines()
+>       assert set(line) == {"ts", "level", "logger", "message", "request_id", "method", "path", "status",
+                             "duration_ms", "user_id"}
+E       AssertionError: assert {'db_mongo_co... 'level', ...} == {'duration_ms..., 'path', ...}
+E         
+E         Extra items in the left set:
+E         'db_pg_queries'
+E         'db_mongo_commands'
+E         'db_mongo_ms'
+E         'db_pg_ms'
+E         Use -v to get more diff
+
+tests/test_request_logging.py:57: AssertionError
+----------------------------- Captured stdout call -----------------------------
+{"ts":"2026-10-27T15:43:44.352+00:00","level":"INFO","logger":"mercer.request","message":"request","request_id":"2948501d5e9a436fb18d5f260a9e0b14","method":"GET","path":"/products/","status":200,"duration_ms":38.86,"user_id":null,"db_pg_ms":2.926,"db_pg_queries":5,"db_mongo_ms":14.484,"db_mongo_commands":3}
+------------------------------ Captured log call -------------------------------
+INFO     mercer.request:middleware.py:65 request
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_check_docs.py:121: the staged check reads the git index
+SKIPPED [1] tests/test_check_docs.py:133: the staged check reads the git index
+SKIPPED [1] tests/test_check_docs.py:146: the staged check reads the git index
+SKIPPED [1] tests/test_check_docs.py:157: the staged check reads the git index
+1 failed, 636 passed, 4 skipped in 432.68s (0:07:12)
+Branch coverage report (informational):
+Name                                              Stmts   Miss Branch BrPart   Cover   Missing
+----------------------------------------------------------------------------------------------
+accounts/__init__.py                                  0      0      0      0 100.00%
+accounts/audit.py                                    35      1      8      1  95.35%   52
+accounts/context_processors.py                       27      0     10      1  97.30%   30->40
+accounts/forms.py                                    46      2      6      2  92.31%   44, 55
+accounts/management/__init__.py                       0      0      0      0 100.00%
+accounts/management/commands/__init__.py              0      0      0      0 100.00%
+accounts/management/commands/create_operator.py      21      0      4      0 100.00%
+accounts/migration_sql.py                             4      0      0      0 100.00%
+accounts/mixins.py                                   57      2     22      2  94.94%   55, 88
+accounts/models.py                                   72      0      2      0 100.00%
+accounts/urls.py                                      5      0      0      0 100.00%
+accounts/views.py                                   139      0     22      0 100.00%
+activity/__init__.py                                  0      0      0      0 100.00%
+activity/management/__init__.py                       0      0      0      0 100.00%
+activity/management/commands/__init__.py              0      0      0      0 100.00%
+activity/management/commands/seed_activity.py        34      1      8      1  95.24%   31
+activity/services.py                                102      9     30      0  93.18%   52-54, 108-110, 128-131
+activity/urls.py                                      4      0      0      0 100.00%
+activity/views.py                                    11      0      0      0 100.00%
+catalogue/__init__.py                                 0      0      0      0 100.00%
+catalogue/forms.py                                   38      5     14      3  80.77%   16, 29-31, 59
+catalogue/icons.py                                    2      0      0      0 100.00%
+catalogue/management/__init__.py                      0      0      0      0 100.00%
+catalogue/management/commands/__init__.py             0      0      0      0 100.00%
+catalogue/management/commands/check_specs.py         32      2      8      1  92.50%   34, 41
+catalogue/management/commands/seed_demo.py           83      7     28      7  87.39%   36, 50, 52, 56, 68, 76, 83
+catalogue/migration_sql.py                            2      0      0      0 100.00%
+catalogue/models.py                                  46      0      0      0 100.00%
+catalogue/operator_views.py                          71     19     12      1  68.67%   25-33, 40-41, 46->54, 61-66, 78-79
+catalogue/photos.py                                  38      1      8      1  95.65%   28
+catalogue/search.py                                  84      3     34      2  95.76%   49, 51->50, 104-105
+catalogue/seller_forms.py                            64     10     18      6  80.49%   42, 44, 64, 67-68, 72-75, 77
+catalogue/seller_views.py                            57      5      4      1  90.16%   22, 39-40, 61-62
+catalogue/services.py                                95     11     32     11  82.68%   23, 25, 36->exit, 39-40, 61, 77, 85, 87, 96->99, 104, 106, 109
+catalogue/templatetags/__init__.py                    0      0      0      0 100.00%
+catalogue/templatetags/catalogue_tags.py             11      0      0      0 100.00%
+catalogue/urls.py                                     4      0      0      0 100.00%
+catalogue/views.py                                  127      8     28      4  92.26%   64, 66, 136-137, 142, 145-146, 149
+config/__init__.py                                    0      0      0      0 100.00%
+config/database.py                                   20      0      8      0 100.00%
+config/db_timing.py                                  35      0      2      0 100.00%
+config/jsonlog.py                                    29      0     10      0 100.00%
+config/management/__init__.py                         0      0      0      0 100.00%
+config/management/commands/__init__.py                0      0      0      0 100.00%
+config/management/commands/check_database.py         25      1      4      1  93.10%   29
+config/management/commands/import_olist.py           76      6     12      2  90.91%   41, 66-67, 69, 81-82
+config/management/commands/mongo_setup.py            18      2      0      0  88.89%   21-22
+config/management/commands/verify_olist.py           47      1     10      1  96.49%   58
+config/middleware.py                                 68      0     10      0 100.00%
+config/mongo.py                                      47      4     10      0  89.47%   55-58
+config/mongo_schema.py                               28      2     12      2  90.00%   70, 82
+config/olist_import.py                              156     10     76     11  90.95%   93, 99, 102, 114, 183, 195->199, 206, 216, 220, 225, 228
+config/privileges.py                                 38      0      8      2  95.65%   32->35, 50->39
+config/settings.py                                   58      7     10      5  82.35%   16, 22, 28, 31, 34, 68-69
+config/urls.py                                        4      0      0      0 100.00%
+config/views.py                                      21      0      0      0 100.00%
+config/wsgi.py                                        7      7      0      0   0.00%   1-11
+dashboard/__init__.py                                 0      0      0      0 100.00%
+dashboard/forms.py                                    5      0      0      0 100.00%
+dashboard/queries.py                                  4      0      0      0 100.00%
+dashboard/services.py                                80      0     12      0 100.00%
+dashboard/urls.py                                     4      0      0      0 100.00%
+dashboard/views.py                                   35      0      4      1  97.44%   32->42
+manage.py                                             6      6      2      0   0.00%   1-7
+orders/__init__.py                                    0      0      0      0 100.00%
+orders/forms.py                                      23      0      8      0 100.00%
+orders/migration_sql.py                              12      0      4      0 100.00%
+orders/models.py                                     77      0      0      0 100.00%
+orders/services.py                                  243      5     68      5  96.78%   63, 81, 159, 217, 241
+orders/urls.py                                        4      0      0      0 100.00%
+orders/views.py                                     116      9     10      1  90.48%   30-31, 52-54, 108, 129, 149-150
+reviews/__init__.py                                   0      0      0      0 100.00%
+reviews/forms.py                                      8      0      0      0 100.00%
+reviews/queries.py                                   18      0      0      0 100.00%
+reviews/ratings.py                                   26      0      2      0 100.00%
+reviews/services.py                                  95      9     30      8  86.40%   26, 56, 67, 89, 94, 96, 98, 112, 124
+reviews/urls.py                                       4      0      0      0 100.00%
+reviews/views.py                                     72     25      6      1  61.54%   22-23, 39-40, 44-46, 63-65, 72-76, 79, 82-91
+tools/collect_static.py                               8      8      0      0   0.00%   2-16
+tools/init_env.py                                    36      5     12      1  83.33%   44-49
+wishlist/__init__.py                                  0      0      0      0 100.00%
+wishlist/context_processors.py                        4      0      0      0 100.00%
+wishlist/models.py                                   20      0      0      0 100.00%
+wishlist/services.py                                 25      2      8      2  87.88%   14, 18
+wishlist/templatetags/__init__.py                     0      0      0      0 100.00%
+wishlist/templatetags/wishlist_tags.py                9      0      2      0 100.00%
+wishlist/urls.py                                      4      0      0      0 100.00%
+wishlist/views.py                                    42      0      4      0 100.00%
+----------------------------------------------------------------------------------------------
+TOTAL                                              2968    195    642     87  91.63%
+Line coverage gate (at least 80%):
+Name                                              Stmts   Miss   Cover   Missing
+--------------------------------------------------------------------------------
+accounts/__init__.py                                  0      0 100.00%
+accounts/audit.py                                    35      1  97.14%   52
+accounts/context_processors.py                       27      0 100.00%
+accounts/forms.py                                    46      2  95.65%   44, 55
+accounts/management/__init__.py                       0      0 100.00%
+accounts/management/commands/__init__.py              0      0 100.00%
+accounts/management/commands/create_operator.py      21      0 100.00%
+accounts/migration_sql.py                             4      0 100.00%
+accounts/mixins.py                                   57      2  96.49%   55, 88
+accounts/models.py                                   72      0 100.00%
+accounts/urls.py                                      5      0 100.00%
+accounts/views.py                                   139      0 100.00%
+activity/__init__.py                                  0      0 100.00%
+activity/management/__init__.py                       0      0 100.00%
+activity/management/commands/__init__.py              0      0 100.00%
+activity/management/commands/seed_activity.py        34      1  97.06%   31
+activity/services.py                                102      9  91.18%   52-54, 108-110, 128-131
+activity/urls.py                                      4      0 100.00%
+activity/views.py                                    11      0 100.00%
+catalogue/__init__.py                                 0      0 100.00%
+catalogue/forms.py                                   38      5  86.84%   16, 29-31, 59
+catalogue/icons.py                                    2      0 100.00%
+catalogue/management/__init__.py                      0      0 100.00%
+catalogue/management/commands/__init__.py             0      0 100.00%
+catalogue/management/commands/check_specs.py         32      2  93.75%   34, 41
+catalogue/management/commands/seed_demo.py           83      7  91.57%   36, 50, 52, 56, 68, 76, 83
+catalogue/migration_sql.py                            2      0 100.00%
+catalogue/models.py                                  46      0 100.00%
+catalogue/operator_views.py                          71     19  73.24%   25-33, 40-41, 61-66, 78-79
+catalogue/photos.py                                  38      1  97.37%   28
+catalogue/search.py                                  84      3  96.43%   49, 104-105
+catalogue/seller_forms.py                            64     10  84.38%   42, 44, 64, 67-68, 72-75, 77
+catalogue/seller_views.py                            57      5  91.23%   22, 39-40, 61-62
+catalogue/services.py                                95     11  88.42%   23, 25, 39-40, 61, 77, 85, 87, 104, 106, 109
+catalogue/templatetags/__init__.py                    0      0 100.00%
+catalogue/templatetags/catalogue_tags.py             11      0 100.00%
+catalogue/urls.py                                     4      0 100.00%
+catalogue/views.py                                  127      8  93.70%   64, 66, 136-137, 142, 145-146, 149
+config/__init__.py                                    0      0 100.00%
+config/database.py                                   20      0 100.00%
+config/db_timing.py                                  35      0 100.00%
+config/jsonlog.py                                    29      0 100.00%
+config/management/__init__.py                         0      0 100.00%
+config/management/commands/__init__.py                0      0 100.00%
+config/management/commands/check_database.py         25      1  96.00%   29
+config/management/commands/import_olist.py           76      6  92.11%   41, 66-67, 69, 81-82
+config/management/commands/mongo_setup.py            18      2  88.89%   21-22
+config/management/commands/verify_olist.py           47      1  97.87%   58
+config/middleware.py                                 68      0 100.00%
+config/mongo.py                                      47      4  91.49%   55-58
+config/mongo_schema.py                               28      2  92.86%   70, 82
+config/olist_import.py                              156     10  93.59%   93, 99, 102, 114, 183, 206, 216, 220, 225, 228
+config/privileges.py                                 38      0 100.00%
+config/settings.py                                   58      7  87.93%   16, 22, 28, 31, 34, 68-69
+config/urls.py                                        4      0 100.00%
+config/views.py                                      21      0 100.00%
+config/wsgi.py                                        7      7   0.00%   1-11
+dashboard/__init__.py                                 0      0 100.00%
+dashboard/forms.py                                    5      0 100.00%
+dashboard/queries.py                                  4      0 100.00%
+dashboard/services.py                                80      0 100.00%
+dashboard/urls.py                                     4      0 100.00%
+dashboard/views.py                                   35      0 100.00%
+manage.py                                             6      6   0.00%   1-7
+orders/__init__.py                                    0      0 100.00%
+orders/forms.py                                      23      0 100.00%
+orders/migration_sql.py                              12      0 100.00%
+orders/models.py                                     77      0 100.00%
+orders/services.py                                  243      5  97.94%   63, 81, 159, 217, 241
+orders/urls.py                                        4      0 100.00%
+orders/views.py                                     116      9  92.24%   30-31, 52-54, 108, 129, 149-150
+reviews/__init__.py                                   0      0 100.00%
+reviews/forms.py                                      8      0 100.00%
+reviews/queries.py                                   18      0 100.00%
+reviews/ratings.py                                   26      0 100.00%
+reviews/services.py                                  95      9  90.53%   26, 56, 67, 89, 94, 96, 98, 112, 124
+reviews/urls.py                                       4      0 100.00%
+reviews/views.py                                     72     25  65.28%   22-23, 39-40, 44-46, 63-65, 72-76, 79, 82-91
+tools/collect_static.py                               8      8   0.00%   2-16
+tools/init_env.py                                    36      5  86.11%   44-49
+wishlist/__init__.py                                  0      0 100.00%
+wishlist/context_processors.py                        4      0 100.00%
+wishlist/models.py                                   20      0 100.00%
+wishlist/services.py                                 25      2  92.00%   14, 18
+wishlist/templatetags/__init__.py                     0      0 100.00%
+wishlist/templatetags/wishlist_tags.py                9      0 100.00%
+wishlist/urls.py                                      4      0 100.00%
+wishlist/views.py                                    42      0 100.00%
+--------------------------------------------------------------------------------
+TOTAL                                              2968    195  93.43%
+

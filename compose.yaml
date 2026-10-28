@@ -112,6 +112,93 @@ services:
       - ./scripts:/app/scripts:ro,z
       - ./data:/app/data:ro,z
     restart: "no"
+  bench-db:
+    profiles: [bench]
+    image: postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+    shm_size: 512m
+    command: [postgres, -c, shared_buffers=512MB, -c, fsync=on, -c, synchronous_commit=on, -c, full_page_writes=on]
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${BENCH_ADMIN_PASSWORD:?Run python src/tools/init_env.py first}
+      APP_DB_NAME: ${BENCH_DB:?Run python src/tools/init_env.py first}
+      APP_OWNER_USER: ${BENCH_OWNER_USER:?Run python src/tools/init_env.py first}
+      APP_OWNER_PASSWORD: ${BENCH_OWNER_PASSWORD:?Run python src/tools/init_env.py first}
+      APP_RUNTIME_USER: ${BENCH_RUNTIME_USER:?Run python src/tools/init_env.py first}
+      APP_RUNTIME_PASSWORD: ${BENCH_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+    volumes:
+      - bench_postgres_data:/var/lib/postgresql
+      - ./src/docker/10-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro,z
+      - ./src/docker/20-bench-checkpoint.sh:/docker-entrypoint-initdb.d/20-bench-checkpoint.sh:ro,z
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres -d postgres]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  bench-mongo:
+    profiles: [bench]
+    image: mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+    entrypoint: [bash, /docker/bench-mongo-start.sh]
+    environment:
+      MONGO_ROOT_USER: ${BENCH_MONGO_ROOT_USER:?Run python src/tools/init_env.py first}
+      MONGO_ROOT_PASSWORD: ${BENCH_MONGO_ROOT_PASSWORD:?Run python src/tools/init_env.py first}
+      MONGO_APP_USER: ${BENCH_MONGO_USER:?Run python src/tools/init_env.py first}
+      MONGO_APP_PASSWORD: ${BENCH_MONGO_PASSWORD:?Run python src/tools/init_env.py first}
+      MONGO_DB: bench
+      MONGOSH_DISABLE_TELEMETRY: "1"
+    volumes:
+      - bench_mongo_data:/data/db
+      - bench_mongo_keyfile:/keyfile
+      - ./src/docker/bench-mongo-start.sh:/docker/bench-mongo-start.sh:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --norc --username=\"$$MONGO_ROOT_USER\" --password=\"$$MONGO_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'quit(rs.status().ok === 1 && db.getSiblingDB(\"admin\").getUser(process.env.MONGO_APP_USER) ? 0 : 1)'"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+  bench-runner:
+    profiles: [bench]
+    build:
+      context: src
+      target: dev
+    image: ${COMPOSE_PROJECT_NAME:-mercer}-app-dev
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+    environment:
+      DJANGO_DEBUG: "false"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Run python src/tools/init_env.py first}
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: ${BENCH_DB:?Run python src/tools/init_env.py first}
+      POSTGRES_HOST: bench-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${BENCH_OWNER_USER:?Run python src/tools/init_env.py first}
+      POSTGRES_PASSWORD: ${BENCH_OWNER_PASSWORD:?Run python src/tools/init_env.py first}
+      POSTGRES_RUNTIME_USER: ${BENCH_RUNTIME_USER:?Run python src/tools/init_env.py first}
+      MONGO_HOST: bench-mongo
+      MONGO_PORT: "27017"
+      MONGO_DB: bench
+      MONGO_APP_USER: ${BENCH_MONGO_USER:?Run python src/tools/init_env.py first}
+      MONGO_APP_PASSWORD: ${BENCH_MONGO_PASSWORD:?Run python src/tools/init_env.py first}
+      OTEL_SDK_DISABLED: "true"
+      PYTHONPATH: /app
+    depends_on:
+      bench-db:
+        condition: service_healthy
+      bench-mongo:
+        condition: service_healthy
+    volumes:
+      - ./benchmarks:/app/benchmarks:ro,z
+      - ./benchmarks/results:/app/benchmarks/results:z
+      - ./data:/app/data:ro,z
+      - ./tests/fixtures:/app/fixtures:ro,z
+    command: [python, -m, benchmarks.harness, --help]
   tools:
     profiles: [tools]
     build:
@@ -145,3 +232,6 @@ volumes:
   postgres_data:
   mongo_data:
   mongo_keyfile:
+  bench_postgres_data:
+  bench_mongo_data:
+  bench_mongo_keyfile:

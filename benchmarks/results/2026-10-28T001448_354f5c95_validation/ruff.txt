@@ -1,0 +1,9 @@
+ Container mercer-bench-full-codex-bench-mongo-1 Running 
+ Container mercer-bench-full-codex-bench-db-1 Running 
+ Container mercer-bench-full-codex-bench-db-1 Waiting 
+ Container mercer-bench-full-codex-bench-mongo-1 Waiting 
+ Container mercer-bench-full-codex-bench-db-1 Healthy 
+ Container mercer-bench-full-codex-bench-mongo-1 Healthy 
+ Container mercer-bench-full-codex-bench-runner-run-c039ebdfa941 Creating 
+ Container mercer-bench-full-codex-bench-runner-run-c039ebdfa941 Created 
+All checks passed!

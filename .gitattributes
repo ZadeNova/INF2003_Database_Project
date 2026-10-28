@@ -7,6 +7,11 @@ data/derived/**/*.json -text
 tests/fixtures/**/*.csv -text
 tests/fixtures/**/*.ndjson -text
 tests/fixtures/**/*.json -text
+# Golden checksums and retained benchmark evidence describe exact bytes on every host.
+benchmarks/golden/** -text
+benchmarks/results/** -text
+# Raw tool output can contain trailing spaces; preserve that evidence verbatim.
+benchmarks/results/** -whitespace
 # Checksums describe bytes, so these manifests must keep their LF newlines too.
 **/checksums.txt text eol=lf
 # Linux container startup scripts require LF shebangs on Windows checkouts.

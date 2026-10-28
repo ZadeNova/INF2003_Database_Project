@@ -427,6 +427,11 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 
 **26 October 2026: Phase 3A exit check passed.** Every Tier 1 application feature is merged and [CI is green on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40210271108).
 
+**28 October 2026: Phase 3B first correctness-complete pass landed before the 30 October target.**
+[Local full-data B1–B6 evidence](benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv)
+passes every workload and variant, with plans and restoration evidence. Fresh review and the designated-machine
+final measurements remain; section 14 keeps the workstream in progress.
+
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
 27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
 day, Erfan assigns `wishlist` or `activity` to another member under its approved plan. Do not shorten database tests,
@@ -453,7 +458,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | done |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | done |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | done |
-| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | ready |
+| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | in progress |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | in progress |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |

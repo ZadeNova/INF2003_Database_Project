@@ -1,0 +1,77 @@
+[
+  {
+    "name": "selective",
+    "predicates": [
+      [
+        "power",
+        "eq",
+        "USB"
+      ]
+    ]
+  },
+  {
+    "name": "broad",
+    "predicates": [
+      [
+        "collection",
+        "eq",
+        "everyday"
+      ]
+    ]
+  },
+  {
+    "name": "boolean",
+    "predicates": [
+      [
+        "outdoor",
+        "eq",
+        true
+      ]
+    ]
+  },
+  {
+    "name": "range",
+    "predicates": [
+      [
+        "age_months",
+        "gte",
+        6
+      ]
+    ]
+  },
+  {
+    "name": "two",
+    "predicates": [
+      [
+        "activity",
+        "eq",
+        "running"
+      ],
+      [
+        "material",
+        "eq",
+        "polyester"
+      ]
+    ]
+  },
+  {
+    "name": "three",
+    "predicates": [
+      [
+        "activity",
+        "eq",
+        "running"
+      ],
+      [
+        "material",
+        "eq",
+        "polyester"
+      ],
+      [
+        "outdoor",
+        "eq",
+        false
+      ]
+    ]
+  }
+]

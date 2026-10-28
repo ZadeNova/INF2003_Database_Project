@@ -1,0 +1,7 @@
+run,variant,winning_indexes,keys_examined,documents_examined,returned
+fix-full,documents,_id_,34211,34211,2879
+fix-full,documents_hinted,spec_attributes,2879,2879,2879
+fix-fixture,documents,spec_attributes,15,15,15
+fix-fixture,documents_hinted,spec_attributes,15,15,15
+fix-trial,documents,_id_,34211,34211,2879
+fix-trial,documents_hinted,spec_attributes,2879,2879,2879

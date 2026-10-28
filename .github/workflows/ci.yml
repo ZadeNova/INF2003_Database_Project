@@ -151,9 +151,97 @@ jobs:
       - name: Install the pinned development dependencies
         run: python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
       - name: Ruff lint (E, F, I)
-        run: python -m ruff check src tests scripts analytics
+        run: python -m ruff check .
       - name: Audit app, development, tools and minimal translation environments
         run: python scripts/audit_requirements.py
+
+  benchmark:
+    name: Benchmark fixture correctness (optional ruleset check)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: mercer-ci-bench-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Check the runner kernel (MongoDB 9.0 refuses 6.19 to 7.0.13)
+        run: |
+          kernel="$(uname -r)"
+          echo "Runner kernel: $kernel"
+          IFS=. read -r major minor patch _ <<< "${kernel%%-*}"
+          patch="${patch%%[!0-9]*}"
+          version=$(( major * 1000000 + minor * 1000 + ${patch:-0} ))
+          if [ "$version" -ge 6019000 ] && [ "$version" -le 7000013 ]; then
+            echo "::error::Kernel $kernel is incompatible with the pinned MongoDB; do not skip database checks."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Start duration record and generate private credentials
+        run: |
+          echo "BENCH_JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          python3 src/tools/init_env.py
+          grep -E '^[A-Z_]*(PASSWORD|SECRET_KEY)=.' .env | cut -d= -f2- | while IFS= read -r value; do echo "::add-mask::$value"; done
+      - name: Build and start isolated bench services
+        run: |
+          mkdir -p benchmarks/results
+          chmod a+rwx benchmarks/results
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench build bench-runner
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench up --detach --wait --wait-timeout 300 bench-db bench-mongo
+      - name: Load the committed fixture and run real-database benchmark tests
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+      - name: Reload a fresh fixture for B5 and the correctness pass
+        run: |
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench down --volumes --remove-orphans
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench up --detach --wait --wait-timeout 300 bench-db bench-mongo
+          docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+      - name: Correctness only (no accepted timing)
+        id: benchmark_run
+        run: |
+          mkdir -p .cache/benchmark-ci
+          set +e
+          python3 -m benchmarks.run --project "$COMPOSE_PROJECT_NAME" --source /app/fixtures/olist/clean --golden fixture --mode correctness --label ci-fixture | tee .cache/benchmark-ci/runner.txt
+          result=${PIPESTATUS[0]}
+          set -e
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          results = None
+          for line in Path('.cache/benchmark-ci/runner.txt').read_text().splitlines():
+              try:
+                  item = json.loads(line)
+              except ValueError:
+                  continue
+              if isinstance(item, dict) and 'results' in item:
+                  results = Path(item['results']).resolve().relative_to(Path.cwd().resolve())
+          if results is not None:
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                  stream.write(f'results_dir={results}\n')
+          PY
+          exit "$result"
+      - name: Record job duration
+        if: always()
+        run: |
+          mkdir -p .cache/benchmark-ci
+          python3 - <<'PY'
+          import json, os, time
+          from pathlib import Path
+          Path('.cache/benchmark-ci/duration.json').write_text(json.dumps({'duration_seconds': time.time() - int(os.environ['BENCH_JOB_START'])}))
+          PY
+      - name: Upload this run's benchmark evidence, including failed checks
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-fixture-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ steps.benchmark_run.outputs.results_dir }}
+            .cache/benchmark-ci/duration.json
+          include-hidden-files: true
+          retention-days: 7
+      - name: Tear down this benchmark project's containers and volumes only
+        if: always()
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" --profile bench down --volumes --remove-orphans
 
   browser:
     name: Chromium demo story (runtime web)

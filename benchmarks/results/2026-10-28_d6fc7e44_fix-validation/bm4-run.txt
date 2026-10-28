@@ -1,0 +1,15 @@
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-10-28T230000_d6fc7e44_fix-bm4", "commit": "d6fc7e44c677fd2423d634fe5791b61d7c61255c", "state": "started"}
+VM below plan minimum: 12 CPUs, 8280399872 bytes; trial/correctness evidence only.
+ Container mercer-bench-fix-bm4-bench-mongo-1 Running 
+ Container mercer-bench-fix-bm4-bench-db-1 Running 
+ Container mercer-bench-fix-bm4-bench-db-1 Waiting 
+ Container mercer-bench-fix-bm4-bench-mongo-1 Waiting 
+ Container mercer-bench-fix-bm4-bench-mongo-1 Healthy 
+ Container mercer-bench-fix-bm4-bench-db-1 Healthy 
+ Container mercer-bench-fix-bm4-load-client Creating 
+ Container mercer-bench-fix-bm4-load-client Created 
+BM4_corrupted_result postgres/expected_failure clients=1 run=1 measured: failed
+BM4_violated_invariant mongo/expected_failure clients=10 run=1 measured: failed
+
+{"amendment_j": [], "outputs": ["BM4_corrupted_result", "BM4_violated_invariant"], "report": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-10-28T230000_d6fc7e44_fix-bm4\\report"}
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-10-28T230000_d6fc7e44_fix-bm4", "commit": "d6fc7e44c677fd2423d634fe5791b61d7c61255c", "exit_code": 1, "duration_seconds": 4.799525200000062}

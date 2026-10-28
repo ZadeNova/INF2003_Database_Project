@@ -381,6 +381,42 @@ IDs through the PostgreSQL purchasable view in small batches. Insights joins sco
 with PostgreSQL non-cancelled units over the same rolling 30 days in Python. The seeder's synthetic session and
 is_generated flag do not enter a real visitor's history; generated view contributions are labelled on the panels.
 
+## Isolated benchmark models
+
+Only the dedicated bench profile owns these copies. Application ownership and grants are unchanged. The benchmark
+loader runs the app migrations and checksum-verifying importer as the bench owner, then adds the structures below;
+the MongoDB bench user has readWrite only on bench. Both engines receive every retained product, attribute and order
+from the same files. bench_template is the immutable PostgreSQL reset source; bench_run is the disposable mutation
+database. MongoDB resets products/orders by dropping and recreating their collections from checksummed, ignored
+Extended JSON NDJSON plus collection-options/ordered-index metadata. Validators and exact index catalogues are
+verified after restoration, and secondary indexes are built after loading to match a fresh load. The loaded
+manifest in PostgreSQL bench_meta and MongoDB meta must agree with each other and the clean files before a run.
+
+| Bench-only object | Columns/document fields and indexes |
+|---|---|
+| PostgreSQL bench_meta | Singleton id=1, manifest jsonb containing the source path, checksums.txt hash and each clean file hash |
+| PostgreSQL bench_attribute_eav | Composite PK (product_id, key), product FK, value_text/value_int/value_bool; num_nonnulls CHECK requires exactly one typed value. Partial composite B-trees on (key, typed value, product_id) |
+| PostgreSQL bench_attribute_jsonb | Product PK/FK, attributes object JSONB with an object-type CHECK. GIN jsonb_path_ops plus expression B-trees for age_months, age_years, volume_ml and capacity_ml integer ranges |
+| PostgreSQL reviews | Bench analytical copy only: id PK, product/order FKs, score CHECK 1–5, answered_at, from_order_review, taken_down. Product/date B-tree and visible/non-copied partial date/order index |
+| MongoDB meta | Source singleton with the same loaded manifest as bench_meta; state singleton with restores_since_load, restoration_in_progress and physical_state_changed_at. The counter increments before a restore attempt; only a fresh load sets it to zero |
+| MongoDB products | _id, seller_id, category_id, Decimal128 price/freight, stock, lead_time_days, purchasable, embedded attributes, has_generated_content and is_generated=false. Validator checks decimal money, nonnegative integer stock and object attributes. App-style attributes.$** wildcard index and partial (purchasable, _id) index |
+| MongoDB orders | One document per seller order: _id, checkout/customer/seller ids, status/dates, Decimal128 paid_amount and embedded product/quantity/Decimal128 price/freight lines. Lines also carry category_id as an explicit bench-only extended reference. Validator requires nonempty lines and nonnegative decimal paid_amount. Compound status/date and lines.product_id/date indexes |
+| MongoDB reviews | The imported app review model and indexes, plus order/date and visible/non-copied partial date/order indexes; a missing taken_down flag is normalised to false in this bench copy |
+
+PostgreSQL keeps the normalised transactional model so keys, composite ownership FKs and CHECKs remain real in B3/B6.
+The EAV and JSONB relations are alternative flexible-attribute representations. MongoDB embeds bounded order lines
+and product attributes for their access patterns, while referencing the unbounded review history. This is a
+document model designed for the queries, rather than one collection per SQL table. The copies and paid amount are
+benchmark evidence only and never introduce application synchronisation.
+
+B2 imports the app's four named SQL definitions. Live sales CTEs shadow the materialized view; view reads and its
+refresh remain separate outputs. Equivalent pipelines use rank, shift and calendar range windows, with explicit
+Asia/Singapore boundaries and lookups for references. The independent Python oracle, decimal canonicalisation and
+output subsets live in benchmarks/reference and benchmarks/golden/schema.json. B4's saved before/after plans and
+B5's physical table/collection sizes provide index/storage evidence; storage comparisons state the differing fields
+and WiredTiger compression. B3 records actual USER trigger state for each PostgreSQL variant and always retains
+internal FK triggers. The benchmark never disables app triggers or changes app privileges.
+
 ## Reproducible pipeline
 
 [The approved rule list](plans/olist-import.md#contract) is authoritative. Cleaning reads all raw CSVs as strings,

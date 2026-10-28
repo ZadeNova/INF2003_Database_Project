@@ -1,0 +1,137 @@
+"""Generate fix-round review evidence from retained results, never hand-maintained figures."""
+import csv
+import gzip
+import hashlib
+import json
+import shutil
+from collections import defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+RESULTS = ROOT / "benchmarks/results"
+CACHE = ROOT / ".cache/benchmark-fix"
+COMMIT = "d6fc7e44c677fd2423d634fe5791b61d7c61255c"
+DESTINATION = RESULTS / "2026-10-28_d6fc7e44_fix-validation"
+
+
+def read_csv(path):
+    with path.open(newline="", encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
+
+
+def write_csv(path, rows):
+    fields = list(dict.fromkeys(key for row in rows for key in row))
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def main():
+    DESTINATION.mkdir(exist_ok=True)
+    entries, statuses, variants, saturated, saturated_runs, checks, broad_plans = [], [], [], [], [], [], []
+    for label in ("fix-full", "fix-fixture", "fix-bm4", "fix-trial"):
+        candidates = list(RESULTS.glob("*d6fc7e44_" + label))
+        assert len(candidates) == 1, (label, candidates)
+        directory = candidates[0]
+        host = json.loads((directory / "host.json").read_text())
+        provenance = json.loads((directory / "provenance.json").read_text())
+        assert host["commit"] == COMMIT and provenance["host"]["commit"] == COMMIT
+        assert host["exit_code"] == (1 if label == "fix-bm4" else 0), host
+        assert provenance["restores_since_load"] == 0, provenance
+        raw_path = directory / "raw.jsonl"
+        raw = raw_path.read_bytes() if raw_path.exists() else gzip.decompress(Path(str(raw_path) + ".gz").read_bytes())
+        assert hashlib.sha256(raw).hexdigest() == provenance["raw_sha256"]
+        operations = defaultdict(list)
+        run_checks = []
+        for line in raw.splitlines():
+            row = json.loads(line)
+            if row["kind"] == "check":
+                run_checks.append(row)
+                if isinstance(row.get("evidence"), dict) and row["evidence"].get("initial_verified"):
+                    assert row["evidence"]["restored"] is True
+            else:
+                if row["accepted"]:
+                    assert row["status"] == "passed" and not row.get("error")
+                key = tuple(row[k] for k in ("output", "engine", "variant", "clients", "run", "phase"))
+                operations[key].append(row)
+        for key, group in operations.items():
+            if group[0].get("validated_at_ns"):
+                assert min(r["started_at_ns"] for r in group) >= max(r["validated_at_ns"] for r in group)
+                counts = defaultdict(int)
+                for row in group:
+                    counts[row["worker"]] += 1
+                assert len(counts) == key[3]
+                assert set(counts.values()) == {1 if key[5] == "correctness" or key[0].startswith("BM4") else 5}
+            if key[0] == "B3":
+                assert len(group) == 50
+                assert min(r["started_at_ns"] for r in group) >= max(r["connection_ready_at_ns"] for r in group)
+        summary = read_csv(directory / "summary.csv")
+        for variant in ("documents", "documents_hinted"):
+            plan_path = directory / "plans" / ("B1_broad_mongo_" + variant + ".json")
+            if plan_path.exists():
+                plan = json.loads(plan_path.read_text())
+                cursor = next(stage["$cursor"] for stage in plan["stages"] if "$cursor" in stage)
+                def indexes(value):
+                    if isinstance(value, dict):
+                        return ([value["indexName"]] if "indexName" in value else []) + [item for child in value.values() for item in indexes(child)]
+                    if isinstance(value, list):
+                        return [item for child in value for item in indexes(child)]
+                    return []
+                stats = cursor["executionStats"]
+                broad_plans.append({"run": label, "variant": variant, "winning_indexes": "/".join(indexes(cursor["queryPlanner"]["winningPlan"])),
+                                    "keys_examined": stats["totalKeysExamined"], "documents_examined": stats["totalDocsExamined"], "returned": stats["nReturned"]})
+        failed = [r for r in summary if r["status"] == "failed"]
+        assert len(failed) == (2 if label == "fix-bm4" else 0), failed
+        if failed:
+            assert all(r["output"].startswith("BM4_") and r["accepted_runs"] == "0" and not r["p50_ms"] for r in failed)
+        entries.append({"run": directory.name, "commit": host["commit"], "exit_code": host["exit_code"],
+                        "duration_seconds": host["duration_seconds"], "checks_passed": sum(r["status"] == "passed" for r in run_checks),
+                        "checks_failed": sum(r["status"] == "failed" for r in run_checks),
+                        "accepted_runs": sum(r["accepted"] for r in run_checks),
+                        "restores_since_load": provenance["restores_since_load"],
+                        "restores_since_load_after_run": provenance["restores_since_load_after_run"]})
+        statuses.extend({"run": directory.name, "commit": COMMIT, **r} for r in summary)
+        per_variant = defaultdict(list)
+        for row in summary:
+            per_variant[row["output"], row["engine"], row["variant"]].append(row)
+            if row["client_saturated"].lower() == "true":
+                saturated.append({"run": directory.name, **row})
+        for key, group in sorted(per_variant.items()):
+            variants.append({"run": label, "output": key[0], "engine": key[1], "variant": key[2],
+                             "clients": "/".join(r["clients"] for r in group),
+                             "status": "failed" if any(r["status"] == "failed" for r in group) else "passed"})
+        saturated_runs.extend({"run_directory": directory.name, **r} for r in read_csv(directory / "runs.csv") if r["client_saturated"].lower() == "true")
+        checks.append(f"{label}: clean commit, raw SHA-256, timing/correctness gates, client counts and barriers verified")
+    write_csv(DESTINATION / "run-index.csv", entries)
+    write_csv(DESTINATION / "workload-status.csv", statuses)
+    write_csv(DESTINATION / "variant-status.csv", variants)
+    write_csv(DESTINATION / "client-saturated.csv", saturated)
+    write_csv(DESTINATION / "client-saturated-runs.csv", saturated_runs)
+    write_csv(DESTINATION / "b1-broad-plans.csv", broad_plans)
+    (DESTINATION / "evidence-checks.txt").write_text("\n".join(checks) + "\n", encoding="utf-8")
+    for name in ("benchmark-tests.txt", "dev-tests.txt", "dev-tests-checkpoint.txt", "request-logging.txt", "ruff.txt", "host-tests.txt", "host-tests-temp-permission.txt", "host-tests-nested-git-temp.txt", "docs.txt", "full-load.txt", "fixture-load.txt", "bm4-load.txt", "trial-load.txt", "full-run.txt", "fixture-run.txt", "bm4-run.txt", "trial-run.txt", "cleanup.txt", "cleanup-before.json", "cleanup-after.json"):
+        source = CACHE / name
+        if source.exists():
+            shutil.copyfile(source, DESTINATION / name)
+    shutil.copyfile(__file__, DESTINATION / "collect_evidence.py.txt")
+    parts = ["Benchmark fix-round review evidence", "Source commit: " + COMMIT, "", "Exact required check results:"]
+    for name in ("benchmark-tests.txt", "request-logging.txt", "ruff.txt", "host-tests.txt", "docs.txt"):
+        parts.append(name)
+        parts.extend(line for line in (CACHE / name).read_text().splitlines() if " passed in " in line or line in {"All checks passed!", "check_docs: ok"})
+    parts += ["", "Run index:", (DESTINATION / "run-index.csv").read_text(), "Per workload and variant:", (DESTINATION / "variant-status.csv").read_text()]
+    trial = next(RESULTS.glob("*d6fc7e44_fix-trial"))
+    full = next(RESULTS.glob("*d6fc7e44_fix-full"))
+    parts += ["Amendment j:", (trial / "report/amendment-j.csv").read_text(), "Fresh B5 physical storage (bytes):", (full / "storage.csv").read_text(),
+              "Fresh / first restore / second restore audit (bytes):", (full / "storage-restores.csv").read_text(),
+              "client_saturated summary rows:", (DESTINATION / "client-saturated.csv").read_text(),
+              "Host check rerun used --basetemp in a fresh OS temporary directory after default-directory permissions failed. A temporary directory nested under the checkout also changed the Git-discovery fixtures; no source change was needed. Both diagnostic logs are retained.",
+              "Cleanup: removed the temporary benchmark/test projects and their disposable volumes; retained mercer, mercer-catalogue and mercer-checkout. See cleanup-before.json and cleanup-after.json.",
+              "Outstanding: Claude Code fix re-check; hosted CI and its full Django suite/duration; owner final measurements on the designated machine.",
+              "The VM is below the plan's 8 GiB minimum. No generator, scale-up, HTTP load script, Tier 2/3 work, formatter stage, push, PR or merge."]
+    (DESTINATION / "handoff.txt").write_text("\n".join(parts) + "\n", encoding="utf-8")
+    print(json.dumps({"validation": str(DESTINATION), "runs": entries, "saturated_summary_rows": len(saturated)}, indent=2))
+
+
+if __name__ == "__main__":
+    main()

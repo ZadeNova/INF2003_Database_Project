@@ -5,11 +5,13 @@ import time
 import uuid
 
 from django.conf import settings
-from django.db import InterfaceError, OperationalError
+from django.db import InterfaceError, OperationalError, connection
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils.functional import empty
 from pymongo.errors import ConnectionFailure
+
+from config.db_timing import DatabaseTiming, current_timing, time_postgres
 
 logger = logging.getLogger("mercer.errors")
 request_logger = logging.getLogger("mercer.request")
@@ -35,9 +37,16 @@ class RequestLoggingMiddleware:
     def __call__(self, request):
         request.request_id = self._request_id(request)
         started = time.perf_counter()
-        response = self.get_response(request)
+        timing = DatabaseTiming()
+        token = current_timing.set(timing)
+        try:
+            with connection.execute_wrapper(time_postgres):
+                response = self.get_response(request)
+        finally:
+            current_timing.reset(token)
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
         response["X-Request-ID"] = request.request_id
+        response["Server-Timing"] = f"pg;dur={timing.pg_ns / 1_000_000:.3f}, mongo;dur={timing.mongo_us / 1000:.3f}"
 
         if response.status_code >= 500:
             level = logging.ERROR
@@ -49,6 +58,7 @@ class RequestLoggingMiddleware:
             "request_id": request.request_id, "method": request.method, "path": request.path,
             "status": response.status_code, "duration_ms": duration_ms, "user_id": self._user_id(request),
         }
+        fields.update(timing.fields())
         exception = getattr(request, "_logged_exception", None)
         if exception:
             fields["exception"] = exception

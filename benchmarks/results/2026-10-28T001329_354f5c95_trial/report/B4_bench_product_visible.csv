@@ -1,0 +1,4 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B4_bench_product_visible,mongo,after,1,passed,5,0,0,0,3559.887769,3482.021186,3621.333273,3648.156958,3607.127692,3848.269485,0.2699775236011843,0.26114846913460865,0.2732753433366251,0.9879669588538649,before/variant
+B4_bench_product_visible,mongo,before,1,passed,5,0,0,0,3517.051493,3512.595166,3544.300351,3585.660411,3557.893703,3618.501518,0.27314910831784706,0.27150422360824,0.2739401169392843,1.0,before/variant
+B4_bench_product_visible,mongo,restore,1,passed,0,0,0,0,,,,,,,,,,,before/variant
