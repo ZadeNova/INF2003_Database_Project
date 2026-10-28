@@ -146,6 +146,8 @@ whether a 10× run for B1, B4 and B5 moves into Tier 1; until then scaled runs s
 part earns Tier 1 marks (performance analysis is optional; the comparison is required), and both cost time the
 benchmark no longer has after Phase 3A.
 
+28 October 2026: OWNER_DECISION=No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
+
 ## Review notes
 
 22 October 2026, independent plan review (fresh Claude Code session; planning only, nothing implemented or timed).
@@ -201,10 +203,49 @@ reset/cache state, latency and error accounting, how run statistics aggregate in
 
 22 October 2026: approved by Chee Long (plan owner) after the fresh Claude Code re-review of the fix round.
 
+28 October 2026, implementation review and fix-round re-check: Claude Code (the session that wrote the Codex brief,
+not a fresh session) reviewed abc006c and re-checked 4a415603f88dc501f121b67e9b3a7bbfa5fb7e97. The review ran the full
+Django suite, fixture tests, a fresh full-data load and B1–B6 correctness, Ruff, host tests and check_docs. The full
+suite is also retained in the [implementation validation log](../../benchmarks/results/2026-10-28T001448_354f5c95_validation/full-suite.txt).
+The owner reports that the re-check ran fresh fixture tests and fresh full-data correctness with B5, its restore
+audit, BM4 and B1–B6: all normal checks passed, with only the deliberate BM4 failures. The fresh MongoDB B5 footprint
+matched the fix-round run, and both restore cycles stayed within tolerance. Ruff, host tests and check_docs were
+clean. The retained fix-round [fixture-test log](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/benchmark-tests.txt),
+[full-data checks](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv),
+[fresh storage](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/storage.csv),
+[restore audit](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/storage-restores.csv),
+[BM4 failures](../../benchmarks/results/2026-10-28T230000_d6fc7e44_fix-bm4/summary.csv),
+[Ruff](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/ruff.txt),
+[host tests](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/host-tests.txt) and
+[documentation check](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/docs.txt) provide the linked evidence;
+these are the committed fix-round artifacts, rather than new artifacts from the reviewer session.
+
+The six fix-round items and outcomes were:
+
+1. **B5 restoration history:** checksummed drop/recreate restores preserve validators, collection options and the
+   exact index catalogue; fresh-state B5 and both physical restore cycles passed.
+2. **Concurrent client timing:** primed connections and barriers, fixed operations per client, untimed first-result
+   canonicalisation and later row equality passed; per-run CPU flags remain visible and exclude headline ratios.
+3. **Amendment-j baseline:** SELECT 1 and MongoDB ping supply the per-engine round-trip noise; the Python no-op
+   remains overhead only. The [generated evaluation](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/report/amendment-j.csv)
+   puts B4_bench_product_visible inside noise; every B1 case and every other B4 case is outside it, subject to the
+   recorded CPU/headline flags. The owner's decision is recorded above and in benchmark-i21.
+4. **B1 broad planner choice:** the planner-chosen path remains headline; documents_hinted uses spec_attributes
+   against the same golden, with both [plans retained](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/b1-broad-plans.csv).
+5. **Result hygiene:** fresh clean-head fixture/full/BM4/trial reruns are committed, dirty directories and the old
+   coverage.json are removed, and the cited first pass is preserved with its superseded figures explained below.
+6. **CI:** the optional benchmark job has the MongoDB kernel guard, a fresh fixture reload before B5, and uploads
+   only its current printed run directory plus its duration; hosted outcomes belong to the PR checks.
+
+**Final-run follow-up:** CPU is sampled once a second, so windows lasting only a few milliseconds get coarse
+client_saturated flags. Use a larger --operations-per-client for the designated-machine final measurements so every
+timed window spans several samples, and record the selected value in provenance. Status remains in-progress;
+the designated-machine final measurements remain with the owner.
+
 ## Implementation notes (27–28 October 2026)
 
 The isolated services, checksummed loader and independent golden outputs, B1–B6, request timing and generated
-CSV/SVG evidence are implemented. Decisions are in [benchmark-i1–i20](../DECISIONS.md#benchmark-implementation-27-october-2026-review-pending).
+CSV/SVG evidence are implemented. Decisions are in [benchmark-i1–i21](../DECISIONS.md#benchmark-implementation-27-october-2026-review-pending).
 
 **28 October 2026: the first correctness-complete full-data pass landed before the 30 October target.**
 The [cited first pass](../../benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv) remains the
@@ -216,7 +257,7 @@ Retained directories containing -dirty and the old validation coverage.json were
 
 ### Authorised fix round (28 October 2026)
 
-Claude Code reviewed abc006c in a fresh session by running the full Django suite, migration drift, fixture and
+Claude Code (the session that wrote the Codex brief, not a fresh session) reviewed abc006c by running the full Django suite, migration drift, fixture and
 fresh full-data correctness including BM4, Ruff, host tests and documentation checks. Correctness gates, independent
 golden outputs, logical restores and PostgreSQL B4 plans passed. The requested fixes concern storage state, client
 measurement, the amendment-j baseline, a hinted broad-query comparison, result hygiene and CI artifacts/kernel guard.
@@ -251,15 +292,17 @@ The product-visible B4 comparison falls inside the trial's noise threshold. Read
 its headline flag: the [saturated summary rows](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/client-saturated.csv)
 remain visible, with [individual run CPU evidence](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/client-saturated-runs.csv).
 One-second sampling gives coarse attribution for short windows, including neighbouring preparation work; saturation
-in any accepted run excludes the summary row from headline ratios. No generator decision is implemented.
+in any accepted run excludes the summary row from headline ratios. The owner's amendment-j decision above closes
+the generator and 10x-run question.
 The [broad-query plan comparison](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/b1-broad-plans.csv)
 records the full-data planner's _id_ scan and the hinted spec_attributes scan separately, against identical golden rows.
 The [generated handoff](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/handoff.txt) includes exact affected-test
 results, fresh storage, per-variant status and the retained limitations. Raw evidence checksums, operation counts,
 barriers and correctness/timing gates were [audited](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/evidence-checks.txt).
 The CI job now checks the kernel, reloads after mutating tests and uploads only the current printed run directory.
-The 28 October PLAN.md date line and original target dates stay unchanged. This workstream remains in progress for
-Claude Code's fix re-check, hosted CI and the designated-machine final measurements. No generator, scaled run,
+The 28 October PLAN.md date line and original target dates stay unchanged. Claude Code re-checked the fix round as
+recorded above; hosted outcomes belong to the PR checks. This workstream remains in progress for the designated-machine
+final measurements. No generator, scaled run,
 HTTP load script, Tier 2/3 work or CI formatter stage is included. Machine memory remains the owner's setting.
 B5 reports the agreed representations separately: MongoDB reviews include text while SQL bench reviews contain
 the analytical columns. These are not equal-payload total-storage claims.
