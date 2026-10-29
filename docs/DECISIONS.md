@@ -82,6 +82,16 @@ runner versions, timeouts and artifact retention. The [CI plan](plans/ci.md#revi
 | ci-i17 | Keep the standard-library smoke script's role, demo username and expected landing path together; check the URL path and Log out, and compare its expectations with landing_url after real seed_demo in a Django test. Run the script through migrate after runtime web is healthy in the browser job | Approved sellers and operators have distinct landing pages; a drift check and the documented HTTP command in CI protect fresh installs without importing Django into the smoke script or printing secrets |
 | ci-i18 | Scan My products through its final Next link, then inspect labels only for active rows with stock at most five; report missing labels after the last page | Seeded demo stocks are zero and one, and journeys temporarily restock to five. Ordinary imported stock starts at twenty. This uses only the seller's visible UI, reaches the oldest products on full data, and avoids opening every detail page or depending on earlier journeys |
 
+## CI stage 3 formatting (29 October 2026; owner choices, review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i19 | Set Ruff's shared formatter/linter line length to 120, replacing stage 2's 230 | A conventional width keeps code readable on a laptop; the owner chose it for the post-freeze formatting pass |
+| ci-i20 | Keep the formatting and line-length change in one commit, followed by a CI/docs/blame-ignore commit; compare every changed Python AST with docstrings removed and inspect docstring changes separately | Reviewers can isolate mechanical reflow from the gate, and the AST proof supplements real-database regression checks |
+| ci-i21 | Ignore E501 centrally, with the formatter owning line length; wrap any remaining long code manually without behaviour changes or per-line noqa | Ruff leaves long string literals and URL comments intact; the generated stage 3 diagnostics and counts are recorded in the [CI plan](plans/ci.md) |
+| ci-i22 | Run `python -m ruff format --check .` immediately after Ruff lint in the existing required `quality` job, preserving its display name | The existing required check includes formatting without a ruleset change; stage 3 closes after its green main run |
+| ci-i23 | Record the full formatting commit hash in root `.git-blame-ignore-revs`, and document the per-clone `blame.ignoreRevsFile` setting beside hooksPath | GitHub and configured local blame skip mechanical reflow so authorship remains useful |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |

@@ -5,6 +5,8 @@ extend-exclude = ["**/migrations/**", ".cache", "data", "src/static/vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+# The formatter owns line length; string literals and URLs can exceed its target.
+ignore = ["E501"]
 
 [tool.coverage.run]
 source = ["${COVERAGE_SOURCE-src}"]
