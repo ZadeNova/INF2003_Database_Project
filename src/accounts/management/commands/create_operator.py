@@ -6,8 +6,10 @@ from django.db import transaction
 
 
 class Command(BaseCommand):
-    help = ("Create an operator, or reset an existing operator's password, from DEMO_OPERATOR_PASSWORD. "
-            "The password is never a command-line argument and is never printed.")
+    help = (
+        "Create an operator, or reset an existing operator's password, from DEMO_OPERATOR_PASSWORD. "
+        "The password is never a command-line argument and is never printed."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("username")
@@ -15,11 +17,14 @@ class Command(BaseCommand):
     def handle(self, *args, username, **options):
         password = os.environ.get("DEMO_OPERATOR_PASSWORD", "")
         if not password or password.startswith("replace-"):
-            raise CommandError("DEMO_OPERATOR_PASSWORD must be set to a generated value; there is no fallback password.")
+            raise CommandError(
+                "DEMO_OPERATOR_PASSWORD must be set to a generated value; there is no fallback password."
+            )
         User = get_user_model()
         with transaction.atomic():
             user, created = User.objects.select_for_update().get_or_create(
-                username=username, defaults={"role": User.Role.OPERATOR, "is_staff": True})
+                username=username, defaults={"role": User.Role.OPERATOR, "is_staff": True}
+            )
             if user.role != User.Role.OPERATOR:
                 raise CommandError(f"{username} already belongs to a {user.role} account; it was not converted.")
             user.set_password(password)

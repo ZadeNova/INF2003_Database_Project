@@ -1,4 +1,5 @@
 """The many-to-many insert/delete is customer scoped; restocks are entirely trigger driven."""
+
 from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.http import Http404
@@ -22,11 +23,16 @@ def set_saved(actor, product_id, saved):
         if saved:
             if not PurchasableProduct.objects.filter(pk=product_id).exists():
                 raise Http404
-            cursor.execute("""INSERT INTO wishlist_item(customer_id, product_id, added_at)
+            cursor.execute(
+                """INSERT INTO wishlist_item(customer_id, product_id, added_at)
                 SELECT %s, id, CURRENT_TIMESTAMP FROM purchasable_product WHERE id = %s
-                ON CONFLICT (customer_id, product_id) DO NOTHING""", [actor.pk, product_id])
+                ON CONFLICT (customer_id, product_id) DO NOTHING""",
+                [actor.pk, product_id],
+            )
         else:
-            cursor.execute("DELETE FROM wishlist_item WHERE customer_id = %s AND product_id = %s", [actor.pk, product_id])
+            cursor.execute(
+                "DELETE FROM wishlist_item WHERE customer_id = %s AND product_id = %s", [actor.pk, product_id]
+            )
 
 
 def visible_alerts(user):

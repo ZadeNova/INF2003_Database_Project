@@ -14,8 +14,11 @@ from .services import moderate_product
 
 
 class ProductReasonForm(forms.Form):
-    reason = forms.CharField(max_length=500, widget=forms.Textarea(attrs={"rows": 3}),
-                             help_text="Tell the seller why you are changing this product.")
+    reason = forms.CharField(
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text="Tell the seller why you are changing this product.",
+    )
 
 
 class OperatorProductListView(OperatorRequiredMixin, View):
@@ -86,7 +89,8 @@ class OperatorCategoryView(OperatorRequiredMixin, View):
             with mongo.client() as client:
                 result = client[mongo.database_name()].category_templates.update_one(
                     {"category_id": category.pk, "attributes." + name: {"$exists": False}},
-                    {"$set": {"attributes." + name: definition}, "$inc": {"version": 1}})
+                    {"$set": {"attributes." + name: definition}, "$inc": {"version": 1}},
+                )
             if result.matched_count == 1:
                 messages.success(request, "Product option added. Sellers can fill it in now.")
                 return redirect("catalogue:operator_category", pk=pk)

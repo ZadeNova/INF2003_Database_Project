@@ -1,4 +1,5 @@
 """Verified restoration after successful and failed mutating runs."""
+
 import hashlib
 import json
 from contextlib import contextmanager
@@ -25,7 +26,9 @@ def verify_manifest(database, source):
 def mongo_digest(collection):
     digest = hashlib.sha256()
     for doc in collection.find().sort("_id", 1):
-        digest.update((json_util.dumps(doc, json_options=json_util.CANONICAL_JSON_OPTIONS, sort_keys=True) + "\n").encode())
+        digest.update(
+            (json_util.dumps(doc, json_options=json_util.CANONICAL_JSON_OPTIONS, sort_keys=True) + "\n").encode()
+        )
     return digest.hexdigest()
 
 
@@ -36,7 +39,9 @@ def restore_mongo(database, provenance):
         if sha256(source / name) != expected:
             raise ValueError("Restore snapshot checksum mismatch")
     metadata = json_util.loads((source / "collections.json").read_text())
-    database.meta.update_one({"_id": "state"}, {"$inc": {"restores_since_load": 1}, "$set": {"restoration_in_progress": True}})
+    database.meta.update_one(
+        {"_id": "state"}, {"$inc": {"restores_since_load": 1}, "$set": {"restoration_in_progress": True}}
+    )
     for name in ("products", "orders"):
         database[name].drop()
         database.create_collection(name, **metadata[name]["options"])
@@ -44,12 +49,18 @@ def restore_mongo(database, provenance):
             for batch in batches(json_util.loads(line) for line in stream):
                 database[name].insert_many(batch)
         # Match a fresh load: insert in source-ID order first, then bulk-build secondary indexes.
-        indexes = [IndexModel(index["key"], **{k: v for k, v in index.items() if k not in {"key", "ns"}})
-                   for index in metadata[name]["indexes"] if index["name"] != "_id_"]
+        indexes = [
+            IndexModel(index["key"], **{k: v for k, v in index.items() if k not in {"key", "ns"}})
+            for index in metadata[name]["indexes"]
+            if index["name"] != "_id_"
+        ]
         if indexes:
             database[name].create_indexes(indexes)
     verify_mongo(database, provenance)
-    database.meta.update_one({"_id": "state"}, {"$set": {"restoration_in_progress": False, "physical_state_changed_at": datetime.now(timezone.utc)}})
+    database.meta.update_one(
+        {"_id": "state"},
+        {"$set": {"restoration_in_progress": False, "physical_state_changed_at": datetime.now(timezone.utc)}},
+    )
 
 
 def restores_since_load(database):
@@ -66,7 +77,10 @@ def verify_mongo(database, provenance):
     for name in ("products", "orders"):
         if mongo_digest(database[name]) != checksums[name + ".ndjson"]:
             raise ValueError("MongoDB baseline differs from snapshot")
-        actual = [{**dict(index), "key": [list(pair) for pair in index["key"].items()]} for index in database[name].list_indexes()]
+        actual = [
+            {**dict(index), "key": [list(pair) for pair in index["key"].items()]}
+            for index in database[name].list_indexes()
+        ]
         if sorted(actual, key=lambda i: i["name"]) != sorted(metadata[name]["indexes"], key=lambda i: i["name"]):
             raise ValueError("MongoDB index catalogue differs from snapshot")
         if database[name].options() != metadata[name]["options"]:

@@ -34,7 +34,13 @@ class SellerProductEditView(SellerRequiredMixin, View):
         # The category is still validated by ModelChoiceField; this conversion only chooses template fields.
         raw = request.POST.get("category") if request.method == "POST" else request.GET.get("category")
         try:
-            selected = int(raw) if raw else item.category_id if item else Category.objects.order_by("name_en").values_list("pk", flat=True).first()
+            selected = (
+                int(raw)
+                if raw
+                else item.category_id
+                if item
+                else Category.objects.order_by("name_en").values_list("pk", flat=True).first()
+            )
             selected = selected if selected is not None and 0 < selected < 2**63 else None
         except (TypeError, ValueError):
             selected = None
@@ -43,14 +49,23 @@ class SellerProductEditView(SellerRequiredMixin, View):
             template = database.category_templates.find_one({"category_id": selected})
             spec = database.product_specs.find_one({"_id": item.pk}) if item else None
         bound = request.method == "POST"
-        form = ProductForm(request.POST if bound else None, request.FILES if bound else None,
-                           instance=item, template=template, spec=spec, initial={"category": selected})
+        form = ProductForm(
+            request.POST if bound else None,
+            request.FILES if bound else None,
+            instance=item,
+            template=template,
+            spec=spec,
+            initial={"category": selected},
+        )
         return form
 
     def get(self, request, pk=None):
         item = self.product(pk)
-        return render(request, "catalogue/product_form.html", {"product": item, "form": self.form(request, item),
-                      "categories": Category.objects.order_by("name_en")})
+        return render(
+            request,
+            "catalogue/product_form.html",
+            {"product": item, "form": self.form(request, item), "categories": Category.objects.order_by("name_en")},
+        )
 
     def post(self, request, pk=None):
         item = self.product(pk)
@@ -63,8 +78,12 @@ class SellerProductEditView(SellerRequiredMixin, View):
             else:
                 messages.success(request, "Product saved.")
                 return redirect("catalogue:seller_products")
-        return render(request, "catalogue/product_form.html", {"product": item, "form": form,
-                      "categories": Category.objects.order_by("name_en")}, status=400)
+        return render(
+            request,
+            "catalogue/product_form.html",
+            {"product": item, "form": form, "categories": Category.objects.order_by("name_en")},
+            status=400,
+        )
 
 
 class SellerProductDeactivateView(SellerRequiredMixin, View):

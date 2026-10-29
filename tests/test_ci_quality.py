@@ -1,4 +1,5 @@
 """Exercise the gates with real coverage data and exception files."""
+
 import json
 import subprocess
 import sys
@@ -17,7 +18,9 @@ def exception_file(tmp_path, *, added="2026-10-24", expires="2026-11-07", owner=
     path = tmp_path / "exceptions.toml"
     path.write_text(
         '[[exceptions]]\nid = "GHSA-aaaa-bbbb-cccc"\nreason = "No upstream fix"\n'
-        f'owner = "{owner}"\nadded = {added}\nexpires = {expires}\n', encoding="utf-8")
+        f'owner = "{owner}"\nadded = {added}\nexpires = {expires}\n',
+        encoding="utf-8",
+    )
     return path
 
 
@@ -27,12 +30,15 @@ def test_valid_exception_has_accountability_and_becomes_ignore_flags(tmp_path):
     assert records[0]["owner"] == "Chee Long"
 
 
-@pytest.mark.parametrize("added,expires,owner", [
-    ("2026-10-01", "2026-10-15", "Chee Long"),
-    ("2026-10-24", "2026-11-08", "Chee Long"),
-    ("2026-10-25", "2026-11-07", "Chee Long"),
-    ("2026-10-24", "2026-11-07", " "),
-])
+@pytest.mark.parametrize(
+    "added,expires,owner",
+    [
+        ("2026-10-01", "2026-10-15", "Chee Long"),
+        ("2026-10-24", "2026-11-08", "Chee Long"),
+        ("2026-10-25", "2026-11-07", "Chee Long"),
+        ("2026-10-24", "2026-11-07", " "),
+    ],
+)
 def test_expired_long_future_or_unowned_exceptions_fail(tmp_path, added, expires, owner):
     with pytest.raises(ValueError):
         load_exceptions(exception_file(tmp_path, added=added, expires=expires, owner=owner), today=date(2026, 10, 24))
@@ -69,12 +75,23 @@ def test_real_coverage_gates_lines_and_reports_branches(tmp_path, all_lines):
     script.write_text(body, encoding="utf-8")
     config = tmp_path / "pyproject.toml"
     config.write_text(
-        f'[tool.coverage.run]\nsource = [{json.dumps(str(source))}]\nbranch = true\n'
-        '[tool.coverage.report]\nfail_under = 80\nprecision = 2\ninclude_namespace_packages = true\n', encoding="utf-8")
+        f"[tool.coverage.run]\nsource = [{json.dumps(str(source))}]\nbranch = true\n"
+        "[tool.coverage.report]\nfail_under = 80\nprecision = 2\ninclude_namespace_packages = true\n",
+        encoding="utf-8",
+    )
     data = tmp_path / ".coverage"
-    subprocess.run([
-        sys.executable, "-m", "coverage", "run", f"--rcfile={config}", f"--data-file={data}", str(script),
-    ], check=True)
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "coverage",
+            "run",
+            f"--rcfile={config}",
+            f"--data-file={data}",
+            str(script),
+        ],
+        check=True,
+    )
     output = tmp_path / "reports"
     result = report_coverage(data, config, output)
     totals = json.loads((output / "coverage.json").read_text())["totals"]
@@ -91,10 +108,13 @@ def test_real_coverage_gates_lines_and_reports_branches(tmp_path, all_lines):
 def test_retained_trace_redacts_passwords_and_cookies_and_preserves_images(tmp_path):
     secret = "OnlyForTheArtifactRegression_123"
     trace = tmp_path / "trace.zip"
-    record = {"params": {"value": secret}, "headers": [
-        {"name": "Cookie", "value": "sessionid=private-cookie"},
-        {"name": "Authorization", "value": "private-bearer"},
-    ]}
+    record = {
+        "params": {"value": secret},
+        "headers": [
+            {"name": "Cookie", "value": "sessionid=private-cookie"},
+            {"name": "Authorization", "value": "private-bearer"},
+        ],
+    }
     with zipfile.ZipFile(trace, "w") as archive:
         archive.writestr("trace.trace", json.dumps(record) + "\n")
         archive.writestr("resources/snapshot.html", f'<input type="password" value="{secret}">')
@@ -110,10 +130,21 @@ def test_retained_trace_redacts_passwords_and_cookies_and_preserves_images(tmp_p
 
 def test_browser_process_receives_demo_logins_without_owner_or_database_credentials(tmp_path):
     path = tmp_path / "browser.env"
-    path.write_text("POSTGRES_OWNER_PASSWORD=private-owner\nDEMO_CUSTOMER_PASSWORD=customer-login\n"
-                    "DEMO_SELLER_PASSWORD=seller-login\nDEMO_OPERATOR_PASSWORD=operator-login\n")
-    env = browser_environment(path, {"PATH": "tools", "POSTGRES_PASSWORD": "private-owner", "MONGO_APP_PASSWORD": "private-mongo",
-                                     "DATABASE_URL": "private-dsn", "DJANGO_SECRET_KEY": "private-key", "PGPASSWORD": "private-pg"})
+    path.write_text(
+        "POSTGRES_OWNER_PASSWORD=private-owner\nDEMO_CUSTOMER_PASSWORD=customer-login\n"
+        "DEMO_SELLER_PASSWORD=seller-login\nDEMO_OPERATOR_PASSWORD=operator-login\n"
+    )
+    env = browser_environment(
+        path,
+        {
+            "PATH": "tools",
+            "POSTGRES_PASSWORD": "private-owner",
+            "MONGO_APP_PASSWORD": "private-mongo",
+            "DATABASE_URL": "private-dsn",
+            "DJANGO_SECRET_KEY": "private-key",
+            "PGPASSWORD": "private-pg",
+        },
+    )
     assert env["DEMO_CUSTOMER_PASSWORD"] == "customer-login" and env["PATH"] == "tools"
     assert not any(name.startswith(("POSTGRES_", "MONGO_", "DATABASE_", "DJANGO_", "PG")) for name in env)
     assert "private-owner" not in env.values()

@@ -19,5 +19,7 @@ class Command(BaseCommand):
         except ValueError as error:
             raise CommandError(str(error)) from None
         except PyMongoError as error:
-            raise CommandError(f"MongoDB setup failed ({type(error).__name__}); verify database health and readWrite privileges.") from None
+            raise CommandError(
+                f"MongoDB setup failed ({type(error).__name__}); verify database health and readWrite privileges."
+            ) from None
         self.stdout.write("MongoDB collections, validators and indexes ready.")

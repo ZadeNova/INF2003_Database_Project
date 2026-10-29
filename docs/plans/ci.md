@@ -1,6 +1,6 @@
 # ci: Real-database correctness, quality gates and demo-story tests
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · Phases 1B–4 (25 October to 4 November 2026)
 · depends on: `foundation`; extend feature and benchmark checks as their workstreams land
 
@@ -368,3 +368,77 @@ in .cache/phase-4-review/codex-review.txt. Fresh Claude Code review of this fix 
 not close Phase 4 or CI stage 3; the owner requested a local commit only, with no push, PR or merge.
 
 29 October 2026 — Review notes: Claude Code (the session that ran the Phase 4 integration review; not a fresh session) reviewed `2d73bd63b9e0003cf60c1b96843a53a7d33b89b5`; the owner reports a fresh full-data install in its own Compose project (torn down afterwards): import_olist, verify_olist and seed_demo passed; smoke_olist.py passed all three role landings; seed_activity and all Chromium journeys passed (`8 passed in 51.57s`); tests/test_smoke_olist.py, tests/test_roles.py, tests/test_registration.py: 112 passed. The docs edits were read against PLAN.md and Part B's evidence in .cache/phase-4-review/codex-review.txt was checked. Results are recorded from the owner's review report. CI remains in-progress for stage 3.
+
+29 October 2026 — Implementation notes, stage 3 (Codex; reviewer: pending (Claude Code)). The owner invoked the
+completion-based Phase 4 start rule and authorised the branch cleanup and two local commits for this run, with
+Claude Code review next. After fetching and archiving merged-worktree evidence, every existing local and remote
+branch was confirmed merged into origin/main `594cc71165605fdfa75b046e6d53c7c81ef88308`, with no open PR.
+The retained Claude app worktree and branch were clean and left in place. The Codex checkout-fix worktree was
+cleared and unregistered, but Windows held its empty directory open; no process was terminated to remove it.
+
+The shared Ruff line length is now 120. The first commit contains only that setting and formatter output;
+import ordering already passed, so no import fix or manual wrap was needed. The remaining E501 diagnostics
+were classified from the formatter output, with generated counts below. E501 is ignored centrally because the
+formatter owns line length and leaves long string literals and URL comments intact. E/F/I remain the only
+selected lint families, with no per-line noqa. These owner choices are ci-i19 to ci-i23 in
+[DECISIONS.md](../DECISIONS.md).
+
+`python -m ruff format --check .` follows lint in the existing required `quality` job. Its display name remains
+"Python lint and dependency audit", so no ruleset change is needed. The formatting commit's full hash is in
+[.git-blame-ignore-revs](../../.git-blame-ignore-revs); README documents local blame configuration beside hooksPath.
+The private `.cache/stage3/ast_check.py` compares every Python file changed by that commit with its parent using
+`ast.dump` after removing docstring nodes. Its separate docstring-change list and diff are retained beside the
+AST result; the generated results below record the comparison.
+
+Verification follows README's CI procedure with private credentials, pinned tools and real PostgreSQL/MongoDB.
+All Compose commands explicitly name `mercer-stage3-...` projects. Browser processes receive only demo logins.
+Benchmark tests and correctness use separate fresh fixture projects so B5 starts before any restore, without
+deleting Docker volumes. The benchmark host wrapper accepts only `mercer-bench...` names, so this run invokes
+the same `benchmarks.harness` directly through Compose to preserve the owner's project-name rule. It runs all
+default baseline/B1–B6 correctness workloads and generates the report; it is local correctness evidence, not
+final measurement evidence. The original mercer, catalogue and checkout Docker projects were left in place;
+this run's temporary containers/networks are removed after checks, with all volumes retained.
+
+The plan's done status records completed local implementation; **stage 3 closes on the required green main run
+after merge**. PLAN.md section 14 stays at review until then. Fresh Claude Code review and that hosted run remain
+pending. No stage 3 push, PR, merge or repository-settings change is authorised by this run.
+
+<!-- stage-3-local-results:start -->
+Local results generated on 29 October 2026 from retained .cache/stage3 command logs, coverage JSON,
+AST/E501 JSON and benchmark runs.csv. Every verification command exited 0. Commands and full output
+remain in the ignored directory; benchmark raw operations, checks, plans and reports remain in the
+ignored result directory recorded by .cache/stage3/bench-output.txt.
+
+| Check | Observed output or generated metric |
+|---|---|
+| Formatting commit | `143 files; +5888/-2045 lines; 16a6ef5238b894eea035de51d524acd599a34c98` |
+| Post-format E501 classification | `54 diagnostics: 54 string-literal lines; 0 URL-comment lines; 0 long code/other-comment lines; 0 manual wraps.` |
+| AST and separate docstring comparison | `AST check: 142 Python files; 0 differences after removing docstrings; 0 files with docstring changes.` |
+| Ruff format check | `196 files already formatted` |
+| Ruff lint | `All checks passed!` |
+| Migration drift | `No changes detected` |
+| Full Django suite under coverage | `664 passed, 4 skipped in 440.16s (0:07:20)` |
+| Line coverage gate | `TOTAL                                              2981    195  93.46%` |
+| Branch coverage, informational | `83.49% (541/648 branches)` |
+| Fixture Chromium | `8 passed in 42.86s` |
+| Fixture smoke through migrate | `{"/": 200, "/health/": 200, "/products/": 200, "customer_login": "passed", "operator_login": "passed", "product_detail": 200, "seller_login": "passed"}` |
+| Benchmark fixture tests | `35 passed in 206.68s (0:03:26)` |
+| Benchmark fixture correctness | `Fixture correctness: 70 checks passed, 0 failed (baseline, B1-B6).` |
+| Analytics pipeline | `39 passed in 3.23s` |
+| Host Git-index/packaging | `28 passed in 2.83s; host tests: 28 run, 0 skipped` |
+| Documentation | `check_docs: ok` |
+| Workflow validation | `actionlint exit 0` |
+| Dependency audit | `src\requirements.txt: 17 dependencies, 0 advisories, 0 with fixes` |
+| Dependency audit | `src\requirements-dev.txt: 51 dependencies, 0 advisories, 0 with fixes` |
+| Dependency audit | `analytics\requirements.txt: 11 dependencies, 0 advisories, 0 with fixes` |
+| Dependency audit | `scripts\translation-requirements.txt: 6 dependencies, 0 advisories, 0 with fixes` |
+| Dependency audit | `scripts\translation-argos-requirements.txt: 1 dependencies, 0 advisories, 0 with fixes` |
+
+The Docker skips are the Git-index cases in tests/test_check_docs.py; the host run above covers them
+with no skips. No assertion was weakened or test skipped to obtain these results. The full Django
+suite ran once. The AST comparison found no docstring changes to inspect; its separate list is empty.
+All test projects were stopped and their temporary containers/networks removed; every Docker volume
+was retained. Fresh Claude Code review and the required green main run after merge remain pending.
+<!-- stage-3-local-results:end -->
+
+29 October 2026 — Review notes: Claude Code (the session that wrote the stage 3 brief; not a fresh session) reviewed `9fbfed4afbf0f0a18e47e6b0861a236153cd99ad`. The owner reports an independent full-AST comparison, including docstrings, of every Python file in formatting commit `16a6ef5238b894eea035de51d524acd599a34c98` against `594cc71`: no differences; its only other change is the Ruff line length from 230 to 120. Pinned Ruff 0.17.0 lint and format checks passed on both the working tree and a git-archive export, with LF stored blobs; check_docs and host tests passed. The reviewer read the gate/docs commit in full and confirmed the unchanged required quality-job name, central E501 ignore, full blame-ignore hash and accurate README/AGENTS/PLAN/DECISIONS edits; branch cleanup was confirmed. The full Django suite was not rerun in review because the AST proof and recorded local run passed; CI reruns it on the PR. PLAN.md now records CI as done; this plan retains status: done, and the stage 3 exit closes on the first green main run after merge.

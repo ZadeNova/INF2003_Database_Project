@@ -1,10 +1,15 @@
 """The connection policy is shared by Django and standalone tools."""
+
 import pytest
 
 from config.database import connection_parameters
 
-BASE = {"POSTGRES_DB": "app", "POSTGRES_USER": "runtime", "POSTGRES_PASSWORD": "test-only",
-        "POSTGRES_HOST": "db.example"}
+BASE = {
+    "POSTGRES_DB": "app",
+    "POSTGRES_USER": "runtime",
+    "POSTGRES_PASSWORD": "test-only",
+    "POSTGRES_HOST": "db.example",
+}
 
 
 def test_sslmode_is_off_unless_requested():

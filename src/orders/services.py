@@ -3,6 +3,7 @@
 All purchase amounts come from locked PostgreSQL products. No payment details are retained beyond
 method, instalments and amount. Every order/product write starts with transaction-local audit context.
 """
+
 import hashlib
 import re
 import uuid
@@ -124,15 +125,19 @@ def remove_from_cart(user, line_id):
 
 def fingerprint_for(lines):
     """Stable (product ID, quantity, unit price, unit freight) digest for exactly the displayed lines."""
-    canonical = "|".join(f"{pid}:{quantity}:{Decimal(price):.2f}:{Decimal(freight):.2f}"
-                         for pid, quantity, price, freight in sorted(lines))
+    canonical = "|".join(
+        f"{pid}:{quantity}:{Decimal(price):.2f}:{Decimal(freight):.2f}"
+        for pid, quantity, price, freight in sorted(lines)
+    )
     return hashlib.sha256(canonical.encode("ascii")).hexdigest()
 
 
 def cart_review(user):
     cart = get_cart(user)
     lines = list(cart.lines.select_related("product__seller").order_by("product__seller_id", "product_id"))
-    visible = set(PurchasableProduct.objects.filter(pk__in=[line.product_id for line in lines]).values_list("pk", flat=True))
+    visible = set(
+        PurchasableProduct.objects.filter(pk__in=[line.product_id for line in lines]).values_list("pk", flat=True)
+    )
     groups = OrderedDict()
     ready = bool(lines)
     for line in lines:
@@ -143,14 +148,24 @@ def cart_review(user):
         line.items_total = item.price * line.quantity
         line.freight_total = item.freight * line.quantity
         line.total = line.items_total + line.freight_total
-        group = groups.setdefault(item.seller_id, {"seller": item.seller, "lines": [], "items": ZERO, "freight": ZERO, "total": ZERO})
+        group = groups.setdefault(
+            item.seller_id, {"seller": item.seller, "lines": [], "items": ZERO, "freight": ZERO, "total": ZERO}
+        )
         group["lines"].append(line)
         group["items"] += line.items_total
         group["freight"] += line.freight_total
         group["total"] += line.total
     total = sum((group["total"] for group in groups.values()), ZERO)
-    return {"cart": cart, "groups": list(groups.values()), "lines": lines, "ready": ready,
-            "total": total, "fingerprint": fingerprint_for((line.product_id, line.quantity, line.product.price, line.product.freight) for line in lines)}
+    return {
+        "cart": cart,
+        "groups": list(groups.values()),
+        "lines": lines,
+        "ready": ready,
+        "total": total,
+        "fingerprint": fingerprint_for(
+            (line.product_id, line.quantity, line.product.price, line.product.freight) for line in lines
+        ),
+    }
 
 
 def _payments(choices, total):
@@ -167,11 +182,20 @@ def _payments(choices, total):
             if isinstance(raw, float):
                 raise ValueError
             amount = Decimal(raw)
-            if not amount.is_finite() or amount <= 0 or amount > MAX_MONEY or amount != amount.quantize(Decimal("0.01")):
+            if (
+                not amount.is_finite()
+                or amount <= 0
+                or amount > MAX_MONEY
+                or amount != amount.quantize(Decimal("0.01"))
+            ):
                 raise ValueError
         except (ValueError, TypeError, InvalidOperation, OverflowError):
             raise CheckoutError("Choose a valid payment amount and instalments.") from None
-        if method in methods or method not in Payment.Method.values or not 1 <= count <= (12 if method == "credit_card" else 1):
+        if (
+            method in methods
+            or method not in Payment.Method.values
+            or not 1 <= count <= (12 if method == "credit_card" else 1)
+        ):
             raise CheckoutError("Choose a valid payment method and instalments.")
         methods.add(method)
         result.append((method, count, amount))
@@ -181,7 +205,10 @@ def _payments(choices, total):
 
 
 def _existing(cursor, customer_id, key, review):
-    cursor.execute("SELECT id, request_fingerprint FROM orders_checkout WHERE customer_id=%s AND idempotency_key=%s", [customer_id, key])
+    cursor.execute(
+        "SELECT id, request_fingerprint FROM orders_checkout WHERE customer_id=%s AND idempotency_key=%s",
+        [customer_id, key],
+    )
     row = cursor.fetchone()
     if row is None:
         return None
@@ -211,21 +238,30 @@ def checkout(user, idempotency_key, review, payments=None):
             existing = _existing(cursor, user.pk, key, review)
             if existing:
                 return existing
-            cursor.execute("SELECT id, product_id, quantity FROM orders_cartline WHERE cart_id=%s ORDER BY product_id FOR UPDATE", [cart.pk])
+            cursor.execute(
+                "SELECT id, product_id, quantity FROM orders_cartline WHERE cart_id=%s ORDER BY product_id FOR UPDATE",
+                [cart.pk],
+            )
             lines = cursor.fetchall()
             if not lines:
                 raise CheckoutError("Your cart is empty.")
             ids = [line[1] for line in lines]
             # Match catalogue's seller -> product order. The cart is stable, but ownership
             # from this unlocked read must be checked again after locking the products.
-            cursor.execute("""SELECT DISTINCT p.seller_id FROM orders_cartline l
-                              JOIN catalogue_product p ON p.id=l.product_id WHERE l.cart_id=%s""", [cart.pk])
+            cursor.execute(
+                """SELECT DISTINCT p.seller_id FROM orders_cartline l
+                              JOIN catalogue_product p ON p.id=l.product_id WHERE l.cart_id=%s""",
+                [cart.pk],
+            )
             seller_ids = sorted(row[0] for row in cursor.fetchall())
             # Seller approval cannot change between the visibility check and commit.
             cursor.execute("SELECT id FROM accounts_seller WHERE id=ANY(%s) ORDER BY id FOR SHARE", [seller_ids])
             locked_sellers = {row[0] for row in cursor.fetchall()}
-            cursor.execute("""SELECT id, seller_id, price, freight, stock, lead_time_days, name
-                              FROM catalogue_product WHERE id=ANY(%s) ORDER BY id FOR UPDATE""", [ids])
+            cursor.execute(
+                """SELECT id, seller_id, price, freight, stock, lead_time_days, name
+                              FROM catalogue_product WHERE id=ANY(%s) ORDER BY id FOR UPDATE""",
+                [ids],
+            )
             products = {row[0]: row for row in cursor.fetchall()}
             if any(item[1] not in locked_sellers for item in products.values()):
                 raise CartChangedError()
@@ -247,25 +283,53 @@ def checkout(user, idempotency_key, review, payments=None):
                 raise CheckoutError("This cart total is too large. Please remove some items.")
             payment_rows = _payments(payments, total)
             now = timezone.now()
-            cursor.execute("""INSERT INTO orders_checkout (customer_id, placed_at, total, idempotency_key, request_fingerprint)
-                              VALUES (%s,%s,%s,%s,%s) RETURNING id""", [user.pk, now, total, key, current])
+            cursor.execute(
+                """INSERT INTO orders_checkout (customer_id, placed_at, total, idempotency_key, request_fingerprint)
+                              VALUES (%s,%s,%s,%s,%s) RETURNING id""",
+                [user.pk, now, total, key, current],
+            )
             checkout_id = cursor.fetchone()[0]
             for seller_id, group in groups.items():
                 items_total = sum((item[2] * quantity for item, quantity in group), ZERO)
                 freight_total = sum((item[3] * quantity for item, quantity in group), ZERO)
                 estimate = now + timedelta(days=max(item[5] for item, _ in group) + 15)
-                cursor.execute("""INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,paid_at,estimated_delivery)
+                cursor.execute(
+                    """INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,paid_at,estimated_delivery)
                                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-                               [checkout_id, seller_id, "paid", items_total, freight_total, items_total+freight_total, now, now, estimate])
+                    [
+                        checkout_id,
+                        seller_id,
+                        "paid",
+                        items_total,
+                        freight_total,
+                        items_total + freight_total,
+                        now,
+                        now,
+                        estimate,
+                    ],
+                )
                 order_id = cursor.fetchone()[0]
                 for item, quantity in group:
-                    cursor.execute("""INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
+                    cursor.execute(
+                        """INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
                                       VALUES (%s,%s,%s,%s,%s,%s,%s)""",
-                                   [order_id, seller_id, item[0], quantity, item[2], item[3]*quantity, now+timedelta(days=item[5])])
+                        [
+                            order_id,
+                            seller_id,
+                            item[0],
+                            quantity,
+                            item[2],
+                            item[3] * quantity,
+                            now + timedelta(days=item[5]),
+                        ],
+                    )
                     cursor.execute("UPDATE catalogue_product SET stock=stock-%s WHERE id=%s", [quantity, item[0]])
             for sequence, (method, count, amount) in enumerate(payment_rows, 1):
-                cursor.execute("""INSERT INTO orders_payment (checkout_id,sequence,method,instalments,amount)
-                                  VALUES (%s,%s,%s,%s,%s)""", [checkout_id, sequence, method, count, amount])
+                cursor.execute(
+                    """INSERT INTO orders_payment (checkout_id,sequence,method,instalments,amount)
+                                  VALUES (%s,%s,%s,%s,%s)""",
+                    [checkout_id, sequence, method, count, amount],
+                )
             cursor.execute("DELETE FROM orders_cartline WHERE cart_id=%s", [cart.pk])
         return Checkout.objects.get(pk=checkout_id, customer=user)
 
@@ -276,7 +340,11 @@ def change_order_status(actor, order_id, action, reason=""):
     if action not in {"ship", "deliver", "cancel"}:
         raise CheckoutError("Choose a valid order action.")
     role = {"ship": "seller", "deliver": "operator", "cancel": "customer"}[action]
-    reason = (reason or "").strip() or {"ship": "Seller shipped order", "deliver": "Operator delivered order", "cancel": "Customer cancelled order"}[action]
+    reason = (reason or "").strip() or {
+        "ship": "Seller shipped order",
+        "deliver": "Operator delivered order",
+        "cancel": "Customer cancelled order",
+    }[action]
     if len(reason) > MAX_REASON_LENGTH:
         raise CheckoutError(f"Keep the reason under {MAX_REASON_LENGTH} characters.")
     with transaction.atomic():
@@ -286,10 +354,13 @@ def change_order_status(actor, order_id, action, reason=""):
         with connection.cursor() as cursor:
             # Lock the parent before its order, matching deferred checks and serializing sibling refunds.
             # The scoped lookup never reveals another customer's or seller's order.
-            cursor.execute("""SELECT o.checkout_id FROM orders_order o JOIN orders_checkout c ON c.id=o.checkout_id
+            cursor.execute(
+                """SELECT o.checkout_id FROM orders_order o JOIN orders_checkout c ON c.id=o.checkout_id
                               JOIN accounts_seller s ON s.id=o.seller_id WHERE o.id=%s AND
                               ((%s='customer' AND c.customer_id=%s) OR (%s='seller' AND s.user_id=%s AND s.status='approved')
-                               OR %s='operator')""", [order_id, role, actor.pk, role, actor.pk, role])
+                               OR %s='operator')""",
+                [order_id, role, actor.pk, role, actor.pk, role],
+            )
             parent = cursor.fetchone()
             if parent is None:
                 raise Http404
@@ -301,14 +372,22 @@ def change_order_status(actor, order_id, action, reason=""):
             if order[1] not in expected:
                 raise CheckoutError("This order has already changed. Please refresh the page.")
             if action == "cancel":
-                cursor.execute("SELECT product_id,quantity FROM orders_orderline WHERE order_id=%s ORDER BY product_id", [order_id])
+                cursor.execute(
+                    "SELECT product_id,quantity FROM orders_orderline WHERE order_id=%s ORDER BY product_id", [order_id]
+                )
                 lines = cursor.fetchall()
-                cursor.execute("SELECT id FROM catalogue_product WHERE id=ANY(%s) ORDER BY id FOR UPDATE", [[row[0] for row in lines]])
+                cursor.execute(
+                    "SELECT id FROM catalogue_product WHERE id=ANY(%s) ORDER BY id FOR UPDATE",
+                    [[row[0] for row in lines]],
+                )
                 cursor.fetchall()
                 for pid, quantity in lines:
                     cursor.execute("UPDATE catalogue_product SET stock=stock+%s WHERE id=%s", [quantity, pid])
-                cursor.execute("""INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
-                                  VALUES (%s,%s,%s,%s,%s,%s)""", [order_id, order[3], order[2], reason, timezone.now(), False])
+                cursor.execute(
+                    """INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
+                                  VALUES (%s,%s,%s,%s,%s,%s)""",
+                    [order_id, order[3], order[2], reason, timezone.now(), False],
+                )
             destination = {"ship": "shipped", "deliver": "delivered", "cancel": "cancelled"}[action]
             cursor.execute("UPDATE orders_order SET status=%s WHERE id=%s", [destination, order_id])
     return order_id

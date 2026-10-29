@@ -1,4 +1,5 @@
 """Deterministic anomalies. Barriers precede locking reads to avoid deadlocking the demonstration."""
+
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +9,10 @@ from psycopg.errors import SerializationFailure
 from benchmarks import db
 from benchmarks.workloads.b3 import mongo_transaction
 
-STRATEGIES = {"postgres": ("read_committed", "for_update", "serializable"), "mongo": ("read_modify_write", "transaction", "atomic_inc")}
+STRATEGIES = {
+    "postgres": ("read_committed", "for_update", "serializable"),
+    "mongo": ("read_modify_write", "transaction", "atomic_inc"),
+}
 
 
 def demonstrate(engine, strategy, database):
@@ -33,7 +37,9 @@ def demonstrate(engine, strategy, database):
                                     # Both transactions are ready before the first locking read. Waiting after
                                     # SELECT FOR UPDATE would make the second reader unable to reach a barrier.
                                     barrier.wait()
-                                statement = "SELECT stock FROM catalogue_product WHERE id=%s" + (" FOR UPDATE" if strategy == "for_update" else "")
+                                statement = "SELECT stock FROM catalogue_product WHERE id=%s" + (
+                                    " FOR UPDATE" if strategy == "for_update" else ""
+                                )
                                 stock = conn.execute(statement, [pid]).fetchone()["stock"]
                                 if strategy != "for_update" and retries == 0:
                                     barrier.wait()
@@ -45,6 +51,7 @@ def demonstrate(engine, strategy, database):
                                 raise
             elif strategy == "transaction":
                 attempts = 0
+
                 def decrement(session):
                     nonlocal attempts
                     stock = database.products.find_one({"_id": pid}, session=session)["stock"]
@@ -52,6 +59,7 @@ def demonstrate(engine, strategy, database):
                         attempts += 1
                         barrier.wait()
                     database.products.update_one({"_id": pid}, {"$set": {"stock": stock - 1}}, session=session)
+
                 _, retries = mongo_transaction(database, decrement)
             elif strategy == "atomic_inc":
                 barrier.wait()
@@ -78,4 +86,9 @@ def demonstrate(engine, strategy, database):
     passed = stock == expected and not any(row["error"] for row in records)
     if strategy in {"serializable", "transaction"}:
         passed = passed and retries > 0
-    return records, elapsed, passed, {"strategy": strategy, "expected_stock": expected, "observed_stock": stock, "retries": retries}
+    return (
+        records,
+        elapsed,
+        passed,
+        {"strategy": strategy, "expected_stock": expected, "observed_stock": stock, "retries": retries},
+    )

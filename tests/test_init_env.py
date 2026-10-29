@@ -1,4 +1,5 @@
 """init_env.py completes a .env without changing, printing or replacing what is already there."""
+
 import json
 import shlex
 import stat
@@ -28,7 +29,7 @@ def test_a_missing_env_is_created_private_with_generated_secrets(tmp_path):
 def test_missing_keys_are_added_and_existing_values_are_untouched(tmp_path):
     example, env = tmp_path / ".env.example", tmp_path / ".env"
     example.write_text(EXAMPLE)
-    env.write_text("A=mine\nB=-keep-this")      # existing credentials, even leading dashes, are preserved
+    env.write_text("A=mine\nB=-keep-this")  # existing credentials, even leading dashes, are preserved
     env.write_text(env.read_text() + "\nOLD=stays\n")
 
     added = complete_env(env, example)
@@ -64,21 +65,23 @@ def test_mongo_startup_and_healthcheck_attach_credentials_to_options():
     source = root / "src" if (root / "src").is_dir() else root
     script = (source / "docker" / "mongo-start.sh").read_text()
     startup = shlex.split(script)
-    assert startup.count('--username=$MONGO_ROOT_USER') == 2
-    assert startup.count('--password=$MONGO_ROOT_PASSWORD') == 2
+    assert startup.count("--username=$MONGO_ROOT_USER") == 2
+    assert startup.count("--password=$MONGO_ROOT_PASSWORD") == 2
     assert not {"-u", "-p", "--username", "--password"}.intersection(startup)
     # shlex drops quotes; the raw text keeps a hand-set password with spaces as one argument
     assert script.count('--username="$MONGO_ROOT_USER"') == 2
     assert script.count('--password="$MONGO_ROOT_PASSWORD"') == 2
 
-    healthcheck = next(line.strip().removeprefix("test: ")
-                       for line in (root / "compose.yaml").read_text().splitlines()
-                       if "test:" in line and "mongosh" in line)
+    healthcheck = next(
+        line.strip().removeprefix("test: ")
+        for line in (root / "compose.yaml").read_text().splitlines()
+        if "test:" in line and "mongosh" in line
+    )
     command_type, command = json.loads(healthcheck)
     assert command_type == "CMD-SHELL"
     arguments = shlex.split(command)
-    assert '--username=$$MONGO_ROOT_USER' in arguments
-    assert '--password=$$MONGO_ROOT_PASSWORD' in arguments
+    assert "--username=$$MONGO_ROOT_USER" in arguments
+    assert "--password=$$MONGO_ROOT_PASSWORD" in arguments
     assert not {"-u", "-p", "--username", "--password"}.intersection(arguments)
     assert '--username="$$MONGO_ROOT_USER"' in command
     assert '--password="$$MONGO_ROOT_PASSWORD"' in command

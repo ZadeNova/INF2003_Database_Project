@@ -1,4 +1,5 @@
 """Product updates use the same real owner/runtime boundary as seller decisions."""
+
 import os
 
 import pytest
@@ -20,8 +21,9 @@ def product_audits():
 def product():
     seller = make_seller()
     category = Category.objects.create(slug="test", name_en="Test", name_pt="Test")
-    return Product.objects.create(seller=seller, category=category, name="Test", price="10.00",
-                                  freight="1.00", stock=10, lead_time_days=3)
+    return Product.objects.create(
+        seller=seller, category=category, name="Test", price="10.00", freight="1.00", stock=10, lead_time_days=3
+    )
 
 
 def test_product_updates_record_actor_reason_and_only_watched_fields():
@@ -55,11 +57,14 @@ def test_runtime_product_trigger_works_and_cannot_be_tampered_with():
     item = product()
     with runtime_connection() as runtime:
         with runtime.transaction():
-            runtime.execute("SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
-                            [str(item.seller.user_id), "Runtime product edit"])
+            runtime.execute(
+                "SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
+                [str(item.seller.user_id), "Runtime product edit"],
+            )
             runtime.execute("UPDATE catalogue_product SET stock = %s WHERE id = %s", [3, item.pk])
-        assert runtime.execute("SELECT actor_id, reason FROM audit_log WHERE table_name = %s",
-                               ["catalogue_product"]).fetchall() == [(item.seller.user_id, "Runtime product edit")]
+        assert runtime.execute(
+            "SELECT actor_id, reason FROM audit_log WHERE table_name = %s", ["catalogue_product"]
+        ).fetchall() == [(item.seller.user_id, "Runtime product edit")]
         for statement in (
             "ALTER TABLE catalogue_product DISABLE TRIGGER product_update_audit",
             "ALTER FUNCTION public.audit_product_update() SET search_path = pg_temp, public",
@@ -69,8 +74,11 @@ def test_runtime_product_trigger_works_and_cannot_be_tampered_with():
             with pytest.raises(errors.InsufficientPrivilege):
                 runtime.execute(statement)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT pg_get_userbyid(proowner), prosecdef, proconfig, has_function_privilege(%s, oid, 'EXECUTE') "
-                       "FROM pg_proc WHERE oid='public.audit_product_update()'::regprocedure", [os.environ["POSTGRES_RUNTIME_USER"]])
+        cursor.execute(
+            "SELECT pg_get_userbyid(proowner), prosecdef, proconfig, has_function_privilege(%s, oid, 'EXECUTE') "
+            "FROM pg_proc WHERE oid='public.audit_product_update()'::regprocedure",
+            [os.environ["POSTGRES_RUNTIME_USER"]],
+        )
         assert cursor.fetchone() == (os.environ["POSTGRES_USER"], True, ["search_path=public, pg_temp"], False)
 
 
@@ -85,6 +93,7 @@ def test_audit_context_injection_remains_a_literal_reason():
 
 def test_shared_mongo_client_is_reused_without_losing_test_routing(mongo_db):
     from config import mongo
+
     with mongo.client() as first:
         first.admin.command("ping")
     with mongo.client() as second:

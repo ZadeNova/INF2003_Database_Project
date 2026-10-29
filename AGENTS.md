@@ -116,6 +116,8 @@ README commands naming a missing script or service, not wrong prose, so the docs
 
 ## Running and testing
 
+Run `python -m ruff format .` before committing; CI checks formatting at 120 columns.
+
 Docker Desktop (or Docker Engine) with Compose 2.20 or later, from the repository root:
 
 ```
@@ -151,7 +153,7 @@ because B5 refuses any earlier restore. Recorded reruns use --require-clean; gen
 until explicitly staged with `git add -f -- benchmarks/results/<run-directory>`. See the README for per-client
 operation counts, the storage checkpoint wait, round-trip baselines and client CPU flags.
 
-CI (`.github/workflows/ci.yml`, stages 1–2 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
+CI (`.github/workflows/ci.yml`, stages 1–3 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
 `main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,
 the host Git-index/packaging tests (which must not skip), `scripts/check_docs.py`, Ruff E/F/I, dependency audit and
 serial Chromium journeys. The full suite runs once through scripts/coverage_suite.py: branch reports are retained,
@@ -162,4 +164,5 @@ owner credentials to browser tests. Trace/screenshot capture is failure-only, wi
 manual failure canary is opt-in; a hosted failed run and useful artifacts are still an exit check.
 To reproduce a run locally, use
 the README's "Continuous integration" commands; they use their own Compose project (`-p`), never `mercer`, so teardown
-cannot touch your data. Do not print `.env` or `docker compose config` in CI. Stage 3's formatter stays deferred.
+cannot touch your data. Do not print `.env` or `docker compose config` in CI. The required quality job also checks
+Ruff formatting at 120 columns.

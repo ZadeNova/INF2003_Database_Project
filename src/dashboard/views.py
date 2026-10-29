@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
@@ -12,12 +11,17 @@ from .services import as_of_date, dashboard_data, refresh_sales, sales_populated
 
 def pager(rows, request, key):
     page = Paginator(rows, 25).get_page(request.GET.get(key))
+
     def url(number):
         query = request.GET.copy()
         query[key] = str(number)
         return "?" + query.urlencode() + "#" + key
-    return {"page": page, "previous": url(page.previous_page_number()) if page.has_previous() else None,
-            "next": url(page.next_page_number()) if page.has_next() else None}
+
+    return {
+        "page": page,
+        "previous": url(page.previous_page_number()) if page.has_previous() else None,
+        "next": url(page.next_page_number()) if page.has_next() else None,
+    }
 
 
 class DashboardView(OperatorRequiredMixin, View):
@@ -34,11 +38,15 @@ class DashboardView(OperatorRequiredMixin, View):
             data = dashboard_data(as_of, category.pk if category else None, form.cleaned_data.get("seller"))
             latest = data["category_rows"][0]["month"] if data["category_rows"] else None
             chart = [row for row in data["category_rows"] if row["month"] == latest][:10]
-            context.update(data, stock_pager=pager(data["stock_rows"], request, "stock"),
+            context.update(
+                data,
+                stock_pager=pager(data["stock_rows"], request, "stock"),
                 category_pager=pager(data["category_rows"], request, "categories"),
                 seller_pager=pager(data["seller_rows"], request, "sellers"),
                 chart={"labels": [row["category"] for row in chart], "revenue": [str(row["revenue"]) for row in chart]},
-                chart_month=latest, ready=True)
+                chart_month=latest,
+                ready=True,
+            )
         return render(request, "dashboard/dashboard.html", context)
 
 

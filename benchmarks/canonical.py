@@ -1,4 +1,5 @@
 """One committed output contract for exact values from the oracle and both engines."""
+
 import csv
 import io
 import json
@@ -25,7 +26,10 @@ def canonical(output, rows):
                     raise ValueError("Floating-point decimal result refused")
                 with localcontext() as ctx:
                     ctx.prec = 50
-                    value = format(Decimal(value).quantize(Decimal(1).scaleb(-int(kind.split(":")[1])), rounding=ROUND_HALF_EVEN), "f")
+                    value = format(
+                        Decimal(value).quantize(Decimal(1).scaleb(-int(kind.split(":")[1])), rounding=ROUND_HALF_EVEN),
+                        "f",
+                    )
             elif kind == "bool":
                 value = "true" if value else "false"
             elif isinstance(value, (date, datetime)):

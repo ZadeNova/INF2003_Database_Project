@@ -1,4 +1,5 @@
 """Fixture-backed facets never count products PostgreSQL has hidden or priced out."""
+
 import csv
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -24,9 +25,14 @@ def test_two_attributes_and_price_range_equal_direct_fixture_count(imported, mon
     item, spec = sample(mongo_db)
     attrs = dict(list(spec["attributes"].items())[:2])
     assert len(attrs) == 2
-    params = {"category": item.category_id, "min_price": str(item.price), "max_price": str(item.price),
-              **{"attr_" + key: str(value).lower() if isinstance(value, bool) else str(value)
-                 for key, value in attrs.items()}}
+    params = {
+        "category": item.category_id,
+        "min_price": str(item.price),
+        "max_price": str(item.price),
+        **{
+            "attr_" + key: str(value).lower() if isinstance(value, bool) else str(value) for key, value in attrs.items()
+        },
+    }
     response = Client().get("/products/", params)
     assert response.status_code == 200
     sql_ids = list(visible_products().filter(category=item.category, price=item.price).values_list("pk", flat=True))
@@ -37,7 +43,9 @@ def test_two_attributes_and_price_range_equal_direct_fixture_count(imported, mon
     assert {row.pk for row in page} == expected
     for name, values in response.context["facet_groups"]:
         for value in values:
-            assert value["count"] == mongo_db.product_specs.count_documents({**direct, "attributes." + name: value["value"]})
+            assert value["count"] == mongo_db.product_specs.count_documents(
+                {**direct, "attributes." + name: value["value"]}
+            )
 
 
 @pytest.mark.parametrize("hidden", ["inactive", "taken_down", "suspended"])
@@ -67,8 +75,7 @@ def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db)
     item, spec = sample(mongo_db)
     attribute, value = next(iter(spec["attributes"].items()))
     value = str(value).lower() if isinstance(value, bool) else str(value)
-    params = {"category": item.category_id, "min_price": "0", "sort": "price",
-              "attr_" + attribute: value, "page": "2"}
+    params = {"category": item.category_id, "min_price": "0", "sort": "price", "attr_" + attribute: value, "page": "2"}
     client = Client()
     response = client.get("/products/", params)
     chips = response.context["filter_chips"]
@@ -78,8 +85,7 @@ def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db)
     assert not any(chip["label"].startswith("Rating") for chip in chips)
     price_chip = next(chip for chip in chips if "min_price" not in parse_qs(urlsplit(chip["url"]).query))
     remaining = parse_qs(urlsplit(price_chip["url"]).query)
-    assert remaining == {"category": [str(item.category_id)], "sort": ["price"],
-                         "attr_" + attribute: [value]}
+    assert remaining == {"category": [str(item.category_id)], "sort": ["price"], "attr_" + attribute: [value]}
     assert client.get(price_chip["url"]).status_code == 200
     rated = client.get("/products/", {"category": item.category_id, "rating": "4"}).context["filter_chips"]
     assert [chip["label"] for chip in rated if chip["label"].startswith("Rating")] == ["Rating: 4 stars and up"]
@@ -92,11 +98,17 @@ def test_search_sorting_and_pagination_are_deterministic(imported, mongo_db, sor
     response = Client().get("/products/", {"category": category, "sort": sort})
     actual = [p.pk for p in response.context["page_obj"]]
     if sort == "top":
-        expected = [r["_id"] for r in mongo_db.product_specs.find({"_id": {"$in": ids}}).sort(
-            [("rating_summary.bayesian", -1), ("_id", -1)]).limit(24)]
+        expected = [
+            r["_id"]
+            for r in mongo_db.product_specs.find({"_id": {"$in": ids}})
+            .sort([("rating_summary.bayesian", -1), ("_id", -1)])
+            .limit(24)
+        ]
     else:
         ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}[sort]
-        expected = list(visible_products().filter(category_id=category).order_by(*ordering).values_list("pk", flat=True)[:24])
+        expected = list(
+            visible_products().filter(category_id=category).order_by(*ordering).values_list("pk", flat=True)[:24]
+        )
     assert response.status_code == 200 and actual == expected
     assert Client().get("/products/", {"category": category, "sort": sort, "page": "999999"}).status_code == 200
 
@@ -112,6 +124,7 @@ def test_trigram_search_finds_a_typo_and_substrings(imported, mongo_db):
 
 def test_a_broad_name_search_keeps_only_the_closest_candidates(imported, mongo_db, monkeypatch):
     import catalogue.search as search
+
     items = list(visible_products().order_by("id")[:3])
     names = ("Portable Hose Nozzle", "Portable Hose Nozzle Spare", "Portable Hose Nozzle Kit Deluxe Edition Large")
     for item, name in zip(items, names):
@@ -127,16 +140,19 @@ def test_a_broad_name_search_keeps_only_the_closest_candidates(imported, mongo_d
     assert "Showing the closest matches only" in response.content.decode()
 
 
-@pytest.mark.parametrize("parameters", [
-    {"q": "'; DROP TABLE catalogue_product; --"},
-    {"q": '{"$where":"sleep(1000)"}'},
-    {"category": "1); DELETE FROM catalogue_product; --"},
-    {"q": "test", "min_price": "0 OR 1=1"},
-    {"q": "test", "max_price": "NaN"},
-    {"q": "test", "sort": "price;DROP TABLE catalogue_product"},
-    {"q": "test", "rating": '{"$ne":null}'},
-    {"q": "test", "attr_$where": "sleep(1000)"},
-])
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"q": "'; DROP TABLE catalogue_product; --"},
+        {"q": '{"$where":"sleep(1000)"}'},
+        {"category": "1); DELETE FROM catalogue_product; --"},
+        {"q": "test", "min_price": "0 OR 1=1"},
+        {"q": "test", "max_price": "NaN"},
+        {"q": "test", "sort": "price;DROP TABLE catalogue_product"},
+        {"q": "test", "rating": '{"$ne":null}'},
+        {"q": "test", "attr_$where": "sleep(1000)"},
+    ],
+)
 def test_search_injection_parameters_cannot_become_queries(imported, mongo_db, parameters):
     before = Product.objects.count()
     assert Client().get("/products/", parameters).status_code in (200, 400)
@@ -153,8 +169,11 @@ def test_attribute_value_injection_is_rejected_as_a_choice(imported, mongo_db):
 
 
 def test_all_imported_categories_have_a_real_sprite_icon(imported):
-    symbols = {element.attrib["id"].removeprefix("i-") for element in ET.parse("/app/static/img/icons.svg").iter()
-               if element.tag.endswith("symbol")}
+    symbols = {
+        element.attrib["id"].removeprefix("i-")
+        for element in ET.parse("/app/static/img/icons.svg").iter()
+        if element.tag.endswith("symbol")
+    }
     slugs = {row["slug"] for row in csv.DictReader(Path("/app/tests/fixtures/olist/clean/categories.csv").open())}
     assert slugs == set(CATEGORY_ICONS)
     assert all(CATEGORY_ICONS[slug] in symbols for slug in slugs)
@@ -164,7 +183,11 @@ def test_all_imported_categories_have_a_real_sprite_icon(imported):
 def test_category_shop_and_generated_labels_render(imported, mongo_db):
     item, spec = sample(mongo_db)
     client = Client()
-    for path in (f"/products/category/{item.category.slug}/", f"/products/shops/{item.seller_id}/", f"/products/{item.pk}/"):
+    for path in (
+        f"/products/category/{item.category.slug}/",
+        f"/products/shops/{item.seller_id}/",
+        f"/products/{item.pk}/",
+    ):
         response = client.get(path)
         assert response.status_code == 200 and "generated" in response.content.decode().lower()
         assert client.post(path).status_code == 405

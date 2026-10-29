@@ -3,6 +3,7 @@
 The database writes the audit row: a trigger on accounts_seller reads the actor and reason set here. Both are
 transaction-local, so they clear on commit or rollback and never leak to the next request on a reused connection.
 """
+
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 
@@ -36,8 +37,10 @@ def set_audit_context(actor_id=None, reason=""):
     if not connection.in_atomic_block:
         raise RuntimeError("Audit context must be set inside transaction.atomic()")
     with connection.cursor() as cursor:
-        cursor.execute("SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
-                       ["" if actor_id is None else str(int(actor_id)), reason or ""])
+        cursor.execute(
+            "SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
+            ["" if actor_id is None else str(int(actor_id)), reason or ""],
+        )
 
 
 def allowed_actions(status):
@@ -63,15 +66,21 @@ def change_seller_status(seller_id, action, actor, reason):
 
 
 # catalogue labels (append-only shared navigation/audit integration).
-AUDIT_LABELS.update({
-    "product.update": "Product updated", "product.activate": "Product activated",
-    "product.deactivate": "Product deactivated", "product.takedown": "Product taken down",
-    "product.restore": "Product restored",
-})
+AUDIT_LABELS.update(
+    {
+        "product.update": "Product updated",
+        "product.activate": "Product activated",
+        "product.deactivate": "Product deactivated",
+        "product.takedown": "Product taken down",
+        "product.restore": "Product restored",
+    }
+)
 AUDIT_TONES.update({"product.activate": "completed", "product.restore": "completed"})
 
 # checkout action labels; seller decisions above retain their existing labels and tones.
-AUDIT_LABELS.update({"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"})
+AUDIT_LABELS.update(
+    {"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"}
+)
 # "warning" is the existing amber badge; there is no badge--pending class.
 AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "warning", "order.shipped": "warning"})
 

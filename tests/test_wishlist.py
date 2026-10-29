@@ -1,4 +1,5 @@
 """Composite wishlist keys, trigger-created alerts and scoped UI against real databases."""
+
 import json
 import uuid
 
@@ -48,7 +49,9 @@ def test_raw_runtime_update_fires_trigger_and_keeps_product_audit():
     audit = AuditLog.objects.get(table_name="catalogue_product")
     assert audit.before["stock"] == 0 and audit.after["stock"] == 5
     with connection.cursor() as cursor:
-        cursor.execute("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='wishlist_item'::regclass AND contype='p'")
+        cursor.execute(
+            "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid='wishlist_item'::regclass AND contype='p'"
+        )
         assert cursor.fetchone()[0] == "PRIMARY KEY (customer_id, product_id)"
         cursor.execute("SELECT indexdef FROM pg_indexes WHERE indexname=%s", ["restock_one_unseen"])
         assert "WHERE (seen_at IS NULL)" in cursor.fetchone()[0]
@@ -115,9 +118,12 @@ def test_alerts_and_badge_hide_products_outside_purchasable_view(hidden):
     restock(item, 1)
     if hidden == "suspended":
         from accounts.models import Seller
+
         Seller.objects.filter(pk=item.seller_id).update(status="suspended")
     else:
-        Product.objects.filter(pk=item.pk).update(**({"taken_down": True} if hidden == "taken_down" else {"active": False}))
+        Product.objects.filter(pk=item.pk).update(
+            **({"taken_down": True} if hidden == "taken_down" else {"active": False})
+        )
     client = Client()
     client.force_login(buyer)
     assert unseen_count(buyer) == 0
@@ -155,9 +161,9 @@ def test_htmx_buttons_post_only_csrf_roles_and_safe_redirect():
         assert client.get(path).status_code == 405
     page = client.post(f"/wishlist/{item.pk}/add/", {"next": "https://evil.example/"}, HTTP_HX_REQUEST="true")
     assert page.status_code == 200 and b"Remove from wishlist" in page.content
-    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged":{"product_id":item.pk,"saved":True}}
+    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged": {"product_id": item.pk, "saved": True}}
     page = client.post(f"/wishlist/{item.pk}/remove/", HTTP_HX_REQUEST="true")
-    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged":{"product_id":item.pk,"saved":False}}
+    assert json.loads(page["HX-Trigger"]) == {"wishlistChanged": {"product_id": item.pk, "saved": False}}
     assert b"Save to wishlist" in page.content
     assert Client().post(f"/wishlist/{item.pk}/add/", HTTP_HX_REQUEST="true")["HX-Redirect"] == "/login/"
     secure = Client(enforce_csrf_checks=True)

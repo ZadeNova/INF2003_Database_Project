@@ -34,8 +34,9 @@ def _filter_chips(form, data):
         remaining = data.copy()
         remaining.pop(name, None)
         remaining.pop("page", None)
-        chips.append({"label": f"{field.label}: {label}",
-                      "url": reverse("catalogue:product_list") + "?" + remaining.urlencode()})
+        chips.append(
+            {"label": f"{field.label}: {label}", "url": reverse("catalogue:product_list") + "?" + remaining.urlencode()}
+        )
     return chips
 
 
@@ -44,8 +45,7 @@ def _listing(request, category=None):
     if category is not None:
         data["category"] = str(category.pk)
     core = SearchForm(data)
-    context = {"search_form": core, "category": category,
-               "categories": Category.objects.order_by("name_en")}
+    context = {"search_form": core, "category": category, "categories": Category.objects.order_by("name_en")}
     searching = bool(data.get("q") or data.get("category"))
     if not core.is_valid():
         context.update(page_obj=Paginator([], PAGE_SIZE).get_page(1), searching=True)
@@ -78,9 +78,22 @@ def _listing(request, category=None):
         for row in facets["attributes"]:
             name, value = row["_id"]["name"], row["_id"]["value"]
             groups.setdefault(name, []).append({"value": value, "count": row["count"]})
-        context.update(page_obj=page, searching=True, result_count=page.paginator.count, capped=facets["capped"],
-                       facet_groups=sorted(groups.items()), rating_counts=[{"label": "Not rated" if str(row["_id"]) == "0" else str(row["_id"]) + (" star" if str(row["_id"]) == "1" else " stars"),
-                                      "count": row["count"]} for row in facets["ratings"]])
+        context.update(
+            page_obj=page,
+            searching=True,
+            result_count=page.paginator.count,
+            capped=facets["capped"],
+            facet_groups=sorted(groups.items()),
+            rating_counts=[
+                {
+                    "label": "Not rated"
+                    if str(row["_id"]) == "0"
+                    else str(row["_id"]) + (" star" if str(row["_id"]) == "1" else " stars"),
+                    "count": row["count"],
+                }
+                for row in facets["ratings"]
+            ],
+        )
     query = data.copy()
     query.pop("page", None)
     context["query"] = query.urlencode()
@@ -110,18 +123,31 @@ def product_detail(request, pk):
         spec = database.product_specs.find_one({"_id": product.pk})
         page = review_page(database, {"product_id": product.pk}, request.GET.get("page"))
     language = "pt" if request.GET.get("lang") == "pt" else "en"
-    histogram = [{"score": score, "count": (spec or {}).get("rating_summary", {}).get("distribution", {}).get(str(score), 0)}
-                 for score in range(5, 0, -1)]
+    histogram = [
+        {"score": score, "count": (spec or {}).get("rating_summary", {}).get("distribution", {}).get(str(score), 0)}
+        for score in range(5, 0, -1)
+    ]
     record_event(request, "view", product=product)
-    return render(request, "catalogue/product_detail.html", {"product": product, "spec": spec,
-        "reviews_page": page, "review_language": language, "histogram": histogram,
-        **browsing_panels(request, category=product.category_id)})
+    return render(
+        request,
+        "catalogue/product_detail.html",
+        {
+            "product": product,
+            "spec": spec,
+            "reviews_page": page,
+            "review_language": language,
+            "histogram": histogram,
+            **browsing_panels(request, category=product.category_id),
+        },
+    )
 
 
 @require_safe
 def seller_shop(request, pk):
     seller = get_object_or_404(Seller, pk=pk, status=Seller.Status.APPROVED)
-    page = Paginator(visible_products().filter(seller=seller).order_by("-id"), PAGE_SIZE).get_page(request.GET.get("page"))
+    page = Paginator(visible_products().filter(seller=seller).order_by("-id"), PAGE_SIZE).get_page(
+        request.GET.get("page")
+    )
     with mongo.client() as client:
         database = client[mongo.database_name()]
         page.object_list = attach_photos(database, page.object_list)

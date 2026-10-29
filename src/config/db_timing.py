@@ -1,4 +1,5 @@
 """Request-local driver counters. Query text, values and command bodies never enter this module."""
+
 from contextvars import ContextVar
 from dataclasses import dataclass
 from time import perf_counter_ns
@@ -14,8 +15,12 @@ class DatabaseTiming:
     mongo_commands: int = 0
 
     def fields(self):
-        return {"db_pg_ms": round(self.pg_ns / 1_000_000, 3), "db_pg_queries": self.pg_queries,
-                "db_mongo_ms": round(self.mongo_us / 1000, 3), "db_mongo_commands": self.mongo_commands}
+        return {
+            "db_pg_ms": round(self.pg_ns / 1_000_000, 3),
+            "db_pg_queries": self.pg_queries,
+            "db_mongo_ms": round(self.mongo_us / 1000, 3),
+            "db_mongo_commands": self.mongo_commands,
+        }
 
 
 current_timing = ContextVar("request_database_timing", default=None)

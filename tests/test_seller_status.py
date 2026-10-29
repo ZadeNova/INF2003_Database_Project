@@ -1,4 +1,5 @@
 """Seller status transitions and their trigger-written audit rows, on real PostgreSQL (accounts plan, P2/P4)."""
+
 import itertools
 import threading
 
@@ -12,8 +13,12 @@ from accounts.models import AuditLog, Seller
 from catalogue.models import Category, Product, PurchasableProduct
 
 STATUSES = ("pending", "approved", "rejected", "suspended")
-LEGAL = {("pending", "approved"): "approve", ("pending", "rejected"): "reject",
-         ("approved", "suspended"): "suspend", ("suspended", "approved"): "reinstate"}
+LEGAL = {
+    ("pending", "approved"): "approve",
+    ("pending", "rejected"): "reject",
+    ("approved", "suspended"): "suspend",
+    ("suspended", "approved"): "reinstate",
+}
 ILLEGAL = [pair for pair in itertools.permutations(STATUSES, 2) if pair not in LEGAL]
 
 
@@ -27,8 +32,12 @@ def test_legal_transitions_write_one_system_audit_row(old, new):
     seller = make_seller(status=old)
     update_status(seller, new)
     entry = AuditLog.objects.get()
-    assert (entry.table_name, entry.row_id, entry.action) == ("accounts_seller", str(seller.pk), "seller." + LEGAL[old, new])
-    assert entry.actor is None and entry.reason is None          # no context: a system change
+    assert (entry.table_name, entry.row_id, entry.action) == (
+        "accounts_seller",
+        str(seller.pk),
+        "seller." + LEGAL[old, new],
+    )
+    assert entry.actor is None and entry.reason is None  # no context: a system change
     assert entry.before == {"id": seller.pk, "user_id": seller.user_id, "status": old, "shop_name": seller.shop_name}
     assert entry.after == {**entry.before, "status": new}
     assert entry.created_at is not None
@@ -61,7 +70,7 @@ def test_operator_action_records_exact_actor_reason_and_snapshots():
     entry = AuditLog.objects.get()
     assert entry.actor == operator and entry.reason == "Documents verified" and entry.action == "seller.approve"
     assert (entry.before["status"], entry.after["status"]) == ("pending", "approved")
-    assert set(entry.after) == {"id", "user_id", "status", "shop_name"}     # no secrets or unlisted columns
+    assert set(entry.after) == {"id", "user_id", "status", "shop_name"}  # no secrets or unlisted columns
 
 
 @pytest.mark.django_db
@@ -108,6 +117,7 @@ def test_stale_or_repeated_actions_fail_without_another_audit_row():
 @pytest.mark.django_db
 def test_customers_and_sellers_cannot_use_the_status_service():
     from django.core.exceptions import PermissionDenied
+
     seller = make_seller(status="pending")
     with pytest.raises(PermissionDenied):
         change_seller_status(seller.pk, "approve", seller.user, "Self approval")
@@ -118,19 +128,26 @@ def test_customers_and_sellers_cannot_use_the_status_service():
 def test_suspension_hides_products_and_reinstatement_restores_them():
     operator, seller = make_operator(), make_seller(status="approved")
     category = Category.objects.create(slug="example", name_en="Example", name_pt="Exemplo")
-    product = Product.objects.create(seller=seller, category=category, name="Lamp", price="10.00", freight="1.00",
-                                     stock=3, lead_time_days=2)
+    product = Product.objects.create(
+        seller=seller, category=category, name="Lamp", price="10.00", freight="1.00", stock=3, lead_time_days=2
+    )
+
     def visible():
         return PurchasableProduct.objects.filter(pk=product.pk).exists()
+
     assert visible()
     change_seller_status(seller.pk, "suspend", operator, "Investigation")
     assert not visible()
     change_seller_status(seller.pk, "reinstate", operator, "Cleared")
     assert visible()
-    assert list(AuditLog.objects.order_by("id").values_list("action", flat=True)) == ["seller.suspend", "seller.reinstate"]
+    assert list(AuditLog.objects.order_by("id").values_list("action", flat=True)) == [
+        "seller.suspend",
+        "seller.reinstate",
+    ]
 
 
 # Transaction-local context needs real commits, so these tests use transactional_db on Django's own connection.
+
 
 @pytest.mark.django_db(transaction=True)
 def test_context_requires_an_open_transaction():
@@ -145,7 +162,7 @@ def test_context_clears_after_commit_on_a_reused_connection():
     with connection.cursor() as cursor:
         cursor.execute("SELECT current_setting('mercer.actor_id', true), current_setting('mercer.audit_reason', true)")
         assert cursor.fetchone() in ((None, None), ("", ""))
-    update_status(seller, "suspended")          # same connection, no context: a system change
+    update_status(seller, "suspended")  # same connection, no context: a system change
     latest = AuditLog.objects.order_by("-id").first()
     assert latest.action == "seller.suspend" and latest.actor is None and latest.reason is None
 
@@ -178,10 +195,10 @@ def test_concurrent_operators_one_wins_and_the_other_fails_cleanly():
             connection.close()
 
     with transaction.atomic():
-        Seller.objects.select_for_update().get(pk=seller.pk)        # first operator holds the row lock
+        Seller.objects.select_for_update().get(pk=seller.pk)  # first operator holds the row lock
         thread = threading.Thread(target=second_operator)
         thread.start()
-        wait_until_blocked()                                        # the second operator waits on that lock
+        wait_until_blocked()  # the second operator waits on that lock
         change_seller_status(seller.pk, "approve", operator, "Approved first")
     thread.join(10)
     assert outcome == {"result": "stale"}

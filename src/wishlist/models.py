@@ -22,6 +22,9 @@ class RestockAlert(models.Model):
 
     class Meta:
         db_table = "restock_alert"
-        constraints = [models.UniqueConstraint(fields=["customer", "product"], condition=models.Q(seen_at__isnull=True),
-                                                name="restock_one_unseen")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["customer", "product"], condition=models.Q(seen_at__isnull=True), name="restock_one_unseen"
+            )
+        ]
         indexes = [models.Index(fields=["customer", "-created_at"], name="restock_customer_newest")]

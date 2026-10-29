@@ -10,6 +10,7 @@ Building packs the committed files at --ref (git archive, so ignored files such 
 source zip, then puts it beside the three deliverables in the outer zip and checks the result. Exit status 1 when a
 check FAILS; WARN lines need a human look. Standard library only; no network.
 """
+
 import argparse
 import io
 import re
@@ -18,11 +19,30 @@ import sys
 import zipfile
 from pathlib import Path
 
-REQUIRED = {".pdf": "final report", ".pptx": "presentation slides", ".mp4": "presentation video",
-            ".zip": "source code zip"}
+REQUIRED = {
+    ".pdf": "final report",
+    ".pptx": "presentation slides",
+    ".mp4": "presentation video",
+    ".zip": "source code zip",
+}
 SOURCE_REQUIRED = ["README.md", "compose.yaml", "src"]
-LIMIT_BYTES = 2 * 1024 ** 3       # the brief allows a GitHub link instead above 2 GB
-TEXT = {".md", ".yaml", ".yml", ".txt", ".py", ".sh", ".json", ".toml", ".cfg", ".ini", ".html", ".css", ".js", ".example"}
+LIMIT_BYTES = 2 * 1024**3  # the brief allows a GitHub link instead above 2 GB
+TEXT = {
+    ".md",
+    ".yaml",
+    ".yml",
+    ".txt",
+    ".py",
+    ".sh",
+    ".json",
+    ".toml",
+    ".cfg",
+    ".ini",
+    ".html",
+    ".css",
+    ".js",
+    ".example",
+}
 SECRET_FILES = re.compile(r"(^|/)\.env($|\.(?!example$))|\.pem$|\.key$|\.p12$|\.pfx$|\.tfstate")
 SECRET_TEXT = [
     ("private key", re.compile(r"BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY")),
@@ -58,15 +78,23 @@ def check_source(data):
         present = required in names or any(name.startswith(required + "/") for name in names)
         results.append(("PASS" if present else "WARN", f"source zip contains {required}"))
     secret_files = sorted(name for name in names if SECRET_FILES.search(name))
-    results.append(("PASS" if not secret_files else "FAIL",
-                    "source zip has no .env, key or state files" + (f": {secret_files[:5]}" if secret_files else "")))
+    results.append(
+        (
+            "PASS" if not secret_files else "FAIL",
+            "source zip has no .env, key or state files" + (f": {secret_files[:5]}" if secret_files else ""),
+        )
+    )
     leaks = []
     for name in sorted(names):
         if Path(name).suffix.lower() in TEXT and not name.endswith("/"):
             text = source.read(name).decode("utf-8", "replace")
             leaks += [f"{name}: {label}" for label, pattern in SECRET_TEXT if pattern.search(text)]
-    results.append(("PASS" if not leaks else "FAIL",
-                    "source zip has no private keys or access tokens" + (f": {leaks[:5]}" if leaks else "")))
+    results.append(
+        (
+            "PASS" if not leaks else "FAIL",
+            "source zip has no private keys or access tokens" + (f": {leaks[:5]}" if leaks else ""),
+        )
+    )
     return results
 
 
@@ -111,8 +139,11 @@ def check(zip_path):
             for level, message in check_source(data):
                 say(level, message)
     size = Path(zip_path).stat().st_size
-    say("PASS" if size < LIMIT_BYTES else "WARN",
-        f"size {size / 1e6:.1f} MB" + ("" if size < LIMIT_BYTES else " is over 2 GB: the brief allows a GitHub link with access granted instead"))
+    say(
+        "PASS" if size < LIMIT_BYTES else "WARN",
+        f"size {size / 1e6:.1f} MB"
+        + ("" if size < LIMIT_BYTES else " is over 2 GB: the brief allows a GitHub link with access granted instead"),
+    )
     return results
 
 

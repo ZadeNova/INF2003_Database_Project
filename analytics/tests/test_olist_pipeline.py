@@ -1,4 +1,5 @@
 """The real deterministic fixture exercises every approved cleaning rule."""
+
 import json
 from collections import Counter, defaultdict
 from decimal import Decimal
@@ -7,7 +8,19 @@ from pathlib import Path
 import pytest
 from clean_olist import clean, validate
 from generate_content import generate
-from olist_common import RAW_FILES, STATUSES, ZERO, checksums, decimal, exact_median, latest_reviews, money, read_csv, read_raw, timestamp
+from olist_common import (
+    RAW_FILES,
+    STATUSES,
+    ZERO,
+    checksums,
+    decimal,
+    exact_median,
+    latest_reviews,
+    money,
+    read_csv,
+    read_raw,
+    timestamp,
+)
 from translate_reviews import read_translations, text_hash
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,7 +36,10 @@ def pipeline(tmp_path_factory):
     ledger = clean(FIXTURE / "raw", output, FIXTURE / "translations.csv", FX)
     generate(output, TEMPLATES)
     tables = {p.stem: read_csv(p) for p in output.glob("*.csv")}
-    documents = {p.stem: [json.loads(line) for line in p.read_text(encoding="utf-8").splitlines()] for p in output.glob("*.ndjson")}
+    documents = {
+        p.stem: [json.loads(line) for line in p.read_text(encoding="utf-8").splitlines()]
+        for p in output.glob("*.ndjson")
+    }
     return output, raw, ledger, tables, documents
 
 
@@ -75,13 +91,19 @@ def test_rule_4_undefined_payment(pipeline):
 
 def test_rule_5_contradictory_delivery_status(pipeline):
     _, raw, _, tables, _ = pipeline
-    bad = {r["order_id"] for r in raw["orders"] if (r["order_status"] == "delivered") != bool(r["order_delivered_customer_date"])}
+    bad = {
+        r["order_id"]
+        for r in raw["orders"]
+        if (r["order_status"] == "delivered") != bool(r["order_delivered_customer_date"])
+    }
     assert bad and bad.isdisjoint(kept_order_ids(tables))
 
 
 def test_rule_6_zero_instalments(pipeline):
     _, raw, ledger, tables, _ = pipeline
-    zero = [r for r in raw["order_payments"] if r["payment_installments"] == "0" and r["order_id"] in kept_order_ids(tables)]
+    zero = [
+        r for r in raw["order_payments"] if r["payment_installments"] == "0" and r["order_id"] in kept_order_ids(tables)
+    ]
     assert zero and ledger["rules"]["6"]["affected"] == len(zero)
     assert all(int(r["instalments"]) >= 1 for r in tables["payments"])
 
@@ -109,8 +131,11 @@ def test_rule_8_split_shared_products(pipeline):
 
 def test_rule_9_equal_price_line_collapse(pipeline):
     _, raw, _, tables, _ = pipeline
-    grouped = Counter((r["order_id"], r["product_id"], r["seller_id"], decimal(r["price"]))
-                      for r in raw["order_items"] if r["order_id"] in kept_order_ids(tables))
+    grouped = Counter(
+        (r["order_id"], r["product_id"], r["seller_id"], decimal(r["price"]))
+        for r in raw["order_items"]
+        if r["order_id"] in kept_order_ids(tables)
+    )
     assert any(v > 1 for v in grouped.values())
     assert len(tables["order_lines"]) == len(grouped)
     assert sum(int(r["quantity"]) for r in tables["order_lines"]) == sum(grouped.values())
@@ -140,6 +165,7 @@ def test_rule_11_status_and_category_mapping(pipeline):
 def test_rule_12_geolocation_and_leading_zero_prefix(pipeline):
     _, raw, _, tables, _ = pipeline
     from statistics import median
+
     grouped = defaultdict(list)
     for row in raw["geolocation"]:
         grouped[row["geolocation_zip_code_prefix"]].append(row)
@@ -147,8 +173,13 @@ def test_rule_12_geolocation_and_leading_zero_prefix(pipeline):
     assert any(r["zip_prefix"].startswith("0") for r in tables["geolocation"])
     for row in tables["geolocation"]:
         source = grouped[row["zip_prefix"]]
-        assert Decimal(row["latitude"]) == median(Decimal(r["geolocation_lat"]) for r in source).quantize(Decimal("0.00000001"))
-        assert row["city"] == sorted(Counter(r["geolocation_city"] for r in source).items(), key=lambda x: (-x[1], x[0]))[0][0]
+        assert Decimal(row["latitude"]) == median(Decimal(r["geolocation_lat"]) for r in source).quantize(
+            Decimal("0.00000001")
+        )
+        assert (
+            row["city"]
+            == sorted(Counter(r["geolocation_city"] for r in source).items(), key=lambda x: (-x[1], x[0]))[0][0]
+        )
 
 
 def test_rule_13_fixed_shift_and_local_timezone(pipeline):
@@ -172,8 +203,14 @@ def test_rule_14_exact_sgd_rounding_and_payment_allocation(pipeline):
     for line in tables["order_lines"]:
         oid = checkouts[orders[line["order_id"]]["checkout_id"]]
         pid = products[line["product_id"]]["olist_product_id"]
-        sources = [r for r in raw["order_items"] if r["order_id"] == oid and r["product_id"] == pid and r["seller_id"] == sellers[line["seller_id"]]
-                   and money(Decimal(r["price"]) * rate) == Decimal(line["unit_price"])]
+        sources = [
+            r
+            for r in raw["order_items"]
+            if r["order_id"] == oid
+            and r["product_id"] == pid
+            and r["seller_id"] == sellers[line["seller_id"]]
+            and money(Decimal(r["price"]) * rate) == Decimal(line["unit_price"])
+        ]
         assert len(sources) >= int(line["quantity"])
         assert Decimal(line["freight"]) == sum((money(Decimal(r["freight_value"]) * rate) for r in sources), ZERO)
     for checkout in tables["checkouts"]:
@@ -196,7 +233,9 @@ def test_rule_15_active_and_featured(pipeline):
 def test_rule_16_product_freight_median(pipeline):
     _, _, _, tables, _ = pipeline
     for product in tables["products"]:
-        assert Decimal(product["freight"]) == exact_median([Decimal(r["freight"]) for r in tables["order_lines"] if r["product_id"] == product["id"]])
+        assert Decimal(product["freight"]) == exact_median(
+            [Decimal(r["freight"]) for r in tables["order_lines"] if r["product_id"] == product["id"]]
+        )
 
 
 def test_rule_17_imported_refunds(pipeline):
@@ -215,8 +254,12 @@ def test_rule_18_removes_exactly_products_without_lines(pipeline):
     assert dropped == set(ledger["rules"]["18"]["source_product_ids"])
     assert {r["olist_product_id"] for r in tables["products"]} == surviving
     all_pairs = {(r["product_id"], r["seller_id"]) for r in raw["order_items"]}
-    kept_pairs = {(r["product_id"], r["seller_id"]) for r in raw["order_items"] if r["order_id"] in kept_order_ids(tables)}
-    assert {(r["olist_product_id"], r["olist_seller_id"]) for r in ledger["rules"]["18"]["seller_product_keys"]} == all_pairs - kept_pairs
+    kept_pairs = {
+        (r["product_id"], r["seller_id"]) for r in raw["order_items"] if r["order_id"] in kept_order_ids(tables)
+    }
+    assert {
+        (r["olist_product_id"], r["olist_seller_id"]) for r in ledger["rules"]["18"]["seller_product_keys"]
+    } == all_pairs - kept_pairs
     assert ledger["rules"]["18"]["affected"] == len(all_pairs - kept_pairs)
 
 
@@ -231,6 +274,7 @@ def test_two_equivalent_runs_are_byte_identical_and_generation_idempotent(pipeli
     output, raw, _, _, _ = pipeline
     shuffled = tmp_path / "raw"
     from olist_common import write_csv
+
     for table, rows in raw.items():
         write_csv(shuffled / RAW_FILES[table], list(reversed(rows)))
     other = tmp_path / "clean"
@@ -254,11 +298,17 @@ def test_generated_content_and_bayesian_subset(pipeline):
     _, _, _, tables, docs = pipeline
     templates = json.loads(TEMPLATES.read_text())
     assert len(templates["categories"]) == 15
-    assert all(r["has_generated_content"] == "True" and int(r["stock"]) >= 20 and 3 <= int(r["lead_time_days"]) <= 14 for r in tables["products"])
+    assert all(
+        r["has_generated_content"] == "True" and int(r["stock"]) >= 20 and 3 <= int(r["lead_time_days"]) <= 14
+        for r in tables["products"]
+    )
     assert len(docs["category_templates"]) == 74
     mean = Decimal(sum(r["score"] for r in docs["reviews"])) / len(docs["reviews"])
     from statistics import median
-    prior = median([Decimal(sum(r["product_id"] == spec["_id"] for r in docs["reviews"])) for spec in docs["product_specs"]])
+
+    prior = median(
+        [Decimal(sum(r["product_id"] == spec["_id"] for r in docs["reviews"])) for spec in docs["product_specs"]]
+    )
     assert Decimal(docs["platform_stats"][0]["m"]["$numberDecimal"]) == mean
     assert Decimal(docs["platform_stats"][0]["C"]["$numberDecimal"]) == prior
     for spec in docs["product_specs"]:
@@ -267,22 +317,35 @@ def test_generated_content_and_bayesian_subset(pipeline):
         assert spec["rating_summary"]["sum"] == sum(r["score"] for r in history)
         assert len(spec["latest_reviews"]) == min(5, len(history))
         assert spec["has_generated_content"] and spec["attributes"]
-        assert spec["rating_summary"]["distribution"] == {str(i): sum(r["score"] == i for r in history) for i in range(1,6)}
-        expected = ((Decimal(sum(r["score"] for r in history)) + prior*mean)/(len(history)+prior)
-                    if len(history)+prior else Decimal("0"))
+        assert spec["rating_summary"]["distribution"] == {
+            str(i): sum(r["score"] == i for r in history) for i in range(1, 6)
+        }
+        expected = (
+            (Decimal(sum(r["score"] for r in history)) + prior * mean) / (len(history) + prior)
+            if len(history) + prior
+            else Decimal("0")
+        )
         assert Decimal(spec["rating_summary"]["bayesian"]["$numberDecimal"]) == expected
-        latest = sorted(history,key=lambda r:(r["answered_at"]["$date"],r["olist_review_id"],r["order_line_id"]),reverse=True)[:5]
+        latest = sorted(
+            history, key=lambda r: (r["answered_at"]["$date"], r["olist_review_id"], r["order_line_id"]), reverse=True
+        )[:5]
         assert [r["order_line_id"] for r in spec["latest_reviews"]] == [r["order_line_id"] for r in latest]
 
 
-@pytest.mark.parametrize("table,field,value", [
-    ("order_items", "price", "NaN"), ("order_items", "price", "-1"),
-    ("order_payments", "payment_value", "bad"), ("orders", "order_status", "intruder"),
-    ("customers", "customer_zip_code_prefix", "0123"),
-    ("order_items", "product_id", "x'); DROP TABLE catalogue_product; --"),
-])
+@pytest.mark.parametrize(
+    "table,field,value",
+    [
+        ("order_items", "price", "NaN"),
+        ("order_items", "price", "-1"),
+        ("order_payments", "payment_value", "bad"),
+        ("orders", "order_status", "intruder"),
+        ("customers", "customer_zip_code_prefix", "0123"),
+        ("order_items", "product_id", "x'); DROP TABLE catalogue_product; --"),
+    ],
+)
 def test_malformed_or_inconsistent_raw_input_fails(pipeline, table, field, value):
     import copy
+
     rows = copy.deepcopy(pipeline[1])
     rows[table][0][field] = value
     with pytest.raises(ValueError):
@@ -291,18 +354,31 @@ def test_malformed_or_inconsistent_raw_input_fails(pipeline, table, field, value
 
 def test_translation_hashes_are_verified_and_preserve_originals():
     rows = read_translations(FIXTURE / "translations.csv")
-    assert rows and all(text_hash(r["source_text"]) == key and r["machine_translated"] == "true" for key, r in rows.items())
+    assert rows and all(
+        text_hash(r["source_text"]) == key and r["machine_translated"] == "true" for key, r in rows.items()
+    )
 
 
-@pytest.mark.parametrize("days,bucket", [(-8,"early_over_7"),(-7,"early_up_to_7_or_on_time"),
-    (0,"early_up_to_7_or_on_time"),(1,"late_1_to_7"),(7,"late_1_to_7"),
-    (8,"late_8_to_14"),(14,"late_8_to_14"),(15,"late_over_14")])
-def test_delivery_delay_bucket_boundaries_are_nonoverlapping(days,bucket):
+@pytest.mark.parametrize(
+    "days,bucket",
+    [
+        (-8, "early_over_7"),
+        (-7, "early_up_to_7_or_on_time"),
+        (0, "early_up_to_7_or_on_time"),
+        (1, "late_1_to_7"),
+        (7, "late_1_to_7"),
+        (8, "late_8_to_14"),
+        (14, "late_8_to_14"),
+        (15, "late_over_14"),
+    ],
+)
+def test_delivery_delay_bucket_boundaries_are_nonoverlapping(days, bucket):
     from datetime import datetime, timedelta
 
     from olist_common import delay_bucket
-    estimated=datetime(2018,8,1)
-    assert delay_bucket((estimated+timedelta(days=days)).isoformat(),estimated.isoformat()) == bucket
+
+    estimated = datetime(2018, 8, 1)
+    assert delay_bucket((estimated + timedelta(days=days)).isoformat(), estimated.isoformat()) == bucket
 
 
 def test_missing_translations_fail_without_fake_english(tmp_path):
@@ -311,6 +387,6 @@ def test_missing_translations_fail_without_fake_english(tmp_path):
 
 
 def test_malformed_duplicate_csv_headers_fail_before_pandas_can_rename_them(tmp_path):
-    (tmp_path / RAW_FILES["customers"]).write_text("customer_id,customer_id\n",encoding="utf-8")
-    with pytest.raises(ValueError,match="duplicate columns"):
+    (tmp_path / RAW_FILES["customers"]).write_text("customer_id,customer_id\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicate columns"):
         read_raw(tmp_path)

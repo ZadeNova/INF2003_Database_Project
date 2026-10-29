@@ -1,4 +1,5 @@
 """PostgreSQL chooses purchasable candidates; one MongoDB facet counts only those candidates."""
+
 import math
 from decimal import Decimal
 
@@ -31,12 +32,17 @@ def candidates(cleaned):
         # Both the trigram similarity operator and literal substring search can use product_name_trgm.
         # Escape LIKE metacharacters separately from SQL binding: they are product-name text, not wildcards.
         escaped = query.replace(chr(92), chr(92) * 2).replace("%", chr(92) + "%").replace("_", chr(92) + "_")
-        products = products.filter(RawSQL(
-            '("catalogue_product"."name" %% %s OR "catalogue_product"."name" ILIKE %s)',
-            [query, "%" + escaped + "%"], output_field=BooleanField()))
+        products = products.filter(
+            RawSQL(
+                '("catalogue_product"."name" %% %s OR "catalogue_product"."name" ILIKE %s)',
+                [query, "%" + escaped + "%"],
+                output_field=BooleanField(),
+            )
+        )
         # Closest names first, so a capped candidate list keeps the most relevant products.
-        return products.annotate(name_rank=RawSQL('similarity("catalogue_product"."name", %s)', [query],
-                                                  output_field=FloatField())).order_by("-name_rank", "-id")
+        return products.annotate(
+            name_rank=RawSQL('similarity("catalogue_product"."name", %s)', [query], output_field=FloatField())
+        ).order_by("-name_rank", "-id")
     return products.order_by("-id")
 
 
@@ -68,22 +74,40 @@ def facet_match(ids, cleaned, definitions):
 def facet_pipeline(ids, cleaned, definitions, page=1):
     results = []
     if cleaned.get("sort") == "top":
-        results += [{"$sort": {"rating_summary.bayesian": -1, "_id": -1}},
-                    {"$skip": (page - 1) * PAGE_SIZE}, {"$limit": PAGE_SIZE}]
+        results += [
+            {"$sort": {"rating_summary.bayesian": -1, "_id": -1}},
+            {"$skip": (page - 1) * PAGE_SIZE},
+            {"$limit": PAGE_SIZE},
+        ]
     results += [{"$project": {"_id": 1}}]
     return [
         {"$match": facet_match(ids, cleaned, definitions)},
-        {"$facet": {
-            "results": results,
-            "total": [{"$count": "count"}],
-            "ratings": [{"$group": {"_id": {"$cond": [{"$gt": ["$rating_summary.count", 0]},
-                            {"$floor": "$rating_summary.average"}, 0]}, "count": {"$sum": 1}}},
-                        {"$sort": {"_id": -1}}],
-            "attributes": [{"$project": {"pairs": {"$objectToArray": "$attributes"}}},
-                           {"$unwind": "$pairs"},
-                           {"$group": {"_id": {"name": "$pairs.k", "value": "$pairs.v"},
-                                       "count": {"$sum": 1}}}],
-        }},
+        {
+            "$facet": {
+                "results": results,
+                "total": [{"$count": "count"}],
+                "ratings": [
+                    {
+                        "$group": {
+                            "_id": {
+                                "$cond": [
+                                    {"$gt": ["$rating_summary.count", 0]},
+                                    {"$floor": "$rating_summary.average"},
+                                    0,
+                                ]
+                            },
+                            "count": {"$sum": 1},
+                        }
+                    },
+                    {"$sort": {"_id": -1}},
+                ],
+                "attributes": [
+                    {"$project": {"pairs": {"$objectToArray": "$attributes"}}},
+                    {"$unwind": "$pairs"},
+                    {"$group": {"_id": {"name": "$pairs.k", "value": "$pairs.v"}, "count": {"$sum": 1}}},
+                ],
+            }
+        },
     ]
 
 
@@ -91,12 +115,13 @@ def matching_products(ids):
     """The explicit, bound cross-store id = ANY path, used for PostgreSQL ordering/pagination."""
     if not ids:
         return visible_products().none()
-    return visible_products().filter(RawSQL('"catalogue_product"."id" = ANY(%s)',
-                                            [list(ids)], output_field=BooleanField()))
+    return visible_products().filter(
+        RawSQL('"catalogue_product"."id" = ANY(%s)', [list(ids)], output_field=BooleanField())
+    )
 
 
 def search_page(database, products, cleaned, definitions, requested):
-    ids = list(products.values_list("pk", flat=True)[:MAX_CANDIDATES + 1])
+    ids = list(products.values_list("pk", flat=True)[: MAX_CANDIDATES + 1])
     capped = len(ids) > MAX_CANDIDATES
     ids = ids[:MAX_CANDIDATES]
     try:
@@ -116,16 +141,19 @@ def search_page(database, products, cleaned, definitions, requested):
         page.object_list = [found[pk] for pk in matched_ids if pk in found]
     else:
         ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}
-        page = Paginator(matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "newest"]),
-                         PAGE_SIZE).get_page(requested)
+        page = Paginator(
+            matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "newest"]), PAGE_SIZE
+        ).get_page(requested)
     facets["capped"] = capped
     return page, facets
 
 
 def attach_photos(database, products):
     products = list(products)
-    photos = {row["_id"]: row.get("photo_file_id") for row in database.product_specs.find(
-        {"_id": {"$in": [item.pk for item in products]}}, {"photo_file_id": 1})}
+    photos = {
+        row["_id"]: row.get("photo_file_id")
+        for row in database.product_specs.find({"_id": {"$in": [item.pk for item in products]}}, {"photo_file_id": 1})
+    }
     for item in products:
         item.photo_file_id = photos.get(item.pk)
     return products

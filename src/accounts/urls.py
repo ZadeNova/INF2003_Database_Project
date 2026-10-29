@@ -15,6 +15,10 @@ urlpatterns = [
     path("seller/status/", views.SellerStatusView.as_view(), name="seller_status"),
     path("operator/", views.OperatorSellerListView.as_view(), name="operator_sellers"),
     path("operator/sellers/<int:pk>/", views.OperatorSellerDetailView.as_view(), name="operator_seller"),
-    path("operator/sellers/<int:pk>/<slug:action>/", views.OperatorSellerActionView.as_view(), name="operator_seller_action"),
+    path(
+        "operator/sellers/<int:pk>/<slug:action>/",
+        views.OperatorSellerActionView.as_view(),
+        name="operator_seller_action",
+    ),
     path("operator/audit/", views.OperatorAuditView.as_view(), name="operator_audit"),
 ]

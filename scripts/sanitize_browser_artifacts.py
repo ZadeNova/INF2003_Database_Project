@@ -1,4 +1,5 @@
 """Redact demo passwords and authentication cookies from retained browser traces."""
+
 import argparse
 import base64
 import json
@@ -11,7 +12,9 @@ PRIVATE_HEADERS = {"authorization", "proxy-authorization", "cookie", "set-cookie
 
 
 def demo_secrets():
-    return [value for name, value in os.environ.items() if name.startswith("DEMO_") and name.endswith("_PASSWORD") and value]
+    return [
+        value for name, value in os.environ.items() if name.startswith("DEMO_") and name.endswith("_PASSWORD") and value
+    ]
 
 
 def secret_variants(secrets):
@@ -31,7 +34,9 @@ def redact_json(value):
     if isinstance(value, dict):
         if str(value.get("name", "")).lower() in PRIVATE_HEADERS and "value" in value:
             value["value"] = "<redacted>"
-        return {key: "<redacted>" if key.lower() in PRIVATE_HEADERS else redact_json(child) for key, child in value.items()}
+        return {
+            key: "<redacted>" if key.lower() in PRIVATE_HEADERS else redact_json(child) for key, child in value.items()
+        }
     if isinstance(value, list):
         return [redact_json(child) for child in value]
     return value

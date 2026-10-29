@@ -1,4 +1,5 @@
 """Physical footprint after checkpoints; data and index bytes stay separate."""
+
 import time
 from datetime import datetime, timezone
 
@@ -32,7 +33,15 @@ def mongo_footprint(database):
     result = []
     for name in ("products", "orders", "reviews"):
         stats = next(database[name].aggregate([{"$collStats": {"storageStats": {"scale": 1}}}]))["storageStats"]
-        result.append({"engine": "mongo", "representation": name, "data_bytes": stats["storageSize"], "index_bytes": stats["totalIndexSize"], "cache_bytes": int(.75 * 1024**3)})
+        result.append(
+            {
+                "engine": "mongo",
+                "representation": name,
+                "data_bytes": stats["storageSize"],
+                "index_bytes": stats["totalIndexSize"],
+                "cache_bytes": int(0.75 * 1024**3),
+            }
+        )
     return result
 
 
@@ -40,7 +49,11 @@ def restore_storage_audit(database, provenance, baseline):
     """A correctness audit, not accepted B5 storage measurements after restoration."""
     if restores_since_load(database) != 0:
         raise ValueError("Storage restore audit requires a freshly loaded project")
-    rows = [{**row, "cycle": 0, "within_tolerance": True} for row in baseline if row["engine"] == "mongo" and row["representation"] in {"products", "orders"}]
+    rows = [
+        {**row, "cycle": 0, "within_tolerance": True}
+        for row in baseline
+        if row["engine"] == "mongo" and row["representation"] in {"products", "orders"}
+    ]
     fresh = {row["representation"]: row for row in rows}
     for cycle in (1, 2):
         restore_mongo(database, provenance)
@@ -48,7 +61,10 @@ def restore_storage_audit(database, provenance, baseline):
             if row["representation"] not in fresh:
                 continue
             original = fresh[row["representation"]]
-            tolerance = {key: max(STORAGE_ABSOLUTE_TOLERANCE, original[key] * STORAGE_RELATIVE_TOLERANCE) for key in ("data_bytes", "index_bytes")}
+            tolerance = {
+                key: max(STORAGE_ABSOLUTE_TOLERANCE, original[key] * STORAGE_RELATIVE_TOLERANCE)
+                for key in ("data_bytes", "index_bytes")
+            }
             passed = all(abs(row[key] - original[key]) <= tolerance[key] for key in tolerance)
             rows.append({**row, "cycle": cycle, "within_tolerance": passed})
     return rows
@@ -57,13 +73,25 @@ def restore_storage_audit(database, provenance, baseline):
 def footprint(database):
     if restores_since_load(database) != 0:
         raise ValueError("B5 requires no restore since load; use a fresh project")
-    tables = ("catalogue_product", "orders_checkout", "orders_order", "orders_orderline", "orders_payment", "reviews",
-              "bench_attribute_eav", "bench_attribute_jsonb", "daily_product_sales")
+    tables = (
+        "catalogue_product",
+        "orders_checkout",
+        "orders_order",
+        "orders_orderline",
+        "orders_payment",
+        "reviews",
+        "bench_attribute_eav",
+        "bench_attribute_jsonb",
+        "daily_product_sales",
+    )
     result = []
     with db.pg() as conn:
         conn.execute("VACUUM (ANALYZE)")
         conn.execute("CHECKPOINT")
         for table in tables:
-            row = conn.execute("SELECT pg_relation_size(%s::regclass) AS data_bytes, pg_indexes_size(%s::regclass) AS index_bytes", [table, table]).fetchone()
+            row = conn.execute(
+                "SELECT pg_relation_size(%s::regclass) AS data_bytes, pg_indexes_size(%s::regclass) AS index_bytes",
+                [table, table],
+            ).fetchone()
             result.append({"engine": "postgres", "representation": table, **row, "cache_bytes": 512 * 1024 * 1024})
     return result + mongo_footprint(database)

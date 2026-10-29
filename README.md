@@ -30,6 +30,7 @@ From the repository root:
 ```sh
 python src/tools/init_env.py              # 1. writes .env with random local secrets (never printed)
 git config core.hooksPath .githooks       # 2. once per clone: the documentation check runs before each commit
+git config blame.ignoreRevsFile .git-blame-ignore-revs  # once per clone: skip the formatting commit in blame
 docker compose up --build                 # 3. builds, starts PostgreSQL and MongoDB, migrates, starts the app
 ```
 
@@ -79,7 +80,7 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 |---|---|
 | `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
 | `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
-| `quality` | Ruff E/F/I and audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
+| `quality` | Ruff E/F/I lint and the 120-column format check, then audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
 | `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
 | `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 
@@ -90,7 +91,7 @@ an advisory whose exception was valid before a fix appeared. Exception metadata 
 [.github/pip-audit-exceptions.toml](.github/pip-audit-exceptions.toml). The Argos file is audited without installing
 its deliberately unused Torch/Stanza dependency tree.
 
-To reproduce stage 2 from the repository root, activate a Python 3.13 virtual environment and install
+To reproduce the CI checks from the repository root, activate a Python 3.13 virtual environment and install
 `src/requirements-dev.txt`. The following commands use Bash (Git Bash on Windows). The private environment below
 does not change the main stack's `.env`. `dc` always supplies the explicit isolated project and environment file.
 
@@ -130,7 +131,8 @@ dc --profile tools down --volumes --remove-orphans
 Quality and host checks need no databases:
 
 ```sh
-python -m ruff check src tests scripts analytics
+python -m ruff check .
+python -m ruff format --check .
 python scripts/audit_requirements.py
 python scripts/check_docs.py
 CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
@@ -173,8 +175,8 @@ For a local artifact check, before teardown run the same browser wrapper with
 Failures retain a trace and screenshot; passwords and authentication cookies are redacted before upload. The
 workflow uploads only sanitized failure artifacts, retained for seven days. To prove hosted behavior, manually
 dispatch the reviewed workflow with `force_browser_failure: true` and inspect its failed browser job's artifacts.
-Local results do not replace that hosted exit check. Stage 3's formatter remains deferred; the separate benchmark
-fixture job is described below and is not a required ruleset check.
+Local results do not replace that hosted exit check. The format gate runs in the required `quality` job; the separate
+benchmark fixture job is described below and is not a required ruleset check.
 
 ## Configuration
 

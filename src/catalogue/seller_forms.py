@@ -8,8 +8,11 @@ from .models import Category, Product
 
 class ProductForm(forms.ModelForm):
     description = forms.CharField(max_length=5000, widget=forms.Textarea(attrs={"rows": 4}))
-    photo = forms.FileField(required=False, help_text="JPEG, PNG or WebP, up to 2 MB.",
-                           widget=forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png,image/webp"}))
+    photo = forms.FileField(
+        required=False,
+        help_text="JPEG, PNG or WebP, up to 2 MB.",
+        widget=forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png,image/webp"}),
+    )
     price = forms.DecimalField(min_value=Decimal("0.01"), max_digits=12, decimal_places=2, label="Price (S$)")
     freight = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, label="Shipping fee (S$)")
     stock = forms.IntegerField(min_value=0, max_value=2**31 - 1)
@@ -33,6 +36,7 @@ class ProductForm(forms.ModelForm):
 
     def clean_photo(self):
         from .photos import clean_photo
+
         upload = self.cleaned_data.get("photo")
         return clean_photo(upload) if upload else None
 
@@ -45,17 +49,31 @@ class ProductForm(forms.ModelForm):
         allowed = {"attr_" + key for key in self.template["attributes"]}
         if self.is_bound and any(key.startswith("attr_") and key not in allowed for key in self.data):
             raise forms.ValidationError("Some options do not belong to this category. Reload its options.")
-        cleaned["attributes"] = {name: cleaned["attr_" + name] for name in self.template["attributes"]
-                                 if cleaned.get("attr_" + name) is not None and cleaned.get("attr_" + name) != ""}
+        cleaned["attributes"] = {
+            name: cleaned["attr_" + name]
+            for name in self.template["attributes"]
+            if cleaned.get("attr_" + name) is not None and cleaned.get("attr_" + name) != ""
+        }
         return cleaned
 
 
 class TemplateAttributeForm(forms.Form):
-    name = forms.RegexField(regex=r"^[a-z][a-z0-9_]{0,39}$", max_length=40,
-                           label="Attribute name", help_text="Lowercase letters, numbers and underscores, starting with a letter.")
-    kind = forms.ChoiceField(label="Type", choices=[("string", "Text"), ("integer", "Whole number"), ("boolean", "Yes or no")])
-    values = forms.CharField(label="Allowed values", required=False, widget=forms.Textarea(attrs={"rows": 4}),
-                             max_length=3000, help_text="One per line. Leave blank for any text or whole number.")
+    name = forms.RegexField(
+        regex=r"^[a-z][a-z0-9_]{0,39}$",
+        max_length=40,
+        label="Attribute name",
+        help_text="Lowercase letters, numbers and underscores, starting with a letter.",
+    )
+    kind = forms.ChoiceField(
+        label="Type", choices=[("string", "Text"), ("integer", "Whole number"), ("boolean", "Yes or no")]
+    )
+    values = forms.CharField(
+        label="Allowed values",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        max_length=3000,
+        help_text="One per line. Leave blank for any text or whole number.",
+    )
 
     def clean(self):
         cleaned = super().clean()

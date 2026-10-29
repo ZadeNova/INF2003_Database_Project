@@ -1,4 +1,5 @@
 """Small browser actions shared by independent demo journeys."""
+
 import os
 import re
 
@@ -23,8 +24,13 @@ def apply_and_create_product(page, username, shop, product, *, photo=None):
     if logout.count():
         logout.click()
     page.goto("/sell/apply/")
-    for label, value in [("Username", username), ("Shop name", shop), ("City", "sao paulo"),
-                         ("State", "SP"), ("Zip prefix", "01310")]:
+    for label, value in [
+        ("Username", username),
+        ("Shop name", shop),
+        ("City", "sao paulo"),
+        ("State", "SP"),
+        ("Zip prefix", "01310"),
+    ]:
         page.get_by_label(label, exact=True).fill(value)
     for label in ("Password", "Password confirmation"):
         page.get_by_label(label, exact=True).fill(os.environ["DEMO_SELLER_PASSWORD"])
@@ -44,12 +50,19 @@ def apply_and_create_product(page, username, shop, product, *, photo=None):
     page.goto("/products/mine/new/")
     page.get_by_label("Category options", exact=True).select_option(label="Uncategorised")
     page.get_by_role("button", name="Load options", exact=True).click()
-    for label, value in [("Name", product), ("Price (S$)", "12.34"), ("Stock", "8"),
-                         ("Shipping fee (S$)", "1.25"), ("Ready to ship in (days)", "2"),
-                         ("Description", "Generated product for the browser regression journey.")]:
+    for label, value in [
+        ("Name", product),
+        ("Price (S$)", "12.34"),
+        ("Stock", "8"),
+        ("Shipping fee (S$)", "1.25"),
+        ("Ready to ship in (days)", "2"),
+        ("Description", "Generated product for the browser regression journey."),
+    ]:
         page.get_by_label(label, exact=True).fill(value)
     if photo:
-        page.get_by_label("Photo", exact=True).set_input_files({"name": "sample.png", "mimeType": "image/png", "buffer": photo})
+        page.get_by_label("Photo", exact=True).set_input_files(
+            {"name": "sample.png", "mimeType": "image/png", "buffer": photo}
+        )
     page.get_by_role("button", name="Save product", exact=True).click()
     page.get_by_role("link", name=product, exact=True).click()
     edit_path = re.search(r"/products/mine/\d+/edit/", page.url).group(0)
@@ -90,15 +103,29 @@ def demo_products(page):
         if response.status == 404:
             continue
         text = page.locator(".product-detail__info").inner_text()
-        key = "sold_out" if "Demo adjustment: sold out" in text else "ready" if "Demo adjustment: low stock" in text else None
+        key = (
+            "sold_out"
+            if "Demo adjustment: sold out" in text
+            else "ready"
+            if "Demo adjustment: low stock" in text
+            else None
+        )
         if key:
             shop = page.locator('.product-detail__info a[href^="/products/shops/"]')
-            found[key] = {"id": product_id, "path": path, "edit": edit, "shop": shop.text_content().strip(), "shop_url": shop.get_attribute("href")}
+            found[key] = {
+                "id": product_id,
+                "path": path,
+                "edit": edit,
+                "shop": shop.text_content().strip(),
+                "shop_url": shop.get_attribute("href"),
+            }
         if len(found) == 2:
             return found
     missing = {"sold_out", "ready"} - found.keys()
-    raise AssertionError(f"seed_demo products {sorted(missing)} not found after the last seller page "
-                         f"({pages} pages, {len(edits)} low-stock candidates checked)")
+    raise AssertionError(
+        f"seed_demo products {sorted(missing)} not found after the last seller page "
+        f"({pages} pages, {len(edits)} low-stock candidates checked)"
+    )
 
 
 def other_sellers(page, excluded_shop, count):
@@ -140,7 +167,10 @@ def buy(page, username, paths):
     expect(page).to_have_url(re.compile(r"/checkouts/\d+/$"))
     expect(page.get_by_role("heading", name="Payment received", exact=True)).to_be_visible()
     links = page.locator('h2 a[href^="/orders/"]')
-    return {links.nth(index).text_content().strip(): links.nth(index).get_attribute("href") for index in range(links.count())}
+    return {
+        links.nth(index).text_content().strip(): links.nth(index).get_attribute("href")
+        for index in range(links.count())
+    }
 
 
 def deliver(page, order_path):

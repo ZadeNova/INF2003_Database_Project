@@ -21,6 +21,7 @@ class RoleRequiredMixin(HtmxLoginRequiredMixin):
     The role (and a seller's status) is read from the database on every request, so a change made by an
     operator applies to sessions that are already logged in.
     """
+
     role = None
 
     def dispatch(self, request, *args, **kwargs):
@@ -47,6 +48,7 @@ class OperatorRequiredMixin(RoleRequiredMixin):
 
 class AnySellerMixin(RoleRequiredMixin):
     """Any seller, whatever their status: only for the seller's own status page."""
+
     role = User.Role.SELLER
 
     def check_access(self, request):
@@ -83,7 +85,8 @@ def safe_local_path(request, target):
     """A same-site path for `next`, or None. Absolute URLs, scheme-relative and backslash tricks are refused."""
     if not target or not target.startswith("/") or target.startswith(("//", "/\\")):
         return None
-    if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
-                                           require_https=request.is_secure()):
+    if not url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         return None
     return target

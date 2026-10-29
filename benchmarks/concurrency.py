@@ -1,4 +1,5 @@
 """Connect and validate every client before releasing a shared timed window."""
+
 import threading
 import time
 

@@ -1,4 +1,5 @@
 """Review contract and exit checks against real PostgreSQL and MongoDB."""
+
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from decimal import Decimal, localcontext
@@ -32,9 +33,18 @@ STATS = {"_id": "bayesian", "m": Decimal128("4"), "C": Decimal128("2")}
 def graph(mongo_db):
     buyer, item = customer(), product()
     mongo_db.platform_stats.insert_one(dict(STATS))
-    mongo_db.product_specs.insert_one({"_id": item.pk, "category_id": item.category_id, "description": "Example",
-        "attributes": {}, "photo_file_id": None, "rating_summary": empty_summary(STATS), "latest_reviews": [],
-        "has_generated_content": False})
+    mongo_db.product_specs.insert_one(
+        {
+            "_id": item.pk,
+            "category_id": item.category_id,
+            "description": "Example",
+            "attributes": {},
+            "photo_file_id": None,
+            "rating_summary": empty_summary(STATS),
+            "latest_reviews": [],
+            "has_generated_content": False,
+        }
+    )
     return buyer, item
 
 
@@ -53,7 +63,9 @@ def assert_summary(database, item):
     with localcontext() as context:
         context.prec = 28
         assert summary["average"].to_decimal() == (Decimal(summary["sum"]) / len(rows) if rows else Decimal(0))
-    assert abs(summary["bayesian"].to_decimal() - bayesian_score(STATS, summary["sum"], len(rows)).to_decimal()) < Decimal("1e-27")
+    assert abs(
+        summary["bayesian"].to_decimal() - bayesian_score(STATS, summary["sum"], len(rows)).to_decimal()
+    ) < Decimal("1e-27")
     assert spec["latest_reviews"] == rows[:5]
 
 
@@ -105,6 +117,7 @@ def test_other_customer_and_duplicate_and_invalid_scores_are_refused(graph, mong
 def test_concurrent_reviews_on_one_product_both_land(graph, mongo_db):
     buyer, item = graph
     lines = [line_for(buyer, item) for _ in range(2)]
+
     def write(line):
         close_old_connections()
         try:
@@ -112,6 +125,7 @@ def test_concurrent_reviews_on_one_product_both_land(graph, mongo_db):
                 write_review(buyer, line.pk, "create", {"score": 4})
         finally:
             close_old_connections()
+
     with ThreadPoolExecutor(max_workers=2) as pool:
         list(pool.map(write, lines))
     assert mongo_db.reviews.count_documents({}) == 2
@@ -157,20 +171,35 @@ def test_literal_injection_text_and_narrow_audit_function(graph, mongo_db):
     assert AuditLog.objects.get(table_name="reviews").reason == payload
     assert mongo_db.reviews.count_documents({}) == 1
     with runtime_connection() as runtime:
-        for review_id, action, reason in [(str(line.pk), payload, "Reason"), (payload, "takedown", "Reason"), (str(line.pk), "takedown", " ")]:
+        for review_id, action, reason in [
+            (str(line.pk), payload, "Reason"),
+            (payload, "takedown", "Reason"),
+            (str(line.pk), "takedown", " "),
+        ]:
             with pytest.raises(psycopg.errors.CheckViolation), runtime.transaction():
-                runtime.execute("SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)", [str(operator.pk), reason])
+                runtime.execute(
+                    "SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
+                    [str(operator.pk), reason],
+                )
                 runtime.execute("SELECT public.audit_review_moderation(%s, %s)", [review_id, action])
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
-            runtime.execute("INSERT INTO audit_log(table_name,row_id,action,created_at) VALUES ('reviews','1','forged',now())")
+            runtime.execute(
+                "INSERT INTO audit_log(table_name,row_id,action,created_at) VALUES ('reviews','1','forged',now())"
+            )
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             runtime.execute("SELECT public.audit_review_moderation(%s, %s)", [str(line.pk), "restore"])
         with runtime.transaction():
-            runtime.execute("SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)", [str(operator.pk), payload])
+            runtime.execute(
+                "SELECT set_config('mercer.actor_id', %s, true), set_config('mercer.audit_reason', %s, true)",
+                [str(operator.pk), payload],
+            )
             runtime.execute("SELECT public.audit_review_moderation(%s, %s)", [str(line.pk), "restore"])
     assert AuditLog.objects.filter(table_name="reviews").count() == 2
     with connection.cursor() as cursor:
-        cursor.execute("SELECT prosecdef, proconfig, pg_get_userbyid(proowner)=current_user FROM pg_proc WHERE proname=%s", ["audit_review_moderation"])
+        cursor.execute(
+            "SELECT prosecdef, proconfig, pg_get_userbyid(proowner)=current_user FROM pg_proc WHERE proname=%s",
+            ["audit_review_moderation"],
+        )
         assert cursor.fetchone() == (True, ["search_path=public, pg_temp"], True)
 
 
@@ -181,7 +210,10 @@ def test_customer_ui_and_seller_scoping_and_operator_roles(graph, mongo_db):
     client.force_login(buyer)
     path = f"/reviews/line/{line.pk}/"
     assert client.get(path).status_code == 200
-    assert client.post(path, {"action": "create", "score": "4", "title": "Only our shop", "text": "Good"}).status_code == 302
+    assert (
+        client.post(path, {"action": "create", "score": "4", "title": "Only our shop", "text": "Good"}).status_code
+        == 302
+    )
     page = client.get(f"/products/{item.pk}/")
     assert b"4.0 / 5 from 1 review" in page.content and b"Only our shop" in page.content
     assert client.post(path, {"action": "edit", "score": "2", "text": "Changed"}).status_code == 302
@@ -200,6 +232,7 @@ def test_customer_ui_and_seller_scoping_and_operator_roles(graph, mongo_db):
 
 def test_seller_rating_match_uses_seller_date_index_and_only_own_documents(imported, mongo_db):
     from reviews.queries import seller_rating
+
     for _ in range(2):
         call_command("mongo_setup", database=mongo_db.name, stdout=StringIO())
     seller_id = mongo_db.reviews.find_one({})["seller_id"]
@@ -232,27 +265,40 @@ def test_imported_display_translation_history_pagination_and_takedown(imported, 
     line = OrderLine.objects.select_related("order__checkout", "product").get(pk=historical["order_line_id"])
     # Imported undelivered history must remain visible and labelled.
     from orders.models import Order
+
     undelivered = set(Order.objects.exclude(status="delivered").values_list("pk", flat=True))
     if without_historical:
         mongo_db.reviews.delete_many({"order_id": {"$in": list(undelivered)}})
     row = mongo_db.reviews.find_one({"order_id": {"$in": list(undelivered)}})
     if row is None:
         pending = line_for(line.order.checkout.customer, line.product, status="paid")
-        row = {**historical, "_id": pending.pk, "order_line_id": pending.pk, "order_id": pending.order_id,
-            "checkout_id": pending.order.checkout_id, "product_id": pending.product_id, "seller_id": pending.seller_id,
-            "customer_id": pending.order.checkout.customer_id, "olist_review_id": None}
+        row = {
+            **historical,
+            "_id": pending.pk,
+            "order_line_id": pending.pk,
+            "order_id": pending.order_id,
+            "checkout_id": pending.order.checkout_id,
+            "product_id": pending.product_id,
+            "seller_id": pending.seller_id,
+            "customer_id": pending.order.checkout.customer_id,
+            "olist_review_id": None,
+        }
         mongo_db.reviews.insert_one(row)
     assert row is not None
     assert Order.objects.get(pk=row["order_id"]).status != "delivered"
     from reviews.queries import review_page
+
     assert review_page(mongo_db, {"order_line_id": row["order_line_id"]}, 1).object_list[0]["historical"]
     from catalogue.models import Product
+
     Product.objects.filter(pk=row["product_id"]).update(active=True)
     ordered = list(mongo_db.reviews.find({"product_id": row["product_id"], **VISIBLE}).sort(NEWEST))
     number = next(index for index, review in enumerate(ordered) if review["_id"] == row["_id"]) // 10 + 1
     page = Client().get(f"/products/{row['product_id']}/", {"page": number})
     assert page.status_code == 200
-    assert any(review["line_id"] == row["order_line_id"] and review["historical"] for review in page.context["reviews_page"])
+    assert any(
+        review["line_id"] == row["order_line_id"] and review["historical"] for review in page.context["reviews_page"]
+    )
     assert b"Historical review (order not delivered)" in page.content
     Product.objects.filter(pk=line.product_id).update(active=True)
     page = Client().get(f"/products/{line.product_id}/?lang=pt")
@@ -260,6 +306,7 @@ def test_imported_display_translation_history_pagination_and_takedown(imported, 
     page = Client().get(f"/products/{line.product_id}/?lang=en")
     assert b"Machine-translated from Portuguese" in page.content
     from reviews.queries import review_page
+
     first = review_page(mongo_db, {}, 1)
     second = review_page(mongo_db, {}, 2)
     assert len(first.object_list) == 10 and not {r["line_id"] for r in first} & {r["line_id"] for r in second}
@@ -267,8 +314,20 @@ def test_imported_display_translation_history_pagination_and_takedown(imported, 
 
 def test_bayesian_prior_for_new_product_and_top_rated_path(graph, mongo_db):
     buyer, item = graph
-    created = save_product(item.seller, item.seller.user, {"name": "New", "category": item.category,
-        "price": item.price, "stock": 2, "freight": item.freight, "lead_time_days": 2, "description": "New", "attributes": {}})
+    created = save_product(
+        item.seller,
+        item.seller.user,
+        {
+            "name": "New",
+            "category": item.category,
+            "price": item.price,
+            "stock": 2,
+            "freight": item.freight,
+            "lead_time_days": 2,
+            "description": "New",
+            "attributes": {},
+        },
+    )
     assert mongo_db.product_specs.find_one({"_id": created.pk})["rating_summary"]["bayesian"] == STATS["m"]
     # A single five-star review shrinks more than a body of very good reviews.
     write_review(buyer, line_for(buyer, created).pk, "create", {"score": 5})
@@ -277,6 +336,7 @@ def test_bayesian_prior_for_new_product_and_top_rated_path(graph, mongo_db):
     write_review(buyer, line_for(buyer, item).pk, "create", {"score": 4})
     assert_summary(mongo_db, item)
     from catalogue.forms import SearchForm
+
     form = SearchForm({"category": item.category_id, "sort": "top"})
     assert form.is_valid(), form.errors
     page, _ = search_page(mongo_db, visible_products(), form.cleaned_data, {}, 1)
@@ -287,6 +347,7 @@ def test_imported_summary_returns_byte_exact_after_insert_and_delete(imported, m
     from accounts.models import User
     from catalogue.models import Product
     from orders.models import Order
+
     order = Order.objects.filter(status="delivered").select_related("checkout").first()
     buyer = User.objects.get(pk=order.checkout.customer_id)
     for spec in mongo_db.product_specs.find({}).limit(20):

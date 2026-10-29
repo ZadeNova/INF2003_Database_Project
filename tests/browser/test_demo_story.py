@@ -1,4 +1,5 @@
 """Serial, independent journeys against freshly imported data and runtime web."""
+
 import os
 import re
 from datetime import datetime
@@ -85,7 +86,9 @@ def test_three_seller_checkout_ship_deliver_cancel_and_refund(page):
     second = other_sellers(page, ready["shop_url"], 1)[0]
     # The small fixture exposes only two established shops. Make the third through
     # the real application/approval UI, independently of the seller-upload test.
-    third = apply_and_create_product(page, unique("checkout-seller"), unique("checkout-shop"), unique("checkout-product"))
+    third = apply_and_create_product(
+        page, unique("checkout-seller"), unique("checkout-shop"), unique("checkout-product")
+    )
     paths = [ready["path"], second, third["path"]]
     orders = buy(page, "demo-chee-long", paths)
     assert len(orders) == 3
@@ -143,7 +146,9 @@ def test_wishlist_restock_shows_one_unseen_alert(page):
     if saved.count():
         saved.click()
     summary.get_by_role("button", name="Save to wishlist", exact=True).click()
-    expect(summary.get_by_role("button", name="Remove from wishlist", exact=True)).to_have_attribute("aria-pressed", "true")
+    expect(summary.get_by_role("button", name="Remove from wishlist", exact=True)).to_have_attribute(
+        "aria-pressed", "true"
+    )
     login(page, "demo-seller", "seller")
     set_stock(page, sold_out["edit"], 5)
     login(page, "demo-joash")
@@ -157,8 +162,13 @@ def test_dashboard_insights_and_trending_render(page):
     login(page, "demo-operator", "operator")
     page.goto("/operator/dashboard/")
     as_of = None
-    for title in ("Replenishment priorities", "Category performance", "Delivery delay and review score",
-                  "Seller delivery risk", "Products with poor reviews"):
+    for title in (
+        "Replenishment priorities",
+        "Category performance",
+        "Delivery delay and review score",
+        "Seller delivery risk",
+        "Products with poor reviews",
+    ):
         panel = page.locator("section").filter(has=page.get_by_role("heading", name=title, exact=True))
         source = panel.locator(".panel__note").filter(has_text=re.compile(r"^As of "))
         expect(source).to_have_count(1)
@@ -172,7 +182,9 @@ def test_dashboard_insights_and_trending_render(page):
     login(page, "demo-seller", "seller")
     page.goto("/seller/insights/")
     expect(page.get_by_role("heading", name="Insights", exact=True)).to_be_visible()
-    expect(page.get_by_role("region", name="Product browsing and sales", exact=True)).to_contain_text("Includes generated views.")
+    expect(page.get_by_role("region", name="Product browsing and sales", exact=True)).to_contain_text(
+        "Includes generated views."
+    )
     page.goto("/products/")
     trending = page.locator("section.panel").filter(has=page.get_by_role("heading", name="Trending", exact=True))
     expect(trending).to_have_count(1)
@@ -184,4 +196,6 @@ def test_failure_artifact_canary(page, request):
     login(page, "demo-chee-long")
     page.goto("/products/")
     expect(page.get_by_role("heading", name="A little of everything", exact=True)).to_be_visible()
-    assert not request.config.getoption("--force-browser-failure"), "Intentional browser failure to verify retained trace and screenshot artifacts"
+    assert not request.config.getoption("--force-browser-failure"), (
+        "Intentional browser failure to verify retained trace and screenshot artifacts"
+    )

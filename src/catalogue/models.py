@@ -16,6 +16,7 @@ class Category(models.Model):
     @property
     def icon_name(self):
         from .icons import CATEGORY_ICONS
+
         return CATEGORY_ICONS.get(self.slug, self.icon)
 
 
@@ -44,8 +45,12 @@ class Product(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["seller", "olist_product_id"], name="product_source_seller_unique"),
             models.UniqueConstraint(fields=["id", "seller"], name="product_id_seller_unique"),
-            models.CheckConstraint(condition=Q(price__gt=0, price__lte="9999999999.99"), name="product_price_positive_finite"),
-            models.CheckConstraint(condition=Q(freight__gte=0, freight__lte="9999999999.99"), name="product_freight_nonnegative_finite"),
+            models.CheckConstraint(
+                condition=Q(price__gt=0, price__lte="9999999999.99"), name="product_price_positive_finite"
+            ),
+            models.CheckConstraint(
+                condition=Q(freight__gte=0, freight__lte="9999999999.99"), name="product_freight_nonnegative_finite"
+            ),
         ]
 
     @property
@@ -55,6 +60,7 @@ class Product(models.Model):
 
 class PurchasableProduct(models.Model):
     """Read-only IDs from the canonical visibility view; use as an ORM subquery."""
+
     id = models.BigIntegerField(primary_key=True)
 
     class Meta:

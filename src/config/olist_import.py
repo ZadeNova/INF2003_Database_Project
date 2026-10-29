@@ -1,4 +1,5 @@
 """Load committed clean files only. No cleaning, translation or generation here."""
+
 import csv
 import hashlib
 import json
@@ -17,10 +18,17 @@ from catalogue.models import Category, Product
 from orders.models import Checkout, Order, OrderLine, Payment, Refund
 
 TABLES = {
-    "users": get_user_model(), "customers": CustomerProfile, "sellers": Seller,
-    "categories": Category, "products": Product, "checkouts": Checkout,
-    "orders": Order, "order_lines": OrderLine, "payments": Payment,
-    "refunds": Refund, "geolocation": Geolocation,
+    "users": get_user_model(),
+    "customers": CustomerProfile,
+    "sellers": Seller,
+    "categories": Category,
+    "products": Product,
+    "checkouts": Checkout,
+    "orders": Order,
+    "order_lines": OrderLine,
+    "payments": Payment,
+    "refunds": Refund,
+    "geolocation": Geolocation,
 }
 COLLECTIONS = ("reviews", "product_specs", "platform_stats", "category_templates")
 IMPORT_LOCK = 8201001
@@ -58,7 +66,9 @@ INVARIANTS = {
 
 
 def fail(name, rows):
-    raise CommandError(f"Invariant {name} failed; diagnostic rows: " + json.dumps(rows[:10], default=str, sort_keys=True))
+    raise CommandError(
+        f"Invariant {name} failed; diagnostic rows: " + json.dumps(rows[:10], default=str, sort_keys=True)
+    )
 
 
 def sql_invariants(*, importing=False):
@@ -106,8 +116,7 @@ def verify_manifest(source):
         approved = {field.column for field in model._meta.local_fields}
         # New application metadata has a database default and is absent from the fixed clean dataset.
         optional = {"request_fingerprint"} if label == "checkouts" else set()
-        if (len(fields) != len(set(fields)) or not set(fields) <= approved
-                or not approved - set(fields) <= optional):
+        if len(fields) != len(set(fields)) or not set(fields) <= approved or not approved - set(fields) <= optional:
             raise CommandError(f"Unexpected CSV header: {label}")
     ledger = json.loads((source / "cleaning_ledger.json").read_text(encoding="utf-8"))
     if set(ledger["output_counts"]) != set(TABLES) | set(COLLECTIONS):
@@ -118,7 +127,9 @@ def verify_manifest(source):
 def ensure_empty(database):
     for label, model in TABLES.items():
         if model.objects.exists():
-            raise CommandError(f"Import requires an empty database; {label} already contains rows. Reset local databases before importing.")
+            raise CommandError(
+                f"Import requires an empty database; {label} already contains rows. Reset local databases before importing."
+            )
     for name in COLLECTIONS:
         if database[name].find_one({}, {"_id": 1}) is not None:
             raise CommandError(f"Import requires empty MongoDB collections; {name} already contains documents.")
@@ -130,7 +141,9 @@ def loading_triggers():
     with connection.cursor() as cursor:
         for model in TABLES.values():
             table = model._meta.db_table
-            cursor.execute("SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid=%s::regclass AND NOT tgisinternal", [table])
+            cursor.execute(
+                "SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid=%s::regclass AND NOT tgisinternal", [table]
+            )
             previous.extend((table, name, mode) for name, mode in cursor.fetchall())
             cursor.execute(sql.SQL("ALTER TABLE {} DISABLE TRIGGER USER").format(sql.Identifier(table)))
     try:
@@ -145,8 +158,11 @@ def loading_triggers():
                 cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
                 modes = {"O": "ENABLE", "D": "DISABLE", "R": "ENABLE REPLICA", "A": "ENABLE ALWAYS"}
                 for table, name, mode in previous:
-                    cursor.execute(sql.SQL("ALTER TABLE {} {} TRIGGER {}").format(
-                        sql.Identifier(table), sql.SQL(modes[mode]), sql.Identifier(name)))
+                    cursor.execute(
+                        sql.SQL("ALTER TABLE {} {} TRIGGER {}").format(
+                            sql.Identifier(table), sql.SQL(modes[mode]), sql.Identifier(name)
+                        )
+                    )
 
 
 def copy_table(source, label, model):
@@ -154,7 +170,8 @@ def copy_table(source, label, model):
     with path.open(encoding="utf-8", newline="") as stream:
         fields = next(csv.reader(stream))
     query = sql.SQL("COPY {} ({}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '\\N')").format(
-        sql.Identifier(model._meta.db_table), sql.SQL(", ").join(map(sql.Identifier, fields)))
+        sql.Identifier(model._meta.db_table), sql.SQL(", ").join(map(sql.Identifier, fields))
+    )
     with connection.cursor() as cursor, path.open("rb") as stream:
         with cursor.copy(query) as copy:
             for block in iter(lambda: stream.read(1024 * 1024), b""):
@@ -169,8 +186,12 @@ def repair_sequences():
             table = model._meta.db_table
             cursor.execute("SELECT pg_get_serial_sequence(%s, %s)", [table, "id"])
             sequence = cursor.fetchone()[0]
-            cursor.execute(sql.SQL("SELECT setval(%s::regclass, COALESCE(max(id), 1), max(id) IS NOT NULL) FROM {}").format(
-                sql.Identifier(table)), [sequence])
+            cursor.execute(
+                sql.SQL("SELECT setval(%s::regclass, COALESCE(max(id), 1), max(id) IS NOT NULL) FROM {}").format(
+                    sql.Identifier(table)
+                ),
+                [sequence],
+            )
 
 
 def insert_documents(database, source, session, progress, attempted_ids):
@@ -207,7 +228,10 @@ def reconcile(database, ledger, session=None):
     with connection.cursor() as cursor:
         cursor.execute("""SELECT l.id, l.order_id, o.checkout_id, l.product_id, l.seller_id, c.customer_id
             FROM orders_orderline l JOIN orders_order o ON o.id=l.order_id JOIN orders_checkout c ON c.id=o.checkout_id""")
-        links = {r[0]: dict(zip(("order_id", "checkout_id", "product_id", "seller_id", "customer_id"), r[1:])) for r in cursor.fetchall()}
+        links = {
+            r[0]: dict(zip(("order_id", "checkout_id", "product_id", "seller_id", "customer_id"), r[1:]))
+            for r in cursor.fetchall()
+        }
     products = dict(Product.objects.values_list("id", "category_id"))
     categories = set(Category.objects.values_list("id", flat=True))
     for name in COLLECTIONS:
@@ -223,6 +247,13 @@ def reconcile(database, ledger, session=None):
             fail("mongo_product_reference", [{"product_id": row["_id"], "category_id": row["category_id"]}])
         if any(r["product_id"] != row["_id"] or r["order_line_id"] not in links for r in row["latest_reviews"]):
             fail("mongo_subset_reference", [{"product_id": row["_id"]}])
-    template_ids = {r["_id"] for r in database.category_templates.find({}, {"_id": 1, "category_id": 1}, session=session) if r["_id"] == r["category_id"]}
+    template_ids = {
+        r["_id"]
+        for r in database.category_templates.find({}, {"_id": 1, "category_id": 1}, session=session)
+        if r["_id"] == r["category_id"]
+    }
     if categories != template_ids:
-        fail("mongo_template_reference", [{"missing": sorted(categories - template_ids), "extra": sorted(template_ids - categories)}])
+        fail(
+            "mongo_template_reference",
+            [{"missing": sorted(categories - template_ids), "extra": sorted(template_ids - categories)}],
+        )

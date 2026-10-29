@@ -71,12 +71,15 @@ _PARENT_IDS = """
         SELECT total INTO checkout_total FROM public.orders_checkout WHERE id = parent FOR UPDATE;
         IF NOT FOUND THEN CONTINUE; END IF;
 """
-MONEY_INVARIANTS = """
+MONEY_INVARIANTS = (
+    """
 CREATE FUNCTION public.check_checkout_money() RETURNS trigger
 LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
 DECLARE old_parent bigint; new_parent bigint; parent bigint; checkout_total numeric;
 BEGIN
-""" + _PARENT_IDS + """
+"""
+    + _PARENT_IDS
+    + """
         IF checkout_total <> (SELECT COALESCE(sum(amount), 0) FROM public.orders_payment WHERE checkout_id = parent)
             OR checkout_total <> (SELECT COALESCE(sum(total), 0) FROM public.orders_order WHERE checkout_id = parent) THEN
             RAISE EXCEPTION 'checkout payments and orders must equal its total' USING ERRCODE = '23514';
@@ -88,7 +91,9 @@ CREATE FUNCTION public.check_checkout_refunds() RETURNS trigger
 LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
 DECLARE old_parent bigint; new_parent bigint; parent bigint; checkout_total numeric;
 BEGIN
-""" + _PARENT_IDS + """
+"""
+    + _PARENT_IDS
+    + """
         IF (SELECT COALESCE(sum(amount), 0) FROM public.orders_refund WHERE checkout_id = parent)
             <> (SELECT COALESCE(sum(total), 0) FROM public.orders_order WHERE checkout_id = parent AND status = 'cancelled') THEN
             RAISE EXCEPTION 'checkout refunds must equal cancelled orders' USING ERRCODE = '23514';
@@ -98,6 +103,7 @@ BEGIN
 END $$;
 REVOKE EXECUTE ON FUNCTION public.check_checkout_money(), public.check_checkout_refunds() FROM PUBLIC;
 """
+)
 MONEY_INVARIANTS_REVERSE = ""
 for _table in ("orders_checkout", "orders_order", "orders_payment", "orders_refund"):
     for _kind in ("money", "refunds"):
@@ -106,4 +112,6 @@ CREATE CONSTRAINT TRIGGER {_table}_{_kind} AFTER INSERT OR UPDATE OR DELETE ON p
 DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.check_checkout_{_kind}();
 """
         MONEY_INVARIANTS_REVERSE += f"DROP TRIGGER {_table}_{_kind} ON public.{_table};\n"
-MONEY_INVARIANTS_REVERSE += "DROP FUNCTION public.check_checkout_money(); DROP FUNCTION public.check_checkout_refunds();"
+MONEY_INVARIANTS_REVERSE += (
+    "DROP FUNCTION public.check_checkout_money(); DROP FUNCTION public.check_checkout_refunds();"
+)

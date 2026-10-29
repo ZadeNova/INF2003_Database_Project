@@ -1,4 +1,5 @@
 """Keep the standard-library HTTP smoke check aligned with seeded role landings."""
+
 from io import StringIO
 
 import pytest

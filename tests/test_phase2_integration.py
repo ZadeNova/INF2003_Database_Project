@@ -1,4 +1,5 @@
 """Checkout and catalogue together: checkout's stock changes fire catalogue's product audit trigger."""
+
 import uuid
 
 import pytest

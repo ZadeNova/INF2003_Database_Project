@@ -1,4 +1,5 @@
 """One MongoDB connection policy for Django and offline tools (no Django import)."""
+
 import atexit
 import os
 from contextlib import contextmanager
@@ -23,9 +24,12 @@ def connection_options(*, environ=None, direct=False):
     if any(not value or value.startswith("replace-") for value in values.values()):
         raise ValueError("Missing MongoDB connection configuration")
     options = {
-        "host": env.get("MONGO_HOST", "mongo"), "port": int(env.get("MONGO_PORT", "27017")),
-        "username": values["MONGO_APP_USER"], "password": values["MONGO_APP_PASSWORD"],
-        "authSource": "admin", "serverSelectionTimeoutMS": 3000,
+        "host": env.get("MONGO_HOST", "mongo"),
+        "port": int(env.get("MONGO_PORT", "27017")),
+        "username": values["MONGO_APP_USER"],
+        "password": values["MONGO_APP_PASSWORD"],
+        "authSource": "admin",
+        "serverSelectionTimeoutMS": 3000,
     }
     if direct:
         options["directConnection"] = True

@@ -1,4 +1,5 @@
 """Host-side standard-library runner: explicit isolated project, provenance and Docker resource sampling."""
+
 import argparse
 import gzip
 import json
@@ -32,41 +33,104 @@ def compose(project):
 
 
 def collect_host(project):
-    info = json.loads(command(["docker", "info", "--format", "{{json .}}"] ))
-    version = json.loads(command(["docker", "version", "--format", "{{json .}}"] ))
+    info = json.loads(command(["docker", "info", "--format", "{{json .}}"]))
+    version = json.loads(command(["docker", "version", "--format", "{{json .}}"]))
     identifiers = command(compose(project) + ["ps", "-q"]).splitlines()
     containers = []
     for identity in identifiers:
-        value = json.loads(command(["docker", "inspect", "--format", '{"name":{{json .Name}},"image":{{json .Config.Image}},"limits":{{json .HostConfig}}}', identity]))
-        containers.append({"name": value["name"], "image": value["image"], "limits": {k: value["limits"][k] for k in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")},
-                           "image_digests": json.loads(command(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", value["image"]]))})
+        value = json.loads(
+            command(
+                [
+                    "docker",
+                    "inspect",
+                    "--format",
+                    '{"name":{{json .Name}},"image":{{json .Config.Image}},"limits":{{json .HostConfig}}}',
+                    identity,
+                ]
+            )
+        )
+        containers.append(
+            {
+                "name": value["name"],
+                "image": value["image"],
+                "limits": {k: value["limits"][k] for k in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")},
+                "image_digests": json.loads(
+                    command(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", value["image"]])
+                ),
+            }
+        )
     if platform.system() == "Windows":
-        hardware = json.loads(command(["powershell", "-NoProfile", "-Command",
-            "@{cpu=(Get-CimInstance Win32_Processor | Select-Object Name,NumberOfCores,NumberOfLogicalProcessors);ram=(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory} | ConvertTo-Json -Depth 4"]))
+        hardware = json.loads(
+            command(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-Command",
+                    "@{cpu=(Get-CimInstance Win32_Processor | Select-Object Name,NumberOfCores,NumberOfLogicalProcessors);ram=(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory} | ConvertTo-Json -Depth 4",
+                ]
+            )
+        )
     else:
         hardware = {"cpu": platform.processor(), "cores": os.cpu_count(), "ram": info["MemTotal"]}
         if Path("/proc/cpuinfo").exists():
-            hardware["cpu"] = next((line.partition(":")[2].strip() for line in Path("/proc/cpuinfo").read_text().splitlines() if line.startswith("model name")), hardware["cpu"])
+            hardware["cpu"] = next(
+                (
+                    line.partition(":")[2].strip()
+                    for line in Path("/proc/cpuinfo").read_text().splitlines()
+                    if line.startswith("model name")
+                ),
+                hardware["cpu"],
+            )
         if Path("/proc/meminfo").exists():
             hardware["ram"] = int(Path("/proc/meminfo").read_text().splitlines()[0].split()[1]) * 1024
     # Executes in the isolated MongoDB container. Environment variables remain inside mongosh.
-    script = ("const a=db.getSiblingDB('admin'); print(JSON.stringify({options:a.runCommand({getCmdLineOpts:1}).parsed,"
-              "cache_bytes:a.serverStatus().wiredTiger.cache['maximum bytes configured'],"
-              "majority_journal_default:rs.conf().writeConcernMajorityJournalDefault,default_write_concern:a.runCommand({getDefaultRWConcern:1})}));")
-    mongo = json.loads(command(compose(project) + ["exec", "-T", "bench-mongo", "bash", "-c",
-        'mongosh --quiet --norc --username="$MONGO_ROOT_USER" --password="$MONGO_ROOT_PASSWORD" --authenticationDatabase admin --eval "$1"', "bench-readback", script]))
-    return {"project": project, "os": platform.platform(), "hardware": hardware, "docker_version": version,
-            "docker_vm": {key: info[key] for key in ("NCPU", "MemTotal", "OperatingSystem", "KernelVersion")}, "containers": containers,
-            "runner_limits": {"cpus": 2, "memory_bytes": 2 * 1024**3, "memory_swap_bytes": 2 * 1024**3},
-            "mongo_server_readback": mongo, "vm_meets_plan": info["NCPU"] >= 6 and info["MemTotal"] >= 8 * 1024**3}
+    script = (
+        "const a=db.getSiblingDB('admin'); print(JSON.stringify({options:a.runCommand({getCmdLineOpts:1}).parsed,"
+        "cache_bytes:a.serverStatus().wiredTiger.cache['maximum bytes configured'],"
+        "majority_journal_default:rs.conf().writeConcernMajorityJournalDefault,default_write_concern:a.runCommand({getDefaultRWConcern:1})}));"
+    )
+    mongo = json.loads(
+        command(
+            compose(project)
+            + [
+                "exec",
+                "-T",
+                "bench-mongo",
+                "bash",
+                "-c",
+                'mongosh --quiet --norc --username="$MONGO_ROOT_USER" --password="$MONGO_ROOT_PASSWORD" --authenticationDatabase admin --eval "$1"',
+                "bench-readback",
+                script,
+            ]
+        )
+    )
+    return {
+        "project": project,
+        "os": platform.platform(),
+        "hardware": hardware,
+        "docker_version": version,
+        "docker_vm": {key: info[key] for key in ("NCPU", "MemTotal", "OperatingSystem", "KernelVersion")},
+        "containers": containers,
+        "runner_limits": {"cpus": 2, "memory_bytes": 2 * 1024**3, "memory_swap_bytes": 2 * 1024**3},
+        "mongo_server_readback": mongo,
+        "vm_meets_plan": info["NCPU"] >= 6 and info["MemTotal"] >= 8 * 1024**3,
+    }
 
 
 def sample_stats(project, destination, stop):
     """A streaming docker stats process; each JSON record is timestamped as received (~one second)."""
-    process = subprocess.Popen(["docker", "stats", "--format", "{{json .}}"], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    process = subprocess.Popen(
+        ["docker", "stats", "--format", "{{json .}}"],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+
     def finish():
         stop.wait()
         process.terminate()
+
     watcher = threading.Thread(target=finish, daemon=True)
     watcher.start()
     last_second = {}
@@ -75,7 +139,7 @@ def sample_stats(project, destination, stop):
             try:
                 # Docker may clear an interactive terminal before its first JSON record.
                 clean = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", line)
-                record = json.loads(clean[clean.find("{"):])
+                record = json.loads(clean[clean.find("{") :])
                 if not record.get("Name", "").startswith(project + "-"):
                     continue
                 now = time.time_ns()
@@ -110,16 +174,23 @@ def main():
     if (args.final or args.require_clean) and dirty:
         parser.error("This run requires a clean committed tree")
     host = collect_host(args.project)
-    host.update(commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZONE).isoformat())
+    host.update(
+        commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZONE).isoformat()
+    )
     stamp = datetime.now(ZONE).strftime("%Y-%m-%dT%H%M%S")
     name = f"{stamp}_{commit[:8]}{'-dirty' if dirty else ''}_{args.label}"
     output = ROOT / "benchmarks" / "results" / name
     output.mkdir(parents=True, exist_ok=False)
-    output.chmod(0o777)  # The Linux runner UID differs from the host user's UID; only this evidence directory is shared.
+    output.chmod(
+        0o777
+    )  # The Linux runner UID differs from the host user's UID; only this evidence directory is shared.
     (output / "host.json").write_text(json.dumps(host, indent=2, sort_keys=True) + "\n", newline="\n")
     print(json.dumps({"results": str(output), "commit": host["commit"], "state": "started"}), flush=True)
     if not host["vm_meets_plan"]:
-        print(f"VM below plan minimum: {host['docker_vm']['NCPU']} CPUs, {host['docker_vm']['MemTotal']} bytes; trial/correctness evidence only.", flush=True)
+        print(
+            f"VM below plan minimum: {host['docker_vm']['NCPU']} CPUs, {host['docker_vm']['MemTotal']} bytes; trial/correctness evidence only.",
+            flush=True,
+        )
         if args.final:
             parser.error("Final measurements require at least six VM CPUs and eight GiB")
     stop = threading.Event()
@@ -127,9 +198,30 @@ def main():
     sampler.start()
     started = time.perf_counter()
     try:
-        arguments = dc + ["run", "--rm", "--name", args.project + "-load-client", "bench-runner", "python", "-m", "benchmarks.harness",
-                          "--source", args.source, "--golden", "/app/benchmarks/golden/" + args.golden, "--mode", args.mode,
-                          "--only", args.only, "--operations-per-client", str(args.operations_per_client), "--label", args.label, "--output", "/app/benchmarks/results/" + name]
+        arguments = dc + [
+            "run",
+            "--rm",
+            "--name",
+            args.project + "-load-client",
+            "bench-runner",
+            "python",
+            "-m",
+            "benchmarks.harness",
+            "--source",
+            args.source,
+            "--golden",
+            "/app/benchmarks/golden/" + args.golden,
+            "--mode",
+            args.mode,
+            "--only",
+            args.only,
+            "--operations-per-client",
+            str(args.operations_per_client),
+            "--label",
+            args.label,
+            "--output",
+            "/app/benchmarks/results/" + name,
+        ]
         # Tee exact printed output into a file without swallowing live progress.
         process = subprocess.Popen(arguments, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         with (output / "console.txt").open("w", encoding="utf-8", newline="\n") as stream:
@@ -137,8 +229,14 @@ def main():
                 print(line, end="", flush=True)
                 stream.write(line)
                 if args.project + "-load-client Created" in line:
-                    actual = json.loads(command(["docker", "inspect", "--format", "{{json .HostConfig}}", args.project + "-load-client"]))
-                    host["runner_actual_limits"] = {key: actual[key] for key in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")}
+                    actual = json.loads(
+                        command(
+                            ["docker", "inspect", "--format", "{{json .HostConfig}}", args.project + "-load-client"]
+                        )
+                    )
+                    host["runner_actual_limits"] = {
+                        key: actual[key] for key in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")
+                    }
         result = process.wait()
     finally:
         time.sleep(1.1)  # Retain the sample interval covering the final, potentially sub-second timed window.
@@ -155,16 +253,29 @@ def main():
         provenance.update(host=host, final=args.final)
         temporary = provenance_file.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(provenance, indent=2, sort_keys=True) + "\n", newline="\n")
-        temporary.replace(provenance_file)  # Directory permission permits replacing a file written by the container UID.
+        temporary.replace(
+            provenance_file
+        )  # Directory permission permits replacing a file written by the container UID.
     raw = output / "raw.jsonl"
     annotate(output)
     if raw.exists() and raw.stat().st_size > 5 * 1024 * 1024:
         with raw.open("rb") as source, gzip.open(str(raw) + ".gz", "wb") as target:
             import shutil
+
             shutil.copyfileobj(source, target)
         raw.unlink()
     command([sys.executable, "-m", "benchmarks.report", str(output)], capture=False)
-    print(json.dumps({"results": str(output), "commit": host["commit"], "exit_code": result, "duration_seconds": host["duration_seconds"]}), flush=True)
+    print(
+        json.dumps(
+            {
+                "results": str(output),
+                "commit": host["commit"],
+                "exit_code": result,
+                "duration_seconds": host["duration_seconds"],
+            }
+        ),
+        flush=True,
+    )
     return result
 
 

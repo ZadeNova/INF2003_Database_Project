@@ -1,4 +1,5 @@
 """Reproduce the Olist profile; generate dataset and ledger tables without manual counts."""
+
 import argparse
 import json
 import sys
@@ -11,12 +12,18 @@ from olist_common import ROOT, ZERO, decimal, delay_scores, read_raw, write_json
 
 
 def profile(raw):
-    totals, paid, pairs, product_sellers, order_sellers = defaultdict(lambda: ZERO), defaultdict(lambda: ZERO), Counter(), defaultdict(set), defaultdict(set)
+    totals, paid, pairs, product_sellers, order_sellers = (
+        defaultdict(lambda: ZERO),
+        defaultdict(lambda: ZERO),
+        Counter(),
+        defaultdict(set),
+        defaultdict(set),
+    )
     product_categories = {r["product_id"]: r["product_category_name"] for r in raw["products"]}
     categories = Counter()
     for row in raw["order_items"]:
         totals[row["order_id"]] += decimal(row["price"]) + decimal(row["freight_value"])
-        pairs[(row["order_id"], row["product_id"], row["seller_id"]) ] += 1
+        pairs[(row["order_id"], row["product_id"], row["seller_id"])] += 1
         product_sellers[row["product_id"]].add(row["seller_id"])
         order_sellers[row["order_id"]].add(row["seller_id"])
         categories[product_categories[row["product_id"]] or "Uncategorised"] += 1
@@ -32,56 +39,103 @@ def profile(raw):
         "no_payments": [r["order_id"] for r in orders if r["order_id"] not in paid],
         "payment_mismatch": sorted(mismatches),
         "not_defined": sorted({r["order_id"] for r in raw["order_payments"] if r["payment_type"] == "not_defined"}),
-        "delivered_without_date": [r["order_id"] for r in orders if r["order_status"] == "delivered" and not r["order_delivered_customer_date"]],
-        "undelivered_with_date": [r["order_id"] for r in orders if r["order_status"] != "delivered" and r["order_delivered_customer_date"]],
+        "delivered_without_date": [
+            r["order_id"] for r in orders if r["order_status"] == "delivered" and not r["order_delivered_customer_date"]
+        ],
+        "undelivered_with_date": [
+            r["order_id"] for r in orders if r["order_status"] != "delivered" and r["order_delivered_customer_date"]
+        ],
     }
     dates = [r["order_purchase_timestamp"] for r in orders]
-    geokeys = {(r["geolocation_zip_code_prefix"], r["geolocation_lat"], r["geolocation_lng"],
-                r["geolocation_city"], r["geolocation_state"]) for r in raw["geolocation"]}
-    return {"source_counts": {k: len(v) for k, v in raw.items()},
-            "payment_mismatches": len(mismatches), "one_cent_mismatches": sum(abs(v) == Decimal("0.01") for v in mismatches.values()),
-            "shared_products": sum(len(v) > 1 for v in product_sellers.values()),
-            "seller_products_before_cleaning": sum(len(v) for v in product_sellers.values()),
-            "shared_product_lines": sum(1 for r in raw["order_items"] if len(product_sellers[r["product_id"]]) > 1),
-            "repeated_line_groups": sum(v > 1 for v in pairs.values()),
-            "repeated_line_excess": sum(v - 1 for v in pairs.values()),
-            "multi_seller_orders": sum(len(v) > 1 for v in order_sellers.values()),
-            "duplicate_review_ids": sum(v - 1 for v in review_ids.values()),
-            "orders_with_duplicate_reviews": sum(v > 1 for v in reviews.values()),
-            "superseded_reviews": sum(v - 1 for v in reviews.values()),
-            "uncategorised_products": sum(not r["product_category_name"] for r in raw["products"]),
-            "customers_with_leading_zero_zip": sum(r["customer_zip_code_prefix"].startswith("0") for r in raw["customers"]),
-            "zero_instalment_payments": sum(r["payment_installments"] == "0" for r in raw["order_payments"]),
-            "categories_without_source_translation": len({r["product_category_name"] for r in raw["products"] if r["product_category_name"]}
-                - {r["product_category_name"] for r in raw["categories"]}),
-            "category_concentration": [{"category": k, "lines": v} for k, v in sorted(categories.items(), key=lambda x: (-x[1], x[0]))],
-            "purchase_dates": {"first": min(dates), "last": max(dates)},
-            "geolocation_unique_prefixes": len({r["geolocation_zip_code_prefix"] for r in raw["geolocation"]}),
-            "geolocation_exact_duplicates": len(raw["geolocation"]) - len(geokeys),
-            "delivery_delay_scores": delay_scores(raw), "broken_orders": {k: sorted(v) for k, v in broken.items()}}
+    geokeys = {
+        (
+            r["geolocation_zip_code_prefix"],
+            r["geolocation_lat"],
+            r["geolocation_lng"],
+            r["geolocation_city"],
+            r["geolocation_state"],
+        )
+        for r in raw["geolocation"]
+    }
+    return {
+        "source_counts": {k: len(v) for k, v in raw.items()},
+        "payment_mismatches": len(mismatches),
+        "one_cent_mismatches": sum(abs(v) == Decimal("0.01") for v in mismatches.values()),
+        "shared_products": sum(len(v) > 1 for v in product_sellers.values()),
+        "seller_products_before_cleaning": sum(len(v) for v in product_sellers.values()),
+        "shared_product_lines": sum(1 for r in raw["order_items"] if len(product_sellers[r["product_id"]]) > 1),
+        "repeated_line_groups": sum(v > 1 for v in pairs.values()),
+        "repeated_line_excess": sum(v - 1 for v in pairs.values()),
+        "multi_seller_orders": sum(len(v) > 1 for v in order_sellers.values()),
+        "duplicate_review_ids": sum(v - 1 for v in review_ids.values()),
+        "orders_with_duplicate_reviews": sum(v > 1 for v in reviews.values()),
+        "superseded_reviews": sum(v - 1 for v in reviews.values()),
+        "uncategorised_products": sum(not r["product_category_name"] for r in raw["products"]),
+        "customers_with_leading_zero_zip": sum(r["customer_zip_code_prefix"].startswith("0") for r in raw["customers"]),
+        "zero_instalment_payments": sum(r["payment_installments"] == "0" for r in raw["order_payments"]),
+        "categories_without_source_translation": len(
+            {r["product_category_name"] for r in raw["products"] if r["product_category_name"]}
+            - {r["product_category_name"] for r in raw["categories"]}
+        ),
+        "category_concentration": [
+            {"category": k, "lines": v} for k, v in sorted(categories.items(), key=lambda x: (-x[1], x[0]))
+        ],
+        "purchase_dates": {"first": min(dates), "last": max(dates)},
+        "geolocation_unique_prefixes": len({r["geolocation_zip_code_prefix"] for r in raw["geolocation"]}),
+        "geolocation_exact_duplicates": len(raw["geolocation"]) - len(geokeys),
+        "delivery_delay_scores": delay_scores(raw),
+        "broken_orders": {k: sorted(v) for k, v in broken.items()},
+    }
 
 
 def update_docs(path, data, ledger=None):
-    lines = ["<!-- generated by analytics/profile_olist.py -->", "## Dataset profile", "",
-             "| Source table | Rows |", "|---|---:|"]
+    lines = [
+        "<!-- generated by analytics/profile_olist.py -->",
+        "## Dataset profile",
+        "",
+        "| Source table | Rows |",
+        "|---|---:|",
+    ]
     lines += [f"| {k} | {v:,} |" for k, v in data["source_counts"].items()]
     lines += ["", "| Profile finding | Value |", "|---|---:|"]
     for key, value in data.items():
         if isinstance(value, int):
             lines.append(f"| {key.replace('_', ' ')} | {value:,} |")
-    lines += ["", "Purchase coverage: " + data["purchase_dates"]["first"] + " to " + data["purchase_dates"]["last"] + ".", "",
-              "| Delivery delay | Reviewed orders | Average score |", "|---|---:|---:|"]
+    lines += [
+        "",
+        "Purchase coverage: " + data["purchase_dates"]["first"] + " to " + data["purchase_dates"]["last"] + ".",
+        "",
+        "| Delivery delay | Reviewed orders | Average score |",
+        "|---|---:|---:|",
+    ]
     lines += [f"| {k} | {v['count']:,} | {v['average']} |" for k, v in data["delivery_delay_scores"].items()]
     lines += ["", "| Category (top 15) | Source item rows |", "|---|---:|"]
     lines += [f"| {r['category']} | {r['lines']:,} |" for r in data["category_concentration"][:15]]
     if ledger:
-        lines += ["", "## Cleaning ledger", "", "Kept counts refer to source rows before expansions or grouping; transformed is a subset of kept.",
-                  "Every table satisfies read = kept + removed. Output counts describe the separate adapted schema.", "",
-                  "| Source | Read | Kept | Removed | Transformed |", "|---|---:|---:|---:|---:|"]
-        lines += [f"| {k} | {v['read']:,} | {v['kept']:,} | {v['removed']:,} | {v['transformed']:,} |" for k, v in ledger["tables"].items()]
-        lines += ["", "Rule counts overlap; the union of removed order IDs determines the surviving history.", "",
-                  "| Rule | Affected |", "|---|---:|"]
-        lines += [f"| {k} | {v['affected']:,} |" for k, v in sorted(ledger["rules"].items(), key=lambda pair: int(pair[0]))]
+        lines += [
+            "",
+            "## Cleaning ledger",
+            "",
+            "Kept counts refer to source rows before expansions or grouping; transformed is a subset of kept.",
+            "Every table satisfies read = kept + removed. Output counts describe the separate adapted schema.",
+            "",
+            "| Source | Read | Kept | Removed | Transformed |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        lines += [
+            f"| {k} | {v['read']:,} | {v['kept']:,} | {v['removed']:,} | {v['transformed']:,} |"
+            for k, v in ledger["tables"].items()
+        ]
+        lines += [
+            "",
+            "Rule counts overlap; the union of removed order IDs determines the surviving history.",
+            "",
+            "| Rule | Affected |",
+            "|---|---:|",
+        ]
+        lines += [
+            f"| {k} | {v['affected']:,} |" for k, v in sorted(ledger["rules"].items(), key=lambda pair: int(pair[0]))
+        ]
         lines += ["", "| Adapted output | Rows |", "|---|---:|"]
         lines += [f"| {k} | {v:,} |" for k, v in ledger["output_counts"].items()]
     lines += ["<!-- end generated -->"]

@@ -1,4 +1,5 @@
 """Category pictograms; imported source rows stay byte-for-byte reproducible."""
+
 ICON_GROUPS = {
     "factory": "agro-industry-and-commerce industry-commerce-and-business",
     "apple": "food food-drink",
