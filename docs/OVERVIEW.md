@@ -172,17 +172,10 @@ data.
 
 ## 8. Timeline
 
-| Phase | Dates | What happens |
-|---|---|---|
-| 0 Setup | 21 to 25 Oct | Repository cleaned up for INF2003; both databases running in Docker; all implementation plans written |
-| 1A Import | 26 to 30 Oct | Olist imported, cleaned and translated |
-| 1B Accounts | 31 Oct to 1 Nov | Customer, seller and operator accounts; seller approval |
-| 2A Checkout | 2 to 4 Nov | Cart, checkout, payment, shipping, cancellation |
-| 2B Catalogue | 5 to 8 Nov | Catalogue, search, seller tools. **8 Nov checkpoint:** the core demo works end to end; Tier 2 decided |
-| 3A Features | 9 to 13 Nov | Wishlist, dashboard, reviews, activity; continuous integration |
-| 3B Benchmark | 14 to 17 Nov | First full benchmark run |
-| 4 Freeze | 18 to 22 Nov | **Feature freeze 18 Nov**; final benchmark runs; report finished |
-| 5 Ship | 23 to 29 Nov | Video and slides; **submit on 28 Nov**, a day before the 29 Nov deadline |
+The authoritative schedule is [PLAN.md section 13](../PLAN.md#13-phases). Application features freeze on
+30 October, with final benchmark runs on 31 October to 1 November and contingency for fixes and retests on
+2 to 4 November. The professor check-in and Tier 2 decision are on 8 November. We aim to submit on 28 November;
+the deadline is 29 November 2026 at 23:30 Singapore time.
 
 ## 9. Who does what
 

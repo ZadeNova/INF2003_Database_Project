@@ -12,9 +12,9 @@ Django with HTMX serves the pages. The target is an A.
 - `docs/plans/<workstream>.md`: the contract for the workstream you are working on.
 - [DESIGN.md](DESIGN.md) for anything visual; `src/static/css/site.css` is its single implementation.
 
-**Current state:** Phase 1A replaces the earlier baseline with the Olist marketplace schema, pipeline and importer.
-Product list/detail and demo logins are the minimum working application. Later routes remain closed until their
-approved workstreams rebuild them; PLAN.md section 14 is the progress index.
+**Current state:** The Tier 1 application is complete and the benchmark harness is merged; final measurements and
+deliverables remain. [PLAN.md section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record)
+is the progress index.
 
 ## Phase check (before starting and before merging)
 

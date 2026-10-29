@@ -1,6 +1,7 @@
-"""Serial, independent journeys against a freshly imported fixture and runtime web."""
+"""Serial, independent journeys against freshly imported data and runtime web."""
 import os
 import re
+from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 from uuid import uuid4
@@ -155,10 +156,18 @@ def test_wishlist_restock_shows_one_unseen_alert(page):
 def test_dashboard_insights_and_trending_render(page):
     login(page, "demo-operator", "operator")
     page.goto("/operator/dashboard/")
+    as_of = None
     for title in ("Replenishment priorities", "Category performance", "Delivery delay and review score",
                   "Seller delivery risk", "Products with poor reviews"):
         panel = page.locator("section").filter(has=page.get_by_role("heading", name=title, exact=True))
-        expect(panel).to_contain_text("As of 24 October 2026")
+        source = panel.locator(".panel__note").filter(has_text=re.compile(r"^As of "))
+        expect(source).to_have_count(1)
+        match = re.match(r"^As of (\d{1,2} [A-Z][a-z]+ \d{4}) · ", source.inner_text())
+        assert match, f"{title} must show a reporting date in day month year format"
+        reported_date = datetime.strptime(match.group(1), "%d %B %Y").date()
+        if as_of is None:
+            as_of = reported_date
+        assert reported_date == as_of, f"{title} must use the same reporting date as every other panel"
     expect(page.locator("#category-revenue")).to_be_visible()
     login(page, "demo-seller", "seller")
     page.goto("/seller/insights/")
