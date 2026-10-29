@@ -6,6 +6,8 @@ from psycopg import sql
 # Tables written only by owner-owned SECURITY DEFINER triggers (accounts plan, P2). Runtime may read them;
 # every broad grant below is followed by these revocations so it can never restore a forbidden write.
 TRIGGER_WRITTEN_TABLES = ("audit_log",)
+# The application records money through inserts/updates, never by erasing its history.
+NO_DELETE_TABLES = ("orders_checkout", "orders_order", "orders_orderline", "orders_payment", "orders_refund")
 
 
 def grant_runtime(apps, schema_editor):
@@ -33,6 +35,7 @@ def grant_runtime(apps, schema_editor):
             cursor.execute(sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(
                 sql.Identifier(*sequence), sql.Identifier(role)))
         restrict_trigger_tables(cursor, role)
+        restrict_money_deletes(cursor, role)
 
 
 def restrict_trigger_tables(cursor, role):
@@ -55,3 +58,16 @@ def restrict_trigger_tables(cursor, role):
 def protect_trigger_tables(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         restrict_trigger_tables(cursor, os.environ["POSTGRES_RUNTIME_USER"])
+
+
+def restrict_money_deletes(cursor, role):
+    for table in NO_DELETE_TABLES:
+        cursor.execute("SELECT to_regclass(%s)", ["public." + table])
+        if cursor.fetchone()[0] is not None:  # the first accounts migration runs before orders exists
+            cursor.execute(sql.SQL("REVOKE DELETE ON TABLE {} FROM {}").format(
+                sql.Identifier("public", table), sql.Identifier(role)))
+
+
+def protect_money_tables(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        restrict_money_deletes(cursor, os.environ["POSTGRES_RUNTIME_USER"])

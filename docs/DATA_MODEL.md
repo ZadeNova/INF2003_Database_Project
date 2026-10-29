@@ -237,10 +237,37 @@ delete of checkouts, orders, payments and refunds: at commit they lock the affec
 and new parent after a move) and require payments = checkout total = sum of order totals, and refunds = totals of the
 cancelled orders. All money arithmetic is PostgreSQL numeric or Python Decimal. New purchases charge freight per unit
 (product freight × quantity) and estimate delivery as the placed time plus the longest product lead time plus 15 days.
-Checkout locks the cart row, then its lines, then products in id order, so concurrent checkouts cannot deadlock.
+Per-order refund matching (the refund belongs to the cancelled order and equals that order's total) and order-line
+consistency (order items = sum of quantity × unit price; order freight = sum of line freight) are enforced by the
+checkout service and checked by `verify_olist`'s `refund_totals` and `order_line_totals` invariant queries, rather than
+database triggers. Direct SQL can still violate these two rules; the deferred triggers enforce checkout-level sums.
 The importer disables these USER triggers while loading and checks the same invariants with its reconciliation
 queries; imported-refund provenance is checked during import only, so a later customer cancellation of imported paid
 history adds a new, non-imported refund that the triggers still balance.
+
+**Row-lock order (checkout-i10).** Paths taking both seller and product locks take sellers first, then products;
+multiple rows of either type are locked in ascending id order. Checkout locks cart → cart lines → sellers (`FOR
+SHARE`) → products (`FOR UPDATE`). It discovers seller ids through an unlocked cart-line/product join, then rechecks
+each locked product's seller against the sellers actually locked, refusing changed ownership with `CartChangedError`.
+Visibility, fingerprint, price and stock checks still follow the product lock. Seller locks remain held through commit,
+so a seller suspension waits for an in-flight purchase, and a checkout after suspension is refused.
+
+| Path | Locks and relationship to the order |
+|---|---|
+| `orders.services.checkout` | Cart, cart lines, sellers in id order, products in id order; its newly inserted checkout/orders are private to the transaction |
+| `orders.services.change_order_status` | Existing checkout → order → products in id order for cancellation; shipping and delivery stop at the order; the seller join is an unlocked permission read |
+| `catalogue.services.save_product` / `deactivate_product` | Seller `FOR UPDATE` → its product `FOR UPDATE`; creating a product locks its seller before inserting |
+| `accounts.audit.change_seller_status` | Seller `FOR UPDATE` only; visibility changes through `purchasable_product`, without locking product rows |
+| `catalogue.services.moderate_product` | Product `FOR UPDATE` only; no seller lock |
+| Wishlist restock trigger | Runs while its caller holds the updated product; reads wishlist rows and inserts alerts, without an additional seller/product row lock |
+| `import_olist` | Owner-only empty-database setup, advisory import lock, table locks while disabling USER triggers, then COPY in dependency order; outside concurrent application row writes |
+| `seed_demo` | Owner setup transaction; the only seller write inserts the pending applicant before product stock adjustments; existing sellers are read without row locks |
+
+The lifecycle branch remains checkout → order → products and never locks a seller after a product. Deterministic
+real-connection tests in [test_checkout_concurrency.py](../tests/test_checkout_concurrency.py) cover checkout against
+catalogue deactivation in either direction, opposite-order multi-product carts (including observation of the actual
+first row lock), and suspension waiting through purchase commit. These establish the tested serialization paths;
+they are not a blanket guarantee against every possible database deadlock.
 
 The first accounts migration grants the runtime role access to tables/sequences and installs default privileges for
 later owner-created objects. It applies equally to mercer and pytest's test_mercer. PUBLIC database privileges and
@@ -249,6 +276,12 @@ TEMP, DROP, ALTER or TRUNCATE. The owner remains responsible for migrations, tes
 quoted with psycopg Identifier; data values are bound parameters.
 `django_migrations` is an explicit exception to row DML: runtime has SELECT only and no access to its identity
 sequence, so only the owner can modify migration history in either the application or test database.
+The orders `0003_protect_money_deletes` migration additionally revokes runtime DELETE on `orders_checkout`,
+`orders_order`, `orders_orderline`, `orders_payment` and `orders_refund`, retaining SELECT, INSERT and UPDATE. The
+`NO_DELETE_TABLES` restriction in [config/privileges.py](../src/config/privileges.py) is reapplied after every broad
+`grant_runtime` call, so a rerun cannot restore DELETE. The owner's privileges are unchanged; carts and cart lines
+retain the DELETE privilege needed by the application. This prevents erasing a paid checkout or bypassing the
+UPDATE-only lifecycle/audit triggers by deleting and reinserting a shipped order (checkout-i11).
 
 **Product search and audit (`catalogue` 0002).** The trusted pg_trgm extension and the `product_name_trgm` GIN index
 on product.name serve typo-tolerant name search. product_update_audit (AFTER UPDATE, only when price, stock, active or
