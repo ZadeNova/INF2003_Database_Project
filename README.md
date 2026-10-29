@@ -9,11 +9,11 @@ simulated and no personal data is used.
 
 ## Status
 
-Phase 1A replaces the earlier dataset with a reproducible Olist pipeline, fresh marketplace schema, cross-store import,
-minimum product pages and demo logins. Phase 1B adds the three roles, seller applications, the operator console and the
-database-written audit log. Scope, tiers, dates and review status live in [PLAN.md](PLAN.md); contributor rules
-are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
-[docs/DATA_MODEL.md](docs/DATA_MODEL.md). Later application workstreams build the purchasing and operator workflows.
+The Tier 1 application is complete and the benchmark harness is merged; final measurements and deliverables remain.
+The authoritative schedule and workstream statuses are in [PLAN.md section 13](PLAN.md#13-phases) and
+[section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record).
+Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
+[docs/DATA_MODEL.md](docs/DATA_MODEL.md).
 
 ## Requirements
 
@@ -80,7 +80,7 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 | `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
 | `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
 | `quality` | Ruff E/F/I and audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
-| `browser` | One serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
+| `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
 | `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 
 The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
@@ -159,10 +159,14 @@ dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/o
 dc run --rm migrate python manage.py seed_demo
 dc run --rm migrate python manage.py seed_activity --count 2000
 dc up --detach --wait --wait-timeout 300 web
+dc run --rm migrate python /app/scripts/smoke_olist.py
 python -m playwright install --with-deps chromium
 python -m scripts.browser_suite --env-file "$CI_ENV_FILE" --base-url "http://127.0.0.1:$APP_PORT" --output test-results
 dc down --volumes --remove-orphans
 ```
+
+Before filming, run this browser suite once against a fresh full-data stack using
+[Load Olist and demo accounts](#load-olist-and-demo-accounts), then `seed_activity --count 2000`.
 
 For a local artifact check, before teardown run the same browser wrapper with
 `--force-browser-failure --canary-only`; a failing canary is the expected result. Normal runs leave this off.

@@ -297,6 +297,8 @@ jobs:
           docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python manage.py seed_activity --count 2000
       - name: Start runtime web and wait for health
         run: docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 web
+      - name: Smoke the documented install and all three role landings
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python /app/scripts/smoke_olist.py
       - name: Install pinned browser tools and Chromium
         run: |
           python -m pip install --disable-pip-version-check -r src/requirements-dev.txt

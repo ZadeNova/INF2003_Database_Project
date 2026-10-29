@@ -38,7 +38,7 @@ writes the generated dataset section of `docs/DATA_MODEL.md`.
 | 10 | Split orders spanning several sellers into one order per seller; the Olist order becomes the checkout and keeps its payments | 1.3% of orders |
 | 11 | Map the eight statuses to five (PLAN.md section 5); translate the 2 missing category names by hand; put the 610 uncategorised products in "Uncategorised" | |
 | 12 | Geolocation: one row per zip prefix (median latitude and longitude, most common city and state) | 1M → 19,015 |
-| 13 | Shift every timestamp by 426 weeks and treat it as Singapore local time | ends 30 October 2026 |
+| 13 | Shift every timestamp by 426 weeks and treat it as Singapore local time | Originally stated "ends 30 October 2026"; correction, 29 October: the clean data's last order is 28 October 2026 and its last delivery is 16 December 2026, per [PLAN.md section 5](../../PLAN.md#5-data-olist-adapted) |
 | 14 | Currency: convert each original Olist item's price and freight to SGD at the stored rate and round half-up to the cent **before** rule 9 collapses lines; the checkout total is the sum of its lines; split each checkout's payments in proportion to their original values, rounded, with the remainder on the largest payment, so payments equal the total exactly | |
 | 15 | Active (`active = true`; "delisted" means `active = false`) = a seller-product in at least two distinct orders, counted after cleaning (D13); featured = the best seller in each of the top 15 categories (D11) | about 13.6k active |
 | 16 | Freight per product: the median freight of its order lines, in SGD (the shipping fee for new orders; `checkout` decision b) | every product |

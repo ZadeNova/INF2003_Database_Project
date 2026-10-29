@@ -112,7 +112,7 @@ installs remain reproducible. Final deliverables follow section 13.
 | **Durability, replication and failover**: a 3-member MongoDB replica set and a PostgreSQL streaming replica; `synchronous_commit` against write concern `majority`; kill the primary on camera and show failover (E6); a timed backup and restore drill with `pg_dump`/`pg_restore` and `mongodump`/`mongorestore` (E7) | tbd | Write/durability axis promised in the proposal; replication is core module theory |
 | **Full-text search** on review text: PostgreSQL `tsvector` with a GIN index against a MongoDB text index, benchmark B7 (E1) | tbd | The same feature on both engines, measured |
 | **Product Q&A**: customers ask, sellers answer; answers embedded in the question document (M2) | tbd | MongoDB embedding |
-| **Scale-up generator runs** to 1M+ rows (promoted to Tier 1 if the 8 November numbers show no clear difference) | tbd | Scale axis |
+| **Scale-up generator runs** to 1M+ rows, within Tier 2 `durability`; the owner decided on 28 October against building it or promoting a 10x run into Tier 1 ([benchmark-i21](docs/DECISIONS.md)) | tbd | Scale axis |
 | Seller replies to reviews | tbd | |
 | Showcase names and descriptions for the demo subset, written by an LLM and labelled as generated | tbd | Cosmetic |
 
@@ -188,9 +188,10 @@ high-volume Olist seller so the seller pages show real products and sales).
 Passwords are generated into the git-ignored `.env` by `init_env.py`. The hard-coded fallback password in
 `seed_demo.py` is removed.
 
-**Scale-up generator** (Python, same codebase as the importer): resamples real Olist rows with a seed, keeps foreign keys
-valid, marks every row `is_generated`, and writes CSV for PostgreSQL `COPY` and NDJSON for `mongoimport`, so both engines
-load byte-identical data. Generated data is not committed; the generator and an output checksum are.
+**Scale-up generator:** on 28 October the owner decided not to build it or promote a 10x run into Tier 1
+([benchmark-i21](docs/DECISIONS.md)); it remains in Tier 2 `durability`. If earned, it would resample real Olist rows
+with a seed, keep foreign keys valid, mark every row `is_generated`, and write identical CSV/NDJSON inputs for both
+engines. Generated data would not be committed; the generator and an output checksum would be.
 
 ## 6. Features in detail (Tier 1)
 
@@ -345,7 +346,7 @@ Fresh repo from the commands already given (no history, private). Then:
 | Request logging, DB-unavailable 503, JSON log | Keep; rename `northstar.*` loggers; becomes the home of per-request DB timing |
 | `src/tools/db_bootstrap.py`, `src/docker/10-local-role.sh` | Replaced by two roles in the PostgreSQL init script: owner (migrate, import, pytest) and runtime (web, data changes only) (foundation-g) |
 | Shoe code and data: `catalogue/shoes.py`, `analytics/build_shoe_dataset.py`, `data/raw/` and `data/derived/`, `src/static/models/` (3D shoes), shoe glyphs, the `CustomerSegment` model and migration | Delete in `olist-import` when the Olist import replaces them (K-means scripts go in `foundation`, decision foundation-b) |
-| `tests/load/` | Delete; `benchmark` writes a new local load script (foundation-h) |
+| `tests/load/` | Deleted (foundation-h); the replacement local HTTP load script was later cut by [benchmark amendment j](docs/plans/benchmark.md#decisions) |
 | `scripts/package_submission.py` | Adapt to the INF2003 zip |
 | Compose | One root file, renamed; add `mongo` as a single-node replica set with a `readWrite`-only application user; latest stable PostgreSQL and MongoDB, pinned by digest |
 | `.vscode/settings.json` | Cross-platform |
@@ -361,7 +362,7 @@ review, record, fix, close out); the documentation rules and docs map; branch pe
 `main`; every AI-assisted commit carries a `Co-Authored-By` trailer; how to run, test and benchmark.
 
 **Repo layout:** `README.md` (overview and user manual), `AGENTS.md`, `CLAUDE.md`, `RUBRICS.md`, `DESIGN.md`, `compose.yaml`, `src/`, `tests/`, `analytics/`,
-`data/`, `benchmarks/` (harness, generator, `results/`), `.github/workflows/ci.yml`, `CONTRIBUTIONS.md` (one page,
+`data/`, `benchmarks/` (harness, `results/`), `.github/workflows/ci.yml`, `CONTRIBUTIONS.md` (one page,
 updated at each checkpoint, for fair peer review), and `docs/` with `DATA_MODEL.md` (PostgreSQL schema with ER diagram, and the MongoDB model),
 `DECISIONS.md`, `AI_USE.md` (including the disclosure that the codebase builds on our earlier module project), `plans/`
 (one per workstream, kept after close-out as the record) and `licenses/`. Benchmark tables are generated from `benchmarks/results/`, not hand-written.
@@ -532,7 +533,7 @@ GPT-authored work; future commits require the review and an explicit user reques
 |---|---|
 | The import (`olist-import`) slips and blocks everything | Verify the full import by 24 Oct; re-estimate immediately if it slips; Erfan can help with cleaning |
 | Unfair comparison | Equivalent minimal operations, identical data files and limits, golden outputs, plans captured |
-| No clear difference at about 100k rows | Driver-level timing; the scale-up generator promotes to Tier 1 at the checkpoint |
+| No clear difference at about 100k rows | Driver-level timing; report differences within the baseline's noise. On 28 October the owner decided against building the generator or promoting a 10x run into Tier 1 ([benchmark-i21](docs/DECISIONS.md)); it stays Tier 2 `durability` |
 | Generated fields weaken "real-world data" | Every generated field labelled; real orders, sellers, reviews and payments dominate |
 | Results depend on the machine | One designated machine, hardware recorded, ratios as headline |
 | Telemetry or cache skews timings | Both off during timed runs; overhead measured separately |
@@ -542,7 +543,7 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | On recording day, run seed_activity and place a few demo purchases for the seller's products before filming Insights. Keep the real rolling window because browsing events expire |
-| Recording-day dependency: the dashboard takes a few seconds on the full data | Preload the operator dashboard before filming; accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
+| Recording-day dependency: the dashboard takes a few seconds on the full data | Run the browser suite once against the full-data stack before filming ([README Continuous integration](README.md#continuous-integration)), then preload the operator dashboard; accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
 | Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |

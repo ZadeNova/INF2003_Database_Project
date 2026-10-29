@@ -146,7 +146,7 @@ whether a 10× run for B1, B4 and B5 moves into Tier 1; until then scaled runs s
 part earns Tier 1 marks (performance analysis is optional; the comparison is required), and both cost time the
 benchmark no longer has after Phase 3A.
 
-28 October 2026: OWNER_DECISION=No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
+28 October 2026: No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
 
 ## Review notes
 
