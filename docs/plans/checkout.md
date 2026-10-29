@@ -148,5 +148,6 @@ migration drift check, three consecutive standalone concurrency runs, fixture Ch
 and documentation checks passed. The original mutation harness now catches M2 (seller lock) and M5 (ascending product
 locks); M4 still survives, as the independent review explains: the order lock and deferred parent lock already
 serialize lifecycle actions. Command logs and the generated mutation comparison are retained locally under
-`.cache/checkout-fix/`; the conditional fresh-install smoke awaits the separately shipped CI fixes on main.
-Independent branch review: pending (Claude Code). The accepted workstream remains done.
+`.cache/checkout-fix/`. The accepted workstream remains done.
+
+29 October 2026, Claude Code review of `247dff225abbf701c011cc7acc2012609f85f97a` (the session that ran the Phase 4 integration review; not a fresh session), confirmed by Chee Long: main `b4277b8` → branch upgrade applied orders 0003 and changed runtime DELETE from allowed to refused on all five money tables while retaining cart-line DELETE; migration drift: no changes; concurrency module: 25 passed on each of three runs; mutation baseline: 131 passed, M2 caught with 3 failed, M5 caught with 10 failed; full coverage suite: 663 passed, 4 skipped, 93.43% line coverage. Lock-order code, the new race/ownership tests and DATA_MODEL/DECISIONS were checked against the independent findings. Approved for shipping after the CI fixes merge; the workstream remains done.

@@ -474,8 +474,8 @@ a workstream changes state, and keep each plan file as short as its contract all
 
 **29 October 2026 checkout follow-up:** Chee Long approved Phase 4 fixes to the completed checkout contract for the
 independent money-SQL review: lock order, runtime DELETE privileges and missing race coverage; document the finer
-refund/line invariants. No new feature or trigger scope. The accepted workstream remains done; fresh Claude Code
-review of the fix branch is pending in [the checkout review notes](docs/plans/checkout.md#review-notes).
+refund/line invariants. No new feature or trigger scope. The accepted workstream remains done; Claude Code reviewed
+and approved the fix branch on 29 October 2026; see [the checkout review notes](docs/plans/checkout.md#review-notes).
 
 ## 15. Decisions
 
