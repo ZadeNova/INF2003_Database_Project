@@ -366,3 +366,5 @@ the two mercer-p4fix projects and their volumes; no containers or volumes remain
 The separate independent Codex review of Claude Code's roles, grants and account audit SQL is retained outside Git
 in .cache/phase-4-review/codex-review.txt. Fresh Claude Code review of this fix branch is pending. This round does
 not close Phase 4 or CI stage 3; the owner requested a local commit only, with no push, PR or merge.
+
+29 October 2026 — Review notes: Claude Code (the session that ran the Phase 4 integration review; not a fresh session) reviewed `2d73bd63b9e0003cf60c1b96843a53a7d33b89b5`; the owner reports a fresh full-data install in its own Compose project (torn down afterwards): import_olist, verify_olist and seed_demo passed; smoke_olist.py passed all three role landings; seed_activity and all Chromium journeys passed (`8 passed in 51.57s`); tests/test_smoke_olist.py, tests/test_roles.py, tests/test_registration.py: 112 passed. The docs edits were read against PLAN.md and Part B's evidence in .cache/phase-4-review/codex-review.txt was checked. Results are recorded from the owner's review report. CI remains in-progress for stage 3.
