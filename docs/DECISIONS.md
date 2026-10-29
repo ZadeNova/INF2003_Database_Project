@@ -75,6 +75,13 @@ Upload-artifact v7.0.2 was checked through GitHub's release and tag APIs: its re
 workflow pins its verified commit. The [workflow](../.github/workflows/ci.yml) is the home for action SHAs, job names,
 runner versions, timeouts and artifact retention. The [CI plan](plans/ci.md#review-notes) holds the generated local results.
 
+## CI Phase 4 integration fixes (29 October 2026; review pending)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i17 | Keep the standard-library smoke script's role, demo username and expected landing path together; check the URL path and Log out, and compare its expectations with landing_url after real seed_demo in a Django test. Run the script through migrate after runtime web is healthy in the browser job | Approved sellers and operators have distinct landing pages; a drift check and the documented HTTP command in CI protect fresh installs without importing Django into the smoke script or printing secrets |
+| ci-i18 | Scan My products through its final Next link, then inspect labels only for active rows with stock at most five; report missing labels after the last page | Seeded demo stocks are zero and one, and journeys temporarily restock to five. Ordinary imported stock starts at twenty. This uses only the seller's visible UI, reaches the oldest products on full data, and avoids opening every detail page or depending on earlier journeys |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |

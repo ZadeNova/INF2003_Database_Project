@@ -68,10 +68,16 @@ def demo_products(page):
     """Find seed_demo's labelled products through the seller's own UI, not SQL."""
     login(page, "demo-seller", "seller")
     page.goto("/products/mine/")
-    edits = []
-    for _ in range(10):
+    edits, pages = [], 0
+    while True:
+        pages += 1
         rows = page.locator(".optable__row--products").filter(has=page.get_by_text("Active", exact=True))
-        edits.extend(rows.nth(index).locator('a[href$="/edit/"]').get_attribute("href") for index in range(rows.count()))
+        for index in range(rows.count()):
+            row = rows.nth(index)
+            # seed_demo starts at 0/1; these journeys restock to five and buy one.
+            # Ordinary imported stock starts at twenty, so skip its detail pages.
+            if int(row.locator(":scope > span").nth(3).inner_text()) <= 5:
+                edits.append(row.locator('a[href$="/edit/"]').get_attribute("href"))
         following = page.get_by_role("link", name="Next", exact=True)
         if not following.count():
             break
@@ -90,7 +96,9 @@ def demo_products(page):
             found[key] = {"id": product_id, "path": path, "edit": edit, "shop": shop.text_content().strip(), "shop_url": shop.get_attribute("href")}
         if len(found) == 2:
             return found
-    raise AssertionError("seed_demo's sold-out and low-stock products must both be visible to its seller")
+    missing = {"sold_out", "ready"} - found.keys()
+    raise AssertionError(f"seed_demo products {sorted(missing)} not found after the last seller page "
+                         f"({pages} pages, {len(edits)} low-stock candidates checked)")
 
 
 def other_sellers(page, excluded_shop, count):

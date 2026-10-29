@@ -12,6 +12,12 @@ import urllib.parse
 import urllib.request
 from http.cookiejar import CookieJar
 
+DEMO_LOGINS = (
+    ("customer", "demo-chee-long", "/products/"),
+    ("seller", "demo-seller", "/seller/"),
+    ("operator", "demo-operator", "/operator/"),
+)
+
 
 def run(base):
     outcomes = {}
@@ -31,14 +37,14 @@ def run(base):
         outcomes["product_detail"] = response.status
         if "generated" not in response.read().decode().lower():
             raise RuntimeError("Generated content label missing from detail")
-    for role, username in (("customer", "demo-chee-long"), ("seller", "demo-seller"), ("operator", "demo-operator")):
+    for role, username, landing_path in DEMO_LOGINS:
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
         with fetch("/login/") as response:
             token = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', response.read().decode()).group(1)
         payload = urllib.parse.urlencode({"username": username, "password": os.environ["DEMO_" + role.upper() + "_PASSWORD"],
                                           "csrfmiddlewaretoken": token}).encode()
         with fetch("/login/", payload) as response:
-            if not response.geturl().endswith("/products/") or "Log out" not in response.read().decode():
+            if urllib.parse.urlsplit(response.geturl()).path != landing_path or "Log out" not in response.read().decode():
                 raise RuntimeError(f"{role} HTTP login failed")
             outcomes[role + "_login"] = "passed"
     print(json.dumps(outcomes, sort_keys=True))
