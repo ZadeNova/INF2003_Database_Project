@@ -472,6 +472,11 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 Status is one of: not started, planning, ready (plan approved, waiting for implementation), in progress, review, done. This column is the only progress index; update it when
 a workstream changes state, and keep each plan file as short as its contract allows (about one page where possible).
 
+**29 October 2026 checkout follow-up:** Chee Long approved Phase 4 fixes to the completed checkout contract for the
+independent money-SQL review: lock order, runtime DELETE privileges and missing race coverage; document the finer
+refund/line invariants. No new feature or trigger scope. The accepted workstream remains done; Claude Code reviewed
+and approved the fix branch on 29 October 2026; see [the checkout review notes](docs/plans/checkout.md#review-notes).
+
 ## 15. Decisions
 
 **Settled** (21 October 2026; reasons in the sections above and in the plan files):

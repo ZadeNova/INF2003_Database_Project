@@ -216,13 +216,19 @@ def checkout(user, idempotency_key, review, payments=None):
             if not lines:
                 raise CheckoutError("Your cart is empty.")
             ids = [line[1] for line in lines]
+            # Match catalogue's seller -> product order. The cart is stable, but ownership
+            # from this unlocked read must be checked again after locking the products.
+            cursor.execute("""SELECT DISTINCT p.seller_id FROM orders_cartline l
+                              JOIN catalogue_product p ON p.id=l.product_id WHERE l.cart_id=%s""", [cart.pk])
+            seller_ids = sorted(row[0] for row in cursor.fetchall())
+            # Seller approval cannot change between the visibility check and commit.
+            cursor.execute("SELECT id FROM accounts_seller WHERE id=ANY(%s) ORDER BY id FOR SHARE", [seller_ids])
+            locked_sellers = {row[0] for row in cursor.fetchall()}
             cursor.execute("""SELECT id, seller_id, price, freight, stock, lead_time_days, name
                               FROM catalogue_product WHERE id=ANY(%s) ORDER BY id FOR UPDATE""", [ids])
             products = {row[0]: row for row in cursor.fetchall()}
-            # Seller approval cannot change between the visibility check and commit.
-            seller_ids = sorted({row[1] for row in products.values()})
-            cursor.execute("SELECT id FROM accounts_seller WHERE id=ANY(%s) ORDER BY id FOR SHARE", [seller_ids])
-            cursor.fetchall()
+            if any(item[1] not in locked_sellers for item in products.values()):
+                raise CartChangedError()
             cursor.execute("SELECT id FROM purchasable_product WHERE id=ANY(%s)", [ids])
             visible = {row[0] for row in cursor.fetchall()}
             if any(pid not in visible for pid in ids):
