@@ -1,4 +1,5 @@
 """Deployment/operator readiness check, deliberately separate from process liveness."""
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, connection
 from django.db.migrations.executor import MigrationExecutor

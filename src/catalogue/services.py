@@ -1,4 +1,5 @@
 """Seller writes keep PostgreSQL open until MongoDB accepts its own fields (catalogue decision c)."""
+
 import logging
 
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -62,15 +63,21 @@ def save_product(seller, actor, cleaned, *, pk=None):
                 old_photo = (previous or {}).get("photo_file_id")
                 photo = cleaned.get("photo")
                 if photo:
-                    new_photo = GridFS(database, collection="photos").put(photo.data,
-                        metadata={"content_type": photo.content_type, "product_id": item.pk})
-                owned = {"category_id": item.category_id, "description": cleaned["description"],
-                         "attributes": cleaned["attributes"], "photo_file_id": new_photo or old_photo,
-                         "has_generated_content": (previous or {}).get("has_generated_content", False)}
+                    new_photo = GridFS(database, collection="photos").put(
+                        photo.data, metadata={"content_type": photo.content_type, "product_id": item.pk}
+                    )
+                owned = {
+                    "category_id": item.category_id,
+                    "description": cleaned["description"],
+                    "attributes": cleaned["attributes"],
+                    "photo_file_id": new_photo or old_photo,
+                    "has_generated_content": (previous or {}).get("has_generated_content", False),
+                }
                 if pk is None:
                     stats = database.platform_stats.find_one({"_id": "bayesian"})
-                    database.product_specs.insert_one({"_id": item.pk, **owned, "latest_reviews": [],
-                        "rating_summary": empty_summary(stats)})
+                    database.product_specs.insert_one(
+                        {"_id": item.pk, **owned, "latest_reviews": [], "rating_summary": empty_summary(stats)}
+                    )
                 else:
                     result = database.product_specs.update_one({"_id": item.pk}, {"$set": owned})
                     if result.matched_count != 1:

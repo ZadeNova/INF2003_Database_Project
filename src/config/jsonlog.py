@@ -8,6 +8,7 @@ The same applies to the message text of Django's own security records (`django.s
 logs the rejected Referer including its query string, and DisallowedHost logs the raw Host header. Those
 messages are replaced by a fixed one; the logger name still says which check rejected the request.
 """
+
 import json
 import logging
 import os
@@ -32,7 +33,7 @@ class JsonFormatter(logging.Formatter):
             if getattr(record, "status_code", None) is not None:
                 payload["status"] = record.status_code
         payload.update(getattr(record, "fields", None) or {})
-        request = getattr(record, "request", None)     # Django attaches the request to its error records
+        request = getattr(record, "request", None)  # Django attaches the request to its error records
         if request is not None and "request_id" not in payload:
             payload["request_id"] = getattr(request, "request_id", None)
         if record.exc_info and record.exc_info[0] is not None:

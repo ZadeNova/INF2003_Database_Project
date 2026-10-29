@@ -1,4 +1,5 @@
 """PostgreSQL verifies ownership first; MongoDB owns every review field and summary."""
+
 import logging
 
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -26,7 +27,8 @@ def customer_line(actor, line_id):
         raise PermissionDenied
     try:
         line = OrderLine.objects.select_related("order__checkout", "product").get(
-            pk=line_id, order__checkout__customer=actor)
+            pk=line_id, order__checkout__customer=actor
+        )
     except (OrderLine.DoesNotExist, ValueError, TypeError):
         raise Http404 from None
     if line.order.status != Order.Status.DELIVERED:
@@ -36,7 +38,9 @@ def customer_line(actor, line_id):
 
 def _summary(database, session, product_id, before, after):
     stats = database.platform_stats.find_one({"_id": "bayesian"}, session=session)
-    result = database.product_specs.update_one({"_id": product_id}, summary_pipeline(stats, before, after), session=session)
+    result = database.product_specs.update_one(
+        {"_id": product_id}, summary_pipeline(stats, before, after), session=session
+    )
     if result.matched_count != 1:
         raise ValidationError("Product specifications are unavailable. Try again later.")
     latest = list(database.reviews.find({"product_id": product_id, **VISIBLE}, session=session).sort(NEWEST).limit(5))
@@ -47,7 +51,9 @@ def _transact(client, callback):
     # with_transaction retries the whole callback on TransientTransactionError (including write conflicts),
     # and retries uncertain commits. No SQL writes or other side effects belong in the callback.
     with client.start_session() as session:
-        return session.with_transaction(callback, read_concern=ReadConcern("snapshot"), write_concern=WriteConcern("majority"))
+        return session.with_transaction(
+            callback, read_concern=ReadConcern("snapshot"), write_concern=WriteConcern("majority")
+        )
 
 
 def write_review(actor, line_id, action, cleaned=None):
@@ -70,12 +76,26 @@ def write_review(actor, line_id, action, cleaned=None):
                 database.reviews.delete_one({"order_line_id": line.pk, "customer_id": actor.pk}, session=session)
             else:
                 now = timezone.now()
-                after = {**(before or {}), "_id": line.pk, "order_line_id": line.pk, "order_id": line.order_id,
-                    "checkout_id": line.order.checkout_id, "product_id": line.product_id, "seller_id": line.seller_id,
-                    "customer_id": actor.pk, "score": cleaned["score"], "title_en": cleaned.get("title", ""),
-                    "text_en": cleaned.get("text", ""), "title_pt": "", "text_pt": "", "machine_translated": False,
-                    "from_order_review": False, "olist_review_id": None,
-                    "created_at": (before or {}).get("created_at", now), "answered_at": now}
+                after = {
+                    **(before or {}),
+                    "_id": line.pk,
+                    "order_line_id": line.pk,
+                    "order_id": line.order_id,
+                    "checkout_id": line.order.checkout_id,
+                    "product_id": line.product_id,
+                    "seller_id": line.seller_id,
+                    "customer_id": actor.pk,
+                    "score": cleaned["score"],
+                    "title_en": cleaned.get("title", ""),
+                    "text_en": cleaned.get("text", ""),
+                    "title_pt": "",
+                    "text_pt": "",
+                    "machine_translated": False,
+                    "from_order_review": False,
+                    "olist_review_id": None,
+                    "created_at": (before or {}).get("created_at", now),
+                    "answered_at": now,
+                }
                 if before:
                     database.reviews.replace_one({"order_line_id": line.pk}, after, session=session)
                 else:

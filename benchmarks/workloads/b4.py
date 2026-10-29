@@ -1,4 +1,5 @@
 """One-index-at-a-time comparisons, restoring the full index catalogue even on failure."""
+
 from contextlib import contextmanager
 from dataclasses import replace
 
@@ -10,12 +11,17 @@ from benchmarks import db
 def cases(b1_queries, b2_queries, parameters):
     def find(queries, output, engine, variant):
         return next(q for q in queries if (q.output, q.engine, q.variant) == (output, engine, variant))
+
     range_key = next(p for p in parameters if p["name"] == "range")["predicates"][0][0]
     rating = find(b2_queries, "B2c", "mongo", "live")
     # A fixed selective example isolates the index's benefit without multiplying a full review scan
     # by every product after its lookup index is removed. Its golden comes from the independent oracle.
-    rating = replace(rating, output="B2c_index", golden="B2c_index",
-                     pipeline=[{"$match": {"_id": 1}}] + rating.pipeline + [{"$match": {"entity": "product"}}])
+    rating = replace(
+        rating,
+        output="B2c_index",
+        golden="B2c_index",
+        pipeline=[{"$match": {"_id": 1}}] + rating.pipeline + [{"$match": {"entity": "product"}}],
+    )
     return [
         ("btree", "bench_jsonb_" + range_key, find(b1_queries, "B1_range", "postgres", "jsonb")),
         ("composite", "bench_eav_text", find(b1_queries, "B1_selective", "postgres", "eav")),
@@ -29,9 +35,22 @@ def cases(b1_queries, b2_queries, parameters):
 
 def index_catalogue(database):
     with db.pg() as conn:
-        postgres = conn.execute("SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=%s ORDER BY indexname", ["public"]).fetchall()
-    return {"postgres": postgres, "mongo": {name: sorted(({**dict(index), "key_sequence": list(index["key"].items())} for index in database[name].list_indexes()), key=lambda i: i["name"])
-                                           for name in ("products", "orders", "reviews")}}
+        postgres = conn.execute(
+            "SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=%s ORDER BY indexname", ["public"]
+        ).fetchall()
+    return {
+        "postgres": postgres,
+        "mongo": {
+            name: sorted(
+                (
+                    {**dict(index), "key_sequence": list(index["key"].items())}
+                    for index in database[name].list_indexes()
+                ),
+                key=lambda i: i["name"],
+            )
+            for name in ("products", "orders", "reviews")
+        },
+    }
 
 
 @contextmanager
@@ -43,7 +62,9 @@ def dropped(query, name, database, evidence):
         with db.pg() as conn:
             conn.execute(sql.SQL("DROP INDEX {}").format(sql.Identifier(name)))
     else:
-        collection = next(coll for coll, indexes in initial["mongo"].items() if any(row["name"] == name for row in indexes))
+        collection = next(
+            coll for coll, indexes in initial["mongo"].items() if any(row["name"] == name for row in indexes)
+        )
         definition = next(row.copy() for row in initial["mongo"][collection] if row["name"] == name)
         database[collection].drop_index(name)
     restored = False

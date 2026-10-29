@@ -1,4 +1,5 @@
 """Run the Django suite once; retain branch reports and gate only line coverage."""
+
 import argparse
 import subprocess
 import sys
@@ -27,10 +28,18 @@ def report_coverage(data_file, config_file, output):
     lines.add_lines({name: original.lines(name) or [] for name in original.measured_files()})
     lines.write()
     print("Line coverage gate (at least 80%):", flush=True)
-    return subprocess.run([
-        sys.executable, "-m", "coverage", "report", f"--rcfile={config_file}",
-        f"--data-file={lines_file}", "--fail-under=80",
-    ], check=False).returncode
+    return subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "coverage",
+            "report",
+            f"--rcfile={config_file}",
+            f"--data-file={lines_file}",
+            "--fail-under=80",
+        ],
+        check=False,
+    ).returncode
 
 
 def main():
@@ -40,10 +49,24 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     data_file = args.output / ".coverage"
-    result = subprocess.run([
-        sys.executable, "-m", "coverage", "run", f"--rcfile={args.config}",
-        f"--data-file={data_file}", "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "/app/tests",
-    ], check=False).returncode
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "coverage",
+            "run",
+            f"--rcfile={args.config}",
+            f"--data-file={data_file}",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "no:cacheprovider",
+            "/app/tests",
+        ],
+        check=False,
+    ).returncode
     if not data_file.is_file():
         return result or 1
     gate = report_coverage(data_file, args.config, args.output)

@@ -1,4 +1,5 @@
 """Helpers for deterministic PostgreSQL concurrency tests."""
+
 import threading
 
 from django.db import connection
@@ -13,8 +14,10 @@ def wait_until_blocked(attempts=100):
     for _ in range(attempts):
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_stat_clear_snapshot()")
-            cursor.execute("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() "
-                           "AND pid <> pg_backend_pid() AND wait_event_type = 'Lock'")
+            cursor.execute(
+                "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() "
+                "AND pid <> pg_backend_pid() AND wait_event_type = 'Lock'"
+            )
             if cursor.fetchone()[0]:
                 return
         threading.Event().wait(0.1)

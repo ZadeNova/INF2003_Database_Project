@@ -1,4 +1,5 @@
 """Best-effort activity writes and bounded, explicit cross-store reads."""
+
 import logging
 from datetime import timedelta
 from decimal import Decimal
@@ -55,24 +56,38 @@ def record_event(request, event_type, *, product=None, query="", category=None):
 
 
 def recently_viewed_pipeline(identity, now):
-    return [{"$match": {"meta.type": "view", **{"meta." + key: value for key, value in identity.items()},
-                        "ts": {"$gte": now - timedelta(days=30), "$lte": now}}},
-            {"$sort": {"ts": -1}},
-            {"$group": {"_id": "$meta.product_id", "last_viewed": {"$max": "$ts"}}},
-            {"$sort": {"last_viewed": -1, "_id": 1}}]
+    return [
+        {
+            "$match": {
+                "meta.type": "view",
+                **{"meta." + key: value for key, value in identity.items()},
+                "ts": {"$gte": now - timedelta(days=30), "$lte": now},
+            }
+        },
+        {"$sort": {"ts": -1}},
+        {"$group": {"_id": "$meta.product_id", "last_viewed": {"$max": "$ts"}}},
+        {"$sort": {"last_viewed": -1, "_id": 1}},
+    ]
 
 
 def trending_pipeline(now, category=None):
     match = {"meta.type": "view", "ts": {"$gte": now - timedelta(hours=24), "$lte": now}}
     if category is not None:
         match["meta.category"] = category
-    return [{"$match": match},
-            {"$group": {"_id": "$meta.product_id", "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}}}},
-            {"$setWindowFields": {"sortBy": {"views": -1}, "output": {"rank": {"$rank": {}}}}},
-            # Sorting by the computed rank keeps the ID tie-breaker after the rank stage. Sorting by
-            # views + ID can be coalesced into the window's ordering by the MongoDB optimizer.
-            {"$sort": {"rank": 1, "_id": 1}}]
+    return [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": "$meta.product_id",
+                "views": {"$sum": 1},
+                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
+            }
+        },
+        {"$setWindowFields": {"sortBy": {"views": -1}, "output": {"rank": {"$rank": {}}}}},
+        # Sorting by the computed rank keeps the ID tie-breaker after the rank stage. Sorting by
+        # views + ID can be coalesced into the window's ordering by the MongoDB optimizer.
+        {"$sort": {"rank": 1, "_id": 1}},
+    ]
 
 
 def _visible_ranked(database, rows, limit):
@@ -102,7 +117,11 @@ def browsing_panels(request, *, category=None):
     try:
         with mongo.client() as client:
             database = client[mongo.database_name()]
-            recent = _visible_ranked(database, database.events.aggregate(recently_viewed_pipeline(identity, now)), 10) if identity else []
+            recent = (
+                _visible_ranked(database, database.events.aggregate(recently_viewed_pipeline(identity, now)), 10)
+                if identity
+                else []
+            )
             trending = _visible_ranked(database, database.events.aggregate(trending_pipeline(now, category)), 8)
         return {"recent_products": recent, "trending_products": trending}
     except PyMongoError:
@@ -111,10 +130,22 @@ def browsing_panels(request, *, category=None):
 
 
 def conversion_pipeline(product_ids, now):
-    return [{"$match": {"meta.type": "view", "meta.product_id": {"$in": list(product_ids)},
-                        "ts": {"$gte": now - timedelta(days=30), "$lte": now}}},
-            {"$group": {"_id": "$meta.product_id", "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}}}}]
+    return [
+        {
+            "$match": {
+                "meta.type": "view",
+                "meta.product_id": {"$in": list(product_ids)},
+                "ts": {"$gte": now - timedelta(days=30), "$lte": now},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$meta.product_id",
+                "views": {"$sum": 1},
+                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
+            }
+        },
+    ]
 
 
 def seller_insights(seller, *, now=None):
@@ -124,20 +155,43 @@ def seller_insights(seller, *, now=None):
     unavailable = False
     try:
         with mongo.client() as client:
-            views = {row["_id"]: row for row in client[mongo.database_name()].events.aggregate(conversion_pipeline(ids, now))}
+            views = {
+                row["_id"]: row for row in client[mongo.database_name()].events.aggregate(conversion_pipeline(ids, now))
+            }
     except PyMongoError:
         logger.warning("activity.insights_unavailable")
         views = {}
         unavailable = True
     # Both seller predicates matter: never aggregate another seller's orders or products.
-    units = dict(OrderLine.objects.filter(seller=seller, product__seller=seller, product_id__in=ids,
-        order__placed_at__gte=now-timedelta(days=30), order__placed_at__lte=now).exclude(order__status="cancelled")
-        .values("product_id").annotate(units=Sum("quantity")).values_list("product_id", "units"))
+    units = dict(
+        OrderLine.objects.filter(
+            seller=seller,
+            product__seller=seller,
+            product_id__in=ids,
+            order__placed_at__gte=now - timedelta(days=30),
+            order__placed_at__lte=now,
+        )
+        .exclude(order__status="cancelled")
+        .values("product_id")
+        .annotate(units=Sum("quantity"))
+        .values_list("product_id", "units")
+    )
     rows = []
     for item in products:
         count = views.get(item.pk, {}).get("views", 0)
         sold = units.get(item.pk, 0)
-        rows.append({"product": item, "views": None if unavailable else count, "units": sold,
-            "conversion_percent": Decimal(sold) * 100 / count if count and not unavailable else None,
-            "generated_views": views.get(item.pk, {}).get("generated_views", 0)})
-    return {"insights": rows, "events_unavailable": unavailable, "window_start": now-timedelta(days=30), "window_end": now}
+        rows.append(
+            {
+                "product": item,
+                "views": None if unavailable else count,
+                "units": sold,
+                "conversion_percent": Decimal(sold) * 100 / count if count and not unavailable else None,
+                "generated_views": views.get(item.pk, {}).get("generated_views", 0),
+            }
+        )
+    return {
+        "insights": rows,
+        "events_unavailable": unavailable,
+        "window_start": now - timedelta(days=30),
+        "window_end": now,
+    }

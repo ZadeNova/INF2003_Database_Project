@@ -1,4 +1,5 @@
 """Attribute the host's one-second Docker CPU sample intervals to each driver run."""
+
 import csv
 import json
 import statistics
@@ -26,7 +27,11 @@ def runner_cpu_intervals(path):
 
 
 def cpu_for_window(intervals, start, end):
-    values = [cpu for left, right, cpu in intervals if start is not None and end is not None and left <= end and right >= start]
+    values = [
+        cpu
+        for left, right, cpu in intervals
+        if start is not None and end is not None and left <= end and right >= start
+    ]
     return statistics.median(values) if values else None
 
 

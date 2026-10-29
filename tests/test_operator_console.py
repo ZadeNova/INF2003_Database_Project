@@ -1,4 +1,5 @@
 """Operator seller list, POST-only status actions and the audit log page."""
+
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -41,8 +42,10 @@ def test_seller_list_filters_by_status_and_paginates(console):
     assert hostile.status_code == 200 and hostile.context["status"] == "pending"
 
 
-@pytest.mark.parametrize("status, actions", [("pending", ["approve", "reject"]), ("approved", ["suspend"]),
-                                             ("suspended", ["reinstate"]), ("rejected", [])])
+@pytest.mark.parametrize(
+    "status, actions",
+    [("pending", ["approve", "reject"]), ("approved", ["suspend"]), ("suspended", ["reinstate"]), ("rejected", [])],
+)
 def test_detail_offers_only_the_legal_actions(console, status, actions):
     seller = make_seller(status=status)
     response = console.get(f"/operator/sellers/{seller.pk}/")
@@ -95,7 +98,7 @@ def test_operator_actions_require_csrf(operator):
 
 def add_entry(**fields):
     defaults = {"table_name": "accounts_seller", "row_id": "1", "action": "seller.approve", "reason": None}
-    return AuditLog.objects.create(**{**defaults, **fields})     # the owner (test role) may write directly
+    return AuditLog.objects.create(**{**defaults, **fields})  # the owner (test role) may write directly
 
 
 def test_audit_page_is_newest_first_with_id_tie_break_and_paginated(console):
@@ -118,8 +121,10 @@ def test_audit_filters_by_actor_and_action(console, operator):
     with transaction.atomic():
         set_audit_context(None, "")
         Seller.objects.filter(pk=approved.pk).update(status="approved")
+
     def actions(query):
         return sorted(e.action for e in console.get("/operator/audit/?" + query).context["entries"])
+
     assert actions(f"actor={operator.pk}") == ["seller.approve"]
     assert actions(f"actor={other.pk}") == ["seller.suspend"]
     assert actions("actor=system") == ["seller.reinstate"]
@@ -130,8 +135,17 @@ def test_audit_filters_by_actor_and_action(console, operator):
     assert "Theirs" in page and "Mine" not in page
 
 
-@pytest.mark.parametrize("query", ["actor=1%20OR%201%3D1", "actor=-1", "action=seller.approve'%20OR%20'1'%3D'1",
-                                   "action[$ne]=x", "reason=Mine", "row_id=1"])
+@pytest.mark.parametrize(
+    "query",
+    [
+        "actor=1%20OR%201%3D1",
+        "actor=-1",
+        "action=seller.approve'%20OR%20'1'%3D'1",
+        "action[$ne]=x",
+        "reason=Mine",
+        "row_id=1",
+    ],
+)
 def test_hostile_or_unsupported_filters_do_not_become_queries(console, operator, query):
     seller = make_seller(status="pending")
     change_seller_status(seller.pk, "approve", operator, "Kept")
@@ -166,8 +180,8 @@ def test_seller_list_and_detail_use_capitalised_status_labels(console, status, l
     seller.has_generated_content = True
     seller.save(update_fields=["has_generated_content"])
     body = console.get(f"/operator/sellers/{seller.pk}/").content.decode()
-    assert f'>{label}</span>' in body and f'>{status}</span>' not in body
-    assert f'>{label} ({1})</a>' in console.get(f"/operator/?status={status}").content.decode()
+    assert f">{label}</span>" in body and f">{status}</span>" not in body
+    assert f">{label} ({1})</a>" in console.get(f"/operator/?status={status}").content.decode()
     for url in (f"/operator/?status={status}", f"/operator/sellers/{seller.pk}/"):
         body = console.get(url).content.decode()
         assert "Sao Paulo Shop AB12CD34" in body and "Olist seller ab12cd34" not in body

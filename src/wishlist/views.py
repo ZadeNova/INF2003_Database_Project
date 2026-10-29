@@ -36,10 +36,19 @@ class WishlistActionView(CustomerRequiredMixin, View):
         set_saved(request.user, pk, saved)
         if request.headers.get("HX-Request") == "true":
             item = get_object_or_404(Product, pk=pk)
-            response = render(request, "wishlist/_button.html", {"product": item,
-                "wishlist_next": safe_local_path(request, request.POST.get("next"))})
-            response["HX-Trigger"] = json.dumps({"wishlistChanged": {"product_id": pk,
-                "saved": WishlistItem.objects.filter(customer=request.user, product_id=pk).exists()}})
+            response = render(
+                request,
+                "wishlist/_button.html",
+                {"product": item, "wishlist_next": safe_local_path(request, request.POST.get("next"))},
+            )
+            response["HX-Trigger"] = json.dumps(
+                {
+                    "wishlistChanged": {
+                        "product_id": pk,
+                        "saved": WishlistItem.objects.filter(customer=request.user, product_id=pk).exists(),
+                    }
+                }
+            )
             return response
         return redirect(safe_local_path(request, request.POST.get("next")) or "wishlist:list")
 
@@ -53,5 +62,7 @@ class AlertsView(CustomerRequiredMixin, View):
             page = Paginator(alerts, 25).get_page(request.GET.get("page"))
             page.object_list = list(page.object_list)
             if request.method == "GET":
-                RestockAlert.objects.filter(customer=request.user, pk__in=[a.pk for a in page], seen_at__isnull=True).update(seen_at=timezone.now())
+                RestockAlert.objects.filter(
+                    customer=request.user, pk__in=[a.pk for a in page], seen_at__isnull=True
+                ).update(seen_at=timezone.now())
         return render(request, "wishlist/alerts.html", {"page_obj": page})

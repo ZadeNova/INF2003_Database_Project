@@ -1,4 +1,5 @@
 """Customer registration with an optional location, and atomic seller applications."""
+
 import pytest
 from account_helpers import PASSWORD, make_customer
 from django.contrib.auth import get_user_model
@@ -9,22 +10,41 @@ from accounts.models import CustomerProfile, Seller
 
 pytestmark = pytest.mark.django_db
 
-APPLICATION = {"username": "new-shop", "shop_name": "New Shop", "city": "campinas", "state": "sp",
-               "zip_prefix": "13010", "password1": PASSWORD, "password2": PASSWORD}
+APPLICATION = {
+    "username": "new-shop",
+    "shop_name": "New Shop",
+    "city": "campinas",
+    "state": "sp",
+    "zip_prefix": "13010",
+    "password1": PASSWORD,
+    "password2": PASSWORD,
+}
 
 
 def test_registration_stores_an_optional_location():
-    response = Client().post("/register/", {"username": "located", "password1": PASSWORD, "password2": PASSWORD,
-                                            "zip_prefix": "01310", "city": " sao paulo ", "state": "sp"})
+    response = Client().post(
+        "/register/",
+        {
+            "username": "located",
+            "password1": PASSWORD,
+            "password2": PASSWORD,
+            "zip_prefix": "01310",
+            "city": " sao paulo ",
+            "state": "sp",
+        },
+    )
     assert response.status_code == 302
     profile = CustomerProfile.objects.get(user__username="located")
     assert (profile.zip_prefix, profile.city, profile.state) == ("01310", "sao paulo", "SP")
 
 
-@pytest.mark.parametrize("field, value", [("zip_prefix", "1234"), ("zip_prefix", "12a45"), ("state", "S1"),
-                                          ("state", "SPX")])
+@pytest.mark.parametrize(
+    "field, value", [("zip_prefix", "1234"), ("zip_prefix", "12a45"), ("state", "S1"), ("state", "SPX")]
+)
 def test_registration_rejects_a_malformed_location(field, value):
-    response = Client().post("/register/", {"username": "bad", "password1": PASSWORD, "password2": PASSWORD, field: value})
+    response = Client().post(
+        "/register/", {"username": "bad", "password1": PASSWORD, "password2": PASSWORD, field: value}
+    )
     assert response.status_code == 200
     assert not get_user_model().objects.filter(username="bad").exists()
 
@@ -50,8 +70,16 @@ def test_seller_application_requires_shop_and_location(missing):
 
 
 def test_seller_application_ignores_forged_role_status_and_staff_fields():
-    forged = {**APPLICATION, "role": "operator", "status": "approved", "is_staff": "true", "is_superuser": "true",
-              "olist_seller_id": "x" * 32, "has_generated_content": "true", "user": "1"}
+    forged = {
+        **APPLICATION,
+        "role": "operator",
+        "status": "approved",
+        "is_staff": "true",
+        "is_superuser": "true",
+        "olist_seller_id": "x" * 32,
+        "has_generated_content": "true",
+        "user": "1",
+    }
     assert Client().post("/sell/apply/", forged).status_code == 302
     seller = Seller.objects.select_related("user").get(user__username="new-shop")
     assert seller.status == "pending" and seller.olist_seller_id is None and not seller.has_generated_content
@@ -62,8 +90,9 @@ def test_a_failed_seller_insert_rolls_back_the_new_user():
     # A real PostgreSQL failure on the second insert: a CHECK added inside this test's transaction (and rolled
     # back with it) rejects the seller row after the user row was written, so both must share one transaction.
     with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE accounts_seller ADD CONSTRAINT test_refuse_new_shop "
-                       "CHECK (shop_name <> 'New Shop') NOT VALID")
+        cursor.execute(
+            "ALTER TABLE accounts_seller ADD CONSTRAINT test_refuse_new_shop CHECK (shop_name <> 'New Shop') NOT VALID"
+        )
     with pytest.raises(IntegrityError, match="test_refuse_new_shop"):
         Client().post("/sell/apply/", APPLICATION)
     assert not get_user_model().objects.filter(username="new-shop").exists()

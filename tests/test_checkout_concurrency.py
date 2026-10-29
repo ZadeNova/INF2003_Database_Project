@@ -1,4 +1,5 @@
 """Twenty genuinely separate PostgreSQL connections contend for five units, ten consecutive runs."""
+
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -17,56 +18,65 @@ from catalogue.services import deactivate_product
 from orders.models import Checkout, Order, OrderLine, Payment
 from orders.services import CartChangedError, CheckoutError, InsufficientStockError, add_to_cart, cart_review, checkout
 
-pytestmark=pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-@pytest.mark.parametrize("run",range(10))
+@pytest.mark.parametrize("run", range(10))
 def test_last_five_units_have_exactly_five_winners(run):
-    item=product(stock=5)
-    buyers=[customer(f"race-{run}-{i}") for i in range(20)]
-    reviews={}
+    item = product(stock=5)
+    buyers = [customer(f"race-{run}-{i}") for i in range(20)]
+    reviews = {}
     for buyer in buyers:
-        add_to_cart(buyer,item.pk)
-        reviews[buyer.pk]=cart_review(buyer)["fingerprint"]
-    barrier=threading.Barrier(20)
+        add_to_cart(buyer, item.pk)
+        reviews[buyer.pk] = cart_review(buyer)["fingerprint"]
+    barrier = threading.Barrier(20)
+
     def contend(buyer):
         connections.close_all()
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT pg_backend_pid()")
-                pid=cursor.fetchone()[0]
+                pid = cursor.fetchone()[0]
             barrier.wait(timeout=30)
             try:
-                return pid,checkout(buyer,uuid.uuid4(),reviews[buyer.pk]).pk
+                return pid, checkout(buyer, uuid.uuid4(), reviews[buyer.pk]).pk
             except InsufficientStockError:
-                return pid,None
+                return pid, None
         finally:
             connections.close_all()
+
     with ThreadPoolExecutor(max_workers=20) as pool:
-        outcomes=list(pool.map(contend,buyers))
-    assert len({pid for pid,_ in outcomes})==20
-    assert sum(pk is not None for _,pk in outcomes)==5
+        outcomes = list(pool.map(contend, buyers))
+    assert len({pid for pid, _ in outcomes}) == 20
+    assert sum(pk is not None for _, pk in outcomes) == 5
     item.refresh_from_db()
-    assert item.stock==0 and Checkout.objects.count()==5 and OrderLine.objects.count()==5 and Payment.objects.count()==5
+    assert (
+        item.stock == 0
+        and Checkout.objects.count() == 5
+        and OrderLine.objects.count() == 5
+        and Payment.objects.count() == 5
+    )
 
 
 def test_same_key_race_replays_one_checkout():
-    buyer,item=customer(),product(stock=5)
-    add_to_cart(buyer,item.pk)
-    key,review=uuid.uuid4(),cart_review(buyer)["fingerprint"]
-    barrier=threading.Barrier(2)
+    buyer, item = customer(), product(stock=5)
+    add_to_cart(buyer, item.pk)
+    key, review = uuid.uuid4(), cart_review(buyer)["fingerprint"]
+    barrier = threading.Barrier(2)
+
     def contend(_):
         connections.close_all()
         try:
             barrier.wait(timeout=30)
-            return checkout(buyer,key,review).pk
+            return checkout(buyer, key, review).pk
         finally:
             connections.close_all()
+
     with ThreadPoolExecutor(max_workers=2) as pool:
-        outcomes=list(pool.map(contend,range(2)))
-    assert outcomes[0]==outcomes[1] and Checkout.objects.count()==1
+        outcomes = list(pool.map(contend, range(2)))
+    assert outcomes[0] == outcomes[1] and Checkout.objects.count() == 1
     item.refresh_from_db()
-    assert item.stock==4 and not buyer.cart.lines.exists()
+    assert item.stock == 4 and not buyer.cart.lines.exists()
 
 
 def _backend_pid():
@@ -146,7 +156,9 @@ def test_checkout_and_product_deactivation_share_seller_first_lock_order(first_l
     actions = {"checkout": buy, "deactivate": deactivate}
     second = "deactivate" if first_locker == "checkout" else "checkout"
     with ThreadPoolExecutor(max_workers=2) as pool:
-        futures = {first_locker: pool.submit(_on_connection, first_locker, pids, finished[first_locker], actions[first_locker])}
+        futures = {
+            first_locker: pool.submit(_on_connection, first_locker, pids, finished[first_locker], actions[first_locker])
+        }
         try:
             assert locked[first_locker].wait(10)
             futures[second] = pool.submit(_on_connection, second, pids, finished[second], actions[second])
@@ -195,7 +207,10 @@ def test_opposite_cart_orders_lock_products_in_ascending_id_order(run):
             # Hold the higher row so real lock acquisition stops between the two rows.
             # Ascending checkout holds low while waiting; descending checkout leaves it free.
             Product.objects.select_for_update().get(pk=high.pk)
-            futures = [pool.submit(_on_connection, buyer.pk, pids, finished[buyer.pk], lambda buyer=buyer: buy(buyer)) for buyer in buyers]
+            futures = [
+                pool.submit(_on_connection, buyer.pk, pids, finished[buyer.pk], lambda buyer=buyer: buy(buyer))
+                for buyer in buyers
+            ]
             for buyer in buyers:
                 assert started[buyer.pk].wait(10)
                 _wait_for_block(pids[buyer.pk], finished[buyer.pk])

@@ -1,4 +1,5 @@
 """scripts/package_submission.py accepts the four deliverables and refuses what the brief would reject."""
+
 import importlib.util
 import io
 import zipfile
@@ -24,8 +25,12 @@ def source_zip(extra=None):
 
 
 def submission(tmp_path, **overrides):
-    files = {"report.pdf": b"%PDF-1.7 dummy", "slides.pptx": b"PK\x03\x04 dummy", "demo.mp4": b"\0\0\0\x18ftypmp42",
-             "source.zip": source_zip()}
+    files = {
+        "report.pdf": b"%PDF-1.7 dummy",
+        "slides.pptx": b"PK\x03\x04 dummy",
+        "demo.mp4": b"\0\0\0\x18ftypmp42",
+        "source.zip": source_zip(),
+    }
     files.update(overrides)
     path = tmp_path / "submission.zip"
     with zipfile.ZipFile(path, "w") as outer:
@@ -45,10 +50,15 @@ def test_a_dummy_zip_with_the_four_files_passes(tmp_path):
     assert package.main(["--check-only", str(submission(tmp_path))]) == 0
 
 
-@pytest.mark.parametrize("missing, expected", [
-    ("report.pdf", "final report"), ("slides.pptx", "presentation slides"),
-    ("demo.mp4", "presentation video"), ("source.zip", "source code zip"),
-])
+@pytest.mark.parametrize(
+    "missing, expected",
+    [
+        ("report.pdf", "final report"),
+        ("slides.pptx", "presentation slides"),
+        ("demo.mp4", "presentation video"),
+        ("source.zip", "source code zip"),
+    ],
+)
 def test_each_missing_deliverable_fails(tmp_path, missing, expected):
     path = submission(tmp_path, **{missing: None})
     (failure,) = levels(package.check(path), "FAIL")

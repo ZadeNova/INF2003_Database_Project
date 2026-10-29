@@ -1,4 +1,5 @@
 """Seller CRUD, real cross-store failures, raster uploads, moderation and live category options."""
+
 import json
 from copy import deepcopy
 from io import BytesIO, StringIO
@@ -30,11 +31,18 @@ def product_audits():
 def shop(mongo_db):
     seller = make_seller()
     category = Category.objects.create(slug="housewares", name_en="Housewares", name_pt="Housewares")
-    template = {"_id": category.pk, "category_id": category.pk, "rich": True,
-                "has_generated_content": False, "version": 1, "attributes": {
-                    "material": {"type": "string", "values": ["cotton", "steel"]},
-                    "capacity": {"type": "integer", "values": [2, 4]},
-                    "wireless": {"type": "boolean", "values": [True, False]}}}
+    template = {
+        "_id": category.pk,
+        "category_id": category.pk,
+        "rich": True,
+        "has_generated_content": False,
+        "version": 1,
+        "attributes": {
+            "material": {"type": "string", "values": ["cotton", "steel"]},
+            "capacity": {"type": "integer", "values": [2, 4]},
+            "wireless": {"type": "boolean", "values": [True, False]},
+        },
+    }
     mongo_db.category_templates.insert_one(template)
     client = Client()
     client.force_login(seller.user)
@@ -42,9 +50,19 @@ def shop(mongo_db):
 
 
 def data(category, **changes):
-    return {"name": "Handmade kettle", "category": str(category.pk), "price": "12.34", "stock": "8",
-            "freight": "1.23", "lead_time_days": "2", "description": "A seller-written description.",
-            "attr_material": "steel", "attr_capacity": "2", "attr_wireless": "false", **changes}
+    return {
+        "name": "Handmade kettle",
+        "category": str(category.pk),
+        "price": "12.34",
+        "stock": "8",
+        "freight": "1.23",
+        "lead_time_days": "2",
+        "description": "A seller-written description.",
+        "attr_material": "steel",
+        "attr_capacity": "2",
+        "attr_wireless": "false",
+        **changes,
+    }
 
 
 def create(shop):
@@ -60,7 +78,11 @@ def photo(format_name="PNG", name="kettle.png"):
     extra = PngImagePlugin.PngInfo()
     extra.add_text("Comment", "PRIVATE METADATA SENTINEL")
     image.save(output, format=format_name, **({"pnginfo": extra} if format_name == "PNG" else {}))
-    return SimpleUploadedFile(name, output.getvalue(), content_type={"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp"}[format_name])
+    return SimpleUploadedFile(
+        name,
+        output.getvalue(),
+        content_type={"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp"}[format_name],
+    )
 
 
 def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
@@ -84,22 +106,36 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
 def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db):
     seller, category, template, client = shop
     other = make_seller("other")
-    response = client.post("/products/mine/new/", data(category, seller=str(other.pk), taken_down="true", has_generated_content="true"))
+    response = client.post(
+        "/products/mine/new/", data(category, seller=str(other.pk), taken_down="true", has_generated_content="true")
+    )
     assert response.status_code == 302
     item = Product.objects.get()
     assert item.seller == seller and not item.taken_down and not item.has_generated_content
     other_client = Client()
     other_client.force_login(other.user)
     assert "Handmade kettle" not in other_client.get("/products/mine/").content.decode()
-    for method, path in (("get", f"/products/mine/{item.pk}/edit/"),
-                         ("post", f"/products/mine/{item.pk}/edit/"),
-                         ("post", f"/products/mine/{item.pk}/deactivate/")):
+    for method, path in (
+        ("get", f"/products/mine/{item.pk}/edit/"),
+        ("post", f"/products/mine/{item.pk}/edit/"),
+        ("post", f"/products/mine/{item.pk}/deactivate/"),
+    ):
         assert getattr(other_client, method)(path, data(category)).status_code == 404
 
 
-@pytest.mark.parametrize("field,value", [("lead_time_days", ""), ("stock", "-1"), ("price", "0.00"),
-    ("freight", "-0.01"), ("attr_material", '{"$ne":null}'), ("attr_capacity", "3"),
-    ("attr_wireless", "not-bool"), ("attr_$where", "sleep(1000)")])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("lead_time_days", ""),
+        ("stock", "-1"),
+        ("price", "0.00"),
+        ("freight", "-0.01"),
+        ("attr_material", '{"$ne":null}'),
+        ("attr_capacity", "3"),
+        ("attr_wireless", "not-bool"),
+        ("attr_$where", "sleep(1000)"),
+    ],
+)
 def test_required_fields_and_template_values_are_validated(shop, mongo_db, field, value):
     _, category, _, client = shop
     assert client.post("/products/mine/new/", data(category, **{field: value})).status_code == 400
@@ -122,8 +158,12 @@ def test_deactivate_is_post_only_and_audited_and_keeps_spec(shop, mongo_db):
 def test_real_mongodb_connection_failure_after_sql_write_rolls_it_back(shop, mongo_db, monkeypatch):
     seller, category, template, client = shop
     item = create(shop)
-    form = ProductForm(data(category, stock="1", price="99.99"), template=template, instance=item,
-                       spec=mongo_db.product_specs.find_one({"_id": item.pk}))
+    form = ProductForm(
+        data(category, stock="1", price="99.99"),
+        template=template,
+        instance=item,
+        spec=mongo_db.product_specs.find_one({"_id": item.pk}),
+    )
     assert form.is_valid(), form.errors
     monkeypatch.setenv("MONGO_HOST", "127.0.0.1")
     monkeypatch.setenv("MONGO_PORT", "1")
@@ -138,8 +178,12 @@ def test_real_mongodb_connection_failure_after_sql_write_rolls_it_back(shop, mon
 def test_real_mongodb_validator_failure_rolls_back_sql_and_audit(shop, mongo_db):
     seller, category, template, client = shop
     item = create(shop)
-    form = ProductForm(data(category, stock="1"), template=template, instance=item,
-                       spec=mongo_db.product_specs.find_one({"_id": item.pk}))
+    form = ProductForm(
+        data(category, stock="1"),
+        template=template,
+        instance=item,
+        spec=mongo_db.product_specs.find_one({"_id": item.pk}),
+    )
     assert form.is_valid()
     invalid_spec = {**form.cleaned_data, "attributes": ["not an outer-schema object"]}
     with pytest.raises(WriteError) as error:
@@ -184,7 +228,9 @@ def test_replacing_photo_deletes_old_file_after_storing_new_one(shop, mongo_db):
 def test_invalid_uploads_are_rejected_before_either_store_changes(shop, mongo_db, kind):
     _, category, _, client = shop
     if kind == "svg":
-        upload = SimpleUploadedFile("image.svg", b'<svg xmlns="http://www.w3.org/2000/svg"/>', content_type="image/svg+xml")
+        upload = SimpleUploadedFile(
+            "image.svg", b'<svg xmlns="http://www.w3.org/2000/svg"/>', content_type="image/svg+xml"
+        )
     elif kind == "oversize":
         upload = SimpleUploadedFile("big.jpg", b"x" * (2 * 1024 * 1024 + 1), content_type="image/jpeg")
     elif kind == "not_image":
@@ -263,7 +309,12 @@ def test_operator_option_name_injection_is_rejected(shop, mongo_db, name):
     operator = make_operator()
     client = Client()
     client.force_login(operator)
-    assert client.post(f"/products/operator/categories/{category.pk}/", {"name": name, "kind": "string", "values": "x"}).status_code == 400
+    assert (
+        client.post(
+            f"/products/operator/categories/{category.pk}/", {"name": name, "kind": "string", "values": "x"}
+        ).status_code
+        == 400
+    )
     assert mongo_db.category_templates.find_one({"_id": category.pk})["version"] == 1
 
 
@@ -304,11 +355,19 @@ def test_product_audit_page_shows_the_shop_product_actor_and_values(shop, mongo_
 def test_editing_keeps_rating_summary_and_latest_reviews_owned_by_reviews(shop, mongo_db):
     seller, category, template, client = shop
     item = create(shop)
-    rating = {"count": 1, "sum": 5, "average": Decimal128("5"),
-              "distribution": {"1": 0, "2": 0, "3": 0, "4": 0, "5": 1}, "bayesian": Decimal128("4.5")}
+    rating = {
+        "count": 1,
+        "sum": 5,
+        "average": Decimal128("5"),
+        "distribution": {"1": 0, "2": 0, "3": 0, "4": 0, "5": 1},
+        "bayesian": Decimal128("4.5"),
+    }
     reviews = [{"score": 5, "text_en": "Existing review"}]
     mongo_db.product_specs.update_one({"_id": item.pk}, {"$set": {"rating_summary": rating, "latest_reviews": reviews}})
-    assert client.post(f"/products/mine/{item.pk}/edit/", data(category, description="Updated description")).status_code == 302
+    assert (
+        client.post(f"/products/mine/{item.pk}/edit/", data(category, description="Updated description")).status_code
+        == 302
+    )
     spec = mongo_db.product_specs.find_one({"_id": item.pk})
     assert spec["rating_summary"] == rating and spec["latest_reviews"] == reviews
 
@@ -333,12 +392,19 @@ def test_operator_pages_require_the_role_and_csrf(shop, mongo_db):
     item = create(shop)
     for user in (seller.user, make_customer()):
         client.force_login(user)
-        for path in ("/products/operator/", "/products/operator/categories/", f"/products/operator/{item.pk}/",
-                     f"/products/operator/categories/{category.pk}/"):
+        for path in (
+            "/products/operator/",
+            "/products/operator/categories/",
+            f"/products/operator/{item.pk}/",
+            f"/products/operator/categories/{category.pk}/",
+        ):
             assert client.get(path).status_code == 403
             assert client.post(path, {"action": "takedown", "reason": "No"}).status_code == 403
     operator = make_operator()
     csrf = Client(enforce_csrf_checks=True)
     csrf.force_login(operator)
     assert csrf.post(f"/products/operator/{item.pk}/", {"action": "takedown", "reason": "No"}).status_code == 403
-    assert csrf.post(f"/products/operator/categories/{category.pk}/", {"name": "finish", "kind": "string"}).status_code == 403
+    assert (
+        csrf.post(f"/products/operator/categories/{category.pk}/", {"name": "finish", "kind": "string"}).status_code
+        == 403
+    )

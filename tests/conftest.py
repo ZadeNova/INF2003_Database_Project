@@ -1,4 +1,5 @@
 """Only real PostgreSQL and MongoDB. Deliberate outages use refused TCP connections."""
+
 import json
 import os
 from contextlib import contextmanager
@@ -46,11 +47,16 @@ def postgres_unavailable(transactional_db):
     def unavailable():
         connection.close()
         original = deepcopy(connection.settings_dict)
-        connection.settings_dict = {**original, "HOST": "127.0.0.1", "PORT": "1",
-                                    "OPTIONS": {**original["OPTIONS"], "connect_timeout": 1}}
+        connection.settings_dict = {
+            **original,
+            "HOST": "127.0.0.1",
+            "PORT": "1",
+            "OPTIONS": {**original["OPTIONS"], "connect_timeout": 1},
+        }
         try:
             yield
         finally:
             connection.close()
             connection.settings_dict = original
+
     return unavailable

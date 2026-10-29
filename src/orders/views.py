@@ -13,7 +13,15 @@ from accounts.mixins import CustomerRequiredMixin, OperatorRequiredMixin, Seller
 
 from .forms import OrderFilterForm, PaymentForm
 from .models import Checkout, Order, OrderLine
-from .services import CheckoutError, add_to_cart, cart_review, change_order_status, checkout, remove_from_cart, set_cart_quantity
+from .services import (
+    CheckoutError,
+    add_to_cart,
+    cart_review,
+    change_order_status,
+    checkout,
+    remove_from_cart,
+    set_cart_quantity,
+)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -58,16 +66,26 @@ class CartChangeView(CustomerRequiredMixin, View):
 class ReviewView(CustomerRequiredMixin, View):
     def get(self, request):
         context = cart_review(request.user)
-        context["form"] = PaymentForm(initial={"idempotency_key": uuid.uuid4(), "fingerprint": context["fingerprint"],
-                                                "method": "credit_card", "instalments": 1})
+        context["form"] = PaymentForm(
+            initial={
+                "idempotency_key": uuid.uuid4(),
+                "fingerprint": context["fingerprint"],
+                "method": "credit_card",
+                "instalments": 1,
+            }
+        )
         return render(request, "orders/review.html", context)
 
     def post(self, request):
         form = PaymentForm(request.POST)
         if form.is_valid():
             try:
-                record = checkout(request.user, form.cleaned_data["idempotency_key"], form.cleaned_data["fingerprint"],
-                                  [{"method": form.cleaned_data["method"], "instalments": form.cleaned_data["instalments"]}])
+                record = checkout(
+                    request.user,
+                    form.cleaned_data["idempotency_key"],
+                    form.cleaned_data["fingerprint"],
+                    [{"method": form.cleaned_data["method"], "instalments": form.cleaned_data["instalments"]}],
+                )
             except CheckoutError as exc:
                 messages.error(request, str(exc))
                 return redirect("orders:review")
@@ -81,22 +99,34 @@ class ReviewView(CustomerRequiredMixin, View):
 @method_decorator(never_cache, name="dispatch")
 class HistoryView(CustomerRequiredMixin, View):
     def get(self, request):
-        records = Checkout.objects.filter(customer=request.user).prefetch_related("orders__seller").order_by("-placed_at", "-pk")
-        return render(request, "orders/history.html", {"page_obj": Paginator(records, 20).get_page(request.GET.get("page"))})
+        records = (
+            Checkout.objects.filter(customer=request.user)
+            .prefetch_related("orders__seller")
+            .order_by("-placed_at", "-pk")
+        )
+        return render(
+            request, "orders/history.html", {"page_obj": Paginator(records, 20).get_page(request.GET.get("page"))}
+        )
 
 
 @method_decorator(never_cache, name="dispatch")
 class CheckoutDetailView(CustomerRequiredMixin, View):
     def get(self, request, pk):
-        record = get_object_or_404(Checkout.objects.filter(customer=request.user).prefetch_related("orders__seller", "payments"), pk=pk)
+        record = get_object_or_404(
+            Checkout.objects.filter(customer=request.user).prefetch_related("orders__seller", "payments"), pk=pk
+        )
         return render(request, "orders/checkout_detail.html", {"checkout": record})
 
 
 @method_decorator(never_cache, name="dispatch")
 class OrderDetailView(CustomerRequiredMixin, View):
     def get(self, request, pk):
-        order = get_object_or_404(Order.objects.filter(checkout__customer=request.user).select_related("seller", "checkout", "refund")
-                                  .prefetch_related(Prefetch("lines", queryset=OrderLine.objects.select_related("product").order_by("pk"))), pk=pk)
+        order = get_object_or_404(
+            Order.objects.filter(checkout__customer=request.user)
+            .select_related("seller", "checkout", "refund")
+            .prefetch_related(Prefetch("lines", queryset=OrderLine.objects.select_related("product").order_by("pk"))),
+            pk=pk,
+        )
         return render(request, "orders/order_detail.html", {"order": order})
 
 
@@ -115,10 +145,26 @@ class CancelView(CustomerRequiredMixin, View):
 class SellerOrdersView(SellerRequiredMixin, View):
     def get(self, request):
         filters = OrderFilterForm(request.GET)
-        orders = filters.apply(Order.objects.filter(seller=self.seller)).select_related("checkout", "seller").order_by("-placed_at", "-pk")
-        query = urlencode({key: value for key, value in filters.cleaned_data.items() if value}) if filters.is_valid() else ""
-        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
-                                                             "seller_mode": True, "filters": filters, "query": query})
+        orders = (
+            filters.apply(Order.objects.filter(seller=self.seller))
+            .select_related("checkout", "seller")
+            .order_by("-placed_at", "-pk")
+        )
+        query = (
+            urlencode({key: value for key, value in filters.cleaned_data.items() if value})
+            if filters.is_valid()
+            else ""
+        )
+        return render(
+            request,
+            "orders/manage_orders.html",
+            {
+                "page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
+                "seller_mode": True,
+                "filters": filters,
+                "query": query,
+            },
+        )
 
 
 class ShipView(SellerRequiredMixin, View):
@@ -137,9 +183,21 @@ class OperatorOrdersView(OperatorRequiredMixin, View):
     def get(self, request):
         filters = OrderFilterForm(request.GET)
         orders = filters.apply(Order.objects.all()).select_related("checkout", "seller").order_by("-placed_at", "-pk")
-        query = urlencode({key: value for key, value in filters.cleaned_data.items() if value}) if filters.is_valid() else ""
-        return render(request, "orders/manage_orders.html", {"page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
-                                                             "seller_mode": False, "filters": filters, "query": query})
+        query = (
+            urlencode({key: value for key, value in filters.cleaned_data.items() if value})
+            if filters.is_valid()
+            else ""
+        )
+        return render(
+            request,
+            "orders/manage_orders.html",
+            {
+                "page_obj": Paginator(orders, 20).get_page(request.GET.get("page")),
+                "seller_mode": False,
+                "filters": filters,
+                "query": query,
+            },
+        )
 
 
 class DeliverView(OperatorRequiredMixin, View):

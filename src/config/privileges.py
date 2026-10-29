@@ -1,4 +1,5 @@
 """Install identical owner/runtime separation in application and pytest databases."""
+
 import os
 
 from psycopg import sql
@@ -16,24 +17,44 @@ def grant_runtime(apps, schema_editor):
         cursor.execute("SELECT current_database()")
         database = cursor.fetchone()[0]
         cursor.execute(sql.SQL("REVOKE ALL ON DATABASE {} FROM PUBLIC").format(sql.Identifier(database)))
-        cursor.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(sql.Identifier(database), sql.Identifier(role)))
+        cursor.execute(
+            sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(sql.Identifier(database), sql.Identifier(role))
+        )
         cursor.execute("REVOKE CREATE ON SCHEMA public FROM PUBLIC")
         cursor.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(sql.Identifier(role)))
-        cursor.execute(sql.SQL("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {}").format(sql.Identifier(role)))
-        cursor.execute(sql.SQL("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {}").format(sql.Identifier(role)))
-        cursor.execute(sql.SQL("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {}").format(sql.Identifier(role)))
-        cursor.execute(sql.SQL("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO {}").format(sql.Identifier(role)))
+        cursor.execute(
+            sql.SQL("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {}").format(
+                sql.Identifier(role)
+            )
+        )
+        cursor.execute(
+            sql.SQL("GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {}").format(sql.Identifier(role))
+        )
+        cursor.execute(
+            sql.SQL(
+                "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {}"
+            ).format(sql.Identifier(role))
+        )
+        cursor.execute(
+            sql.SQL("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO {}").format(
+                sql.Identifier(role)
+            )
+        )
         # Django creates its migration recorder before the first migration.
         # Web may inspect that history, but only the owner may change it.
         cursor.execute(sql.SQL("REVOKE ALL ON TABLE django_migrations FROM {}").format(sql.Identifier(role)))
         cursor.execute(sql.SQL("GRANT SELECT ON TABLE django_migrations TO {}").format(sql.Identifier(role)))
-        cursor.execute("""SELECT n.nspname, c.relname FROM pg_class c
+        cursor.execute(
+            """SELECT n.nspname, c.relname FROM pg_class c
             JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE c.oid=pg_get_serial_sequence(%s, %s)::regclass""", ["django_migrations", "id"])
+            WHERE c.oid=pg_get_serial_sequence(%s, %s)::regclass""",
+            ["django_migrations", "id"],
+        )
         sequence = cursor.fetchone()
         if sequence:
-            cursor.execute(sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(
-                sql.Identifier(*sequence), sql.Identifier(role)))
+            cursor.execute(
+                sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(sql.Identifier(*sequence), sql.Identifier(role))
+            )
         restrict_trigger_tables(cursor, role)
         restrict_money_deletes(cursor, role)
 
@@ -46,13 +67,17 @@ def restrict_trigger_tables(cursor, role):
         target = sql.Identifier("public", table)
         cursor.execute(sql.SQL("REVOKE ALL ON TABLE {} FROM {}").format(target, sql.Identifier(role)))
         cursor.execute(sql.SQL("GRANT SELECT ON TABLE {} TO {}").format(target, sql.Identifier(role)))
-        cursor.execute("""SELECT n.nspname, c.relname FROM pg_class c
+        cursor.execute(
+            """SELECT n.nspname, c.relname FROM pg_class c
             JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE c.oid=pg_get_serial_sequence(%s, %s)::regclass""", ["public." + table, "id"])
+            WHERE c.oid=pg_get_serial_sequence(%s, %s)::regclass""",
+            ["public." + table, "id"],
+        )
         sequence = cursor.fetchone()
         if sequence:
-            cursor.execute(sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(
-                sql.Identifier(*sequence), sql.Identifier(role)))
+            cursor.execute(
+                sql.SQL("REVOKE ALL ON SEQUENCE {} FROM {}").format(sql.Identifier(*sequence), sql.Identifier(role))
+            )
 
 
 def protect_trigger_tables(apps, schema_editor):
@@ -64,8 +89,11 @@ def restrict_money_deletes(cursor, role):
     for table in NO_DELETE_TABLES:
         cursor.execute("SELECT to_regclass(%s)", ["public." + table])
         if cursor.fetchone()[0] is not None:  # the first accounts migration runs before orders exists
-            cursor.execute(sql.SQL("REVOKE DELETE ON TABLE {} FROM {}").format(
-                sql.Identifier("public", table), sql.Identifier(role)))
+            cursor.execute(
+                sql.SQL("REVOKE DELETE ON TABLE {} FROM {}").format(
+                    sql.Identifier("public", table), sql.Identifier(role)
+                )
+            )
 
 
 def protect_money_tables(apps, schema_editor):

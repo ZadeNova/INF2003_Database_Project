@@ -1,4 +1,5 @@
 """Product audit follows the shared accounts owner/privilege boundary."""
+
 PRODUCT_AUDIT = """
 CREATE FUNCTION public.audit_product_update() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$

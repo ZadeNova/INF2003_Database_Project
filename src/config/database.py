@@ -1,4 +1,5 @@
 """One connection policy for Django and offline PostgreSQL tools (no Django import)."""
+
 import os
 
 from psycopg import ProgrammingError
@@ -15,9 +16,15 @@ def connection_parameters(database_url=None, *, environ=None):
         if set(params) - {"dbname", "user", "password", "host", "port", "sslmode"}:
             raise ValueError("Unsupported PostgreSQL connection string option")
     else:
-        params = {key: env.get(name, "") for key, name in (
-            ("dbname", "POSTGRES_DB"), ("user", "POSTGRES_USER"),
-            ("password", "POSTGRES_PASSWORD"), ("host", "POSTGRES_HOST"))}
+        params = {
+            key: env.get(name, "")
+            for key, name in (
+                ("dbname", "POSTGRES_DB"),
+                ("user", "POSTGRES_USER"),
+                ("password", "POSTGRES_PASSWORD"),
+                ("host", "POSTGRES_HOST"),
+            )
+        }
         params["port"] = env.get("POSTGRES_PORT", "5432")
     for key in ("dbname", "user", "password", "host"):
         if not params.get(key) or params[key].startswith("replace-"):

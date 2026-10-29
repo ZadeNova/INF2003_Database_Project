@@ -1,4 +1,5 @@
 """The MongoDB application user reaches its own databases only (AGENTS.md rule 5)."""
+
 import os
 from uuid import uuid4
 
@@ -29,7 +30,7 @@ def test_app_user_reads_and_writes_its_databases(client, database):
 def test_app_user_is_refused_on_any_other_database(client, database):
     with pytest.raises(OperationFailure) as refused:
         client[database]["role_probe"].insert_one({"x": 1})
-    assert refused.value.code == 13       # Unauthorized
+    assert refused.value.code == 13  # Unauthorized
     with pytest.raises(OperationFailure) as refused:
         client[database]["role_probe"].find_one()
     assert refused.value.code == 13

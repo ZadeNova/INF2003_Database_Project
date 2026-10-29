@@ -16,7 +16,9 @@ class User(AbstractUser):
     role = models.CharField(max_length=8, choices=Role.choices, default=Role.CUSTOMER)
 
     class Meta(AbstractUser.Meta):
-        constraints = [models.CheckConstraint(condition=Q(role__in=["customer", "seller", "operator"]), name="user_role_valid")]
+        constraints = [
+            models.CheckConstraint(condition=Q(role__in=["customer", "seller", "operator"]), name="user_role_valid")
+        ]
 
 
 class CustomerProfile(models.Model):
@@ -57,16 +59,22 @@ class Seller(models.Model):
         return ", ".join(part for part in (self.city.title(), self.state) if part)
 
     class Meta:
-        constraints = [models.CheckConstraint(condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid")]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid"
+            )
+        ]
 
 
 class AuditLog(models.Model):
     """Written only by owner-owned SECURITY DEFINER triggers; the runtime role may only read it."""
+
     table_name = models.CharField(max_length=63)
     row_id = models.CharField(max_length=64)  # text, so MongoDB ObjectIds fit as well as bigint ids
     action = models.CharField(max_length=64)
-    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
-                              related_name="audit_entries")  # NULL means a system change
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="audit_entries"
+    )  # NULL means a system change
     before = models.JSONField(null=True, blank=True)
     after = models.JSONField(null=True, blank=True)
     reason = models.TextField(null=True, blank=True)
@@ -75,22 +83,30 @@ class AuditLog(models.Model):
     @property
     def action_label(self):
         from .audit import AUDIT_LABELS
+
         return AUDIT_LABELS.get(self.action, "Updated")
 
     @property
     def action_tone(self):
         from .audit import AUDIT_TONES
+
         return AUDIT_TONES.get(self.action, "neutral")
 
     class Meta:
         db_table = "audit_log"
-        indexes = [models.Index(F("created_at").desc(), F("id").desc(), name="audit_log_newest"),
-                   models.Index(fields=["action"], name="audit_log_action")]
+        indexes = [
+            models.Index(F("created_at").desc(), F("id").desc(), name="audit_log_newest"),
+            models.Index(fields=["action"], name="audit_log_action"),
+        ]
         constraints = [
-            models.CheckConstraint(condition=~Q(table_name="") & ~Q(row_id="") & ~Q(action=""), name="audit_log_identity_nonblank"),
+            models.CheckConstraint(
+                condition=~Q(table_name="") & ~Q(row_id="") & ~Q(action=""), name="audit_log_identity_nonblank"
+            ),
             # An operator (non-NULL actor) must give a reason. Both sides are non-NULL so the CHECK cannot pass on NULL.
-            models.CheckConstraint(condition=Q(actor__isnull=True) | (Q(reason__isnull=False) & Q(reason__regex=r"\S")),
-                                   name="audit_log_actor_reason"),
+            models.CheckConstraint(
+                condition=Q(actor__isnull=True) | (Q(reason__isnull=False) & Q(reason__regex=r"\S")),
+                name="audit_log_actor_reason",
+            ),
         ]
 
 

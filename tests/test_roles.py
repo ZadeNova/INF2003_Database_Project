@@ -1,4 +1,5 @@
 """Role and seller-status access over every protected URL and action (accounts plan, P1)."""
+
 import pytest
 from account_helpers import PASSWORD, make_customer, make_operator, make_seller
 from django.test import Client
@@ -32,18 +33,60 @@ def client_for(users, kind):
 # Expected outcome per kind: "ok" (200), "login" (redirect to login), "status" (redirect to the seller's status
 # page) or "forbidden" (403).
 GET_MATRIX = {
-    "/account/":          dict(anonymous="login", customer="ok", approved="forbidden", pending="forbidden",
-                               rejected="forbidden", suspended="forbidden", operator="forbidden"),
-    "/seller/":           dict(anonymous="login", customer="forbidden", approved="ok", pending="status",
-                               rejected="status", suspended="status", operator="forbidden"),
-    STATUS_PAGE:          dict(anonymous="login", customer="forbidden", approved="ok", pending="ok",
-                               rejected="ok", suspended="ok", operator="forbidden"),
-    "/operator/":         dict(anonymous="login", customer="forbidden", approved="forbidden", pending="forbidden",
-                               rejected="forbidden", suspended="forbidden", operator="ok"),
-    "/operator/sellers/{target}/": dict(anonymous="login", customer="forbidden", approved="forbidden",
-                               pending="forbidden", rejected="forbidden", suspended="forbidden", operator="ok"),
-    "/operator/audit/":   dict(anonymous="login", customer="forbidden", approved="forbidden", pending="forbidden",
-                               rejected="forbidden", suspended="forbidden", operator="ok"),
+    "/account/": dict(
+        anonymous="login",
+        customer="ok",
+        approved="forbidden",
+        pending="forbidden",
+        rejected="forbidden",
+        suspended="forbidden",
+        operator="forbidden",
+    ),
+    "/seller/": dict(
+        anonymous="login",
+        customer="forbidden",
+        approved="ok",
+        pending="status",
+        rejected="status",
+        suspended="status",
+        operator="forbidden",
+    ),
+    STATUS_PAGE: dict(
+        anonymous="login",
+        customer="forbidden",
+        approved="ok",
+        pending="ok",
+        rejected="ok",
+        suspended="ok",
+        operator="forbidden",
+    ),
+    "/operator/": dict(
+        anonymous="login",
+        customer="forbidden",
+        approved="forbidden",
+        pending="forbidden",
+        rejected="forbidden",
+        suspended="forbidden",
+        operator="ok",
+    ),
+    "/operator/sellers/{target}/": dict(
+        anonymous="login",
+        customer="forbidden",
+        approved="forbidden",
+        pending="forbidden",
+        rejected="forbidden",
+        suspended="forbidden",
+        operator="ok",
+    ),
+    "/operator/audit/": dict(
+        anonymous="login",
+        customer="forbidden",
+        approved="forbidden",
+        pending="forbidden",
+        rejected="forbidden",
+        suspended="forbidden",
+        operator="ok",
+    ),
 }
 
 
@@ -72,10 +115,14 @@ def test_get_access_matrix(people, url, kind):
 def test_only_operators_can_post_seller_actions(people, kind, action):
     users, _ = people
     # Each action's target is a seller in the state that action expects, so only access decides the outcome.
-    target = make_seller(username="target", status={"approve": "pending", "reject": "pending",
-                                                     "suspend": "approved", "reinstate": "suspended"}[action])
+    target = make_seller(
+        username="target",
+        status={"approve": "pending", "reject": "pending", "suspend": "approved", "reinstate": "suspended"}[action],
+    )
     before = target.status
-    response = client_for(users, kind).post(f"/operator/sellers/{target.pk}/{action}/", {f"{action}-reason": "Policy check"})
+    response = client_for(users, kind).post(
+        f"/operator/sellers/{target.pk}/{action}/", {f"{action}-reason": "Policy check"}
+    )
     target.refresh_from_db()
     if kind == "operator":
         assert response.status_code == 302 and target.status != before
@@ -115,12 +162,17 @@ def test_a_seller_cannot_reach_another_sellers_rows_by_tampering(people):
     users, target = people
     other = make_seller(username="other-approved", status="approved", shop_name="Other Shop Ltd")
     client = client_for(users, "approved")
-    for url in (f"/seller/?seller={other.pk}", f"/seller/?seller_id={other.pk}&user={other.user_id}",
-                f"{STATUS_PAGE}?seller={other.pk}"):
+    for url in (
+        f"/seller/?seller={other.pk}",
+        f"/seller/?seller_id={other.pk}&user={other.user_id}",
+        f"{STATUS_PAGE}?seller={other.pk}",
+    ):
         body = client.get(url).content.decode()
         assert "seller-approved shop" in body and "Other Shop Ltd" not in body
     assert client.get(f"/operator/sellers/{other.pk}/").status_code == 403
-    assert client.post(f"/operator/sellers/{target.pk}/approve/", {"approve-reason": "self-approval"}).status_code == 403
+    assert (
+        client.post(f"/operator/sellers/{target.pk}/approve/", {"approve-reason": "self-approval"}).status_code == 403
+    )
     target.refresh_from_db()
     assert target.status == "pending"
 
@@ -138,26 +190,42 @@ EXPECTED_NAV = {
 def test_navigation_shows_only_the_current_roles_links(people, kind):
     users, _ = people
     body = client_for(users, kind).get("/products/").content.decode()
-    nav = body[body.index('id="primary-navigation"'):body.index("</nav>", body.index('id="primary-navigation"'))]
+    nav = body[body.index('id="primary-navigation"') : body.index("</nav>", body.index('id="primary-navigation"'))]
     shown, hidden = EXPECTED_NAV[kind]
     assert all(f">{label}</a>" in nav for label in shown)
     assert not any(f">{label}</a>" in nav for label in hidden)
 
 
-@pytest.mark.parametrize("kind, landing", [
-    ("customer", "/products/"), ("approved", "/seller/"), ("pending", STATUS_PAGE),
-    ("rejected", STATUS_PAGE), ("suspended", STATUS_PAGE), ("operator", "/operator/"),
-])
+@pytest.mark.parametrize(
+    "kind, landing",
+    [
+        ("customer", "/products/"),
+        ("approved", "/seller/"),
+        ("pending", STATUS_PAGE),
+        ("rejected", STATUS_PAGE),
+        ("suspended", STATUS_PAGE),
+        ("operator", "/operator/"),
+    ],
+)
 def test_login_lands_each_role_on_its_home(people, kind, landing):
     users, _ = people
     client = Client()
     response = client.post("/login/", {"username": users[kind].username, "password": PASSWORD})
     assert response.status_code == 302 and response.url == landing
-    assert client.get("/login/").url == landing       # already logged in: same landing
+    assert client.get("/login/").url == landing  # already logged in: same landing
 
 
-@pytest.mark.parametrize("target", ["//evil.example.com/", "/\\evil.example.com", "https://evil.example.com/",
-                                    "http://testserver/operator/", "javascript:alert(1)", "operator/"])
+@pytest.mark.parametrize(
+    "target",
+    [
+        "//evil.example.com/",
+        "/\\evil.example.com",
+        "https://evil.example.com/",
+        "http://testserver/operator/",
+        "javascript:alert(1)",
+        "operator/",
+    ],
+)
 def test_login_next_must_be_a_same_site_path(people, target):
     users, _ = people
     response = Client().post("/login/", {"username": "operator", "password": PASSWORD, "next": target})
@@ -165,5 +233,7 @@ def test_login_next_must_be_a_same_site_path(people, target):
 
 
 def test_login_honours_a_local_next_path(people):
-    response = Client().post("/login/", {"username": "seller-approved", "password": PASSWORD, "next": "/seller/status/"})
+    response = Client().post(
+        "/login/", {"username": "seller-approved", "password": PASSWORD, "next": "/seller/status/"}
+    )
     assert response.url == STATUS_PAGE

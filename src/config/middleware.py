@@ -1,4 +1,5 @@
 """Turn transient database failures into a controlled 503; never expose connection details."""
+
 import logging
 import re
 import time
@@ -55,8 +56,12 @@ class RequestLoggingMiddleware:
         else:
             level = logging.INFO
         fields = {
-            "request_id": request.request_id, "method": request.method, "path": request.path,
-            "status": response.status_code, "duration_ms": duration_ms, "user_id": self._user_id(request),
+            "request_id": request.request_id,
+            "method": request.method,
+            "path": request.path,
+            "status": response.status_code,
+            "duration_ms": duration_ms,
+            "user_id": self._user_id(request),
         }
         fields.update(timing.fields())
         exception = getattr(request, "_logged_exception", None)
@@ -66,7 +71,7 @@ class RequestLoggingMiddleware:
         return response
 
     def process_exception(self, request, exception):
-        request._logged_exception = type(exception).__name__      # class only; the message may hold user data
+        request._logged_exception = type(exception).__name__  # class only; the message may hold user data
         return None
 
     @staticmethod
@@ -102,8 +107,13 @@ class DatabaseUnavailableMiddleware:
     def process_exception(self, request, exception):
         if not isinstance(exception, (OperationalError, InterfaceError, ConnectionFailure)):
             return None
-        logger.warning("database unavailable: %s (%s %s)", type(exception).__name__, request.method, request.path,
-                       extra={"fields": {"request_id": getattr(request, "request_id", None)}})
+        logger.warning(
+            "database unavailable: %s (%s %s)",
+            type(exception).__name__,
+            request.method,
+            request.path,
+            extra={"fields": {"request_id": getattr(request, "request_id", None)}},
+        )
         response = HttpResponse(render_to_string("503.html"), status=503)
         response["Retry-After"] = RETRY_AFTER_SECONDS
         response["Cache-Control"] = "no-store"

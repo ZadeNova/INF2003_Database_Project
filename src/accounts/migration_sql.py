@@ -1,4 +1,5 @@
 """Profile ownership constraints and the seller status workflow with its audit trigger."""
+
 PROFILE_GUARDS = """
 CREATE FUNCTION check_profile_role() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE expected text; actual text;

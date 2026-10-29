@@ -48,9 +48,16 @@ class Order(models.Model):
             models.UniqueConstraint(fields=["checkout", "seller"], name="order_checkout_seller_unique"),
             models.UniqueConstraint(fields=["id", "seller"], name="order_id_seller_unique"),
             models.UniqueConstraint(fields=["id", "checkout"], name="order_id_checkout_unique"),
-            models.CheckConstraint(condition=Q(status__in=["placed", "paid", "shipped", "delivered", "cancelled"]), name="order_status_valid"),
-            models.CheckConstraint(condition=nonnegative("items") & nonnegative("freight") & nonnegative("total"), name="order_money_valid"),
-            models.CheckConstraint(condition=Q(total=models.F("items") + models.F("freight")), name="order_total_parts"),
+            models.CheckConstraint(
+                condition=Q(status__in=["placed", "paid", "shipped", "delivered", "cancelled"]),
+                name="order_status_valid",
+            ),
+            models.CheckConstraint(
+                condition=nonnegative("items") & nonnegative("freight") & nonnegative("total"), name="order_money_valid"
+            ),
+            models.CheckConstraint(
+                condition=Q(total=models.F("items") + models.F("freight")), name="order_total_parts"
+            ),
         ]
         indexes = [models.Index(fields=["seller", "placed_at"], name="order_seller_date")]
 
@@ -67,7 +74,10 @@ class OrderLine(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(condition=Q(quantity__gt=0), name="line_quantity_positive"),
-            models.CheckConstraint(condition=Q(unit_price__gt=0, unit_price__lte="9999999999.99") & nonnegative("freight"), name="line_money_valid"),
+            models.CheckConstraint(
+                condition=Q(unit_price__gt=0, unit_price__lte="9999999999.99") & nonnegative("freight"),
+                name="line_money_valid",
+            ),
         ]
 
 
@@ -87,7 +97,9 @@ class Payment(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["checkout", "sequence"], name="payment_checkout_sequence_unique"),
-            models.CheckConstraint(condition=Q(method__in=["credit_card", "boleto", "voucher", "debit_card"]), name="payment_method_valid"),
+            models.CheckConstraint(
+                condition=Q(method__in=["credit_card", "boleto", "voucher", "debit_card"]), name="payment_method_valid"
+            ),
             models.CheckConstraint(condition=Q(instalments__gte=1, sequence__gte=1), name="payment_counts_positive"),
             models.CheckConstraint(condition=nonnegative("amount"), name="payment_amount_valid"),
         ]
@@ -120,5 +132,7 @@ class CartLine(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["cart", "product"], name="cart_product_unique"),
-            models.CheckConstraint(condition=Q(quantity__gte=1, quantity__lte=MAX_CART_QUANTITY), name="cart_quantity_valid"),
+            models.CheckConstraint(
+                condition=Q(quantity__gte=1, quantity__lte=MAX_CART_QUANTITY), name="cart_quantity_valid"
+            ),
         ]

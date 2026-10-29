@@ -1,4 +1,5 @@
 """Environment-driven configuration. One local setup: plain HTTP on 127.0.0.1, secrets from the git-ignored .env."""
+
 import os
 import re
 from pathlib import Path
@@ -10,17 +11,20 @@ from config.database import connection_parameters
 ENVIRON = os.environ
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 def required(name):
     value = ENVIRON.get(name, "")
     if not value or value.startswith("replace-"):
         raise ImproperlyConfigured(f"{name} must be set to a non-placeholder value")
     return value
 
+
 def boolean(name, default=False):
     value = ENVIRON.get(name, str(default)).lower()
     if value not in {"true", "false"}:
         raise ImproperlyConfigured(f"{name} must be true or false")
     return value == "true"
+
 
 DEBUG = boolean("DJANGO_DEBUG")
 SECRET_KEY = required("DJANGO_SECRET_KEY")
@@ -34,9 +38,19 @@ if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Explicit allowed hosts are required")
 CSRF_TRUSTED_ORIGINS = [v.strip() for v in ENVIRON.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if v.strip()]
 INSTALLED_APPS = [
-    "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
-    "django.contrib.messages", "django.contrib.staticfiles",
-    "config", "accounts", "catalogue", "orders", "reviews", "wishlist", "dashboard", "activity",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "config",
+    "accounts",
+    "catalogue",
+    "orders",
+    "reviews",
+    "wishlist",
+    "dashboard",
+    "activity",
 ]
 MIDDLEWARE = [
     "config.middleware.DatabaseUnavailableMiddleware",
@@ -54,25 +68,39 @@ MIDDLEWARE = [
 ]
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
-TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates",
-    "DIRS": [BASE_DIR / "templates"], "APP_DIRS": True,
-    "OPTIONS": {"context_processors": [
-        "django.template.context_processors.request",
-        "django.contrib.auth.context_processors.auth",
-        "django.contrib.messages.context_processors.messages",
-        "accounts.context_processors.role_navigation",
-        "wishlist.context_processors.alerts_badge",
-    ]}}]
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "accounts.context_processors.role_navigation",
+                "wishlist.context_processors.alerts_badge",
+            ]
+        },
+    }
+]
 try:
     database = connection_parameters(environ=ENVIRON)
 except ValueError as error:
     raise ImproperlyConfigured(str(error)) from None
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql",
-    "NAME": database.pop("dbname"), "USER": database.pop("user"),
-    "PASSWORD": database.pop("password"), "HOST": database.pop("host"),
-    "PORT": database.pop("port", "5432"), "CONN_MAX_AGE": 60,
-    "CONN_HEALTH_CHECKS": True, "OPTIONS": {**database, "connect_timeout": 3},
-}}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": database.pop("dbname"),
+        "USER": database.pop("user"),
+        "PASSWORD": database.pop("password"),
+        "HOST": database.pop("host"),
+        "PORT": database.pop("port", "5432"),
+        "CONN_MAX_AGE": 60,
+        "CONN_HEALTH_CHECKS": True,
+        "OPTIONS": {**database, "connect_timeout": 3},
+    }
+}
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -88,8 +116,10 @@ AUTH_USER_MODEL = "accounts.User"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STORAGES = {"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}}
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600
 SESSION_COOKIE_HTTPONLY = True

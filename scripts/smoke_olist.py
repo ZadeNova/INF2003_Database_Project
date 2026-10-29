@@ -4,6 +4,7 @@ Run through migrate so the demo passwords come from its environment. The Host
 header is localhost because Docker's service name is not a public allowed host.
 No credentials, cookies or response bodies are printed.
 """
+
 import argparse
 import json
 import os
@@ -22,9 +23,11 @@ DEMO_LOGINS = (
 def run(base):
     outcomes = {}
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
+
     def fetch(path, data=None):
         request = urllib.request.Request(base + path, data=data, headers={"Host": "127.0.0.1"})
         return opener.open(request, timeout=15)
+
     for path in ("/", "/products/", "/health/"):
         with fetch(path) as response:
             outcomes[path] = response.status
@@ -41,10 +44,18 @@ def run(base):
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
         with fetch("/login/") as response:
             token = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', response.read().decode()).group(1)
-        payload = urllib.parse.urlencode({"username": username, "password": os.environ["DEMO_" + role.upper() + "_PASSWORD"],
-                                          "csrfmiddlewaretoken": token}).encode()
+        payload = urllib.parse.urlencode(
+            {
+                "username": username,
+                "password": os.environ["DEMO_" + role.upper() + "_PASSWORD"],
+                "csrfmiddlewaretoken": token,
+            }
+        ).encode()
         with fetch("/login/", payload) as response:
-            if urllib.parse.urlsplit(response.geturl()).path != landing_path or "Log out" not in response.read().decode():
+            if (
+                urllib.parse.urlsplit(response.geturl()).path != landing_path
+                or "Log out" not in response.read().decode()
+            ):
                 raise RuntimeError(f"{role} HTTP login failed")
             outcomes[role + "_login"] = "passed"
     print(json.dumps(outcomes, sort_keys=True))

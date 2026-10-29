@@ -1,5 +1,5 @@
 [tool.ruff]
-line-length = 230
+line-length = 120
 target-version = "py313"
 extend-exclude = ["**/migrations/**", ".cache", "data", "src/static/vendor"]
 

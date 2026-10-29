@@ -1,17 +1,23 @@
 """Browser-only fixtures: HTTP through web's runtime role, with no database credentials."""
+
 import pytest
 
 from scripts.sanitize_browser_artifacts import demo_secrets, redact_text, sanitize
 
 
 def pytest_addoption(parser):
-    parser.addoption("--force-browser-failure", action="store_true", default=False,
-                     help="Fail the artifact canary deliberately after loading the app.")
+    parser.addoption(
+        "--force-browser-failure",
+        action="store_true",
+        default=False,
+        help="Fail the artifact canary deliberately after loading the app.",
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)
 def browser_environment(pytestconfig):
     import os
+
     for name in ("DEMO_CUSTOMER_PASSWORD", "DEMO_SELLER_PASSWORD", "DEMO_OPERATOR_PASSWORD"):
         if not os.environ.get(name):
             raise pytest.UsageError(f"{name} is required; export it without printing the generated value")

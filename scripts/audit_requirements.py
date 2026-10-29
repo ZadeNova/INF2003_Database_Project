@@ -1,4 +1,5 @@
 """Audit each installed environment's pins with short, accountable exceptions."""
+
 import argparse
 import json
 import re
@@ -10,8 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIREMENTS = [
-    ROOT / "src/requirements.txt", ROOT / "src/requirements-dev.txt",
-    ROOT / "analytics/requirements.txt", ROOT / "scripts/translation-requirements.txt",
+    ROOT / "src/requirements.txt",
+    ROOT / "src/requirements-dev.txt",
+    ROOT / "analytics/requirements.txt",
+    ROOT / "scripts/translation-requirements.txt",
     ROOT / "scripts/translation-argos-requirements.txt",
 ]
 
@@ -58,7 +61,16 @@ def allowed_unfixed(dependencies, records):
 
 
 def audit(requirement, records):
-    command = [sys.executable, "-m", "pip_audit", "--strict", "--progress-spinner=off", "--desc=off", "-r", str(requirement)]
+    command = [
+        sys.executable,
+        "-m",
+        "pip_audit",
+        "--strict",
+        "--progress-spinner=off",
+        "--desc=off",
+        "-r",
+        str(requirement),
+    ]
     if requirement.name.startswith("translation-"):
         # Every installed translation component is pinned; Argos deliberately omits
         # its unused Torch/Stanza dependency tree. Audit exactly that environment.
@@ -71,7 +83,10 @@ def audit(requirement, records):
         return checked.returncode or 1
     advisories = [advisory for dependency in dependencies for advisory in dependency.get("vulns", [])]
     fixed = sum(bool(advisory.get("fix_versions")) for advisory in advisories)
-    print(f"{requirement.relative_to(ROOT)}: {len(dependencies)} dependencies, {len(advisories)} advisories, {fixed} with fixes", flush=True)
+    print(
+        f"{requirement.relative_to(ROOT)}: {len(dependencies)} dependencies, {len(advisories)} advisories, {fixed} with fixes",
+        flush=True,
+    )
     if any(dependency.get("skip_reason") for dependency in dependencies):
         print("An unaudited dependency is not permitted.", file=sys.stderr)
         return 1

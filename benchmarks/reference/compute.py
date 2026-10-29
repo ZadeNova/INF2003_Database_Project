@@ -1,4 +1,5 @@
 """Reproduce the analytical definitions with Python data structures and Decimal arithmetic."""
+
 import argparse
 import hashlib
 import json
@@ -24,12 +25,14 @@ def parameters(specs):
     attrs = sorted(chosen["attributes"].items())
     range_key = integers[0][0]
     range_values = sorted(v for k, v in integers if k == range_key)
-    selections = [("selective", [[strings[0][1], "eq", json.loads(strings[0][2])]]),
-                  ("broad", [[strings[-1][1], "eq", json.loads(strings[-1][2])]]),
-                  ("boolean", [[booleans[-1][1], "eq", json.loads(booleans[-1][2])]]),
-                  ("range", [[range_key, "gte", range_values[len(range_values) // 2]]]),
-                  ("two", [[k, "eq", v] for k, v in attrs[:2]]),
-                  ("three", [[k, "eq", v] for k, v in attrs[:3]])]
+    selections = [
+        ("selective", [[strings[0][1], "eq", json.loads(strings[0][2])]]),
+        ("broad", [[strings[-1][1], "eq", json.loads(strings[-1][2])]]),
+        ("boolean", [[booleans[-1][1], "eq", json.loads(booleans[-1][2])]]),
+        ("range", [[range_key, "gte", range_values[len(range_values) // 2]]]),
+        ("two", [[k, "eq", v] for k, v in attrs[:2]]),
+        ("three", [[k, "eq", v] for k, v in attrs[:3]]),
+    ]
     return [{"name": name, "predicates": predicates} for name, predicates in selections]
 
 
@@ -50,7 +53,10 @@ def compute(source):
     orders = {int(o["id"]): o for o in csv_rows(source, "orders")}
     specs = list(ndjson(source, "product_specs"))
     params = parameters(specs)
-    outputs = {"B1_" + p["name"]: [{"product_id": s["_id"]} for s in specs if matches(s["attributes"], p["predicates"])] for p in params}
+    outputs = {
+        "B1_" + p["name"]: [{"product_id": s["_id"]} for s in specs if matches(s["attributes"], p["predicates"])]
+        for p in params
+    }
     as_of = max(local_day(instant(o["placed_at"])) for o in orders.values())
     end = datetime.combine(as_of + timedelta(days=1), time.min, ZONE)
     daily = defaultdict(lambda: [0, Decimal(0)])
@@ -75,17 +81,34 @@ def compute(source):
         previous_month = (month - timedelta(days=1)).replace(day=1)
         previous = monthly.get((category, previous_month))
         rank = 1 + sum(r > revenue for (c, m), (u, r) in monthly.items() if m == month)
-        category_rows.append({"category_id": category, "month": month, "units": units, "revenue": revenue, "revenue_rank": rank,
-                              "change_percent": (revenue - previous[1]) * 100 / previous[1] if previous and previous[1] else None})
+        category_rows.append(
+            {
+                "category_id": category,
+                "month": month,
+                "units": units,
+                "revenue": revenue,
+                "revenue_rank": rank,
+                "change_percent": (revenue - previous[1]) * 100 / previous[1] if previous and previous[1] else None,
+            }
+        )
     outputs["B2a"] = category_rows
     stock = []
     for pid, product in products.items():
-        if product["active"] != "True" or product["taken_down"] == "True" or sellers[int(product["seller_id"])]["status"] != "approved":
+        if (
+            product["active"] != "True"
+            or product["taken_down"] == "True"
+            or sellers[int(product["seller_id"])]["status"] != "approved"
+        ):
             continue
         units = units_28[pid]
-        stock.append({"product_id": pid, "daily_demand": Decimal(units) / 28,
-                      "days_cover": Decimal(product["stock"]) * 28 / units if units else None,
-                      "replenish": units > 0 and int(product["stock"]) * 28 < int(product["lead_time_days"]) * units})
+        stock.append(
+            {
+                "product_id": pid,
+                "daily_demand": Decimal(units) / 28,
+                "days_cover": Decimal(product["stock"]) * 28 / units if units else None,
+                "replenish": units > 0 and int(product["stock"]) * 28 < int(product["lead_time_days"]) * units,
+            }
+        )
     outputs["B2b"] = stock
     ratings = defaultdict(list)
     order_scores = defaultdict(list)
@@ -100,9 +123,18 @@ def compute(source):
     for pid, product in products.items():
         grouped["product", pid].extend(ratings[pid])
         grouped["seller", int(product["seller_id"])].extend(ratings[pid])
-    outputs["B2c"] = [{"entity": entity, "entity_id": identity, "review_count": len(scores), "score_sum": sum(scores),
-                       "bayesian": (stats["C"] * stats["m"] + sum(scores)) / (stats["C"] + len(scores)) if stats["C"] + len(scores) else Decimal(0)}
-                      for (entity, identity), scores in grouped.items()]
+    outputs["B2c"] = [
+        {
+            "entity": entity,
+            "entity_id": identity,
+            "review_count": len(scores),
+            "score_sum": sum(scores),
+            "bayesian": (stats["C"] * stats["m"] + sum(scores)) / (stats["C"] + len(scores))
+            if stats["C"] + len(scores)
+            else Decimal(0),
+        }
+        for (entity, identity), scores in grouped.items()
+    ]
     outputs["B2c_index"] = [row for row in outputs["B2c"] if row["entity"] == "product" and row["entity_id"] == 1]
     buckets = defaultdict(lambda: {"orders": 0, "scores": []})
     for oid, order in orders.items():
@@ -110,14 +142,29 @@ def compute(source):
         if order["status"] != "delivered" or instant(order["placed_at"]) >= end or delivered >= end:
             continue
         delay = (local_day(delivered) - local_day(instant(order["estimated_delivery"]))).days
-        bucket = ("early_over_7" if delay < -7 else "early_up_to_7_or_on_time" if delay <= 0 else "late_1_to_7" if delay <= 7
-                  else "late_8_to_14" if delay <= 14 else "late_over_14")
+        bucket = (
+            "early_over_7"
+            if delay < -7
+            else "early_up_to_7_or_on_time"
+            if delay <= 0
+            else "late_1_to_7"
+            if delay <= 7
+            else "late_8_to_14"
+            if delay <= 14
+            else "late_over_14"
+        )
         buckets[bucket]["orders"] += 1
         if order_scores[oid]:
             buckets[bucket]["scores"].append(Decimal(sum(order_scores[oid])) / len(order_scores[oid]))
-    outputs["B2d"] = [{"bucket": key, "orders": value["orders"], "reviewed_orders": len(value["scores"]),
-                       "average_score": sum(value["scores"], Decimal(0)) / len(value["scores"]) if value["scores"] else None}
-                      for key, value in buckets.items()]
+    outputs["B2d"] = [
+        {
+            "bucket": key,
+            "orders": value["orders"],
+            "reviewed_orders": len(value["scores"]),
+            "average_score": sum(value["scores"], Decimal(0)) / len(value["scores"]) if value["scores"] else None,
+        }
+        for key, value in buckets.items()
+    ]
     return outputs, params, {**provenance, "as_of": as_of.isoformat(), "seed": SEED}
 
 
@@ -131,8 +178,14 @@ def generate(source, destination):
     (destination / "source.json").write_bytes((json.dumps(provenance, indent=2, sort_keys=True) + "\n").encode())
     for name, rows in outputs.items():
         (destination / f"{name}.csv").write_bytes(csv_bytes(name, rows))
-    checksums = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(destination.iterdir()) if path.name != "checksums.txt"}
-    (destination / "checksums.txt").write_bytes("".join(f"{digest}  {name}\n" for name, digest in checksums.items()).encode())
+    checksums = {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(destination.iterdir())
+        if path.name != "checksums.txt"
+    }
+    (destination / "checksums.txt").write_bytes(
+        "".join(f"{digest}  {name}\n" for name, digest in checksums.items()).encode()
+    )
     print(json.dumps({"golden": str(destination), "outputs": {name: len(rows) for name, rows in outputs.items()}}))
 
 

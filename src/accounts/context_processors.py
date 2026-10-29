@@ -11,11 +11,15 @@ def role_navigation(request):
         links.append(("Sell on Mercer", reverse("accounts:seller_apply"), "accounts:seller_apply"))
     elif user.role == User.Role.CUSTOMER:
         # checkout links
-        links += [("Cart", reverse("orders:cart"), "orders:cart"),
-                  ("Orders", reverse("orders:history"), "orders:history")]
+        links += [
+            ("Cart", reverse("orders:cart"), "orders:cart"),
+            ("Orders", reverse("orders:history"), "orders:history"),
+        ]
         links.append(("My account", reverse("accounts:account"), "accounts:account"))
-        links += [("Wishlist", reverse("wishlist:list"), "wishlist:list"),
-                  ("Alerts", reverse("wishlist:alerts"), "wishlist:alerts")]
+        links += [
+            ("Wishlist", reverse("wishlist:list"), "wishlist:list"),
+            ("Alerts", reverse("wishlist:alerts"), "wishlist:alerts"),
+        ]
     elif user.role == User.Role.SELLER:
         status = Seller.objects.filter(user=user).values_list("status", flat=True).first()
         if status == Seller.Status.APPROVED:
@@ -31,10 +35,14 @@ def role_navigation(request):
         links.append(("Dashboard", reverse("dashboard:home"), "dashboard:home"))
         # checkout links
         links.append(("Orders", reverse("orders:operator_orders"), "orders:operator_orders"))
-        links += [("Sellers", reverse("accounts:operator_sellers"), "accounts:operator_sellers"),
-                  ("Audit log", reverse("accounts:operator_audit"), "accounts:operator_audit")]
+        links += [
+            ("Sellers", reverse("accounts:operator_sellers"), "accounts:operator_sellers"),
+            ("Audit log", reverse("accounts:operator_audit"), "accounts:operator_audit"),
+        ]
         # catalogue links
-        links += [("Products", reverse("catalogue:operator_products"), "catalogue:operator_products"),
-                  ("Categories", reverse("catalogue:operator_categories"), "catalogue:operator_categories")]
+        links += [
+            ("Products", reverse("catalogue:operator_products"), "catalogue:operator_products"),
+            ("Categories", reverse("catalogue:operator_categories"), "catalogue:operator_categories"),
+        ]
         links.append(("Reviews", reverse("reviews:operator_reviews"), "reviews:operator_reviews"))
     return {"nav_links": links}

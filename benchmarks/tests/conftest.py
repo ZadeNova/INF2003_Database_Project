@@ -1,4 +1,5 @@
 """A separate fixture-loaded Compose bench project, never application or full-data databases."""
+
 from pathlib import Path
 
 import pytest
@@ -19,7 +20,10 @@ def database(source):
         provenance = verify_manifest(database, source)
         expected = Path("/app/benchmarks/golden/fixture/source.json").read_text()
         import json
-        assert provenance["manifest_sha256"] == json.loads(expected)["manifest_sha256"], "Tests require the separate fixture project"
+
+        assert provenance["manifest_sha256"] == json.loads(expected)["manifest_sha256"], (
+            "Tests require the separate fixture project"
+        )
         yield database
 
 
@@ -30,5 +34,7 @@ def provenance(database, source):
 
 @pytest.fixture(scope="session", autouse=True)
 def fresh_storage(database):
-    assert database.meta.find_one({"_id": "state"})["restores_since_load"] == 0, "Start tests on a freshly loaded fixture project"
+    assert database.meta.find_one({"_id": "state"})["restores_since_load"] == 0, (
+        "Start tests on a freshly loaded fixture project"
+    )
     return mongo_footprint(database)

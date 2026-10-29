@@ -1,4 +1,5 @@
 """Request logging: IDs, durations, sanitised errors, nothing sensitive (review finding SEC-001)."""
+
 import io
 import json
 import logging
@@ -54,8 +55,22 @@ def test_a_request_produces_exactly_one_line_with_the_documented_fields(logs):
     response = Client().get(reverse("catalogue:product_list"))
 
     (line,) = logs.request_lines()
-    assert set(line) == {"ts", "level", "logger", "message", "request_id", "method", "path", "status",
-                         "duration_ms", "user_id", "db_pg_ms", "db_pg_queries", "db_mongo_ms", "db_mongo_commands"}
+    assert set(line) == {
+        "ts",
+        "level",
+        "logger",
+        "message",
+        "request_id",
+        "method",
+        "path",
+        "status",
+        "duration_ms",
+        "user_id",
+        "db_pg_ms",
+        "db_pg_queries",
+        "db_mongo_ms",
+        "db_mongo_commands",
+    }
     assert (line["method"], line["path"], line["status"], line["level"]) == ("GET", "/products/", 200, "INFO")
     assert isinstance(line["duration_ms"], float) and line["duration_ms"] >= 0
     assert line["user_id"] is None
@@ -69,7 +84,7 @@ def test_the_numeric_user_id_is_logged_when_the_view_loaded_the_user(logs, user)
     client.get(reverse("catalogue:product_list"))
 
     assert logs.request_lines()[-1]["user_id"] == user.pk
-    assert "shopper" not in logs.raw                       # the username is never logged
+    assert "shopper" not in logs.raw  # the username is never logged
 
 
 def test_logging_never_queries_the_database(logs, django_assert_num_queries):
@@ -91,6 +106,7 @@ def test_request_without_queries_has_zero_database_timings(logs):
 @pytest.mark.django_db(transaction=True)
 def test_product_detail_reports_both_real_databases_without_query_text(imported, logs):
     from catalogue.models import Product
+
     product = Product.objects.filter(active=True, taken_down=False, seller__status="approved").first()
     response = Client().get(f"/products/{product.pk}/")
     line = logs.request_lines()[-1]
@@ -130,8 +146,11 @@ def test_a_login_post_logs_neither_the_password_nor_the_cookie(logs, user):
     client.cookies["sessionid"] = "COOKIEVALUE123"
     client.cookies["csrftoken"] = "c" * 32
 
-    client.post(reverse("accounts:login"), {"username": "shopper", "password": "Sup3rSecret!pass"},
-                HTTP_AUTHORIZATION="Bearer BEARERTOKEN999")
+    client.post(
+        reverse("accounts:login"),
+        {"username": "shopper", "password": "Sup3rSecret!pass"},
+        HTTP_AUTHORIZATION="Bearer BEARERTOKEN999",
+    )
     client.post(reverse("accounts:login"), {"username": "shopper", "password": "wrong-Passw0rd"})
 
     assert len(logs.request_lines()) == 2
@@ -149,16 +168,25 @@ def test_a_controlled_failure_can_be_correlated_without_leaking_its_message(logs
     assert response.status_code == 500
     request_id = response["X-Request-ID"]
     (line,) = logs.request_lines()
-    assert (line["status"], line["level"], line["exception"], line["request_id"]) == (500, "ERROR", "ValueError", request_id)
+    assert (line["status"], line["level"], line["exception"], line["request_id"]) == (
+        500,
+        "ERROR",
+        "ValueError",
+        request_id,
+    )
     (error,) = logs.records("django.request")
     assert error["exception"] == "ValueError" and error["request_id"] == request_id
     assert error["frames"] and all(":" in frame for frame in error["frames"])
-    assert any("tests/test_request_logging.py" in frame for frame in error["frames"])         # the frame that called the failing code
+    assert any(
+        "tests/test_request_logging.py" in frame for frame in error["frames"]
+    )  # the frame that called the failing code
     for secret in ("secret-detail", "hunter2"):
         assert secret not in logs.raw
 
 
-def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a_lookup(logs, user, postgres_unavailable):
+def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a_lookup(
+    logs, user, postgres_unavailable
+):
     client = Client()
     client.force_login(user)
 
@@ -167,7 +195,12 @@ def test_a_database_outage_is_logged_with_its_class_and_request_id_and_without_a
 
     assert response.status_code == 503
     (line,) = logs.request_lines()
-    assert (line["status"], line["level"], line["exception"], line["user_id"]) == (503, "ERROR", "OperationalError", None)
+    assert (line["status"], line["level"], line["exception"], line["user_id"]) == (
+        503,
+        "ERROR",
+        "OperationalError",
+        None,
+    )
     (warning,) = logs.records("mercer.errors")
     assert warning["request_id"] == line["request_id"] == response["X-Request-ID"]
     assert "OperationalError" in warning["message"] and "db-secret-host" not in logs.raw
@@ -183,8 +216,12 @@ def test_client_errors_are_logged_at_info_with_their_status(logs):
 def test_a_rejected_referer_is_not_echoed_into_the_security_log(logs):
     client = Client(enforce_csrf_checks=True)
 
-    response = client.post(reverse("accounts:login"), {"username": "x", "password": "y"}, secure=True,
-                           HTTP_REFERER="https://untrusted.example/reset?token=REVIEW_SENTINEL")
+    response = client.post(
+        reverse("accounts:login"),
+        {"username": "x", "password": "y"},
+        secure=True,
+        HTTP_REFERER="https://untrusted.example/reset?token=REVIEW_SENTINEL",
+    )
 
     assert response.status_code == 403
     (rejection,) = logs.records("django.security.csrf")
@@ -194,11 +231,13 @@ def test_a_rejected_referer_is_not_echoed_into_the_security_log(logs):
 
 # --- formatter and configuration -----------------------------------------------------------------
 
+
 def test_the_formatter_emits_one_line_and_reduces_exceptions_to_class_and_frames():
     try:
         raise KeyError("secret\nmultiline value")
     except KeyError:
         import sys
+
         record = logging.LogRecord("x", logging.ERROR, __file__, 1, "multi\nline message", (), sys.exc_info())
 
     output = JsonFormatter().format(record)
@@ -212,7 +251,9 @@ def test_the_formatter_emits_one_line_and_reduces_exceptions_to_class_and_frames
 
 def test_the_formatter_replaces_the_message_of_every_django_security_logger():
     for name in ("django.security", "django.security.DisallowedHost", "django.security.csrf"):
-        record = logging.LogRecord(name, logging.WARNING, __file__, 1, "Invalid HTTP_HOST header: %r", ("SENTINEL-HOST",), None)
+        record = logging.LogRecord(
+            name, logging.WARNING, __file__, 1, "Invalid HTTP_HOST header: %r", ("SENTINEL-HOST",), None
+        )
 
         payload = json.loads(JsonFormatter().format(record))
 
@@ -252,4 +293,4 @@ def controlled_failure(request):
     raise ValueError("secret-detail password=hunter2")
 
 
-urlpatterns=[path("controlled-failure/",controlled_failure)]
+urlpatterns = [path("controlled-failure/", controlled_failure)]

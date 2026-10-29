@@ -14,6 +14,7 @@ class CustomerCreationForm(UserCreationForm):
 
     The optional location follows Olist: five-digit zip prefix, city and two-letter state.
     """
+
     zip_prefix = forms.CharField(label="Zip prefix", max_length=5, required=False, validators=[zip_prefix_validator])
     city = forms.CharField(max_length=100, required=False)
     state = forms.CharField(max_length=2, required=False, validators=[state_validator])
@@ -46,8 +47,11 @@ class SellerApplicationForm(CustomerCreationForm):
 
 
 class ReasonForm(forms.Form):
-    reason = forms.CharField(max_length=500, widget=forms.Textarea(attrs={"rows": 3}),
-                             help_text="The seller sees this reason on their status page.")
+    reason = forms.CharField(
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text="The seller sees this reason on their status page.",
+    )
 
     def clean_reason(self):
         reason = self.cleaned_data["reason"].strip()
@@ -58,14 +62,22 @@ class ReasonForm(forms.Form):
 
 class AuditFilterForm(forms.Form):
     """Only the actor and action filters; both are validated choices, never text placed into a query."""
+
     actor = forms.TypedChoiceField(label="Made by", required=False, coerce=str)
     action = forms.ChoiceField(label="Decision", required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        actors = (User.objects.filter(pk__in=AuditLog.objects.filter(actor__isnull=False).values("actor_id"))
-                  .order_by("username").values_list("pk", "username"))
+        actors = (
+            User.objects.filter(pk__in=AuditLog.objects.filter(actor__isnull=False).values("actor_id"))
+            .order_by("username")
+            .values_list("pk", "username")
+        )
         self.fields["actor"].choices = [("", "Anyone"), ("system", "System")] + [(str(pk), name) for pk, name in actors]
-        actions = sorted({"seller." + name for name in SELLER_ACTIONS} |
-                         set(AuditLog.objects.values_list("action", flat=True).distinct()))
-        self.fields["action"].choices = [("", "Any decision")] + [(name, AUDIT_LABELS.get(name, "Updated")) for name in actions]
+        actions = sorted(
+            {"seller." + name for name in SELLER_ACTIONS}
+            | set(AuditLog.objects.values_list("action", flat=True).distinct())
+        )
+        self.fields["action"].choices = [("", "Any decision")] + [
+            (name, AUDIT_LABELS.get(name, "Updated")) for name in actions
+        ]

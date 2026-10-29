@@ -1,4 +1,5 @@
 """Bench-only connections, durable writes and guarded reset boundaries."""
+
 import os
 import time
 from contextlib import contextmanager
@@ -18,7 +19,11 @@ READ_CONCERN = ReadConcern("snapshot")
 
 
 def guard():
-    if os.environ.get("POSTGRES_HOST") != "bench-db" or os.environ.get("POSTGRES_DB") != "bench" or os.environ.get("MONGO_DB") != "bench":
+    if (
+        os.environ.get("POSTGRES_HOST") != "bench-db"
+        or os.environ.get("POSTGRES_DB") != "bench"
+        or os.environ.get("MONGO_DB") != "bench"
+    ):
         raise ValueError("Refusing a benchmark outside the isolated bench services/database")
 
 
@@ -52,16 +57,25 @@ def recreate(name, template):
             except errors.ObjectInUse:
                 if time.monotonic() >= deadline:
                     raise
-                time.sleep(.1)
-        conn.execute(sql.SQL("CREATE DATABASE {} TEMPLATE {} ALLOW_CONNECTIONS {}").format(
-            sql.Identifier(name), sql.Identifier(template), sql.SQL("false" if name == "bench_template" else "true")))
+                time.sleep(0.1)
+        conn.execute(
+            sql.SQL("CREATE DATABASE {} TEMPLATE {} ALLOW_CONNECTIONS {}").format(
+                sql.Identifier(name), sql.Identifier(template), sql.SQL("false" if name == "bench_template" else "true")
+            )
+        )
 
 
 def settings(database):
     with pg() as conn:
-        postgres = {name: conn.execute(sql.SQL("SHOW {}").format(sql.Identifier(name))).fetchone()[name]
-                    for name in ("fsync", "synchronous_commit", "full_page_writes", "shared_buffers", "server_version")}
+        postgres = {
+            name: conn.execute(sql.SQL("SHOW {}").format(sql.Identifier(name))).fetchone()[name]
+            for name in ("fsync", "synchronous_commit", "full_page_writes", "shared_buffers", "server_version")
+        }
     # The bench user is deliberately readWrite only; serverStatus/getCmdLineOpts require extra privileges.
     # Host run.py obtains the root-only readback with docker exec and never exposes its credentials.
-    return {"postgres": postgres, "mongo_write_concern": database.write_concern.document,
-            "mongo_transaction_read_concern": READ_CONCERN.document, "mongo_version": database.client.server_info()["version"]}
+    return {
+        "postgres": postgres,
+        "mongo_write_concern": database.write_concern.document,
+        "mongo_transaction_read_concern": READ_CONCERN.document,
+        "mongo_version": database.client.server_info()["version"],
+    }
