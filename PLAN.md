@@ -433,6 +433,15 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 passes every workload and variant, with plans and restoration evidence. Fresh review and the designated-machine
 final measurements remain; section 14 keeps the workstream in progress.
 
+**30 October 2026: Phase 4 exit check passed.** The application is frozen. After the integration and checkout fixes
+(PRs #24, #25) and CI stage 3 (PR #26), [CI is green on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40906382080)
+at `69d88c2`: the full suite, the smoke check, the Chromium journeys and the format gate. A fresh install from a new
+clone with no `.env` and fresh volumes, following the README in its own Compose project, passed import, verification,
+seeding, smoke and the browser journeys ([CI review notes](docs/plans/ci.md#review-notes)). That ran on the owner's
+machine; a run on a teammate's machine stays in Phase 5's clean-machine check. Claude Code reviewed each Phase 4 change
+before merge, not in fresh sessions ([CI](docs/plans/ci.md#review-notes) and [checkout](docs/plans/checkout.md#review-notes)
+review notes). Phase 3B stays open for the designated-machine final measurements, which do not change the application.
+
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
 27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
 day, Erfan assigns `wishlist` or `activity` to another member under its approved plan. Do not shorten database tests,
