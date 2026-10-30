@@ -1,6 +1,6 @@
 # deliverables: Report, slides, video, user manual and packaging
 
-status: draft
+status: approved
 plan owner: Chee Long · implementers: all five members, working together · reviewer: a fresh session · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: every Tier 1 workstream for final acceptance;
 `benchmark` final measurements for report section 6 and video part iv
@@ -113,7 +113,7 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 3. Pre-stage the demo state the script needs; preload the operator dashboard.
 4. Log in from the ignored `.env`; never show a password or `.env` on screen.
 
-## Decisions (proposed, awaiting the owner)
+## Decisions (all approved by Chee Long, 30 October 2026)
 
 | ID | Proposal | Why |
 |---|---|---|
@@ -123,7 +123,7 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 | d | All demo footage is captured in one session on one prepared full-data stack; each presenter records their own voice-over (or face) for their part | The checklist needs one prepared stack, not five imports and five preparations. Presenters narrate footage they may not have driven, so the script names every click |
 | e | If Tier 2 is earned on 8 November, it is funded from the slack: at most 0.5 page and at most 15 seconds, so the video target becomes at most 9:45 | Tier 2 never displaces graded core content, and the video keeps a margin under 10:00 |
 
-**At close-out:** record decision a in PLAN.md section 12 and close D2 in section 15.
+Decision a is recorded in PLAN.md section 12 and closes open decision D2 in section 15.
 
 ## Review notes
 
@@ -180,3 +180,8 @@ Removed every per-person assignment (section owners, presenters, the named edito
 clean-machine runner and reuse-approval owner); decision a now closes D2 with no single editor. The report outline
 and video keep their budgets and timings without per-item detail; the draft theory-map rows and the per-part demo
 and slide lists were removed and remain in commit 875a325.
+
+30 October 2026: the video outline places B3, B6 and the comparison table in part iii and B1, B2, B4 and B5 in part
+iv, as benchmark amendment i does.
+
+30 October 2026: Chee Long approved the plan and decisions a to e.
