@@ -148,7 +148,7 @@ benchmark no longer has after Phase 3A.
 
 28 October 2026: No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
 
-**Final-run amendment k (proposed 30 October 2026, awaiting the owner).** Two gaps between the exit check and what the
+**Final-run amendment k (proposed and approved by Chee Long, 30 October 2026).** Two gaps between the exit check and what the
 runner records today.
 
 | ID | Proposal | Why |
