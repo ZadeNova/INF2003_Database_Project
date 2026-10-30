@@ -8,8 +8,9 @@ acceptance; `benchmark` final measurements for report section 6 and video part i
 **Assumes:** the application is frozen (Phase 4 closed 30 October 2026); the XSite final report template is
 downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine. The
 `benchmark` final measurements target 1 November with 2 to 4 November as contingency. If they slip, section 6 is
-drafted from the [28 October fix-round evidence](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
-and regenerated from the final run.
+drafted from the 28 October fix round, the [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
+and the [trial measure run](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/summary.csv) for draft
+ratios, labelled as a trial not run on the designated machine, and regenerated from the final run.
 
 ## Contract
 
@@ -145,7 +146,7 @@ Paths are relative to the repository root.
 |---|---|---|
 | a | Erfan edits and assembles the report (PLAN.md open decision D2); section owners as in the outline | One editor keeps one voice and the page count; it leaves the main developer free for the benchmark and sections 5 and 6 |
 | b | The report is drafted in the XSite Word template in a shared drive, not in the repository | The template is Word; the docs rules allow no new Markdown file; only the PDF is submitted |
-| c | Record by 21 November, with 24 November as the hard limit | Insights is near-empty by 25 November (PLAN.md section 16). Demo purchases add only a handful of sales, not the imported history, and 21 November leaves time to re-record |
+| c | Footage by 18 November, voice-overs by 21 November; 24 November is the hard limit | Insights is near-empty by 25 November (PLAN.md section 16). Demo purchases add only a handful of sales, not the imported history, and footage on 18 November leaves time to re-shoot |
 | d | Chee Long, who holds the full-data stack, captures all demo footage in one session on it by 18 November, after the script freezes; each presenter records their own voice-over (or face) for their part; Syahfariz assembles and times the video and slides (PLAN.md section 12) | The checklist needs one prepared full-data stack. Five members each recording live demos would need five imports and five preparations. The tradeoff: presenters narrate footage they did not drive, so the script names every click |
 | e | If Tier 2 is earned on 8 November, it is funded from the slack: at most 0.5 page from the 0.75 page of slack, and at most 15 seconds added to the close, so the video target becomes at most 9:45. The close and section 9 keep their budgets | Tier 2 never displaces graded core content: the close's implications and conclusions keep their 0:45, and the video keeps a margin under 10:00 |
 
@@ -184,3 +185,10 @@ from the slack, name the footage capturer, and replace "wishlist migration" with
 target at most 9:45); decision d names Chee Long, with footage captured by 18 November; the wishlist proof is a path;
 PLAN.md section 16 links to decision c instead of repeating its dates; slide tables and charts name their sources;
 the plan owner checks the lecture list; the benchmark fallback links its evidence.
+
+30 October 2026, Claude Code (Opus 5.5), fresh session, third review. Reviewed commit 3b17020 against the second
+review's five edits: confirmed the new proof paths and the fallback link exist, that decision e's Tier 2 budget and
+the 18 and 21 November milestones are consistent with the script, page budget and PLAN.md section 16, and that the
+fallback run (`fix-full`) is correctness-only, so draft ratios should come from the full-data `fix-trial` measure
+run; `scripts/check_docs.py` passed. Verdict APPROVE; optional tweaks are to link `fix-trial` for draft ratios and to
+align decision c's wording with the 18 November footage date. Both tweaks applied by the session that wrote the plan.
