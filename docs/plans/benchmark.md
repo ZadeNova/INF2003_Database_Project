@@ -107,7 +107,7 @@ turns `benchmarks/results/` into each output's chart or table; no figure or numb
 report's results and discussion.
 
 **Exit check.** Reproduce B1–B6, the applicable client/run matrix, plans, storage metrics, resource/provenance records
-and per-request database timing on the designated machine. Check database restoration after success and failure,
+and per-request database timing (amendment k2) on the designated machine. Check database restoration after success and failure,
 and generator determinism if amendment j's condition built it. Deliberately corrupt a result or violate an invariant: the run must be recorded as failed with
 no accepted timing (BM4). Each workload's expectation (amendment f) was committed before its final run; the durability
 settings and trigger state (amendment g) are recorded with every result; the generated charts and tables exist for
@@ -147,6 +147,16 @@ part earns Tier 1 marks (performance analysis is optional; the comparison is req
 benchmark no longer has after Phase 3A.
 
 28 October 2026: No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
+
+**Final-run amendment k (proposed 30 October 2026, awaiting the owner).** Two gaps between the exit check and what the
+runner records today.
+
+| ID | Proposal | Why |
+|---|---|---|
+| k1 | **Operations per client.** Final runs use `--operations-per-client 100`. First a pilot on a freshly loaded project, `--mode measure --only baseline,B1 --operations-per-client 100`, times the slowest part of the matrix; if the projected full run does not fit one sitting on the designated machine, fall back to 50 and state the limit in the report. B3 keeps its fifty buyers either way. The value is already written to provenance (`operations_per_client`) | The default of 5 makes a one-client p95 the slowest of five samples, and leaves the one-second CPU sampling with almost nothing to attribute (the final-run follow-up in the review notes). One hundred gives each one-client p95 a hundred operations per run |
+| k2 | **Per-request timing evidence.** A small host script, standard library only, requests a fixed page list on the full-data app stack: home, product list, a faceted search, a product detail and, logged in as the demo operator from `.env`, the operator dashboard. One untimed warm-up pass, then twenty sequential requests per page. It joins each response's request ID to the app's JSON request line and writes a CSV per page: median and p95 of `duration_ms`, `db_pg_ms` and `db_mongo_ms`, query and command counts, and the database share of the request. Output goes to a dated `benchmarks/results/` directory with the commit and host details; it runs after the bench runs, never alongside them, with no demo password or owner credential in its output | The exit check asks for per-request database timing on the designated machine, but the runner never records it. This evidence backs section 7's claim that the database is a minor or major share of each request, which is why engines are compared at the driver level |
+
+Out of scope: no HTTP load test (amendment j stays), no concurrency in k2 and no change to B1–B6 or their gates.
 
 ## Review notes
 
