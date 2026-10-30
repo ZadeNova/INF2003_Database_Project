@@ -8,7 +8,8 @@ acceptance; `benchmark` final measurements for report section 6 and video part i
 **Assumes:** the application is frozen (Phase 4 closed 30 October 2026); the XSite final report template is
 downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine. The
 `benchmark` final measurements target 1 November with 2 to 4 November as contingency. If they slip, section 6 is
-drafted from the 28 October fix-round evidence and regenerated from the final run.
+drafted from the [28 October fix-round evidence](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
+and regenerated from the final run.
 
 ## Contract
 
@@ -81,16 +82,16 @@ Paths are relative to the repository root.
 | Module concept | Where Mercer shows it | Proof |
 |---|---|---|
 | ER modelling and relationship types | 1-to-many, many-to-1, many-to-many (wishlist, order lines) | ER diagram in docs/DATA_MODEL.md |
-| Data types | Exact money as `numeric(12,2)` and `Decimal128`; integers, text, timestamps, booleans, JSONB | docs/DATA_MODEL.md; src/reviews/ratings.py |
+| Data types | Exact money as `numeric(12,2)` and `Decimal128`; integers, text, timestamps, booleans, JSONB | src/catalogue/models.py; src/reviews/ratings.py; docs/DATA_MODEL.md |
 | Normalisation | 3NF justification; the deliberate MongoDB denormalisation (subset pattern) | docs/DATA_MODEL.md, Normalisation (3NF) |
 | Integrity constraints | Keys, `CHECK`, `ON DELETE RESTRICT`, composite foreign keys such as `(order_id, seller_id)`, two deferred constraint triggers (payments and refunds against the checkout), a partial unique index | src/orders/migration_sql.py; src/wishlist/migrations/0001_wishlist_restock.py |
-| Triggers | Profile-role checks; seller and order status transitions; seller, order and product audit; restock alert | src/accounts/migration_sql.py; src/orders/migration_sql.py; src/catalogue/migration_sql.py; wishlist migration |
+| Triggers | Profile-role checks; seller and order status transitions; seller, order and product audit; restock alert | src/accounts/migration_sql.py; src/orders/migration_sql.py; src/catalogue/migration_sql.py; src/wishlist/migrations/0001_wishlist_restock.py |
 | Views | `purchasable_product`; the `daily_product_sales` materialized view | src/catalogue/migrations/0001_initial.py; src/dashboard/migrations/0001_daily_product_sales.py |
 | Complex SQL | CTEs, window functions, aggregates in the dashboard and forecast | src/dashboard/queries.py |
 | Transactions | Checkout with `FOR UPDATE` and a fixed lock order, idempotency key, compensating cancellation; B3 on both engines | src/orders/services.py; benchmarks/workloads/b3.py; tests/test_checkout.py |
 | Isolation and lost updates | PostgreSQL: lost update under READ COMMITTED, `FOR UPDATE`, SERIALIZABLE with retry. MongoDB: read-modify-write, transaction retry, atomic `$inc` | benchmarks/workloads/b6.py |
 | Indexing and query plans | PostgreSQL B-tree, composite, partial, GIN, trigram; MongoDB compound, multikey, wildcard, unique, partial (bench); `EXPLAIN (ANALYZE, BUFFERS)` and `explain("executionStats")`; B4 | src/catalogue/migrations/0002_product_search_audit.py; src/config/mongo_schema.py; benchmarks/load.py; benchmarks/workloads/b4.py |
-| Security and least privilege | PostgreSQL owner and runtime roles; the MongoDB app user with `readWrite` on its databases only; parameterised queries with injection tests; seller scoping | src/config/privileges.py; src/config/management/commands/mongo_setup.py; tests/test_catalogue_search.py |
+| Security and least privilege | PostgreSQL owner and runtime roles; the MongoDB app user with `readWrite` on its databases only; parameterised queries with injection tests; seller scoping | src/config/privileges.py; src/docker/mongo-start.sh; tests/test_mongo_user.py; tests/test_catalogue_search.py |
 | Document data model | Specifications embed the rating summary and latest five reviews; all reviews referenced | docs/DATA_MODEL.md, MongoDB |
 | Schema validation and evolution | `$jsonSchema` validators; a new category attribute without a migration | src/config/mongo_schema.py |
 | Aggregation | `$facet`; `$setWindowFields`; the Bayesian rating as an update pipeline built from aggregation expressions | src/catalogue/search.py; src/activity/services.py; src/reviews/ratings.py |
@@ -99,10 +100,11 @@ Paths are relative to the repository root.
 
 **Exit check**
 1. The report PDF is at most 10 pages excluding cover, references and appendix, in Calibri (Body) 12, on the XSite
-   template. Every figure and table caption names its generated source (benchmark report, cleaning ledger, CI run).
+   template. Every figure and table caption in the report, and every table and chart in the slides, names its
+   generated source (benchmark report, cleaning ledger, CI run).
 2. The video plays in at most 10:00 at normal speed. A part-by-part timestamp list shows the order i to iv, every
    member presenting with a name on screen, and the slide range used in each part.
-3. The theory map rows are checked against the module's lecture list, and each proof path exists.
+3. The plan owner checks the theory map rows against the module's lecture list, and each proof path exists.
 4. Syahfariz, or another member who is not the main developer, follows README.md on their own machine from an
    extracted `git archive` zip of `main` (what the packager ships) to working demo logins by 15 November, and any
    manual fix is merged. The check is repeated from the final submission zip by 27 November.
@@ -123,7 +125,8 @@ Paths are relative to the repository root.
 | 7 Nov | Report sections 1 to 5 drafted; slide skeleton; material for the check-in |
 | 8 Nov | Professor check-in; Tier 2 decision; written reuse approval in hand |
 | 15 Nov | Full report draft, including sections 6 and 7; script frozen; first clean-machine run done |
-| 21 Nov | Video footage and voice-overs recorded (24 November is the hard limit, decision c) |
+| 18 Nov | Demo footage captured in one session on the prepared stack (decision d) |
+| 21 Nov | Voice-overs recorded (24 November is the hard limit, decision c) |
 | 25 to 27 Nov | Video edit, report and video review, final report pass, repeat clean-machine run, packaging |
 | 28 Nov | Submit |
 
@@ -143,8 +146,8 @@ Paths are relative to the repository root.
 | a | Erfan edits and assembles the report (PLAN.md open decision D2); section owners as in the outline | One editor keeps one voice and the page count; it leaves the main developer free for the benchmark and sections 5 and 6 |
 | b | The report is drafted in the XSite Word template in a shared drive, not in the repository | The template is Word; the docs rules allow no new Markdown file; only the PDF is submitted |
 | c | Record by 21 November, with 24 November as the hard limit | Insights is near-empty by 25 November (PLAN.md section 16). Demo purchases add only a handful of sales, not the imported history, and 21 November leaves time to re-record |
-| d | One person captures all demo footage in one session on the prepared stack; each presenter records their own voice-over (or face) for their part; Syahfariz assembles and times the video and slides (PLAN.md section 12) | The checklist needs one prepared full-data stack. Five members each recording live demos would need five imports and five preparations. The tradeoff: presenters narrate footage they did not drive, so the script names every click |
-| e | If Tier 2 is earned on 8 November, it gets at most half a page in section 9 and 30 seconds in the close | The outline and script stay stable; Tier 2 never displaces graded core content |
+| d | Chee Long, who holds the full-data stack, captures all demo footage in one session on it by 18 November, after the script freezes; each presenter records their own voice-over (or face) for their part; Syahfariz assembles and times the video and slides (PLAN.md section 12) | The checklist needs one prepared full-data stack. Five members each recording live demos would need five imports and five preparations. The tradeoff: presenters narrate footage they did not drive, so the script names every click |
+| e | If Tier 2 is earned on 8 November, it is funded from the slack: at most 0.5 page from the 0.75 page of slack, and at most 15 seconds added to the close, so the video target becomes at most 9:45. The close and section 9 keep their budgets | Tier 2 never displaces graded core content: the close's implications and conclusions keep their 0:45, and the video keeps a margin under 10:00 |
 
 **At close-out:** move decision a into PLAN.md section 15 (closing D2) and section 12.
 
@@ -167,3 +170,17 @@ reworded rows and the missing constructs, its lecture-list check moved to exit c
 and a review of the report and video added; standalone slides; README reorder; dates linked to PLAN.md section 13
 with a benchmark fallback; the recording checklist kept here with PLAN.md section 16 linking to it; figures budgeted
 per section; name overlays, generated-content labels, Olist attribution and the peer-review survey.
+
+30 October 2026, Claude Code (Opus 5.5), fresh session, second review. Reviewed fix-round commit 7d5ba44 against the
+first review's 15 findings, RUBRICS.md, PLAN.md sections 12–16 and OVERVIEW.md sections 3 and 7. Confirmed the video
+(9:30) and page (9.25 + 0.75) sums and the date agreement, checked that every Proof path exists, and spot-checked the
+composite foreign keys, the profile-role triggers, the MongoDB wildcard and unique indexes, B6's MongoDB strategies
+and the app user's `readWrite` grant in the code; `scripts/check_docs.py` passed. Verdict APPROVE, with small edits:
+cite `src/docker/mongo-start.sh` and `tests/test_mongo_user.py` for the `readWrite` scope, fund Tier 2 (decision e)
+from the slack, name the footage capturer, and replace "wishlist migration" with its path.
+
+30 October 2026, the second review's edits (Claude Code, the session that wrote the plan): all applied. The
+`readWrite` and money proofs cite the grant, its test and the model; decision e takes Tier 2 from the slack (video
+target at most 9:45); decision d names Chee Long, with footage captured by 18 November; the wishlist proof is a path;
+PLAN.md section 16 links to decision c instead of repeating its dates; slide tables and charts name their sources;
+the plan owner checks the lecture list; the benchmark fallback links its evidence.

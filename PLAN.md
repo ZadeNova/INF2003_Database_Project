@@ -556,7 +556,7 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Benchmark development or Claude Code review is left until the end | Build workloads alongside features and review each batch before any commit; first correctness-complete B1 to B6 pass by 30 Oct |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
-| Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | Record by 21 November (hard limit 24 November) and follow the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist). Keep the real rolling window because browsing events expire |
+| Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | Follow [deliverables](docs/plans/deliverables.md) decision c and the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist). Keep the real rolling window because browsing events expire |
 | Recording-day dependency: the dashboard takes a few seconds on the full data | Follow the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist); accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
 | Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
