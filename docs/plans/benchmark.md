@@ -38,7 +38,7 @@ Never derive the oracle from either engine or compare floating-point money.
 
 **Measurement and evidence.** Decision d controls state and statistics; application caches are off (none in Tier 1),
 while database buffers are warmed by that procedure. Disable telemetry. Driver workloads use the 1/10/50-client
-matrix; B3 always retains fifty total buyers, including the fifty-client race. B5 records footprint; B6 is the
+matrix (B2 1/10, amendment k3); B3 always retains fifty total buyers, including the fifty-client race. B5 records footprint; B6 is the
 separate correctness demonstration above. Failed checks remain visible and supply no accepted timing. Capture
 query plans separately (`EXPLAIN (ANALYZE, BUFFERS)`, `explain("executionStats")`) and sample `docker stats` each second.
 Save dated JSON-lines results/CSV summaries under `benchmarks/results/`, with errors, retries, seeds, file/golden
@@ -107,9 +107,9 @@ turns `benchmarks/results/` into each output's chart or table; no figure or numb
 report's results and discussion.
 
 **Exit check.** Reproduce B1–B6, the applicable client/run matrix, plans, storage metrics, resource/provenance records
-and per-request database timing (amendment k2) on the designated machine. Check database restoration after success and failure,
-and generator determinism if amendment j's condition built it. Deliberately corrupt a result or violate an invariant: the run must be recorded as failed with
-no accepted timing (BM4). Each workload's expectation (amendment f) was committed before its final run; the durability
+and per-request database timing (amendment k2) on the designated machine. Check database restoration after success
+and failure, and generator determinism if amendment j's condition built it. Deliberately corrupt a result or violate
+an invariant: the run must be recorded as failed with no accepted timing (BM4). Each workload's expectation (amendment f) was committed before its final run; the durability
 settings and trigger state (amendment g) are recorded with every result; the generated charts and tables exist for
 every output; the matrix (amendment h) cites evidence for every cell. No B7, failover, backup drill or other Tier 2/3
 work is included.
@@ -148,15 +148,17 @@ benchmark no longer has after Phase 3A.
 
 28 October 2026: No generator and no 10x run (Chee Long, 28 October 2026). The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding; report it in B4 as an index that buys almost nothing.
 
-**Final-run amendment k (proposed and approved by Chee Long, 30 October 2026).** Two gaps between the exit check and what the
+**Final-run amendment k (proposed and approved by Chee Long, 30 October 2026).** Three gaps between the exit check and what the
 runner records today.
 
 | ID | Proposal | Why |
 |---|---|---|
-| k1 | **Operations per client.** Final runs use `--operations-per-client 100`. First a pilot on a freshly loaded project, `--mode measure --only baseline,B1 --operations-per-client 100`, times the slowest part of the matrix; if the projected full run does not fit one sitting on the designated machine, fall back to 50 and state the limit in the report. B3 keeps its fifty buyers either way. The value is already written to provenance (`operations_per_client`) | The default of 5 makes a one-client p95 the slowest of five samples, and leaves the one-second CPU sampling with almost nothing to attribute (the final-run follow-up in the review notes). One hundred gives each one-client p95 a hundred operations per run |
+| k1 | **Operations per client.** Final runs use `--operations-per-client 100`, except B2 (k3). After the k3 runner change, a pilot on a freshly loaded project, `--mode measure --only baseline,B1,B2 --operations-per-client 100`, times the two slowest parts of the matrix: B1 at fifty clients and B2. If the projected full run does not fit one sitting on the designated machine, fall back to 50 (B2 to 10) and state the limit in the report. B3 keeps its fifty buyers either way. The values are written to provenance (`operations_per_client`) | The default of 5 makes a one-client p95 the slowest of five samples, and leaves the one-second CPU sampling with almost nothing to attribute (the final-run follow-up in the review notes). One hundred gives each one-client p95 a hundred operations per run |
+| k3 | **B2 runs at 1 and 10 clients, 20 operations per client.** The runner gains a per-workload client matrix and operation count, recorded in provenance; every other driver workload keeps 1/10/50. The report states the B2 limit and its reason | B2 is the dashboard's analytics, not a concurrent shopper path, so fifty simultaneous copies is not a load Mercer sees. The 28 October [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/runs.csv) took about 1.5, 3.5, 3.6 and 10.5 s per MongoDB B2a–B2d operation at one client: at fifty clients on two CPUs, B2d is estimated past the 120 s `maxTimeMS` and `statement_timeout`, and 100 operations would take days. At 1/10 clients and 20 operations, B2 is estimated at a few hours and inside the limits; the pilot checks both |
 | k2 | **Per-request timing evidence.** A small host script, standard library only, requests a fixed page list on the full-data app stack: home, product list, a faceted search, a product detail and, logged in as the demo operator from `.env`, the operator dashboard. One untimed warm-up pass, then twenty sequential requests per page. It joins each response's request ID to the app's JSON request line and writes a CSV per page: median and p95 of `duration_ms`, `db_pg_ms` and `db_mongo_ms`, query and command counts, and the database share of the request. Output goes to a dated `benchmarks/results/` directory with the commit and host details; it runs after the bench runs, never alongside them, with no demo password or owner credential in its output | The exit check asks for per-request database timing on the designated machine, but the runner never records it. This evidence backs section 7's claim that the database is a minor or major share of each request, which is why engines are compared at the driver level |
 
-Out of scope: no HTTP load test (amendment j stays), no concurrency in k2 and no change to B1–B6 or their gates.
+Out of scope: no HTTP load test (amendment j stays), no concurrency in k2 and no change to the B1–B6 queries or their
+gates; k3 changes only B2's client matrix and operation count.
 
 ## Review notes
 
@@ -316,3 +318,8 @@ final measurements. No generator, scaled run,
 HTTP load script, Tier 2/3 work or CI formatter stage is included. Machine memory remains the owner's setting.
 B5 reports the agreed representations separately: MongoDB reviews include text while SQL bench reviews contain
 the analytical columns. These are not equal-payload total-storage claims.
+
+30 October 2026, pull request review of amendment k (Claude Code, fresh session): k1's pilot covered only baseline and
+B1, while the committed full-data run shows MongoDB B2 about ten times slower per operation at one client, so the
+pilot could not project the matrix. Chee Long chose B2 at 1/10 clients with 20 operations per client (k3); the pilot
+now includes B2 and runs after the k3 runner change.
