@@ -2,12 +2,13 @@
 
 status: draft
 plan owner: Chee Long · implementers: all five members (each writes and presents their part) · reviewer: a fresh
-session · phase 5 (30 October to 28 November) · depends on: every Tier 1 workstream for final acceptance; `benchmark`
-final measurements for report section 6 and video part iv
+session · phase 5 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: every Tier 1 workstream for final
+acceptance; `benchmark` final measurements for report section 6 and video part iv
 
 **Assumes:** the application is frozen (Phase 4 closed 30 October 2026); the XSite final report template is
-downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine; the
-`benchmark` workstream closes its designated-machine measurements by 4 November.
+downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine. The
+`benchmark` final measurements target 1 November with 2 to 4 November as contingency. If they slip, section 6 is
+drafted from the 28 October fix-round evidence and regenerated from the final run.
 
 ## Contract
 
@@ -19,97 +20,121 @@ band for presentation (25%) and report (25%) and shows the project-quality work 
 
 | Area | Deliverable |
 |---|---|
-| Report | PDF from the XSite template; at most 10 pages in Calibri (Body) 12, excluding cover, references and appendix; outline and page budget below |
-| Theory map | Appendix A of the report: each module concept, where Mercer shows it, and the file or test that proves it (draft rows below) |
-| Slides | `.pptx` following the script below; each presenter's name bottom-left on the slides they present |
-| Video | `.mp4`, target 9:30, hard limit 10:00 at normal speed; parts i to iv in the brief's order; all five members present with names on screen |
-| User manual | README.md; final pass after a clean-machine run on a teammate's machine (not the main developer's) |
+| Report | PDF from the XSite template; at most 10 pages in Calibri (Body) 12, body tables included, excluding cover, references and appendix; outline and page budget below |
+| Theory map | Appendix A: each module concept, where Mercer shows it, and the file or test that proves it (draft below) |
+| Slides | `.pptx` that stands on its own (the brief: "informative enough about the project details"): architecture, core ER diagram, MongoDB data model, the comparison table, benchmark tables and demo screenshots, not only a script skeleton; each presenter's name bottom-left on the slides they present |
+| Video | `.mp4`, target 9:30, hard limit 10:00 at normal speed; parts i to iv in the brief's order; all five members present, with a name overlay during demo footage as well as on slides; generated content keeps its visible labels (AGENTS.md rule 9) |
+| User manual | README.md reordered so a marker reads setup, data load and demo logins in sequence near the top, with a note for starting from the extracted source zip; developer, CI and benchmark material after the user sections; checked by the clean-machine runs below |
 | Packaging | `scripts/package_submission.py` builds the zip from a committed ref; `--check-only` passes |
-| Records | CONTRIBUTIONS.md complete for peer review (including Joash's student ID); docs/AI_USE.md complete; the professors' reuse approval obtained in writing and cited |
+| Records | CONTRIBUTIONS.md with every student ID and each member's work; a deliverables line in docs/AI_USE.md; the reuse approval in writing (below); Olist CC BY-NC-SA attribution in the report's references; every member completes the peer-review survey |
+
+**Reuse approval (carried over from Phase 0).** Phase 0's exit check required the professors' written approval of
+building on our earlier module project; [AI_USE.md](../AI_USE.md) records only a verbal one. Erfan, who obtained it,
+requests it in writing now and has it by the 8 November check-in; the email's sender and date are cited in AI_USE.md
+and the report. The plagiarism clause carries a zero mark, so this does not wait for the end.
 
 **Out of scope:** new application features (frozen); Tier 2 work, which needs its own approved plan after the
 8 November check-in; editing or re-deriving benchmark numbers by hand.
 
 ### Report outline and page budget
 
-Nine pages budgeted, one page of slack for figures. Section owners are proposed (decision a).
+9.25 pages budgeted, with figures inside each section's pages; 0.75 page of slack. The body carries a core ER diagram
+(the full one goes in appendix B). Section owners are proposed (decision a).
 
-| # | Section | Pages | Proposed owner | Material |
-|---|---|---:|---|---|
-| 1 | Introduction: the marketplace, three roles, why two databases | 0.5 | Erfan | PLAN.md sections 2 and 3 |
-| 2 | Dataset: Olist, profile, cleaning rules and ledger, generated content and its labels | 1.0 | Erfan | [DATA_MODEL.md](../DATA_MODEL.md) dataset profile and cleaning ledger |
-| 3 | Relational design: ER diagram, 3NF, constraints, triggers, deferred payment check, roles and privileges | 1.5 | Jun Keat | DATA_MODEL.md PostgreSQL sections |
-| 4 | NoSQL design: embed against reference, subset pattern, `$jsonSchema`, GridFS, time series with TTL, live schema evolution | 1.25 | Joash | DATA_MODEL.md MongoDB sections |
-| 5 | Implementation: checkout under concurrency, cross-store faceted search, review transactions and Bayesian rating, dashboard and forecast, activity | 1.5 | Chee Long | Workstream plans and their review notes |
-| 6 | Performance analysis: method and fairness, B1 to B6 as ratios, query plans, threats to validity | 1.75 | Chee Long | Generated `benchmarks/results/` reports |
-| 7 | Discussion: SQL against NoSQL beyond speed (modelling, consistency, constraints, flexibility); the delivery-delay finding and its implications | 0.75 | Joash, Chee Long | Benchmark plan amendments f to i; dashboard |
-| 8 | Testing and quality: real-database tests, injection negatives, browser journeys, CI gates | 0.25 | Syahfariz | [ci.md](ci.md), CI run summaries |
-| 9 | Reflections: changes since the proposal, limitations, future work | 0.5 | All, edited by the report editor | PLAN.md section 9; Tier 2 and 3 |
+| # | Section | Pages | Figures | Proposed owner | Material |
+|---|---|---:|---|---|---|
+| 1 | Introduction: the marketplace, three roles, why two databases | 0.5 | Architecture | Erfan | PLAN.md sections 2 and 3 |
+| 2 | Dataset and database construction: Olist, profile, cleaning ledger, the import into both stores, generated content and its labels | 1.0 | Ledger summary table | Erfan | [DATA_MODEL.md](../DATA_MODEL.md) dataset profile and cleaning ledger |
+| 3 | Relational design: core ER diagram, 3NF, constraints, triggers, deferred money checks, roles and privileges | 1.5 | Core ER diagram | Jun Keat | DATA_MODEL.md PostgreSQL sections |
+| 4 | NoSQL design: embed against reference, subset pattern, `$jsonSchema`, GridFS, time series with TTL, live schema evolution | 1.25 | Document model | Joash | DATA_MODEL.md MongoDB sections |
+| 5 | Implementation: CRUD on both stores (seller products, operator take-downs), checkout under concurrency, cross-store faceted search, review transactions and Bayesian rating, dashboard and forecast, activity | 1.5 | One screenshot | Chee Long | Workstream plans and their review notes |
+| 6 | Performance analysis: method and fairness, B1 to B6 as ratios, query plans, threats to validity | 1.75 | Two benchmark figures | Chee Long | Generated `benchmarks/results/` reports |
+| 7 | Discussion: SQL against NoSQL beyond speed (modelling, consistency, constraints, flexibility); the delivery-delay finding and its implications | 0.75 | none | Joash, Chee Long | Benchmark plan amendments f to i; dashboard |
+| 8 | Testing and quality: real-database tests, injection negatives, browser journeys, CI gates | 0.5 | none | Syahfariz | [ci.md](ci.md), CI run summaries |
+| 9 | Reflections: changes since the proposal, limitations, future work | 0.5 | none | All, edited by the report editor | PLAN.md section 9; Tier 2 and 3 |
 
-Appendices (outside the page count): A theory map; B full cleaning ledger; C generated benchmark tables; D AI use and
-the reuse disclosure; references.
+Appendices (outside the page count): A theory map; B full ER diagram and cleaning ledger; C generated benchmark
+tables; D AI use and the reuse disclosure; references, including the Olist licence.
 
 ### Video script (target 9:30)
 
-| Part | Time | Presenter (proposed) | Shows |
-|---|---|---|---|
-| i. Background | 0:00–1:15 | Erfan | The idea, the three roles, Olist and its cleaning ledger, the two-store architecture |
-| ii. Relational | 1:15–4:15 | Jun Keat, then Chee Long | ER and 3NF; buy from three sellers in one checkout; seller ships, operator delivers, a cancel refunds; status, audit and restock triggers (wishlist alert); roles and privileges; dashboard with materialized view, window functions and forecast |
-| iii. NoSQL and comparison | 4:15–7:15 | Joash | Typo search and live facet counts; a new category attribute with no migration; a review updating the rating summary in one transaction; a seller photo in GridFS; trending from the time series; the comparison table |
-| iv. Performance | 7:15–9:00 | Chee Long | Method and fairness rules; headline ratios; one slow, index, fast plan story; B3 last-unit and B6 lost-update results |
-| Close | 9:00–9:30 | Syahfariz | Testing and CI in one slide; the delivery-delay implication; conclusions |
+Demo footage starts from a pre-staged state on the prepared stack (decision d): orders already placed for the
+cancellation, two of the three seller orders already shipped, a wishlisted sold-out product.
 
-### Theory map (draft rows for appendix A)
+| Part | Time | Presenter (proposed) | Live demo | Slides |
+|---|---|---|---|---|
+| i. Background | 0:00–1:05 | Erfan | Home page and the three role landings | Idea, roles, Olist and its cleaning ledger, architecture |
+| ii. Relational | 1:05–3:50 | Jun Keat, then Chee Long | One checkout from three sellers (three orders, stock reduced); one seller ships, the operator delivers; a cancel refunds; a restock fires the wishlist alert; dashboard (about 0:30), ending on the delivery-delay finding and what it means for sellers | Core ER and 3NF; constraints and composite keys; triggers; roles and privileges |
+| iii. NoSQL and comparison | 3:50–7:00 | Joash | Typo search with live facet counts; a new category attribute with no migration; a seller edits price and stock (PostgreSQL), the specification (MongoDB) and a photo (GridFS), and the operator takes a product down (0:20); a review updating the rating summary in one transaction; trending from the time series | Document model; the comparison table below |
+| iv. Performance | 7:00–8:45 | Chee Long | none | Method and fairness rules; headline ratios, each with one line on what it means; one slow, index, fast plan story; B3 last-unit and B6 lost-update results |
+| Close | 8:45–9:30 | Syahfariz | none | Testing and CI in one slide; implications (which store suits which job, and the delivery-delay finding); conclusions |
 
-| Module concept | Where Mercer shows it |
-|---|---|
-| ER modelling and relationship types | ER diagram: 1-to-many, many-to-1, many-to-many (wishlist, order lines) |
-| Normalisation | 3NF justification in DATA_MODEL.md; the deliberate MongoDB denormalisation |
-| Integrity constraints | Keys, `CHECK`, `ON DELETE RESTRICT`, the deferred payment constraint trigger, partial unique index |
-| Triggers | Status transition, audit, restock alert |
-| Views | `purchasable_product`; the dashboard's materialized view |
-| Complex SQL | CTEs, window functions, aggregates in the dashboard and forecast |
-| Transactions and concurrency | `FOR UPDATE` checkout, idempotency, compensating cancellation; B3 and B6 |
-| Isolation levels | Lost update under READ COMMITTED; SERIALIZABLE with retry (B6) |
-| Indexing and query plans | B-tree, composite, partial, GIN, trigram; `EXPLAIN (ANALYZE, BUFFERS)`; B4 |
-| Security | Owner and runtime roles, parameterised queries, injection tests, seller scoping |
-| Document data model | Specifications, reviews, embed against reference, subset pattern |
-| Schema validation and evolution | `$jsonSchema`; a new attribute without a migration |
-| Aggregation | `$facet`, `$setWindowFields`, the Bayesian rating pipeline |
-| MongoDB transactions and replication | Review writes in one transaction on a replica set |
-| Specialised collections | Time series with TTL; GridFS |
+**Comparison table (part iii and report section 7):** flexible attributes as EAV against JSONB against documents
+(B1); integrity as constraints and foreign keys against validators and unique indexes; concurrency as `FOR UPDATE` and
+SERIALIZABLE against transaction retry and atomic `$inc` (B6); schema evolution as `ALTER TABLE` against a new
+attribute; modelling as normalised tables against embedding and referencing. Part iv then gives the numbers.
 
-The owner checks these rows against the module's lecture list before the appendix is written (decision e).
+### Theory map (draft for appendix A)
+
+Paths are relative to the repository root.
+
+| Module concept | Where Mercer shows it | Proof |
+|---|---|---|
+| ER modelling and relationship types | 1-to-many, many-to-1, many-to-many (wishlist, order lines) | ER diagram in docs/DATA_MODEL.md |
+| Data types | Exact money as `numeric(12,2)` and `Decimal128`; integers, text, timestamps, booleans, JSONB | docs/DATA_MODEL.md; src/reviews/ratings.py |
+| Normalisation | 3NF justification; the deliberate MongoDB denormalisation (subset pattern) | docs/DATA_MODEL.md, Normalisation (3NF) |
+| Integrity constraints | Keys, `CHECK`, `ON DELETE RESTRICT`, composite foreign keys such as `(order_id, seller_id)`, two deferred constraint triggers (payments and refunds against the checkout), a partial unique index | src/orders/migration_sql.py; src/wishlist/migrations/0001_wishlist_restock.py |
+| Triggers | Profile-role checks; seller and order status transitions; seller, order and product audit; restock alert | src/accounts/migration_sql.py; src/orders/migration_sql.py; src/catalogue/migration_sql.py; wishlist migration |
+| Views | `purchasable_product`; the `daily_product_sales` materialized view | src/catalogue/migrations/0001_initial.py; src/dashboard/migrations/0001_daily_product_sales.py |
+| Complex SQL | CTEs, window functions, aggregates in the dashboard and forecast | src/dashboard/queries.py |
+| Transactions | Checkout with `FOR UPDATE` and a fixed lock order, idempotency key, compensating cancellation; B3 on both engines | src/orders/services.py; benchmarks/workloads/b3.py; tests/test_checkout.py |
+| Isolation and lost updates | PostgreSQL: lost update under READ COMMITTED, `FOR UPDATE`, SERIALIZABLE with retry. MongoDB: read-modify-write, transaction retry, atomic `$inc` | benchmarks/workloads/b6.py |
+| Indexing and query plans | PostgreSQL B-tree, composite, partial, GIN, trigram; MongoDB compound, multikey, wildcard, unique, partial (bench); `EXPLAIN (ANALYZE, BUFFERS)` and `explain("executionStats")`; B4 | src/catalogue/migrations/0002_product_search_audit.py; src/config/mongo_schema.py; benchmarks/load.py; benchmarks/workloads/b4.py |
+| Security and least privilege | PostgreSQL owner and runtime roles; the MongoDB app user with `readWrite` on its databases only; parameterised queries with injection tests; seller scoping | src/config/privileges.py; src/config/management/commands/mongo_setup.py; tests/test_catalogue_search.py |
+| Document data model | Specifications embed the rating summary and latest five reviews; all reviews referenced | docs/DATA_MODEL.md, MongoDB |
+| Schema validation and evolution | `$jsonSchema` validators; a new category attribute without a migration | src/config/mongo_schema.py |
+| Aggregation | `$facet`; `$setWindowFields`; the Bayesian rating as an update pipeline built from aggregation expressions | src/catalogue/search.py; src/activity/services.py; src/reviews/ratings.py |
+| MongoDB transactions and replication | A review, the rating summary and the embedded subset in one transaction on a replica set | src/reviews/services.py |
+| Specialised storage | Time-series collection with TTL; GridFS | src/config/mongo_schema.py; src/catalogue/services.py |
 
 **Exit check**
 1. The report PDF is at most 10 pages excluding cover, references and appendix, in Calibri (Body) 12, on the XSite
-   template. Every figure and number traces to a generated source: benchmark reports, the cleaning ledger, CI output.
-2. The video plays in at most 10:00 at normal speed, parts in order, all five members presenting with names on screen.
-   The slides match it.
-3. A teammate other than the main developer follows README.md on their own machine from a fresh clone to working demo
-   logins, and any manual fix is merged.
-4. `scripts/package_submission.py` builds the zip from the submitted commit; `--check-only` reports no FAIL, and every
+   template. Every figure and table caption names its generated source (benchmark report, cleaning ledger, CI run).
+2. The video plays in at most 10:00 at normal speed. A part-by-part timestamp list shows the order i to iv, every
+   member presenting with a name on screen, and the slide range used in each part.
+3. The theory map rows are checked against the module's lecture list, and each proof path exists.
+4. Syahfariz, or another member who is not the main developer, follows README.md on their own machine from an
+   extracted `git archive` zip of `main` (what the packager ships) to working demo logins by 15 November, and any
+   manual fix is merged. The check is repeated from the final submission zip by 27 November.
+5. `scripts/package_submission.py` builds the zip from the submitted commit; `--check-only` reports no FAIL, and every
    WARN has been looked at.
-5. CONTRIBUTIONS.md and docs/AI_USE.md are complete; the reuse approval is cited in writing.
-6. Submitted by 28 November, with the XSite confirmation kept.
+6. CONTRIBUTIONS.md has every student ID and each member's work; docs/AI_USE.md has a deliverables line and cites the
+   approval email's sender and date.
+7. A fresh session or a teammate who did not write them reviews the report and video against the RUBRICS.md
+   Excellent bands before submission, with one fix round.
+8. Submitted by 28 November, with the XSite confirmation kept.
 
 ## Milestones
 
 | Date | Milestone |
 |---|---|
-| 2 Nov | This plan approved; decisions a to e settled |
-| 4 Nov | `benchmark` final measurements closed |
+| 2 Nov | This plan approved; decisions a to e settled; reuse approval requested |
+| 4 Nov | `benchmark` final measurements closed (target 1 November) |
 | 7 Nov | Report sections 1 to 5 drafted; slide skeleton; material for the check-in |
-| 8 Nov | Professor check-in; Tier 2 decision |
-| 15 Nov | Full report draft, including sections 6 and 7; script frozen |
-| 24 Nov | Video recorded (hard limit, decision c) |
-| 25 to 27 Nov | Video edit, final report pass, clean-machine run, packaging |
+| 8 Nov | Professor check-in; Tier 2 decision; written reuse approval in hand |
+| 15 Nov | Full report draft, including sections 6 and 7; script frozen; first clean-machine run done |
+| 21 Nov | Video footage and voice-overs recorded (24 November is the hard limit, decision c) |
+| 25 to 27 Nov | Video edit, report and video review, final report pass, repeat clean-machine run, packaging |
 | 28 Nov | Submit |
 
-**Recording-day checklist:** run the browser suite once against the full-data stack ([README Continuous
-integration](../../README.md#continuous-integration)); run `seed_activity`; place a few demo purchases for the demo
-seller's products before filming Insights; preload the operator dashboard; log in from the ignored `.env` and never
-show a password or `.env` on screen.
+### Recording-day checklist
+
+[PLAN.md section 16](../../PLAN.md#16-risks) links here. On the prepared full-data stack:
+
+1. Run the browser suite once against it ([README Continuous integration](../../README.md#continuous-integration)).
+2. Run `seed_activity`, then place a few demo purchases for the demo seller's products before filming Insights.
+3. Pre-stage the demo state named in the video script; preload the operator dashboard.
+4. Log in from the ignored `.env`; never show a password or `.env` on screen.
 
 ## Decisions (proposed, awaiting the owner)
 
@@ -117,9 +142,28 @@ show a password or `.env` on screen.
 |---|---|---|
 | a | Erfan edits and assembles the report (PLAN.md open decision D2); section owners as in the outline | One editor keeps one voice and the page count; it leaves the main developer free for the benchmark and sections 5 and 6 |
 | b | The report is drafted in the XSite Word template in a shared drive, not in the repository | The template is Word; the docs rules allow no new Markdown file; only the PDF is submitted |
-| c | Record the video by 24 November | The seller Insights window is near-empty by 25 November and empty after 27 November (PLAN.md section 16) |
-| d | Each presenter records their own segment with voice-over; Syahfariz assembles and times the video and slides (PLAN.md section 12) | Parallel recording; one person owns the 9:30 target |
-| e | The theory map rows are confirmed against the module's lecture list before writing | The draft rows come from the project, not from the syllabus |
-| f | If Tier 2 is earned on 8 November, it gets at most half a page in section 9 and 30 seconds in the close | The outline and script stay stable; Tier 2 never displaces graded core content |
+| c | Record by 21 November, with 24 November as the hard limit | Insights is near-empty by 25 November (PLAN.md section 16). Demo purchases add only a handful of sales, not the imported history, and 21 November leaves time to re-record |
+| d | One person captures all demo footage in one session on the prepared stack; each presenter records their own voice-over (or face) for their part; Syahfariz assembles and times the video and slides (PLAN.md section 12) | The checklist needs one prepared full-data stack. Five members each recording live demos would need five imports and five preparations. The tradeoff: presenters narrate footage they did not drive, so the script names every click |
+| e | If Tier 2 is earned on 8 November, it gets at most half a page in section 9 and 30 seconds in the close | The outline and script stay stable; Tier 2 never displaces graded core content |
+
+**At close-out:** move decision a into PLAN.md section 15 (closing D2) and section 12.
 
 ## Review notes
+
+30 October 2026, Claude Code (Opus 5.5), fresh session. Reviewed commit 490e140 against RUBRICS.md, PLAN.md
+sections 4, 9, 10 and 12–16 and OVERVIEW.md sections 3 and 7. Spot-checked the theory map in the code (deferred
+money triggers, the `restock_one_unseen` partial unique index, `$facet`, the time-series TTL, B6 isolation
+strategies, the Bayesian update pipeline, both views) and confirmed the packager ships the Olist data;
+`scripts/check_docs.py` passed. Verdict APPROVE WITH CHANGES: put a written-reuse-approval owner and date in the plan,
+settle decision d against the single-stack recording checklist, move the clean-machine run earlier and run it from
+`source_code.zip`, give implications more video time, add CRUD and a named comparison table, and add a proof column
+to the theory map.
+
+30 October 2026, fix round (Claude Code, the session that wrote the plan). All 15 findings applied: reuse approval
+with owner and date; decision d reworked to one capture session with per-presenter voice-over; clean-machine runs by
+15 and 27 November from the archive zip; video re-timed (part ii 2:45 with pre-staged state, a 0:45 close, the
+delivery-delay implication in part ii, CRUD in part iii, a named comparison table); theory map with a proof column,
+reworded rows and the missing constructs, its lecture-list check moved to exit check 3; exit checks made verifiable
+and a review of the report and video added; standalone slides; README reorder; dates linked to PLAN.md section 13
+with a benchmark fallback; the recording checklist kept here with PLAN.md section 16 linking to it; figures budgeted
+per section; name overlays, generated-content labels, Olist attribution and the peer-review survey.
