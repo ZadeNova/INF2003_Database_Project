@@ -94,8 +94,9 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 
 | Date | Milestone |
 |---|---|
-| 2 Nov | This plan approved; reuse approval requested |
-| 4 Nov | `benchmark` final measurements closed (target 1 November) |
+| 30 Oct | This plan approved |
+| 2 Nov | Reuse approval requested |
+| 4 Nov | `benchmark` final measurements closed (target 1 November); if they slip, section 6 is drafted from the fallback runs under **Assumes** |
 | 7 Nov | Report sections 1 to 5 drafted; slide skeleton; material for the check-in |
 | 8 Nov | Professor check-in; Tier 2 decision; written reuse approval in hand |
 | 15 Nov | Full report draft; script frozen; first clean-machine run done |
@@ -185,3 +186,6 @@ and slide lists were removed and remain in commit 875a325.
 iv, as benchmark amendment i does.
 
 30 October 2026: Chee Long approved the plan and decisions a to e.
+
+30 October 2026, pull request review (Claude Code, fresh session): the milestones now show the plan approved on
+30 October rather than 2 November, and the 4 November benchmark milestone points to the fallback runs.
