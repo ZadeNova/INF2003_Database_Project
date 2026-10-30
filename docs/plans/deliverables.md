@@ -64,12 +64,13 @@ tables; D AI use and the reuse disclosure; references, including the Olist licen
 |---|---|---|
 | i. Background | 0:00–1:05 | The idea, three roles, Olist and its cleaning, architecture |
 | ii. Relational | 1:05–3:50 | Design and constraints; checkout across sellers, shipping, cancellation; triggers; the dashboard and the delivery-delay finding |
-| iii. NoSQL and comparison | 3:50–7:00 | Faceted search, live schema evolution, CRUD across both stores and GridFS, reviews, activity; the comparison table |
-| iv. Performance | 7:00–8:45 | Method, headline ratios with what each means, a query-plan story, B3 and B6 |
+| iii. NoSQL and comparison | 3:50–7:00 | Faceted search, live schema evolution, CRUD across both stores and GridFS, reviews, activity; the comparison table with the B3 last-unit and B6 lost-update results |
+| iv. Performance | 7:00–8:45 | Method, B1, B2, B4 and B5 headline ratios with what each means, a query-plan story |
 | Close | 8:45–9:30 | Testing and CI; implications; conclusions |
 
 **Comparison table (part iii and report section 7):** flexible attributes, integrity, concurrency, schema evolution
-and data modelling, each compared across PostgreSQL and MongoDB. Part iv gives the numbers.
+and data modelling, each compared across PostgreSQL and MongoDB. Placement follows
+[benchmark amendment i](benchmark.md#decisions): B3, B6 and this table in part iii; B1, B2, B4 and B5 in part iv.
 
 **Exit check**
 1. The report PDF is at most 10 pages excluding cover, references and appendix, in Calibri (Body) 12, on the XSite
