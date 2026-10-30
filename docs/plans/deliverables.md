@@ -8,7 +8,7 @@ acceptance; `benchmark` final measurements for report section 6 and video part i
 **Assumes:** the application is frozen (Phase 4 closed 30 October 2026); the XSite final report template is
 downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine. The
 `benchmark` final measurements target 1 November with 2 to 4 November as contingency. If they slip, section 6 is
-drafted from the 28 October fix round, the [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
+drafted from two 28 October fix-round runs: the [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
 and the [trial measure run](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/summary.csv) for draft
 ratios, labelled as a trial not run on the designated machine, and regenerated from the final run.
 
@@ -191,4 +191,13 @@ review's five edits: confirmed the new proof paths and the fallback link exist, 
 the 18 and 21 November milestones are consistent with the script, page budget and PLAN.md section 16, and that the
 fallback run (`fix-full`) is correctness-only, so draft ratios should come from the full-data `fix-trial` measure
 run; `scripts/check_docs.py` passed. Verdict APPROVE; optional tweaks are to link `fix-trial` for draft ratios and to
-align decision c's wording with the 18 November footage date. Both tweaks applied by the session that wrote the plan.
+align decision c's wording with the 18 November footage date.
+
+30 October 2026, the third review's tweaks (Claude Code, the session that wrote the plan): both applied.
+
+30 October 2026, Claude Code (Opus 5.5), fresh session, fourth review. Reviewed commit f0bf99b: the benchmark
+fallback links both 28 October runs, correctness from `fix-full` and draft ratios from the full-data `fix-trial`
+measure run, and both summaries are committed. Decision c now matches decision d and the 18 and 21 November
+milestones. `scripts/check_docs.py` passed. Verdict APPROVE; the plan is ready for the owner to record approval.
+
+30 October 2026, the fourth review's cosmetic points (Claude Code, the session that wrote the plan): both applied.
