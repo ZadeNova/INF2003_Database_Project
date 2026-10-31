@@ -275,6 +275,8 @@ approved both preparation worktrees. The reviewer reported that documentation ch
 and the affected fixture benchmark tests passed. Chee Long authorised committing, pushing and opening the two PRs;
 the pilot and full-data runs remain for the next session.
 
+31 October 2026, owner-requested CI follow-up (Codex): [PR #33's Django job](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/41170847257/job/124448283477) stopped at collection because the app image has no benchmarks package; the timing test module now uses pytest.importorskip and qualified helper calls so it skips in that image while the host job still requires its tests to run without skips.
+
 ## Implementation notes (27–28 October 2026)
 
 The isolated services, checksummed loader and independent golden outputs, B1–B6, request timing and generated
