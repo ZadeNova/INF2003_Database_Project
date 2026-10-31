@@ -285,3 +285,9 @@ precommitted expectations remain unchanged.
 | activity-i8 (integration fix) | Disable Chart.js automatic colours and set the theme palette before chart construction | The responsive browser check found blue defaults overriding the intended ink palette; both themes now use the design tokens |
 | activity-i9 (integration fix) | Return a committed wishlistChanged event and update all matching visible buttons before the HTMX swap | A product can occur in detail and recently viewed simultaneously; both controls must keep the same action and pressed state |
 | activity-i10 (team review decision, 24 October 2026) | Keep Insights on the real rolling window; on recording day, run seed_activity and place a few demo purchases before filming the seller's page | Imported sales become near-empty after the imported data ends. Browsing events expire, so anchoring the window to imported history cannot preserve comparable views and sales |
+
+## Reuse disclosure (31 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| deliverables-no-written-reuse-approval | Chee Long decided on 31 October 2026 that written approval from the professors is not required for building on the earlier module project. Keep the reuse disclosure in docs/AI_USE.md and report appendix D; this supersedes the written-approval requirement carried over from Phase 0 | Mercer is a substantially different project after most of the earlier project was changed |

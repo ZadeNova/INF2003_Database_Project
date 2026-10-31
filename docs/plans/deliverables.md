@@ -28,12 +28,10 @@ band for presentation (25%) and report (25%) and shows the project-quality work 
 | Video | `.mp4`, target 9:30, hard limit 10:00 at normal speed; parts i to iv in the brief's order; all five members present, with a name overlay during demo footage as well as on slides; generated content keeps its visible labels (AGENTS.md rule 9) |
 | User manual | README.md reordered so a marker reads setup, data load and demo logins in sequence near the top, with a note for starting from the extracted source zip; developer, CI and benchmark material after the user sections |
 | Packaging | `scripts/package_submission.py` builds the zip from a committed ref; `--check-only` passes |
-| Records | CONTRIBUTIONS.md with every student ID and each member's work; a deliverables line in docs/AI_USE.md; the professors' reuse approval in writing (below); Olist CC BY-NC-SA attribution in the report's references; every member completes the peer-review survey |
+| Records | CONTRIBUTIONS.md with every student ID and each member's work; a deliverables line in docs/AI_USE.md; Olist CC BY-NC-SA attribution in the report's references; every member completes the peer-review survey |
 
-**Reuse approval (carried over from Phase 0).** Phase 0's exit check required the professors' written approval of
-building on our earlier module project; [AI_USE.md](../AI_USE.md) records only a verbal one. It is requested in
-writing now and in hand by the 8 November check-in, with the email's sender and date cited in AI_USE.md and the
-report. The plagiarism clause carries a zero mark, so this does not wait for the end.
+**Reuse disclosure.** The disclosure stays in [AI_USE.md](../AI_USE.md) and report appendix D; written approval is
+not required under [the 31 October owner decision](../DECISIONS.md#reuse-disclosure-31-october-2026).
 
 **Out of scope:** new application features (frozen); Tier 2 work, which needs its own approved plan after the
 8 November check-in; editing or re-deriving benchmark numbers by hand.
@@ -84,8 +82,7 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
    check is repeated from the final submission zip by 27 November.
 5. `scripts/package_submission.py` builds the zip from the submitted commit; `--check-only` reports no FAIL, and every
    WARN has been looked at.
-6. CONTRIBUTIONS.md has every student ID and each member's work; docs/AI_USE.md has a deliverables line and cites the
-   approval email's sender and date.
+6. CONTRIBUTIONS.md has every student ID and each member's work; docs/AI_USE.md has a deliverables line.
 7. A fresh session reviews the report and video against the RUBRICS.md Excellent bands before submission, with one
    fix round.
 8. Submitted by 28 November, with the XSite confirmation kept.
@@ -95,10 +92,9 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 | Date | Milestone |
 |---|---|
 | 30 Oct | This plan approved |
-| 2 Nov | Reuse approval requested |
 | 4 Nov | `benchmark` final measurements closed (target 1 November); if they slip, section 6 is drafted from the fallback runs under **Assumes** |
 | 7 Nov | Report sections 1 to 5 drafted; slide skeleton; material for the check-in |
-| 8 Nov | Professor check-in; Tier 2 decision; written reuse approval in hand |
+| 8 Nov | Professor check-in; Tier 2 decision |
 | 15 Nov | Full report draft; script frozen; first clean-machine run done |
 | 18 Nov | Demo footage captured (decisions c and d) |
 | 21 Nov | Voice-overs recorded (24 November is the hard limit) |
@@ -127,6 +123,7 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 Decision a is recorded in PLAN.md section 12 and closes open decision D2 in section 15.
 
 ## Review notes
+
 
 30 October 2026, Claude Code (Opus 5.5), fresh session. Reviewed commit 490e140 against RUBRICS.md, PLAN.md
 sections 4, 9, 10 and 12–16 and OVERVIEW.md sections 3 and 7. Spot-checked the theory map in the code (deferred
@@ -189,3 +186,11 @@ iv, as benchmark amendment i does.
 
 30 October 2026, pull request review (Claude Code, fresh session): the milestones now show the plan approved on
 30 October rather than 2 November, and the 4 November benchmark milestone points to the fallback runs.
+
+31 October 2026, Codex: recorded Chee Long's decision that written reuse approval is not required; retained the
+AI_USE.md and appendix D disclosure. Documentation check run; Claude Code
+(the session that wrote the brief; not a fresh session) approved this change on 31 October 2026.
+
+31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): re-checked the fix round and
+approved both preparation worktrees. The documentation check passed; Chee Long authorised committing, pushing and
+opening the two PRs after this approval.
