@@ -247,6 +247,15 @@ def run(args):
     with db.mongo() as database:
         provenance = verify_manifest(database, args.source)
         expected, parameters, golden_source, hashes = golden_files(args.golden, provenance)
+        b1_queries = [query for parameter in parameters for query in b1.queries(parameter)]
+        b2_queries = b2.queries(
+            date.fromisoformat(golden_source["as_of"]), database.platform_stats.find_one({"_id": "bayesian"})
+        )
+        b4_cases = b4.cases(b1_queries, b2_queries, parameters)
+        b4_operations = {
+            index: args.b2_operations_per_client if query.output.startswith("B2") else args.operations_per_client
+            for kind, index, query in b4_cases
+        }
         host_file = args.output / "host.json"
         provenance.update(
             mode=args.mode,
@@ -257,6 +266,18 @@ def run(args):
             output_schema_sha256=sha256(SCHEMA_PATH),
             seed=82,
             operations_per_client=args.operations_per_client,
+            workload_matrix={
+                name: {
+                    "clients": clients if args.mode == "measure" else [1],
+                    "operations_per_client": operations if args.mode == "measure" else 1,
+                }
+                for name, clients, operations in (
+                    ("default", [1, 10, 50], args.operations_per_client),
+                    ("B2", [1, 10], args.b2_operations_per_client),
+                    ("B2refresh", [1], args.b2_operations_per_client),
+                    ("B4", [1], args.operations_per_client),
+                )
+            },
             validation_operations_per_client=1,
             operations_by_clients={str(n): n * args.operations_per_client for n in (1, 10, 50)},
             fixed_b3_buyers=50,
@@ -271,6 +292,9 @@ def run(args):
             final=False,
             trigger_policy="B3 PostgreSQL USER off headline and USER on separate; internal FK triggers always enabled",
         )
+        provenance["workload_matrix"]["B4"]["operations_per_client_by_case"] = {
+            "B4_" + index: operations if args.mode == "measure" else 1 for index, operations in b4_operations.items()
+        }
         provenance["restores_since_load"] = restores_since_load(database)
         provenance["storage_tolerance"] = {
             "relative": b5.STORAGE_RELATIVE_TOLERANCE,
@@ -281,10 +305,6 @@ def run(args):
             "median of one-second Docker runner sample intervals overlapping the timed operation window; 180 percent is saturated"
         )
         recorder = Recorder(args.output, args.mode, provenance)
-        b1_queries = [query for parameter in parameters for query in b1.queries(parameter)]
-        b2_queries = b2.queries(
-            date.fromisoformat(golden_source["as_of"]), database.platform_stats.find_one({"_id": "bayesian"})
-        )
 
         def refresh_check():
             for query in b2_queries:
@@ -355,12 +375,12 @@ def run(args):
                     [query],
                     recorder,
                     expected,
-                    args.operations_per_client,
-                    clients=(1,) if query.output == "B2refresh" else (1, 10, 50),
+                    args.b2_operations_per_client,
+                    clients=(1,) if query.output == "B2refresh" else (1, 10),
                     refresh_check=refresh_check,
                 )
         if "B4" in selected:
-            for kind, index, query in b4.cases(b1_queries, b2_queries, parameters):
+            for kind, index, query in b4_cases:
                 evidence = {}
                 try:
                     with b4.dropped(query, index, database, evidence) as restore:
@@ -368,7 +388,7 @@ def run(args):
                             [query],
                             recorder,
                             expected,
-                            args.operations_per_client,
+                            b4_operations[index],
                             clients=(1,),
                             output="B4_" + index,
                             variant="before",
@@ -378,7 +398,7 @@ def run(args):
                             [query],
                             recorder,
                             expected,
-                            args.operations_per_client,
+                            b4_operations[index],
                             clients=(1,),
                             output="B4_" + index,
                             variant="after",
@@ -406,7 +426,7 @@ def run(args):
         return int(recorder.failed)
 
 
-def main():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--golden", type=Path, required=True)
@@ -414,9 +434,10 @@ def main():
     parser.add_argument("--mode", choices=("correctness", "measure"), required=True)
     parser.add_argument("--only", default="baseline,B1,B2,B3,B4,B5,B6")
     parser.add_argument("--operations-per-client", type=int, default=5)
+    parser.add_argument("--b2-operations-per-client", type=int, default=20)
     parser.add_argument("--label", default="correctness")
-    args = parser.parse_args()
-    if args.operations_per_client < 5 or not set(args.only.split(",")) <= {
+    args = parser.parse_args(argv)
+    if min(args.operations_per_client, args.b2_operations_per_client) < 5 or not set(args.only.split(",")) <= {
         "baseline",
         "B1",
         "B2",
@@ -428,7 +449,11 @@ def main():
         "B5restore",
     }:
         parser.error("Use at least five operations per client and named workloads")
-    raise SystemExit(run(args))
+    return args
+
+
+def main():
+    raise SystemExit(run(parse_args()))
 
 
 if __name__ == "__main__":

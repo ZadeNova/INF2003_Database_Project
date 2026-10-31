@@ -153,12 +153,12 @@ runner records today.
 
 | ID | Proposal | Why |
 |---|---|---|
-| k1 | **Operations per client.** Final runs use `--operations-per-client 100`, except B2 (k3). After the k3 runner change, a pilot on a freshly loaded project, `--mode measure --only baseline,B1,B2 --operations-per-client 100`, times the two slowest parts of the matrix: B1 at fifty clients and B2. If the projected full run does not fit one sitting on the designated machine, fall back to 50 (B2 to 10) and state the limit in the report. B3 keeps its fifty buyers either way. The values are written to provenance (`operations_per_client`) | The default of 5 makes a one-client p95 the slowest of five samples, and leaves the one-second CPU sampling with almost nothing to attribute (the final-run follow-up in the review notes). One hundred gives each one-client p95 a hundred operations per run |
-| k3 | **B2 runs at 1 and 10 clients, 20 operations per client.** The runner gains a per-workload client matrix and operation count, recorded in provenance; every other driver workload keeps 1/10/50. The report states the B2 limit and its reason | B2 is the dashboard's analytics, not a concurrent shopper path, so fifty simultaneous copies is not a load Mercer sees. The 28 October [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/runs.csv) took about 1.5, 3.5, 3.6 and 10.5 s per MongoDB B2a–B2d operation at one client: at fifty clients on two CPUs, B2d is estimated past the 120 s `maxTimeMS` and `statement_timeout`, and 100 operations would take days. At 1/10 clients and 20 operations, B2 is estimated at a few hours and inside the limits; the pilot checks both |
-| k2 | **Per-request timing evidence.** A small host script, standard library only, requests a fixed page list on the full-data app stack: home, product list, a faceted search, a product detail and, logged in as the demo operator from `.env`, the operator dashboard. One untimed warm-up pass, then twenty sequential requests per page. It joins each response's request ID to the app's JSON request line and writes a CSV per page: median and p95 of `duration_ms`, `db_pg_ms` and `db_mongo_ms`, query and command counts, and the database share of the request. Output goes to a dated `benchmarks/results/` directory with the commit and host details; it runs after the bench runs, never alongside them, with no demo password or owner credential in its output | The exit check asks for per-request database timing on the designated machine, but the runner never records it. This evidence backs section 7's claim that the database is a minor or major share of each request, which is why engines are compared at the driver level |
+| k1 | **Operations per client.** Final runs use `--operations-per-client 100`, except B2 and B2-derived B4 cases (k3). After the k3 runner change, a pilot on a freshly loaded project, `--mode measure --only baseline,B1,B2 --operations-per-client 100`, times the two slowest parts of the matrix: B1 at fifty clients and B2. If the projected full run does not fit one sitting on the designated machine, fall back to 50 (B2 to 10) and state the limit in the report. B3 keeps its fifty buyers either way. The values are written to provenance (`operations_per_client`) | The default of 5 makes a one-client p95 the slowest of five samples, and leaves the one-second CPU sampling with almost nothing to attribute (the final-run follow-up in the review notes). One hundred gives each one-client p95 a hundred operations per run |
+| k3 | **B2 runs at 1 and 10 clients, 20 operations per client.** The runner gains a per-workload client matrix and operation count, recorded in provenance. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the default count, recorded per case under an explicit B4 matrix entry. Other workload matrices stay unchanged. The report states the B2 limit and its reason | B2 is the dashboard's analytics, not a concurrent shopper path, so fifty simultaneous copies is not a load Mercer sees. The 28 October [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/runs.csv) took about 1.5, 3.5, 3.6 and 10.5 s per MongoDB B2a–B2d operation at one client: at fifty clients on two CPUs, B2d is estimated past the 120 s `maxTimeMS` and `statement_timeout`, and 100 operations would take days. At 1/10 clients and 20 operations, B2 is estimated at a few hours and inside the limits; the pilot checks both |
+| k2 | **Per-request timing evidence.** A small host script, standard library only, requests a fixed page list on the full-data app stack: a category page, product list, a faceted search, a product detail and, logged in as the demo operator from `.env`, the operator dashboard. One untimed warm-up pass, then twenty sequential requests per page. It joins each response's request ID to the app's JSON request line and writes a CSV per page: median and p95 of `duration_ms`, `db_pg_ms` and `db_mongo_ms`, query and command counts, and the database share of the request. Output goes to a dated `benchmarks/results/` directory with the commit and host details; it runs after the bench runs, never alongside them, with no demo password or owner credential in its output | The exit check asks for per-request database timing on the designated machine, but the runner never records it. This evidence backs section 7's claim that the database is a minor or major share of each request, which is why engines are compared at the driver level |
 
 Out of scope: no HTTP load test (amendment j stays), no concurrency in k2 and no change to the B1–B6 queries or their
-gates; k3 changes only B2's client matrix and operation count.
+gates; k3 changes B2's client matrix and the operation count for B2 and its B4 cases.
 
 ## Review notes
 
@@ -253,6 +253,29 @@ The six fix-round items and outcomes were:
 client_saturated flags. Use a larger --operations-per-client for the designated-machine final measurements so every
 timed window spans several samples, and record the selected value in provenance. Status remains in-progress;
 the designated-machine final measurements remain with the owner.
+
+31 October 2026, Codex: implemented amendment k3 (B2 1/10 clients with its own operation count and provenance) and
+k2 (standard-library request/log timing collector, host tests and fixture rehearsal), plus the README final-run
+checklist. Host tests, freshly loaded fixture bench tests, the B2-only fixture measurement and the fixture app
+request-timing rehearsal passed; fixture evidence stays ignored and unstaged. The pilot and designated-machine
+final runs remain with Chee Long; benchmark stays in progress in PLAN.md section 14.
+
+31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): reviewed both preparation
+worktrees and approved the reuse-decision documentation. The reviewer ran Ruff format/check in the dev image,
+check_docs, host tests and freshly loaded fixture benchmark tests; all passed. Codex's fix round gives B2-derived
+B4 cases the B2 count and records B4's one-client matrix and per-case counts, clarifies automatic report generation,
+repairs README wording and records the reviewer accurately. Chee Long chose a category page instead of the home
+redirect for k2 on 31 October; the plan, collector, tests and checklist now use it. Codex reran Ruff format/check
+in the dev image, the affected B2/B4 fixture integration cases in both modes, the timing host tests and the fixture
+category collector; all passed. Documentation checks passed in both worktrees, fixture projects were torn down,
+and all changes remain uncommitted.
+
+31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): re-checked the fix round and
+approved both preparation worktrees. The reviewer reported that documentation checks, host tests, Ruff format/check
+and the affected fixture benchmark tests passed. Chee Long authorised committing, pushing and opening the two PRs;
+the pilot and full-data runs remain for the next session.
+
+31 October 2026, owner-requested CI follow-up (Codex): [PR #33's Django job](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/41170847257/job/124448283477) stopped at collection because the app image has no benchmarks package; the timing test module now uses pytest.importorskip and qualified helper calls so it skips in that image while the host job still requires its tests to run without skips.
 
 ## Implementation notes (27–28 October 2026)
 

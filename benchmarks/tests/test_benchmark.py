@@ -364,3 +364,119 @@ def test_noise_uses_engine_round_trips_and_ignores_python_noop():
     result = noise(rows)[0]
     assert result["threshold_ms"] == 5 and result["inside_noise"] == "yes"
     assert result["baseline_used"] == "mongo/ping+postgres/select1"
+
+
+@pytest.mark.parametrize("mode", ["measure", "correctness"])
+def test_b2_workload_matrix_operations_and_provenance(database, tmp_path, mode):
+    from benchmarks.harness import parse_args, run
+
+    args = parse_args(
+        [
+            "--source",
+            "/app/fixtures/olist/clean",
+            "--golden",
+            "/app/benchmarks/golden/fixture",
+            "--output",
+            str(tmp_path),
+            "--mode",
+            mode,
+            "--only",
+            "B2,B4",
+            "--operations-per-client",
+            "7",
+            "--b2-operations-per-client",
+            "6",
+        ]
+    )
+    assert run(args) == 0
+    with (tmp_path / "runs.csv").open() as stream:
+        rows = list(csv.DictReader(stream))
+    b2_index_cases = {"B4_bench_product_visible", "B4_review_product_date"}
+    b4_outputs = {row["output"] for row in rows if row["output"].startswith("B4_")}
+    assert b2_index_cases <= b4_outputs
+    for row in rows:
+        assert row["status"] == "passed"
+        if row["phase"] == "invariant":
+            continue
+        clients = int(row["clients"])
+        is_b4 = row["output"] in b4_outputs
+        expected_clients = {1} if mode == "correctness" or row["output"] == "B2refresh" or is_b4 else {1, 10}
+        assert clients in expected_clients
+        count = 7 if is_b4 and row["output"] not in b2_index_cases else 6
+        assert int(row["operations"]) == (1 if mode == "correctness" else clients * count)
+    for output in {row["output"] for row in rows}:
+        clients = {int(row["clients"]) for row in rows if row["output"] == output}
+        assert clients == ({1} if mode == "correctness" or output == "B2refresh" or output in b4_outputs else {1, 10})
+    provenance = json.loads((tmp_path / "provenance.json").read_text())
+    expected_matrix = {
+        name: {
+            "clients": clients if mode == "measure" else [1],
+            "operations_per_client": count if mode == "measure" else 1,
+        }
+        for name, clients, count in (
+            ("default", [1, 10, 50], 7),
+            ("B2", [1, 10], 6),
+            ("B2refresh", [1], 6),
+            ("B4", [1], 7),
+        )
+    }
+    expected_matrix["B4"]["operations_per_client_by_case"] = {
+        output: 1 if mode == "correctness" else 6 if output in b2_index_cases else 7 for output in b4_outputs
+    }
+    assert provenance["workload_matrix"] == expected_matrix
+    assert provenance["operations_per_client"] == 7
+    assert provenance["clients"] == [1, 10, 50]
+    assert provenance["operations_by_clients"] == {"1": 7, "10": 70, "50": 350}
+    report(tmp_path)
+    with (tmp_path / "report/B2a.csv").open() as stream:
+        assert {row["clients"] for row in csv.DictReader(stream)} == ({"1"} if mode == "correctness" else {"1", "10"})
+
+
+@pytest.mark.parametrize("option", ["--operations-per-client", "--b2-operations-per-client"])
+@pytest.mark.parametrize("value", ["4", "0", "-1"])
+def test_operation_counts_below_five_rejected_before_any_run(tmp_path, option, value):
+    import subprocess
+    import sys
+
+    from benchmarks.harness import parse_args
+
+    with pytest.raises(SystemExit) as error:
+        parse_args(
+            [
+                "--source",
+                "/unused",
+                "--golden",
+                "/unused",
+                "--output",
+                str(tmp_path),
+                "--mode",
+                "measure",
+                option,
+                value,
+            ]
+        )
+    assert error.value.code == 2
+    host = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "benchmarks.run",
+            "--project",
+            "mercer-bench-unused",
+            "--mode",
+            "measure",
+            option,
+            value,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert host.returncode == 2 and "at least five" in host.stderr
+
+
+def test_default_b2_operation_count_is_twenty(tmp_path):
+    from benchmarks.harness import parse_args
+
+    args = parse_args(["--source", "/unused", "--golden", "/unused", "--output", str(tmp_path), "--mode", "measure"])
+    assert args.b2_operations_per_client == 20 and args.operations_per_client == 5

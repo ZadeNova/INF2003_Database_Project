@@ -127,7 +127,7 @@ docker compose build migrate web                               # rebuild dev run
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_settings.py   # one module
 docker compose --profile tools run --rm tools pytest -q -p no:cacheprovider analytics/tests
-python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py tests/test_package_submission.py
+python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py tests/test_package_submission.py tests/test_request_timing.py
 ```
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
@@ -144,6 +144,7 @@ for full-data loading, measurements and teardown. The fixture tests use their ow
 docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
 python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
 python -m benchmarks.run --project mercer-bench-local --mode measure --only baseline,B1,B4 --label trial
+python -m benchmarks.request_timing --project mercer-request-final --base-url http://127.0.0.1:18082
 python -m benchmarks.report benchmarks/results/<run-directory>
 ```
 
@@ -151,7 +152,9 @@ The benchmark fixture CI job is optional in the ruleset; its duration and all fa
 Benchmark tests require a freshly loaded fixture project. Reload before a correctness run that includes B5,
 because B5 refuses any earlier restore. Recorded reruns use --require-clean; generated run directories are ignored
 until explicitly staged with `git add -f -- benchmarks/results/<run-directory>`. See the README for per-client
-operation counts, the storage checkpoint wait, round-trip baselines and client CPU flags.
+operation counts (including `--b2-operations-per-client`), the storage checkpoint wait, round-trip baselines and
+client CPU flags. The [final-run checklist](README.md#final-run-checklist-next-session) covers reloads and the separate
+per-request collector; never run that collector alongside a benchmark.
 
 CI (`.github/workflows/ci.yml`, stages 1–3 of [ci](docs/plans/ci.md)) runs these checks on every pull request and push to
 `main`: build, migrate as owner, the drift check, the fixture import and `seed_demo`, the full suite, the pipeline tests,
