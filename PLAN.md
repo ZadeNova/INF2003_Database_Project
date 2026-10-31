@@ -373,8 +373,9 @@ Olist import and schema; every later workstream brings its own tests. Tests that
 dataset (security negatives, idempotent checkout, database unavailability) are ported rather than deleted. CI runs
 against a small committed fixture subset of Olist, not the full dataset.
 
-**Professors' approval of building on our earlier module project:** keep it in writing and cite it in `docs/AI_USE.md`
-and the report. The proposal does not mention the reuse.
+**Reuse of our earlier module project:** retain the disclosure in `docs/AI_USE.md` and report appendix D; written
+approval is not required under [the 31 October owner decision](docs/DECISIONS.md#reuse-disclosure-31-october-2026).
+The proposal does not mention the reuse.
 
 ## 12. Team and work split (proposal; edit freely)
 
@@ -417,7 +418,7 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 
 | Phase | Dates | Build (Chee Long unless noted) | Write plans | Exit check |
 |---|---|---|---|---|
-| **0 Setup** | 21 to 22 Oct | `foundation` (Erfan; marked done in section 14) | Existing feature plans approved; prepare `benchmark` and `ci` plans | Repo runs on Linux and Windows with both databases; professors' written approval |
+| **0 Setup** | 21 to 22 Oct | `foundation` (Erfan; marked done in section 14) | Existing feature plans approved; prepare `benchmark` and `ci` plans | Repo runs on Linux and Windows with both databases; professors' written approval (superseded by [the 31 October owner decision](docs/DECISIONS.md#reuse-disclosure-31-october-2026)) |
 | **1A Import** | 22 to 24 Oct | `olist-import` (Erfan optionally on the cleaning script) | Approve `benchmark` and `ci` plans by 24 Oct, before their implementation | Olist loaded in both databases; the ledger and money invariants reconcile; product pages and demo logins work; full import exit checks pass |
 | **1B Accounts** | 25 Oct | `accounts`; start `ci` (Chee Long) after its plan is approved | none | The three roles log in; seller approval and operator controls work; CI runs the real-database checks available so far |
 | **2A Checkout** | 25 to 26 Oct, after `accounts` | `checkout`; benchmark correctness cases for B3/B6 as checkout lands | none | Buy from three sellers in one checkout, ship, deliver, cancel with refund; stock, payments, permissions and retries pass their tests |
@@ -559,7 +560,6 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Video over 10 minutes | Script by section; cut to 9:30 |
 | Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | Follow [deliverables](docs/plans/deliverables.md) decision c and the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist). Keep the real rolling window because browsing events expire |
 | Recording-day dependency: the dashboard takes a few seconds on the full data | Follow the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist); accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
-| Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |
 | Cleaning distorts the real data | Raw files untouched; every rule counted in the import ledger; analyses re-run on the cleaned data |
