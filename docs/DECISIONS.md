@@ -258,6 +258,12 @@ precommitted expectations remain unchanged.
 | benchmark-i20 (fix round, 28 October) | Add the existing MongoDB kernel guard to the optional job, reload after mutating fixture tests, capture the current runner's printed directory and upload only that directory plus this job's duration | B5 needs a fresh load, and artifact upload must not collect unrelated committed runs; required checks and CI stage 3 stay unchanged |
 | benchmark-i21 (owner decision, 28 October 2026) | No generator and no 10x run (Chee Long, 28 October 2026). Report B4_bench_product_visible, the MongoDB partial index on B2b, as an index that buys almost nothing; use its before/after and run-range figures from the [fix-round amendment-j.csv](../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/report/amendment-j.csv) | The B2b partial index selects about 40% of products inside a pipeline dominated by the per-product $lookup, so more data would not change the finding. The generator decision belongs to the owner; designated-machine final measurements remain |
 
+## Benchmark final-run preparation (31 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-i22 | Amendment k1/k3 (approved by Chee Long, 30 October 2026) supersedes benchmark-i16's counts for final measurements: default 100 operations per client at 1/10/50, falling back to 50 if the baseline/B1/B2 pilot projects beyond one sitting; B2 uses 1/10 clients with 20 operations per client, falling back to 10. B2refresh uses the B2 count at one client. B3 retains fifty buyers. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the default count, recorded per case in workload_matrix. Keep the legacy provenance keys; correctness query passes stay at one client/one operation | Longer windows improve p95 and CPU attribution, while B2 is operator analytics and the fifty-client full-data pipelines risk timeout and excessive duration. Its B4 index experiments are outside the pilot and also need the smaller count. The pilot, final flags and report disclose the chosen limit |
+
 ## dashboard implementation (24 October 2026; review pending)
 
 | ID | Decision | Why |

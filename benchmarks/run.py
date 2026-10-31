@@ -162,10 +162,13 @@ def main():
     parser.add_argument("--mode", choices=("correctness", "measure"), required=True)
     parser.add_argument("--only", default="baseline,B1,B2,B3,B4,B5,B6")
     parser.add_argument("--operations-per-client", type=int, default=5)
+    parser.add_argument("--b2-operations-per-client", type=int, default=20)
     parser.add_argument("--label", default="correctness")
     parser.add_argument("--final", action="store_true")
     parser.add_argument("--require-clean", action="store_true")
     args = parser.parse_args()
+    if min(args.operations_per_client, args.b2_operations_per_client) < 5:
+        parser.error("Use at least five operations per client for default and B2 workloads")
     dc = compose(args.project)
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("Label must be lowercase letters, digits and hyphens")
@@ -217,6 +220,8 @@ def main():
             args.only,
             "--operations-per-client",
             str(args.operations_per_client),
+            "--b2-operations-per-client",
+            str(args.b2_operations_per_client),
             "--label",
             args.label,
             "--output",

@@ -250,8 +250,8 @@ docker compose -p mercer-bench-trial --profile bench run --rm bench-runner pytho
 python -m benchmarks.run --project mercer-bench-trial --require-clean --mode measure --only baseline,B1,B4 --operations-per-client 5 --label trial
 ```
 
-For final repeated measurements the owner runs measure mode without `--only`, adding `--final --label final`, after
-review, on the designated machine. The loader requires empty destinations; to reload, explicitly tear down only
+For the designated-machine run, use the [final-run checklist](#final-run-checklist-next-session) below after review.
+The loader requires empty destinations; to reload, explicitly tear down only
 the named benchmark project with `docker compose -p mercer-bench-local --profile bench down --volumes` and repeat.
 Never remove application volumes. PostgreSQL mutation runs use bench_run cloned from bench_template; MongoDB restores
 checksummed NDJSON in ignored benchmarks/results/.state. Each restored MongoDB collection is dropped and recreated
@@ -265,8 +265,13 @@ The runner prints its dated results directory. It holds raw operations, failed c
 CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
 driver versions and container limits. All workers connect and ping before a barrier; each first result is
 canonicalised against golden before a second barrier releases timing. Later results use plain fetched-row equality.
-The default is five measured operations per client at every concurrency, plus one untimed reference operation per
-worker; B3 keeps fifty buyers. Throughput excludes setup, initial canonicalisation and teardown. The Python no-op
+The default is five measured operations per client at 1/10/50 clients (`--operations-per-client`), except B2: it
+uses 1/10 clients and twenty operations per client (`--b2-operations-per-client`, minimum five). B2refresh uses one
+client with the B2 count. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the
+default count. Provenance records each B4 case's operation count. Each worker also validates one untimed reference
+operation; B3 keeps fifty buyers. Correctness query passes stay at one client and one operation. The per-workload
+matrix is recorded in provenance alongside the legacy default keys. Throughput excludes setup, initial
+canonicalisation and teardown. The Python no-op
 measures harness overhead; SELECT 1 and MongoDB ping provide the per-engine round-trip noise baselines.
 Per-run CPU is the median of the one-second Docker runner intervals overlapping its timed window, so short runs
 have coarse attribution. Runs at or above 180% runner CPU remain visible with client_saturated=true and contribute
@@ -309,6 +314,97 @@ evidence. The host runner creates writable run directories and replaces containe
 
 Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_pg_queries/db_mongo_ms/db_mongo_commands
 in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.
+
+### Final-run checklist (next session)
+
+Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
+[benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker
+VM settings checked. The commands below use dedicated projects; leave existing application projects alone.
+
+1. **Fresh full-data load.** From the repository root, run the following. To **reload** in steps 4 and 5, repeat the
+   last three commands (`down`, `up`, `load`); the loader requires empty destinations. Check the reported usable
+   memory, not just Docker Desktop's allocation label: `--final` requires at least six CPUs and 8,589,934,592
+   bytes (`8 * 1024**3`). An 8 GB allocation can report less usable memory; raise the allocation until this check
+   meets the gate before loading or piloting.
+
+   ```sh
+   docker info --format 'CPUs={{.NCPU}} memory_bytes={{.MemTotal}}'
+   python src/tools/init_env.py
+   docker compose -p mercer-bench-final --profile bench build bench-runner
+   docker compose -p mercer-bench-final --profile bench down --volumes
+   docker compose -p mercer-bench-final --profile bench up --detach --wait bench-db bench-mongo
+   docker compose -p mercer-bench-final --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+   ```
+
+2. **Pilot.** Keep the printed results directory. B2 uses its default 20 operations per client at 1/10 clients.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode measure --only baseline,B1,B2 --operations-per-client 100 --label pilot
+   ```
+
+3. **Choose the counts.** Use the pilot's `host.json` duration and `runs.csv` windows to project the full run, allowing
+   for the remaining workloads and reloads. Keep 100 default operations and 20 for B2 if it fits one sitting;
+   otherwise choose 50 and 10 and state the limit in the report. Check for failed cells/timeouts before continuing.
+   B3 always keeps fifty buyers. Retain the pilot and record the choice in the final run's provenance flags below.
+
+4. **Reload**, then run correctness on the clean tree. B5 refuses any earlier restore, so always reload before a
+   correctness run that includes B5, including a retry after a failed run.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode correctness --require-clean --label final-correctness
+   ```
+
+5. **Reload again**, then run the final matrix. If step 3 selected the fallback, replace `100` with `50` and `20`
+   with `10` in this command. Keep the printed directory and check every correctness gate.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode measure --final --require-clean --operations-per-client 100 --b2-operations-per-client 20 --label final
+   ```
+
+6. **Per-request evidence (k2).** Finish the benchmark first and stop its engines. The timing script refuses an
+   active benchmark runner and must never run alongside a benchmark. Prepare a separate full-data app stack using
+   unused loopback ports; this PowerShell example reads demo credentials from the ignored `.env` in place.
+
+   ```powershell
+   docker compose -p mercer-bench-final --profile bench stop
+   $env:APP_PORT = "18082"
+   $env:MONGO_PORT = "0"
+   docker compose -p mercer-request-final up --build --detach --wait
+   docker compose -p mercer-request-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
+   docker compose -p mercer-request-final run --rm migrate python manage.py seed_demo > $null
+   python -m benchmarks.request_timing --project mercer-request-final --base-url http://127.0.0.1:18082
+   ```
+
+   The script uses anonymous shopping requests and a separate in-memory operator session, one warm-up pass and
+   twenty sequential requests per page. It joins response IDs to this project's JSON web logs and saves
+   `requests.csv`, one aggregate CSV per page and `provenance.json`. The category page, facet and detail use the
+   same visible product and its source category/attributes, with the chosen paths recorded. It retains no
+   credentials, cookies or response bodies.
+   A fixture rehearsal uses `--source tests/fixtures/olist/clean` on a separately loaded fixture app project.
+
+7. **Regenerate tables if needed.** `benchmarks.run` already runs `benchmarks.report` for each benchmark run. Use
+   this command only to regenerate its tables and charts; the k2 directory has its own CSVs and does not use the
+   driver report generator.
+
+   ```sh
+   python -m benchmarks.report benchmarks/results/<run-directory>
+   ```
+
+8. **Retain the reviewed evidence.** Inspect all outputs, then explicitly stage only these run directories (replace
+   each placeholder with the directory printed by its command).
+
+   ```sh
+   git add -f -- benchmarks/results/<pilot-run-directory> benchmarks/results/<correctness-run-directory> benchmarks/results/<final-run-directory> benchmarks/results/<request-timing-directory>
+   ```
+
+9. **Tear down only the two projects created here**, after the evidence is saved. In PowerShell, clear the temporary
+   port overrides for subsequent work.
+
+   ```powershell
+   docker compose -p mercer-bench-final --profile bench down --volumes
+   docker compose -p mercer-request-final down --volumes
+   Remove-Item Env:APP_PORT, Env:MONGO_PORT
+   ```
 
 ## Load Olist and demo accounts
 
