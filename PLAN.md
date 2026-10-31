@@ -391,10 +391,10 @@ before any commit.** The review runs the applicable tests and exit checks from A
 the fixes. GPT agents leave changes uncommitted for that review and commit only when the user explicitly asks after
 review; there is no automatic commit or push. This is the user's review instruction of 22 October.
 
-Every member presents their part in the video and writes its report section; `docs/OVERVIEW.md` is the plain-language
-guide for the team. Chee Long carries most of the development; the supporting members' work is smaller but recorded in
-`CONTRIBUTIONS.md`. Report: shared, each owner writes the section for their work; one editor assembles
-it (to decide). Report, slides and video preparation may follow the accelerated application and benchmark sprint.
+Every member presents in the video; `docs/OVERVIEW.md` is the plain-language guide for the team. Chee Long carries
+most of the development; the supporting members' work is smaller but recorded in `CONTRIBUTIONS.md`. The team writes,
+edits and presents the deliverables together, with no single report editor ([deliverables](docs/plans/deliverables.md)
+decision a). Report, slides and video preparation may follow the accelerated application and benchmark sprint.
 
 ## 13. Phases
 
@@ -470,7 +470,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | done |
 | `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | in progress |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | done |
-| `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | not started |
+| `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | ready |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
@@ -523,7 +523,8 @@ and approved the fix branch on 29 October 2026; see [the checkout review notes](
   triggers while loading and checks the invariants with queries (X4); `taken_down` and a `purchasable_product` view
   live in `olist-import`; one idempotent `mongo_setup` command; runtime privileges granted in the first migration.
 - **Deliverables:** a professor check-in at the 8 November checkpoint, a scripted demo story, a report outline with a
-  page budget, and a theory map appendix.
+  page budget, and a theory map appendix. The team writes and edits the report together, with no single editor (D2,
+  closed 30 October 2026 by [deliverables](docs/plans/deliverables.md) decision a).
 - **No further scope additions.**
 
 **Schedule and review revision (22 October 2026).** The user requested the full Tier 1 application and benchmarks
@@ -538,7 +539,6 @@ GPT-authored work; future commits require the review and an explicit user reques
 
 | ID | Question | Recommendation |
 |---|---|---|
-| D2 | Report editor | One person assembles; everyone writes their section |
 | D3 | Tier 2 owners other than observability | Decide at the 8 November checkpoint |
 
 ## 16. Risks
@@ -556,8 +556,8 @@ GPT-authored work; future commits require the review and an explicit user reques
 | Benchmark development or Claude Code review is left until the end | Build workloads alongside features and review each batch before any commit; first correctness-complete B1 to B6 pass by 30 Oct |
 | Agents produce code no one can explain | `docs/DECISIONS.md`; each owner presents their part |
 | Video over 10 minutes | Script by section; cut to 9:30 |
-| Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | On recording day, run seed_activity and place a few demo purchases for the seller's products before filming Insights. Keep the real rolling window because browsing events expire |
-| Recording-day dependency: the dashboard takes a few seconds on the full data | Run the browser suite once against the full-data stack before filming ([README Continuous integration](README.md#continuous-integration)), then preload the operator dashboard; accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
+| Recording-day dependency: Insights' rolling sales window is near-empty after the imported data ends, by 25 November, and empty after 27 November | Follow [deliverables](docs/plans/deliverables.md) decision c and the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist). Keep the real rolling window because browsing events expire |
+| Recording-day dependency: the dashboard takes a few seconds on the full data | Follow the [recording-day checklist](docs/plans/deliverables.md#recording-day-checklist); accept the cross-store join cost for Tier 1 and leave caching to the Tier 2 redis workstream |
 | Reuse approval only verbal | Written confirmation, cited |
 | CI is incomplete while early workstreams land | Start CI on 25 Oct and complete it by 29 Oct; until then, review runs the applicable full suite in Docker before workstream commits/merges |
 | MongoDB 9.0 does not start on some Linux kernels (SERVER-121912) | The team works on Windows; tests and exit checks run there (X2, foundation-m) |
