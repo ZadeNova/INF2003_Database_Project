@@ -269,9 +269,10 @@ Tier 1 measures base Olist; generated rows/flags stay in bench databases and sca
 **Method.**
 - Identical Docker limits: 2 CPUs and 2 GB per engine; cache/client/VM settings are fixed in the benchmark plan.
 - All final runs on one designated machine; CPU model, cores, RAM, OS and Docker version recorded with every result.
-- Timed driver workloads: 1/10/50 clients, one untimed warm-up, five fixed-operation measured runs; report median
-  per-run p50/p95/throughput and ranges, errors and retries. B5 records storage; B6 is a correctness demonstration
-  outside that matrix, recording throughput/retries. Reset/warm-cache and latency accounting live in benchmark.md.
+- Timed driver workloads: 1/10/50 clients (B2 1/10, [benchmark](docs/plans/benchmark.md) amendment k3), one untimed
+  warm-up, five fixed-operation measured runs; report median per-run p50/p95/throughput and ranges, errors and
+  retries. B5 records storage; B6 is a correctness demonstration outside that matrix, recording throughput/retries.
+  Reset/warm-cache and latency accounting live in benchmark.md.
 - Engine comparison timed **at the driver level**. The separate HTTP load script is cut ([benchmark](docs/plans/benchmark.md)
   amendment j); per-request database timing (below) shows the database share of each request.
 - Query plans captured beside timings: `EXPLAIN (ANALYZE, BUFFERS)` and MongoDB `explain("executionStats")`.
