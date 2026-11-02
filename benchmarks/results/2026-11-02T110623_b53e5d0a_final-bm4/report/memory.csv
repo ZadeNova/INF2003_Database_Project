@@ -1,0 +1,7 @@
+scope,workload,container,status,window_count,sample_count,median_memory_bytes,peak_memory_bytes,median_memory_gib,peak_memory_gib,limit_bytes,observed_limits_bytes,peak_percent_of_limit,peak_time_ns,peak_memory_text
+run,all,mercer-bench-final-bench-db-1,sampled,,34,716596838.0,722888294,0.667382812127471,0.673242187127471,2147483648,[2147483648],33.66210935637355,1793588796374585600,689.4MiB / 2GiB
+run,all,mercer-bench-final-bench-mongo-1,sampled,,34,758802022.0,922222592,0.706689452752471,0.85888671875,2147483648,[2147483648],42.9443359375,1793588811374803000,879.5MiB / 2GiB
+run,all,mercer-bench-final-load-client,sampled,,31,178467635,180564787,0.16621093731373549,0.16816406231373549,2147483648,[2147483648],8.408203115686774,1793588806374702300,172.2MiB / 2GiB
+workload,BM4,mercer-bench-final-bench-db-1,no_samples,2,0,,,,,2147483648,[2147483648],,,
+workload,BM4,mercer-bench-final-bench-mongo-1,no_samples,2,0,,,,,2147483648,[2147483648],,,
+workload,BM4,mercer-bench-final-load-client,no_samples,2,0,,,,,2147483648,[2147483648],,,

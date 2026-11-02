@@ -1,0 +1,4 @@
+container,limit_bytes,cpu_limit,postgres_shared_buffers,wiredtiger_cache_size_gb_setting,wiredtiger_cache_bytes,source_input_bytes,source_input_decimal_mb,source_input_status,docker_vm_memory_bytes,docker_vm_cpus
+mercer-bench-final-bench-db-1,2147483648,2.0,512MB,,,155346688,155.346688,checksum_verified,10429964288,12
+mercer-bench-final-bench-mongo-1,2147483648,2.0,,0.75,805306368,155346688,155.346688,checksum_verified,10429964288,12
+mercer-bench-final-load-client,2147483648,2.0,,,,155346688,155.346688,checksum_verified,10429964288,12

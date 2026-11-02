@@ -1,0 +1,11 @@
+﻿{
+    "step":  "host-tests-external",
+    "pid":  34812,
+    "started_at":  "2026-11-02T12:06:06.0122163+08:00",
+    "ended_at":  "2026-11-02T12:06:09.3649151+08:00",
+    "duration_seconds":  3.3475761,
+    "exit_code":  0,
+    "results":  [
+
+                ]
+}

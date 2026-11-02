@@ -1,0 +1,2 @@
+page,path,requests,duration_ms_median,duration_ms_p95,db_pg_ms_median,db_pg_ms_p95,db_pg_queries_median,db_pg_queries_p95,db_mongo_ms_median,db_mongo_ms_p95,db_mongo_commands_median,db_mongo_commands_p95,db_share_percent_median,db_share_percent_p95,db_pg_queries_total,db_mongo_commands_total,db_share_percent_total
+category,/products/category/health-beauty/,20,420.305,468.09,380.35799999999995,421.584,11.0,11,13.361,17.478,9.0,9,93.9474620695515,94.4097535801832,220,181,93.47447502722906

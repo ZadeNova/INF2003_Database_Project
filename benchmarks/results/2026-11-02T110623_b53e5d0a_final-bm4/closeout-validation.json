@@ -1,0 +1,955 @@
+{
+  "generated_at": "2026-11-02T12:23:35.839005+08:00",
+  "status": "passed",
+  "branch": "benchmark/close-out",
+  "measurement_commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+  "generator_uncommitted": true,
+  "tested_source_sha256": {
+    "benchmarks/report.py": "d872959f8d7b295c1cd9a80ef05fc1d580df7d602c36608ee78d78e1b285a0b2",
+    "benchmarks/resources.py": "802b58ada01c312a6197ce07244ebf45e3b0187e0baa96c786f95fa23a2a21a9",
+    "benchmarks/tests/test_reporting.py": "4796c91a29c292b5968c4e610b86c6ffbdade094f17e450c701e9a1a220b9679"
+  },
+  "validation_generator_sha256": "a8a9b56ee66590e7164a4e2b4e84573a60378f449a71f9a80a6385f7f1dd03d9",
+  "reviewer": "Claude Code (pending; no commit authorised)",
+  "checks": {
+    "ruff_and_focused_tests": "closeout-checks/dev-checks-final.log",
+    "focused_tests_summary": [
+      "7 passed in 0.20s"
+    ],
+    "host": {
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "fixture": {
+      "tests": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "full_suite_summary": [
+      "664 passed, 5 skipped in 401.84s (0:06:41)"
+    ],
+    "full_suite_skip_reasons": [
+      "SKIPPED [1] tests/test_request_timing.py:7: could not import 'benchmarks.request_timing': No module named 'benchmarks'",
+      "SKIPPED [1] tests/test_check_docs.py:132: the staged check reads the git index",
+      "SKIPPED [1] tests/test_check_docs.py:144: the staged check reads the git index",
+      "SKIPPED [1] tests/test_check_docs.py:157: the staged check reads the git index",
+      "SKIPPED [1] tests/test_check_docs.py:168: the staged check reads the git index"
+    ],
+    "coverage_totals": {
+      "covered_lines": 2786,
+      "num_statements": 2981,
+      "percent_covered": 91.67814825020668,
+      "percent_covered_display": "91.68",
+      "missing_lines": 195,
+      "excluded_lines": 0,
+      "percent_statements_covered": 93.45857094934586,
+      "percent_statements_covered_display": "93.46",
+      "num_branches": 648,
+      "num_partial_branches": 87,
+      "covered_branches": 541,
+      "missing_branches": 107,
+      "percent_branches_covered": 83.48765432098766,
+      "percent_branches_covered_display": "83.49"
+    },
+    "line_coverage_percent": 93.45857094934586,
+    "docs": {
+      "exit_code": 0,
+      "output": "check_docs: ok"
+    }
+  },
+  "diagnostics": [
+    "Initial host negative checks failed because their temporary repositories were inside the ignored parent checkout; all host cases were rerun in a unique external temporary directory without changing checker code.",
+    "Initial fresh-fixture run failed the existing MongoDB drop/restore storage-tolerance check. The isolated fixture was fully reloaded and rerun with unchanged source and tolerance; both attempts are retained.",
+    "Docker Desktop stopped during initial dev-image setup attempts before tests; recovered by Docker Desktop restart. No benchmark measurements or evidence were rerun for this setup issue."
+  ],
+  "steps": [
+    {
+      "step": "dev-checks-final",
+      "pid": 9516,
+      "started_at": "2026-11-02T11:45:25.1947699+08:00",
+      "ended_at": "2026-11-02T11:45:31.1368763+08:00",
+      "duration_seconds": 5.934659099999999,
+      "exit_code": 0,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/dev-checks-final.commands.ps1",
+          "sha256": "b6160dac09a14c275228092e94d4d5f5f23b820865c6a856968ba87073708cad"
+        },
+        {
+          "path": "closeout-checks/dev-checks-final.log",
+          "sha256": "dfd665836c79c0b1392b463fe57205a2319bd04d4cd00d4c211f79ce13f2b970"
+        },
+        {
+          "path": "closeout-checks/dev-checks-final.err",
+          "sha256": "958a7a46d931ee2e39fdef47ed0a66d60bed304dbaa44e6b77fcde6aa36c00ed"
+        },
+        {
+          "path": "closeout-checks/dev-checks-final.completed.json",
+          "sha256": "cd219f4d7d814c53c6f60882ebe3f9f4e204796d447a6797f905eb6193b4eb02"
+        }
+      ]
+    },
+    {
+      "step": "host-tests",
+      "pid": 37512,
+      "started_at": "2026-11-02T11:57:12.5446667+08:00",
+      "ended_at": "2026-11-02T11:57:15.9789751+08:00",
+      "duration_seconds": 3.4269811999999997,
+      "exit_code": 1,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/host-tests.commands.ps1",
+          "sha256": "534fbe31b33007bbeaa84392a97fa5a7b75a011a7294ecb93e00951ac9551049"
+        },
+        {
+          "path": "closeout-checks/host-tests.log",
+          "sha256": "85d10f1ae9e460976fd8157be6387131c297cd9aaf4aa273175623ea9130bdb2"
+        },
+        {
+          "path": "closeout-checks/host-tests.err",
+          "sha256": "212a73d46ceacd175f9bac5fb585f93c57f79bc7cfa25073f280c21999b2af44"
+        },
+        {
+          "path": "closeout-checks/host-tests.completed.json",
+          "sha256": "8ab8ef68385218a88adc6800bbe2dea32fec7017479898b9d6eb5eb81d6a5157"
+        }
+      ]
+    },
+    {
+      "step": "host-tests-external",
+      "pid": 34812,
+      "started_at": "2026-11-02T12:06:06.0122163+08:00",
+      "ended_at": "2026-11-02T12:06:09.3649151+08:00",
+      "duration_seconds": 3.3475761,
+      "exit_code": 0,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/host-tests-external.commands.ps1",
+          "sha256": "4882c5b86105080fe7d760021c6e2d20139ce2b5793b30551672226b56fd05d1"
+        },
+        {
+          "path": "closeout-checks/host-tests-external.log",
+          "sha256": "7a8366d8783a8286ca4d42b253006e3fb8698d68f4f1625bbb9029abc5c8c0e7"
+        },
+        {
+          "path": "closeout-checks/host-tests-external.err",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "closeout-checks/host-tests-external.completed.json",
+          "sha256": "19235852952de3af5514932d6b1a7de41a2efdb5b2d279da05b3f645c08f1b31"
+        }
+      ]
+    },
+    {
+      "step": "fixture-tests",
+      "pid": 27964,
+      "started_at": "2026-11-02T11:57:12.5736669+08:00",
+      "ended_at": "2026-11-02T11:59:26.4096344+08:00",
+      "duration_seconds": 133.8287451,
+      "exit_code": 1,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/fixture-tests.commands.ps1",
+          "sha256": "86309a7cb70e4df6e4d8768b94ec70c10a2217100660c64554ed555fcc5f2864"
+        },
+        {
+          "path": "closeout-checks/fixture-tests.log",
+          "sha256": "91b23178d62f9bec0571a06941f4730d759fa0520589ff3970287f7ecdcc1b35"
+        },
+        {
+          "path": "closeout-checks/fixture-tests.err",
+          "sha256": "dc6407cc2f989bc5204f729e975e6041b62596a7c44bf1c239f25bdd739b2726"
+        },
+        {
+          "path": "closeout-checks/fixture-tests.completed.json",
+          "sha256": "b1742754ccea8c235207f844d625b6dbc5757f6025f63718e05b3880d72481ec"
+        }
+      ]
+    },
+    {
+      "step": "fixture-tests-fresh",
+      "pid": 36884,
+      "started_at": "2026-11-02T12:06:06.0482187+08:00",
+      "ended_at": "2026-11-02T12:10:42.6087863+08:00",
+      "duration_seconds": 276.5545911,
+      "exit_code": 0,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/fixture-tests-fresh.commands.ps1",
+          "sha256": "af4275829b34c514a845d529efda196bd102452736c04734c4ca8f7f9b71ffdc"
+        },
+        {
+          "path": "closeout-checks/fixture-tests-fresh.log",
+          "sha256": "93ff5c0b2402f6f4737945a0708b2aff1f5a79d44e81f94eeb10852e94a89337"
+        },
+        {
+          "path": "closeout-checks/fixture-tests-fresh.err",
+          "sha256": "07d4047fb36403c0f8b71335b510677f387fe22aad5542ff9161477841ae4692"
+        },
+        {
+          "path": "closeout-checks/fixture-tests-fresh.completed.json",
+          "sha256": "8930699733e066dc4a4d4764ab0886af52fdb85552de2c8ce8f6b953874f8e4f"
+        }
+      ]
+    },
+    {
+      "step": "full-suite",
+      "pid": 10472,
+      "started_at": "2026-11-02T12:11:13.0480992+08:00",
+      "ended_at": "2026-11-02T12:18:23.7356065+08:00",
+      "duration_seconds": 429.4837005,
+      "exit_code": 0,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/full-suite.commands.ps1",
+          "sha256": "fc7da6ec06d2eb10444665cc14f3a1e024fbbf902716da2de34274555addaedc"
+        },
+        {
+          "path": "closeout-checks/full-suite.log",
+          "sha256": "f6d0c44eb5bff901f800b5ad781d79efc3e639ecda819e057fa470159e3d4066"
+        },
+        {
+          "path": "closeout-checks/full-suite.err",
+          "sha256": "59c9173f505c8acebc92e8883f52146135b97596616ad82326245a7794d06f1d"
+        },
+        {
+          "path": "closeout-checks/full-suite.completed.json",
+          "sha256": "78b49d56749e362e0f9a292d882b83c5b9fd3d71eabec04f7209ac285d8780bf"
+        }
+      ]
+    },
+    {
+      "step": "memory-release",
+      "pid": 37616,
+      "started_at": "2026-11-02T12:21:21.7811636+08:00",
+      "ended_at": "2026-11-02T12:21:35.8442693+08:00",
+      "duration_seconds": 14.0574125,
+      "exit_code": 0,
+      "results": [],
+      "artifacts": [
+        {
+          "path": "closeout-checks/memory-release.commands.ps1",
+          "sha256": "1d1cae62dcf9b0fb08d7bbd064ef70bbe78e102c01dae8324b363a4339eef143"
+        },
+        {
+          "path": "closeout-checks/memory-release.log",
+          "sha256": "8b12f549042903f33ab59a4e5c77923a753dbdca3d088f404092641e82a385da"
+        },
+        {
+          "path": "closeout-checks/memory-release.err",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "closeout-checks/memory-release.completed.json",
+          "sha256": "e2423d0472fe4f6b338e7a0a49d3a78cff5a4cb4339b750e95033aef0b31fe06"
+        }
+      ]
+    }
+  ],
+  "post_test_memory_cleanup": {
+    "at": "2026-11-02T12:22:43.0480566+08:00",
+    "running_distros_before_shutdown": [],
+    "wsl_shutdown_exit_code": 0,
+    "remaining_vmmem_processes": 0,
+    "remaining_vmmem_bytes": null
+  },
+  "source_rule": {
+    "B3": "2026-11-02T095518_b53e5d0a_final-b3-b6",
+    "B6": "2026-11-02T095518_b53e5d0a_final-b3-b6",
+    "all_other_final_outputs": "2026-11-02T004351_b53e5d0a_final"
+  },
+  "source_selection": {
+    "path": "final-source-selection.csv",
+    "cell_status_counts": {
+      "passed": 124
+    },
+    "cells_by_directory": {
+      "2026-11-02T004351_b53e5d0a_final": 109,
+      "2026-11-02T095518_b53e5d0a_final-b3-b6": 15
+    },
+    "all_selected_cells_passed_without_failed_runs": true
+  },
+  "evidence": [
+    {
+      "directory": "2026-11-01T220402_b53e5d0a_pilot",
+      "provenance_sha256": "b717aeebad47443832074f34aa50e7d3282f25ea7c3216e72eba1e58a1200d81",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": 0,
+      "duration_seconds": 8232.381567500008,
+      "final": false,
+      "cell_status_counts": {
+        "passed": 87
+      },
+      "non_passed_or_failed_runs": []
+    },
+    {
+      "directory": "2026-11-02T002948_b53e5d0a_final-correctness",
+      "provenance_sha256": "3f602908109a0fe3259746934bd9eddf69ba7c336ed337473be41e6310a083df",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": 0,
+      "duration_seconds": 541.4257066000137,
+      "final": false,
+      "cell_status_counts": {
+        "passed": 70
+      },
+      "non_passed_or_failed_runs": []
+    },
+    {
+      "directory": "2026-11-02T004351_b53e5d0a_final",
+      "provenance_sha256": "b18cb8cb94d6f207cff82e07bd23fa879965b094ac659fba55f0dc1c6e6495d3",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": 1,
+      "duration_seconds": 26286.232879100018,
+      "final": true,
+      "cell_status_counts": {
+        "passed": 117,
+        "failed": 7
+      },
+      "non_passed_or_failed_runs": [
+        {
+          "output": "B3",
+          "engine": "mongo",
+          "variant": "snapshot",
+          "clients": "50",
+          "status": "failed",
+          "accepted_runs": "4",
+          "failed_runs": "1",
+          "retries": "2032",
+          "errors": "1",
+          "runner_cpu_median_percent": "112.08500000000001",
+          "runner_cpu_median_percent_min": "107.42",
+          "runner_cpu_median_percent_max": "122.96",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "403.35553",
+          "p50_ms_min": "374.782622",
+          "p50_ms_max": "420.399097",
+          "p95_ms": "421.34249950000003",
+          "p95_ms_min": "389.321629",
+          "p95_ms_max": "438.436526",
+          "throughput_ops_s": "117.20904348499141",
+          "throughput_ops_s_min": "112.821878902537",
+          "throughput_ops_s_max": "126.07412570581779"
+        },
+        {
+          "output": "B6",
+          "engine": "mongo",
+          "variant": "atomic_inc",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "B6",
+          "engine": "mongo",
+          "variant": "read_modify_write",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "B6",
+          "engine": "mongo",
+          "variant": "transaction",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "B6",
+          "engine": "postgres",
+          "variant": "for_update",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "B6",
+          "engine": "postgres",
+          "variant": "read_committed",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "B6",
+          "engine": "postgres",
+          "variant": "serializable",
+          "clients": "2",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        }
+      ]
+    },
+    {
+      "directory": "2026-11-02T095518_b53e5d0a_final-b3-b6",
+      "provenance_sha256": "f30799d8bf82b2b8b26519ad92a1483d00658110b489520585c10437f0dd4d46",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": 0,
+      "duration_seconds": 1660.377029699972,
+      "final": true,
+      "cell_status_counts": {
+        "passed": 15
+      },
+      "non_passed_or_failed_runs": []
+    },
+    {
+      "directory": "2026-11-02T103305_b53e5d0a_request-timing",
+      "provenance_sha256": "52062b1d98fe892b6c110a96203924fc70d857b640c57bef85ccd30c90826ca7",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": null,
+      "duration_seconds": null,
+      "final": null,
+      "collector_elapsed_seconds": 73.981279,
+      "absent_fields_note": "Collector provenance does not record exit_code, duration_seconds or final."
+    },
+    {
+      "directory": "2026-11-02T110623_b53e5d0a_final-bm4",
+      "provenance_sha256": "b2862c274994c27c17e79f123a87c38cf97e2b0e6a66566954edae4ada0a4117",
+      "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+      "exit_code": 1,
+      "duration_seconds": 34.14987890003249,
+      "final": true,
+      "cell_status_counts": {
+        "failed": 2
+      },
+      "non_passed_or_failed_runs": [
+        {
+          "output": "BM4_corrupted_result",
+          "engine": "postgres",
+          "variant": "expected_failure",
+          "clients": "1",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "0",
+          "errors": "1",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        },
+        {
+          "output": "BM4_violated_invariant",
+          "engine": "mongo",
+          "variant": "expected_failure",
+          "clients": "10",
+          "status": "failed",
+          "accepted_runs": "0",
+          "failed_runs": "1",
+          "retries": "94",
+          "errors": "0",
+          "runner_cpu_median_percent": "",
+          "runner_cpu_median_percent_min": "",
+          "runner_cpu_median_percent_max": "",
+          "client_saturated_runs": "0",
+          "client_saturated": "False",
+          "headline": "False",
+          "not_headline_reason": "failed_check",
+          "p50_ms": "",
+          "p50_ms_min": "",
+          "p50_ms_max": "",
+          "p95_ms": "",
+          "p95_ms_min": "",
+          "p95_ms_max": "",
+          "throughput_ops_s": "",
+          "throughput_ops_s_min": "",
+          "throughput_ops_s_max": ""
+        }
+      ]
+    }
+  ],
+  "raw_payload_hash_reverified": true,
+  "original_provenance_hash_reverified": true,
+  "protected_evidence": [
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\console.txt",
+      "status": "unchanged",
+      "original_sha256": "9650010812e60c848a02ae41c1b67c919b4decb9d501546ae3eed7102fcd93d0"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\host.json",
+      "status": "unchanged",
+      "original_sha256": "30b3cdbdcef37620380688019efe052b9bb2fbe1b84d679e7bc34242dad37b46"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_boolean_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "cd1be08b1629c9f430ad6535688f80e0bf090ee47e1c026eefdcf3e8b8a13f48"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_boolean_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "7fc8037140893943e31e714fb7b45e763c2262edd8803a84ed4cbfb9444e66d0"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_boolean_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "61ce82c8f3a6086a5b416b8d339faa214df83728f6fcdd16c34d187777a5d6b5"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_broad_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "8a003e9714628261d6174b326ee856b248577ea2dc7b6d8ffbcdc91ab7cc3a30"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_broad_mongo_documents_hinted.json",
+      "status": "unchanged",
+      "original_sha256": "4984eaa18900c578bb8c657505ca8cd856a1a6f70b29dcde8d2b7efe849bbb9e"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_broad_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "25d183f12cf5884010c4fa0d8d1864d2a63d2f151c40437d8e08092211ff3a46"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_broad_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "a9facf89ad3ea64a857e93adfc5fc8ff01114df968540aee0e112bb1f3d523ee"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_range_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "201f6933f385fdb808807d6ab139b94b42adc2a31449b37e1e37244234ad6676"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_range_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "8e79b26a6216220ae8b91a372c83fffcf2ef33bdf3884a274e60cb4350d27e44"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_range_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "43b132818e019292169db744c457f310a7485bfa11335706b879ef635d2332dd"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_selective_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "2f7cdb0ca582b9aacb118d7e7f795d3661b8fea8fa84edc39d4717c13fc5cf07"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_selective_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "a063cc874f25868cb32e9ff218e5e2c46c4400020b4d44d2e1b57bfad8185d63"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_selective_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "f8338134b958f810e7b713777fc657c173517d6ef430b8c174dbeb8cc8d1bfbf"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_three_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "78c2e76d466c81300af4ab666d1636321706608cbd4a787bb71229fdbec47afd"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_three_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "dbaf55c7cbf1a0b895eb683a0976d14cf2843026c25f137f542b5359d6130c6f"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_three_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "4444263e469e6a46a209704f1500777f5e67289de6e9620ca95227e2927430ea"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_two_mongo_documents.json",
+      "status": "unchanged",
+      "original_sha256": "97d0533082de45b47cab23b1f01ad22ccd19ce92279138619904bf7ac88cebda"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_two_postgres_eav.json",
+      "status": "unchanged",
+      "original_sha256": "543e1cd28a33e8129b95156514ab5cf674f70b911b29b41bd12ef2081d66a020"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B1_two_postgres_jsonb.json",
+      "status": "unchanged",
+      "original_sha256": "8efffe451e751411b0898226654df8cb5117dcb5efe59d0a8bf3aed86a996bd4"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2a_mongo_live.json",
+      "status": "unchanged",
+      "original_sha256": "487ff5c66bf03bf180f6ca79370b65b714f19821974ed2ecbbe3e2027869b220"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2a_postgres_live.json",
+      "status": "unchanged",
+      "original_sha256": "e6bf2b88f919991b2c88ce63307a10ad8ff23686f86c6a5bf2ed6678c75e14c2"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2a_postgres_view.json",
+      "status": "unchanged",
+      "original_sha256": "1928164df2a29678634a705f2890f5a305a63197bfd250f1051756c1a60ee98f"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2b_mongo_live.json",
+      "status": "unchanged",
+      "original_sha256": "2f05a43ee1134e566cc011c358d5037f4336c5dff6a22de1a6656246df57cbf1"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2b_postgres_live.json",
+      "status": "unchanged",
+      "original_sha256": "e3c975dd27b49eb8ea249225cfc22099c6b470b64182e1e2984c18d6030e7ed3"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2b_postgres_view.json",
+      "status": "unchanged",
+      "original_sha256": "31770d4352837d3f5024e5b1f6a76403770deecfa2d78bce6c927246ce3b933d"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2c_mongo_live.json",
+      "status": "unchanged",
+      "original_sha256": "94c72a49d4c442d23e48f30577e098cefc266029bd9211aa34e646ee7be84ab5"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2c_postgres_live.json",
+      "status": "unchanged",
+      "original_sha256": "9ea43966b1cf71c92697dbc56ba84d21818edcca1dacf599844b8c72481d69dc"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2d_mongo_live.json",
+      "status": "unchanged",
+      "original_sha256": "e2a7970d433c3f9dadf17ac4ed1dafbefea8f8578187369ed3c56fad23a54ec0"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2d_postgres_live.json",
+      "status": "unchanged",
+      "original_sha256": "e2962b0a9ba90a6474e2cc596d040cd21542a4e978f774a61cbeb5c493f412f3"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B2refresh_postgres_refresh.json",
+      "status": "unchanged",
+      "original_sha256": "16491ea1e2cd93b1579b8537d4e3ba9ba4dc298e762ceda333f0bb5cb6066364"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_eav_bool_postgres_after.json",
+      "status": "unchanged",
+      "original_sha256": "415475e9d4aa4095fb0d795c1d997075617e605ad839b772bd4f54d96703755b"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_eav_bool_postgres_before.json",
+      "status": "unchanged",
+      "original_sha256": "34f0bba1d7e4173f9ed854cb67a6a748fccd4b8be412317a34aea6a8df3da2b4"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_eav_text_postgres_after.json",
+      "status": "unchanged",
+      "original_sha256": "e99bddb7f609110f00893085677ba07a6debe8499f46a355ff1e9b6c92110bf8"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_eav_text_postgres_before.json",
+      "status": "unchanged",
+      "original_sha256": "cb0e66b8012c94b5639ae2af77a3b3862a99629827eb5504c0712af478d2d504"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_jsonb_age_months_postgres_after.json",
+      "status": "unchanged",
+      "original_sha256": "de1674cd176a493eadcbb06e5b59241ef29d94cc43c4e3fb6c2dc9dd740692a4"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_jsonb_age_months_postgres_before.json",
+      "status": "unchanged",
+      "original_sha256": "060ec64022f0aed2b7ce9f9277da5fcc4fe98ee3f365232954f03468c000d1af"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_jsonb_gin_postgres_after.json",
+      "status": "unchanged",
+      "original_sha256": "d048be62f3b72589b84abd895bc76719f29506c8510a2fdc0bc3c17f7ac3a09f"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_jsonb_gin_postgres_before.json",
+      "status": "unchanged",
+      "original_sha256": "1d13863b3c8514e2adf36efa37f41748767130e5c23dec27f25dde3c25cda81c"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_product_visible_mongo_after.json",
+      "status": "unchanged",
+      "original_sha256": "b7f6bd77ca2512ebabe602fe7cd585f7b770e8978e2e162ed58f6874c623bcc8"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_bench_product_visible_mongo_before.json",
+      "status": "unchanged",
+      "original_sha256": "6146559ce1542c0ee38d24aa81ff2815f60453777b1e6f856028430143b9622b"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_review_product_date_mongo_after.json",
+      "status": "unchanged",
+      "original_sha256": "d1a3b20e8724bdf31f735ad66bf9d743f69993b31b76cf0f107f72f9f7e722bc"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_review_product_date_mongo_before.json",
+      "status": "unchanged",
+      "original_sha256": "9ff80b7d364b4e92c2c3ef092756acf9ea26bbf7daee33b451bceba96b956dd3"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_spec_attributes_mongo_after.json",
+      "status": "unchanged",
+      "original_sha256": "8b4f910e0e51aa613ef210b3011f2d12707096ca183891b5f2c43f7c0eed95f6"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\B4_spec_attributes_mongo_before.json",
+      "status": "unchanged",
+      "original_sha256": "26b2d766f5ec4789eb926ed8b5fddc038d67b24cdb085fae7c4e7918ea79977c"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\baseline_python_noop.json",
+      "status": "unchanged",
+      "original_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\baseline_roundtrip_mongo_ping.json",
+      "status": "unchanged",
+      "original_sha256": "99a4b2b213aab0d818a412a1170fbc450a78a75589aa91d355c04b68e8cef900"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\plans\\baseline_roundtrip_postgres_select1.json",
+      "status": "unchanged",
+      "original_sha256": "8085d1c33f6a08d4f4f0126fb5fa9c6fc4d349c190c4844e157f5992e1164442"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\provenance.json",
+      "status": "unchanged",
+      "original_sha256": "b18cb8cb94d6f207cff82e07bd23fa879965b094ac659fba55f0dc1c6e6495d3"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\raw.jsonl",
+      "status": "same_payload_in_verified_gzip",
+      "original_sha256": "600bf54d4fc77cf41b02601d140ad4a1522c105b4e68f5786069c590ab39ef9e"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\runs.csv",
+      "status": "owner_authorised_cpu_annotation; measurement_fields_verified_by_generation.json",
+      "original_sha256": "e26cb81f9d12ac1c80a2024dd35977043f690d7d907c9bb1d7927a29b3e62b56"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\stats.jsonl",
+      "status": "unchanged",
+      "original_sha256": "6f0b3751835e233721375cdde7ecdd23ee88aff494f1ba82574d9fcee93ab080"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\storage.csv",
+      "status": "unchanged",
+      "original_sha256": "4c29782c5f435f77b4ccfd5376a83152bfc059be00338ba2c5cdff8117cb8a37"
+    },
+    {
+      "path": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\summary.csv",
+      "status": "owner_authorised_cpu_annotation; measurement_fields_verified_by_generation.json",
+      "original_sha256": "3b7d7ce86c80921a4bede2c60993315852b27df94bb28abb63da7c48af86cfbb"
+    },
+    {
+      "path": ".cache\\final-run\\failure.json",
+      "status": "unchanged",
+      "original_sha256": "e9b9d0408641f72685366a77e1b8f2c11ed9ea437c9df96c316d7fb3e8bbf260"
+    },
+    {
+      "path": ".cache\\final-run\\failure-docker-state.txt",
+      "status": "unchanged",
+      "original_sha256": "de383580961c4dbcdd2012c7ce6b4dc5c231362ec074b6f1c60ef06dacdf5048"
+    },
+    {
+      "path": ".cache\\final-run\\final.log",
+      "status": "unchanged",
+      "original_sha256": "25bc530706f8ca81d9d8e1e48a2b5716ff400a94568bbcb77dc792d4f2f377c6"
+    },
+    {
+      "path": ".cache\\final-run\\final.err",
+      "status": "unchanged",
+      "original_sha256": "6ab325803e6347e37d402da7bc13a5e073844356481c5a7b6b169d4f91b9ecc0"
+    }
+  ],
+  "bm4_rows": [
+    {
+      "output": "BM4_corrupted_result",
+      "engine": "postgres",
+      "variant": "expected_failure",
+      "clients": "1",
+      "status": "failed",
+      "accepted_runs": "0",
+      "failed_runs": "1",
+      "retries": "0",
+      "errors": "1",
+      "runner_cpu_median_percent": "",
+      "runner_cpu_median_percent_min": "",
+      "runner_cpu_median_percent_max": "",
+      "client_saturated_runs": "0",
+      "client_saturated": "False",
+      "headline": "False",
+      "not_headline_reason": "failed_check",
+      "p50_ms": "",
+      "p50_ms_min": "",
+      "p50_ms_max": "",
+      "p95_ms": "",
+      "p95_ms_min": "",
+      "p95_ms_max": "",
+      "throughput_ops_s": "",
+      "throughput_ops_s_min": "",
+      "throughput_ops_s_max": ""
+    },
+    {
+      "output": "BM4_violated_invariant",
+      "engine": "mongo",
+      "variant": "expected_failure",
+      "clients": "10",
+      "status": "failed",
+      "accepted_runs": "0",
+      "failed_runs": "1",
+      "retries": "94",
+      "errors": "0",
+      "runner_cpu_median_percent": "",
+      "runner_cpu_median_percent_min": "",
+      "runner_cpu_median_percent_max": "",
+      "client_saturated_runs": "0",
+      "client_saturated": "False",
+      "headline": "False",
+      "not_headline_reason": "failed_check",
+      "p50_ms": "",
+      "p50_ms_min": "",
+      "p50_ms_max": "",
+      "p95_ms": "",
+      "p95_ms_min": "",
+      "p95_ms_max": "",
+      "throughput_ops_s": "",
+      "throughput_ops_s_min": "",
+      "throughput_ops_s_max": ""
+    }
+  ]
+}

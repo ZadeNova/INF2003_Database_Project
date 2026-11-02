@@ -1,0 +1,9 @@
+ Container mercer-bench-closeout-fixture-bench-db-1 Running 
+ Container mercer-bench-closeout-fixture-bench-mongo-1 Running 
+ Container mercer-bench-closeout-fixture-bench-mongo-1 Waiting 
+ Container mercer-bench-closeout-fixture-bench-db-1 Waiting 
+ Container mercer-bench-closeout-fixture-bench-mongo-1 Healthy 
+ Container mercer-bench-closeout-fixture-bench-db-1 Healthy 
+ Container mercer-bench-closeout-fixture-bench-runner-run-41524829e01b Creating 
+ Container mercer-bench-closeout-fixture-bench-runner-run-41524829e01b Created 
+

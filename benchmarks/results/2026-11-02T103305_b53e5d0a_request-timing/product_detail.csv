@@ -1,0 +1,2 @@
+page,path,requests,duration_ms_median,duration_ms_p95,db_pg_ms_median,db_pg_ms_p95,db_pg_queries_median,db_pg_queries_p95,db_mongo_ms_median,db_mongo_ms_p95,db_mongo_commands_median,db_mongo_commands_p95,db_share_percent_median,db_share_percent_p95,db_pg_queries_total,db_mongo_commands_total,db_share_percent_total
+product_detail,/products/2892/,20,15.85,18.41,2.2880000000000003,2.848,6.0,6,4.688000000000001,5.468,9.0,9,44.70625833462283,48.909191583610195,120,180,44.593527052267376

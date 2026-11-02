@@ -1,0 +1,480 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {},
+          "indexFilterSet": false,
+          "queryHash": "F865F3D7",
+          "planCacheShapeHash": "F865F3D7",
+          "planCacheKey": "529ED479",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 110,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "transformBy": {
+              "_id": 1,
+              "seller_id": 1
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "nss": "bench.products",
+              "direction": "forward"
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 34211,
+          "executionTimeMillis": 3777,
+          "executionTimeMicros": 3777315,
+          "totalKeysExamined": 0,
+          "totalDocsExamined": 34211,
+          "executionStages": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "nReturned": 34211,
+            "executionTimeMillisEstimate": 2,
+            "works": 34212,
+            "advanced": 34211,
+            "needTime": 0,
+            "needYield": 0,
+            "saveState": 20,
+            "restoreState": 19,
+            "isEOF": 1,
+            "transformBy": {
+              "_id": 1,
+              "seller_id": 1
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "nReturned": 34211,
+              "executionTimeMillisEstimate": 2,
+              "works": 34212,
+              "advanced": 34211,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 20,
+              "restoreState": 19,
+              "isEOF": 1,
+              "nss": "bench.products",
+              "direction": "forward",
+              "docsExamined": 34211,
+              "seeks": 0
+            }
+          }
+        }
+      },
+      "nReturned": 34211,
+      "executionTimeMillisEstimate": 4
+    },
+    {
+      "$lookup": {
+        "from": "reviews",
+        "as": "ratings",
+        "localField": "_id",
+        "foreignField": "product_id",
+        "let": {},
+        "pipeline": [
+          {
+            "$match": {
+              "$and": [
+                {
+                  "taken_down": {
+                    "$not": {
+                      "$eq": true
+                    }
+                  }
+                },
+                {
+                  "answered_at": {
+                    "$lt": {
+                      "$date": "2026-10-28T16:00:00Z"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "$const": null
+              },
+              "count": {
+                "$sum": {
+                  "$const": 1
+                }
+              },
+              "total": {
+                "$sum": "$score"
+              },
+              "$willBeMerged": false
+            }
+          }
+        ]
+      },
+      "nReturned": 34211,
+      "executionTimeMillisEstimate": 3661,
+      "totalDocsExamined": 99359,
+      "totalKeysExamined": 99359,
+      "collectionScans": 0,
+      "indexesUsed": [
+        "review_product_date"
+      ],
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$set": {
+        "count": {
+          "$ifNull": [
+            {
+              "$first": [
+                "$ratings.count"
+              ]
+            },
+            {
+              "$const": 0
+            }
+          ]
+        },
+        "total": {
+          "$ifNull": [
+            {
+              "$first": [
+                "$ratings.total"
+              ]
+            },
+            {
+              "$const": 0
+            }
+          ]
+        },
+        "entities": [
+          {
+            "entity": {
+              "$const": "product"
+            },
+            "identity": "$_id"
+          },
+          {
+            "entity": {
+              "$const": "seller"
+            },
+            "identity": "$seller_id"
+          }
+        ]
+      },
+      "nReturned": 34211,
+      "executionTimeMillisEstimate": 3661,
+      "expressionEvaluationPeakMemoryBytes": 506
+    },
+    {
+      "$unwind": {
+        "path": "$entities"
+      },
+      "nReturned": 68422,
+      "executionTimeMillisEstimate": 3661
+    },
+    {
+      "$group": {
+        "_id": "$entities",
+        "review_count": {
+          "$sum": "$count"
+        },
+        "score_sum": {
+          "$sum": "$total"
+        },
+        "$willBeMerged": false
+      },
+      "nReturned": 37302,
+      "executionTimeMillisEstimate": 3698,
+      "maxAccumulatorMemoryUsageBytes": {
+        "review_count": 7460400,
+        "score_sum": 7460400
+      },
+      "totalOutputDataSizeBytes": 18874812,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 24358206
+    },
+    {
+      "$project": {
+        "review_count": true,
+        "score_sum": true,
+        "entity": "$_id.entity",
+        "entity_id": "$_id.identity",
+        "bayesian": {
+          "$cond": [
+            {
+              "$gt": [
+                {
+                  "$add": [
+                    {
+                      "$const": {
+                        "$numberDecimal": "1"
+                      }
+                    },
+                    "$review_count"
+                  ]
+                },
+                {
+                  "$const": 0
+                }
+              ]
+            },
+            {
+              "$divide": [
+                {
+                  "$add": [
+                    {
+                      "$const": {
+                        "$numberDecimal": "4.083765060838841580817404077"
+                      }
+                    },
+                    "$score_sum"
+                  ]
+                },
+                {
+                  "$add": [
+                    {
+                      "$const": {
+                        "$numberDecimal": "1"
+                      }
+                    },
+                    "$review_count"
+                  ]
+                }
+              ]
+            },
+            {
+              "$const": {
+                "$numberDecimal": "0"
+              }
+            }
+          ]
+        },
+        "_id": false
+      },
+      "nReturned": 37302,
+      "executionTimeMillisEstimate": 3722,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "entity": 1,
+          "entity_id": 1
+        }
+      },
+      "totalDataSizeSortedBytesEstimate": 16599390,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 37302,
+      "executionTimeMillisEstimate": 3764,
+      "peakTrackedMemBytes": 16599390
+    }
+  ],
+  "queryShapeHash": "3AD432E0906E5643A9D47938AF306C95D0B2A35F5895A74E417552C0579AD9C4",
+  "peakTrackedMemBytes": 40957596,
+  "serverInfo": {
+    "host": "a685fff21347",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$lookup": {
+          "from": "reviews",
+          "localField": "_id",
+          "foreignField": "product_id",
+          "pipeline": [
+            {
+              "$match": {
+                "taken_down": {
+                  "$ne": true
+                },
+                "answered_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              }
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                },
+                "total": {
+                  "$sum": "$score"
+                }
+              }
+            }
+          ],
+          "as": "ratings"
+        }
+      },
+      {
+        "$set": {
+          "count": {
+            "$ifNull": [
+              {
+                "$first": "$ratings.count"
+              },
+              0
+            ]
+          },
+          "total": {
+            "$ifNull": [
+              {
+                "$first": "$ratings.total"
+              },
+              0
+            ]
+          },
+          "entities": [
+            {
+              "entity": "product",
+              "identity": "$_id"
+            },
+            {
+              "entity": "seller",
+              "identity": "$seller_id"
+            }
+          ]
+        }
+      },
+      {
+        "$unwind": "$entities"
+      },
+      {
+        "$group": {
+          "_id": "$entities",
+          "review_count": {
+            "$sum": "$count"
+          },
+          "score_sum": {
+            "$sum": "$total"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "entity": "$_id.entity",
+          "entity_id": "$_id.identity",
+          "review_count": 1,
+          "score_sum": 1,
+          "bayesian": {
+            "$cond": [
+              {
+                "$gt": [
+                  {
+                    "$add": [
+                      {
+                        "$numberDecimal": "1"
+                      },
+                      "$review_count"
+                    ]
+                  },
+                  0
+                ]
+              },
+              {
+                "$divide": [
+                  {
+                    "$add": [
+                      {
+                        "$multiply": [
+                          {
+                            "$numberDecimal": "1"
+                          },
+                          {
+                            "$numberDecimal": "4.083765060838841580817404077"
+                          }
+                        ]
+                      },
+                      "$score_sum"
+                    ]
+                  },
+                  {
+                    "$add": [
+                      {
+                        "$numberDecimal": "1"
+                      },
+                      "$review_count"
+                    ]
+                  }
+                ]
+              },
+              {
+                "$numberDecimal": "0"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$sort": {
+          "entity": 1,
+          "entity_id": 1
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1793550645,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "1xZ1CoTccqG2ZpJGKXSCMtBxHCE=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7703240719749611529
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1793550645,
+      "i": 1
+    }
+  }
+}

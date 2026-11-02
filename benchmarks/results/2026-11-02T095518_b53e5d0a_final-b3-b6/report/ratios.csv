@@ -1,0 +1,16 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,runner_cpu_median_percent,runner_cpu_median_percent_min,runner_cpu_median_percent_max,client_saturated_runs,client_saturated,headline,not_headline_reason,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B3,mongo,snapshot,1,passed,5,0,0,0,83.6,42.71,99.33,0,False,True,,1.349161,1.30586,1.368664,2.317109,2.150597,3.361665,644.222603957042,626.5205654122556,659.3567128651981,4.315740817749685,variant/fastest
+B3,mongo,snapshot,10,passed,5,0,403,0,98.04,74.36,99.88,0,False,True,,6.767033,6.235694,7.20035,71.981888,53.385029,81.555015,521.7883364360955,486.32993188667234,618.1230335574668,9.128122222087331,variant/fastest
+B3,mongo,snapshot,50,passed,5,0,2313,0,95.32,90.0,115.49,0,False,True,,344.231021,314.890055,414.870173,364.274059,329.876868,430.592819,135.96399294942944,114.51841465727236,148.11212903377015,4.991101879000814,variant/fastest
+B3,postgres,triggers_off,1,passed,5,0,0,0,96.98,72.95,99.5,0,False,True,,0.321215,0.304316,0.448521,2.381404,2.370928,2.508216,1335.3407600001133,1195.7601978495256,1372.0936244242764,1.0275131631980652,variant/fastest
+B3,postgres,triggers_off,10,passed,5,0,0,0,97.12,57.07,99.74,0,False,True,,0.741339,0.650631,1.057449,38.902726,35.095466,39.981464,1041.88637445588,958.224772854734,1090.792054871378,1.0,variant/fastest
+B3,postgres,triggers_off,50,passed,5,0,0,0,83.66,62.02,100.21,0,False,True,,68.968943,67.666772,72.586357,91.498802,87.163585,96.180516,531.269316620309,493.4935539773281,541.3046344586584,1.0,variant/fastest
+B3,postgres,triggers_on,1,passed,5,0,0,0,86.89,58.47,99.99,0,False,True,,0.312614,0.297615,0.340616,3.370557,3.188353,3.490665,1056.190875490981,1019.6900725442187,1082.8763847660778,1.0,variant/fastest
+B3,postgres,triggers_on,10,passed,5,0,0,0,73.32,52.5,99.99,0,False,True,,0.918543,0.64963,1.11475,67.686863,64.016594,70.920831,639.2165107886068,589.0025496271167,654.5354370591,1.2390323455261358,variant/fastest
+B3,postgres,triggers_on,50,passed,5,0,0,0,81.46000000000001,39.3,105.66,0,False,True,,118.15142,112.194122,130.050119,140.84498,134.508201,153.728334,347.15995522691946,318.45756682534284,362.4139926360956,1.713110493805886,variant/fastest
+B6,mongo,atomic_inc,2,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest
+B6,mongo,read_modify_write,2,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest
+B6,mongo,transaction,2,passed,0,0,1,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest
+B6,postgres,for_update,2,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest
+B6,postgres,read_committed,2,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest
+B6,postgres,serializable,2,passed,0,0,1,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,variant/fastest

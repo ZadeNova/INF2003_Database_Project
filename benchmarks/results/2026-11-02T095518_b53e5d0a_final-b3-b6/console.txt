@@ -1,0 +1,68 @@
+ Container mercer-bench-final-bench-mongo-1 Running 
+ Container mercer-bench-final-bench-db-1 Running 
+ Container mercer-bench-final-bench-db-1 Waiting 
+ Container mercer-bench-final-bench-mongo-1 Waiting 
+ Container mercer-bench-final-bench-db-1 Healthy 
+ Container mercer-bench-final-bench-mongo-1 Healthy 
+ Container mercer-bench-final-load-client Creating 
+ Container mercer-bench-final-load-client Created 
+B3 postgres/triggers_off clients=1 run=0 warmup: passed
+B3 postgres/triggers_off clients=1 run=1 measured: passed
+B3 postgres/triggers_off clients=1 run=2 measured: passed
+B3 postgres/triggers_off clients=1 run=3 measured: passed
+B3 postgres/triggers_off clients=1 run=4 measured: passed
+B3 postgres/triggers_off clients=1 run=5 measured: passed
+B3 postgres/triggers_off clients=10 run=0 warmup: passed
+B3 postgres/triggers_off clients=10 run=1 measured: passed
+B3 postgres/triggers_off clients=10 run=2 measured: passed
+B3 postgres/triggers_off clients=10 run=3 measured: passed
+B3 postgres/triggers_off clients=10 run=4 measured: passed
+B3 postgres/triggers_off clients=10 run=5 measured: passed
+B3 postgres/triggers_off clients=50 run=0 warmup: passed
+B3 postgres/triggers_off clients=50 run=1 measured: passed
+B3 postgres/triggers_off clients=50 run=2 measured: passed
+B3 postgres/triggers_off clients=50 run=3 measured: passed
+B3 postgres/triggers_off clients=50 run=4 measured: passed
+B3 postgres/triggers_off clients=50 run=5 measured: passed
+B3 postgres/triggers_on clients=1 run=0 warmup: passed
+B3 postgres/triggers_on clients=1 run=1 measured: passed
+B3 postgres/triggers_on clients=1 run=2 measured: passed
+B3 postgres/triggers_on clients=1 run=3 measured: passed
+B3 postgres/triggers_on clients=1 run=4 measured: passed
+B3 postgres/triggers_on clients=1 run=5 measured: passed
+B3 postgres/triggers_on clients=10 run=0 warmup: passed
+B3 postgres/triggers_on clients=10 run=1 measured: passed
+B3 postgres/triggers_on clients=10 run=2 measured: passed
+B3 postgres/triggers_on clients=10 run=3 measured: passed
+B3 postgres/triggers_on clients=10 run=4 measured: passed
+B3 postgres/triggers_on clients=10 run=5 measured: passed
+B3 postgres/triggers_on clients=50 run=0 warmup: passed
+B3 postgres/triggers_on clients=50 run=1 measured: passed
+B3 postgres/triggers_on clients=50 run=2 measured: passed
+B3 postgres/triggers_on clients=50 run=3 measured: passed
+B3 postgres/triggers_on clients=50 run=4 measured: passed
+B3 postgres/triggers_on clients=50 run=5 measured: passed
+B3 mongo/snapshot clients=1 run=0 warmup: passed
+B3 mongo/snapshot clients=1 run=1 measured: passed
+B3 mongo/snapshot clients=1 run=2 measured: passed
+B3 mongo/snapshot clients=1 run=3 measured: passed
+B3 mongo/snapshot clients=1 run=4 measured: passed
+B3 mongo/snapshot clients=1 run=5 measured: passed
+B3 mongo/snapshot clients=10 run=0 warmup: passed
+B3 mongo/snapshot clients=10 run=1 measured: passed
+B3 mongo/snapshot clients=10 run=2 measured: passed
+B3 mongo/snapshot clients=10 run=3 measured: passed
+B3 mongo/snapshot clients=10 run=4 measured: passed
+B3 mongo/snapshot clients=10 run=5 measured: passed
+B3 mongo/snapshot clients=50 run=0 warmup: passed
+B3 mongo/snapshot clients=50 run=1 measured: passed
+B3 mongo/snapshot clients=50 run=2 measured: passed
+B3 mongo/snapshot clients=50 run=3 measured: passed
+B3 mongo/snapshot clients=50 run=4 measured: passed
+B3 mongo/snapshot clients=50 run=5 measured: passed
+B6 postgres/read_committed clients=2 run=1 demonstration: passed
+B6 postgres/for_update clients=2 run=1 demonstration: passed
+B6 postgres/serializable clients=2 run=1 demonstration: passed
+B6 mongo/read_modify_write clients=2 run=1 demonstration: passed
+B6 mongo/transaction clients=2 run=1 demonstration: passed
+B6 mongo/atomic_inc clients=2 run=1 demonstration: passed

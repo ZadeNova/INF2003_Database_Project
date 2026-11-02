@@ -1,0 +1,25 @@
+scope,workload,container,status,window_count,sample_count,median_memory_bytes,peak_memory_bytes,median_memory_gib,peak_memory_gib,limit_bytes,observed_limits_bytes,peak_percent_of_limit,peak_time_ns,peak_memory_text
+run,all,mercer-bench-final-bench-db-1,sampled,,541,773639372,781503692,0.7205078117549419,0.7278320305049419,2147483648,[2147483648],36.3916015252471,1793550911340152300,745.3MiB / 2GiB
+run,all,mercer-bench-final-bench-mongo-1,sampled,,541,1018481868,1307817541,0.9485351555049419,1.2179999994114041,2147483648,[2147483648],60.89999997057021,1793551099340630400,1.218GiB / 2GiB
+run,all,mercer-bench-final-load-client,sampled,,539,193671987,198705152,0.18037109356373549,0.18505859375,2147483648,[2147483648],9.2529296875,1793551081340463300,189.5MiB / 2GiB
+workload,B1,mercer-bench-final-bench-db-1,no_samples,19,0,,,,,2147483648,[2147483648],,,
+workload,B1,mercer-bench-final-bench-mongo-1,no_samples,19,0,,,,,2147483648,[2147483648],,,
+workload,B1,mercer-bench-final-load-client,no_samples,19,0,,,,,2147483648,[2147483648],,,
+workload,B2,mercer-bench-final-bench-db-1,sampled,11,19,567699046,616457830,0.528710937127471,0.574121093377471,2147483648,[2147483648],28.70605466887355,1793550619340313500,587.9MiB / 2GiB
+workload,B2,mercer-bench-final-bench-mongo-1,sampled,11,19,648124825,806459801,0.6036132806912065,0.7510742181912065,2147483648,[2147483648],37.55371090956032,1793550661340177600,769.1MiB / 2GiB
+workload,B2,mercer-bench-final-load-client,sampled,11,19,60114862,74574725,0.055986328050494194,0.06945312488824129,2147483648,[2147483648],3.4726562444120646,1793550641340164000,71.12MiB / 2GiB
+workload,B3,mercer-bench-final-bench-db-1,no_samples,9,0,,,,,2147483648,[2147483648],,,
+workload,B3,mercer-bench-final-bench-mongo-1,no_samples,9,0,,,,,2147483648,[2147483648],,,
+workload,B3,mercer-bench-final-load-client,no_samples,9,0,,,,,2147483648,[2147483648],,,
+workload,B4,mercer-bench-final-bench-db-1,sampled,14,7,567174758,567908761,0.528222655877471,0.5289062494412065,2147483648,[2147483648],26.445312472060323,1793550686340025700,541.6MiB / 2GiB
+workload,B4,mercer-bench-final-bench-mongo-1,sampled,14,7,655569715,661861171,0.6105468748137355,0.6164062498137355,2147483648,[2147483648],30.820312490686774,1793550695341000600,631.2MiB / 2GiB
+workload,B4,mercer-bench-final-load-client,sampled,14,7,61540925,63239618,0.05731445271521807,0.05889648385345936,2147483648,[2147483648],2.944824192672968,1793550696340731400,60.31MiB / 2GiB
+workload,B5,mercer-bench-final-bench-db-1,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,B5,mercer-bench-final-bench-mongo-1,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,B5,mercer-bench-final-load-client,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,B6,mercer-bench-final-bench-db-1,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,B6,mercer-bench-final-bench-mongo-1,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,B6,mercer-bench-final-load-client,no_windows,0,0,,,,,2147483648,[2147483648],,,
+workload,baseline,mercer-bench-final-bench-db-1,no_samples,3,0,,,,,2147483648,[2147483648],,,
+workload,baseline,mercer-bench-final-bench-mongo-1,no_samples,3,0,,,,,2147483648,[2147483648],,,
+workload,baseline,mercer-bench-final-load-client,no_samples,3,0,,,,,2147483648,[2147483648],,,

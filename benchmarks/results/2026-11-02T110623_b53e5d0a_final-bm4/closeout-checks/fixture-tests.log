@@ -1,0 +1,31 @@
+............................F......................                      [100%]
+=================================== FAILURES ===================================
+________ test_drop_restore_storage_matches_fresh_load_after_two_cycles _________
+
+database = Database(MongoClient(host=['bench-mongo:27017'], document_class=dict, tz_aware=False, connect=True, authsource='admin'...erselectiontimeoutms=3000, replicaset='rs0', w='majority', journal=True, retryreads=False, retrywrites=False), 'bench')
+provenance = {'manifest_sha256': 'd361d608a5171ec3e40ab13ac6a207b1dff61938befe7394e8da1ded006f68d6', 'source': '/app/fixtures/olist...d92be6bc3511ba56d9c', 'cleaning_ledger.json': '59badb9f135b6e7a0b5705a55f458b1598d1a6f92fa7e153bd2c68e976003ca7', ...}}
+fresh_storage = [{'engine': 'mongo', 'representation': 'products', 'data_bytes': 45056, 'index_bytes': 77824, ...}, {'engine': 'mongo'...tes': 118784, ...}, {'engine': 'mongo', 'representation': 'reviews', 'data_bytes': 352256, 'index_bytes': 520192, ...}]
+
+    def test_drop_restore_storage_matches_fresh_load_after_two_cycles(database, provenance, fresh_storage):
+        fresh = {r["representation"]: r for r in fresh_storage if r["representation"] in {"products", "orders"}}
+        for _ in range(2):
+            restore_mongo(database, provenance)
+            assert verify_mongo(database, provenance)
+            for row in b5.mongo_footprint(database):
+                if row["representation"] not in fresh:
+                    continue
+                for key in ("data_bytes", "index_bytes"):
+                    tolerance = max(
+                        b5.STORAGE_ABSOLUTE_TOLERANCE, fresh[row["representation"]][key] * b5.STORAGE_RELATIVE_TOLERANCE
+                    )
+>                   assert abs(row[key] - fresh[row["representation"]][key]) <= tolerance, (row, fresh, tolerance)
+E                   AssertionError: ({'engine': 'mongo', 'representation': 'orders', 'data_bytes': 90112, 'index_bytes': 98304, ...}, {'products': {'engin...}, 'orders': {'engine': 'mongo', 'representation': 'orders', 'data_bytes': 176128, 'index_bytes': 118784, ...}}, 65536)
+E                   assert 86016 <= 65536
+E                    +  where 86016 = abs((90112 - 176128))
+
+benchmarks/tests/test_benchmark.py:279: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Waiting for the automatic MongoDB checkpoint before physical storage statistics.
+=========================== short test summary info ============================
+FAILED benchmarks/tests/test_benchmark.py::test_drop_restore_storage_matches_fresh_load_after_two_cycles
+1 failed, 50 passed in 130.91s (0:02:10)

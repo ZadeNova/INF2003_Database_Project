@@ -1,0 +1,327 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="3988" viewBox="0 0 1050 3988">
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="Arial,sans-serif" fill="#152536">
+<text x="20" y="30" font-size="18">B3 accepted and refused buyers (all checks must pass)</text>
+<text x="20" y="77" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="60" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="77" font-size="12">10 buyers</text>
+<text x="20" y="113" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="96" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="113" font-size="12">40 buyers</text>
+<text x="20" y="149" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="132" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="149" font-size="12">10 buyers</text>
+<text x="20" y="185" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="168" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="185" font-size="12">40 buyers</text>
+<text x="20" y="221" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="204" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="221" font-size="12">10 buyers</text>
+<text x="20" y="257" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="240" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="257" font-size="12">40 buyers</text>
+<text x="20" y="293" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="276" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="293" font-size="12">10 buyers</text>
+<text x="20" y="329" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="312" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="329" font-size="12">40 buyers</text>
+<text x="20" y="365" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="348" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="365" font-size="12">10 buyers</text>
+<text x="20" y="401" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="384" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="401" font-size="12">40 buyers</text>
+<text x="20" y="437" font-size="12">postgres/triggers_off c=1/successes</text>
+<rect x="475" y="420" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="437" font-size="12">10 buyers</text>
+<text x="20" y="473" font-size="12">postgres/triggers_off c=1/refusals</text>
+<rect x="475" y="456" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="473" font-size="12">40 buyers</text>
+<text x="20" y="509" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="492" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="509" font-size="12">10 buyers</text>
+<text x="20" y="545" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="528" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="545" font-size="12">40 buyers</text>
+<text x="20" y="581" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="564" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="581" font-size="12">10 buyers</text>
+<text x="20" y="617" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="600" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="617" font-size="12">40 buyers</text>
+<text x="20" y="653" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="636" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="653" font-size="12">10 buyers</text>
+<text x="20" y="689" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="672" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="689" font-size="12">40 buyers</text>
+<text x="20" y="725" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="708" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="725" font-size="12">10 buyers</text>
+<text x="20" y="761" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="744" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="761" font-size="12">40 buyers</text>
+<text x="20" y="797" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="780" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="797" font-size="12">10 buyers</text>
+<text x="20" y="833" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="816" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="833" font-size="12">40 buyers</text>
+<text x="20" y="869" font-size="12">postgres/triggers_off c=10/successes</text>
+<rect x="475" y="852" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="869" font-size="12">10 buyers</text>
+<text x="20" y="905" font-size="12">postgres/triggers_off c=10/refusals</text>
+<rect x="475" y="888" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="905" font-size="12">40 buyers</text>
+<text x="20" y="941" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="924" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="941" font-size="12">10 buyers</text>
+<text x="20" y="977" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="960" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="977" font-size="12">40 buyers</text>
+<text x="20" y="1013" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="996" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1013" font-size="12">10 buyers</text>
+<text x="20" y="1049" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="1032" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1049" font-size="12">40 buyers</text>
+<text x="20" y="1085" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="1068" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1085" font-size="12">10 buyers</text>
+<text x="20" y="1121" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="1104" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1121" font-size="12">40 buyers</text>
+<text x="20" y="1157" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="1140" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1157" font-size="12">10 buyers</text>
+<text x="20" y="1193" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="1176" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1193" font-size="12">40 buyers</text>
+<text x="20" y="1229" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="1212" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1229" font-size="12">10 buyers</text>
+<text x="20" y="1265" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="1248" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1265" font-size="12">40 buyers</text>
+<text x="20" y="1301" font-size="12">postgres/triggers_off c=50/successes</text>
+<rect x="475" y="1284" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1301" font-size="12">10 buyers</text>
+<text x="20" y="1337" font-size="12">postgres/triggers_off c=50/refusals</text>
+<rect x="475" y="1320" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1337" font-size="12">40 buyers</text>
+<text x="20" y="1373" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1356" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1373" font-size="12">10 buyers</text>
+<text x="20" y="1409" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1392" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1409" font-size="12">40 buyers</text>
+<text x="20" y="1445" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1428" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1445" font-size="12">10 buyers</text>
+<text x="20" y="1481" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1464" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1481" font-size="12">40 buyers</text>
+<text x="20" y="1517" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1500" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1517" font-size="12">10 buyers</text>
+<text x="20" y="1553" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1536" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1553" font-size="12">40 buyers</text>
+<text x="20" y="1589" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1572" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1589" font-size="12">10 buyers</text>
+<text x="20" y="1625" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1608" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1625" font-size="12">40 buyers</text>
+<text x="20" y="1661" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1644" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1661" font-size="12">10 buyers</text>
+<text x="20" y="1697" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1680" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1697" font-size="12">40 buyers</text>
+<text x="20" y="1733" font-size="12">postgres/triggers_on c=1/successes</text>
+<rect x="475" y="1716" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1733" font-size="12">10 buyers</text>
+<text x="20" y="1769" font-size="12">postgres/triggers_on c=1/refusals</text>
+<rect x="475" y="1752" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1769" font-size="12">40 buyers</text>
+<text x="20" y="1805" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="1788" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1805" font-size="12">10 buyers</text>
+<text x="20" y="1841" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="1824" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1841" font-size="12">40 buyers</text>
+<text x="20" y="1877" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="1860" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1877" font-size="12">10 buyers</text>
+<text x="20" y="1913" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="1896" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1913" font-size="12">40 buyers</text>
+<text x="20" y="1949" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="1932" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="1949" font-size="12">10 buyers</text>
+<text x="20" y="1985" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="1968" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="1985" font-size="12">40 buyers</text>
+<text x="20" y="2021" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="2004" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2021" font-size="12">10 buyers</text>
+<text x="20" y="2057" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="2040" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2057" font-size="12">40 buyers</text>
+<text x="20" y="2093" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="2076" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2093" font-size="12">10 buyers</text>
+<text x="20" y="2129" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="2112" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2129" font-size="12">40 buyers</text>
+<text x="20" y="2165" font-size="12">postgres/triggers_on c=10/successes</text>
+<rect x="475" y="2148" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2165" font-size="12">10 buyers</text>
+<text x="20" y="2201" font-size="12">postgres/triggers_on c=10/refusals</text>
+<rect x="475" y="2184" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2201" font-size="12">40 buyers</text>
+<text x="20" y="2237" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2220" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2237" font-size="12">10 buyers</text>
+<text x="20" y="2273" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2256" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2273" font-size="12">40 buyers</text>
+<text x="20" y="2309" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2292" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2309" font-size="12">10 buyers</text>
+<text x="20" y="2345" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2328" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2345" font-size="12">40 buyers</text>
+<text x="20" y="2381" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2364" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2381" font-size="12">10 buyers</text>
+<text x="20" y="2417" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2400" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2417" font-size="12">40 buyers</text>
+<text x="20" y="2453" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2436" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2453" font-size="12">10 buyers</text>
+<text x="20" y="2489" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2472" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2489" font-size="12">40 buyers</text>
+<text x="20" y="2525" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2508" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2525" font-size="12">10 buyers</text>
+<text x="20" y="2561" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2544" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2561" font-size="12">40 buyers</text>
+<text x="20" y="2597" font-size="12">postgres/triggers_on c=50/successes</text>
+<rect x="475" y="2580" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2597" font-size="12">10 buyers</text>
+<text x="20" y="2633" font-size="12">postgres/triggers_on c=50/refusals</text>
+<rect x="475" y="2616" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2633" font-size="12">40 buyers</text>
+<text x="20" y="2669" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="2652" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2669" font-size="12">10 buyers</text>
+<text x="20" y="2705" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="2688" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2705" font-size="12">40 buyers</text>
+<text x="20" y="2741" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="2724" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2741" font-size="12">10 buyers</text>
+<text x="20" y="2777" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="2760" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2777" font-size="12">40 buyers</text>
+<text x="20" y="2813" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="2796" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2813" font-size="12">10 buyers</text>
+<text x="20" y="2849" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="2832" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2849" font-size="12">40 buyers</text>
+<text x="20" y="2885" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="2868" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2885" font-size="12">10 buyers</text>
+<text x="20" y="2921" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="2904" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2921" font-size="12">40 buyers</text>
+<text x="20" y="2957" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="2940" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="2957" font-size="12">10 buyers</text>
+<text x="20" y="2993" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="2976" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="2993" font-size="12">40 buyers</text>
+<text x="20" y="3029" font-size="12">mongo/snapshot c=1/successes</text>
+<rect x="475" y="3012" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3029" font-size="12">10 buyers</text>
+<text x="20" y="3065" font-size="12">mongo/snapshot c=1/refusals</text>
+<rect x="475" y="3048" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3065" font-size="12">40 buyers</text>
+<text x="20" y="3101" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3084" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3101" font-size="12">10 buyers</text>
+<text x="20" y="3137" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3120" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3137" font-size="12">40 buyers</text>
+<text x="20" y="3173" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3156" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3173" font-size="12">10 buyers</text>
+<text x="20" y="3209" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3192" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3209" font-size="12">40 buyers</text>
+<text x="20" y="3245" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3228" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3245" font-size="12">10 buyers</text>
+<text x="20" y="3281" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3264" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3281" font-size="12">40 buyers</text>
+<text x="20" y="3317" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3300" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3317" font-size="12">10 buyers</text>
+<text x="20" y="3353" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3336" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3353" font-size="12">40 buyers</text>
+<text x="20" y="3389" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3372" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3389" font-size="12">10 buyers</text>
+<text x="20" y="3425" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3408" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3425" font-size="12">40 buyers</text>
+<text x="20" y="3461" font-size="12">mongo/snapshot c=10/successes</text>
+<rect x="475" y="3444" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3461" font-size="12">10 buyers</text>
+<text x="20" y="3497" font-size="12">mongo/snapshot c=10/refusals</text>
+<rect x="475" y="3480" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3497" font-size="12">40 buyers</text>
+<text x="20" y="3533" font-size="12">mongo/snapshot c=50/successes</text>
+<rect x="475" y="3516" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3533" font-size="12">10 buyers</text>
+<text x="20" y="3569" font-size="12">mongo/snapshot c=50/refusals</text>
+<rect x="475" y="3552" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3569" font-size="12">40 buyers</text>
+<text x="20" y="3605" font-size="12">mongo/snapshot c=50/successes</text>
+<rect x="475" y="3588" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3605" font-size="12">10 buyers</text>
+<text x="20" y="3641" font-size="12">mongo/snapshot c=50/refusals</text>
+<rect x="475" y="3624" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3641" font-size="12">40 buyers</text>
+<text x="20" y="3677" font-size="12">mongo/snapshot c=50/successes</text>
+<rect x="475" y="3660" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3677" font-size="12">10 buyers</text>
+<text x="20" y="3713" font-size="12">mongo/snapshot c=50/refusals</text>
+<rect x="475" y="3696" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3713" font-size="12">40 buyers</text>
+<text x="20" y="3749" font-size="12">mongo/snapshot c=50/successes</text>
+<rect x="475" y="3732" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3749" font-size="12">10 buyers</text>
+<text x="20" y="3785" font-size="12">mongo/snapshot c=50/refusals</text>
+<rect x="475" y="3768" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3785" font-size="12">40 buyers</text>
+<text x="20" y="3821" font-size="12">mongo/snapshot c=50/successes</text>
+<rect x="475" y="3804" width="105.00" height="23" fill="#357b89"/>
+<text x="590.00" y="3821" font-size="12">10 buyers</text>
+<text x="20" y="3857" font-size="12">mongo/snapshot c=50/refusals</text>
+<rect x="475" y="3840" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="3857" font-size="12">40 buyers</text>
+<text x="20" y="3893" font-size="12">mongo/snapshot c=50/successes</text>
+<text x="485.00" y="3893" font-size="12">FAILED</text>
+<text x="20" y="3929" font-size="12">mongo/snapshot c=50/refusals</text>
+<text x="485.00" y="3929" font-size="12">FAILED</text>
+</g></svg>

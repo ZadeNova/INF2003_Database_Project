@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Github repos\INF2003_Database_Project\benchmarks\run.py", line 288, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\Github repos\INF2003_Database_Project\benchmarks\run.py", line 265, in main
+    annotate(output)
+    ~~~~~~~~^^^^^^^^
+  File "C:\Github repos\INF2003_Database_Project\benchmarks\resources.py", line 45, in annotate
+    intervals = runner_cpu_intervals(directory / "stats.jsonl")
+  File "C:\Github repos\INF2003_Database_Project\benchmarks\resources.py", line 25, in runner_cpu_intervals
+    result.append((start, now, float(row["CPUPerc"].rstrip("%"))))
+                               ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: '--'
+final exited 1
