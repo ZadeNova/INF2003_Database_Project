@@ -9,7 +9,8 @@ simulated and no personal data is used.
 
 ## Status
 
-The Tier 1 application is complete and the benchmark harness is merged; final measurements and deliverables remain.
+The Tier 1 application is complete; designated-machine benchmark evidence is recorded in the
+[benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026). Deliverables remain.
 The authoritative schedule and workstream statuses are in [PLAN.md section 13](PLAN.md#13-phases) and
 [section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record).
 Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
@@ -280,6 +281,14 @@ no headline ratio; summary.csv keeps their metrics and report tables mark them a
 latencies; amendment-j.csv evaluates noise per B1 parameter set/client count and B4 index. Failed checks have no
 accepted timing. B1 broad retains the planner-chosen MongoDB plan as the headline; documents_hinted separately
 uses spec_attributes with the same golden. No scale-up generator is built; the owner decides after reading that table.
+`report/memory.csv` reports median and peak memory per container for the whole run and each workload. Workload rows
+include only samples whose timestamps lie in the union of that workload's `runs.csv` windows; the median is
+sample-weighted, without interpolation. Whole-run rows also include setup and restoration. Untimed workloads and
+windows without samples retain blank figures with an explicit status. Docker's rounded `MemUsage` makes converted
+byte values approximate. `report/memory-settings.csv` records the original caps, caches and input footprint; the
+footprint is populated only when local input files match every checksum in provenance. Stopped-container CPU
+placeholders are skipped for CPU attribution; independently valid memory samples remain usable. These tables do
+not measure memory for the same operation across engines.
 New result directories are ignored while collecting evidence so subsequent runs can use the same clean commit.
 After inspecting them, stage only the intended directories with `git add -f -- benchmarks/results/<run-directory>`.
 Use --require-clean for recorded reruns; it refuses uncommitted source changes.
@@ -316,6 +325,10 @@ Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_
 in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.
 
 ### Final-run checklist (next session)
+
+The completed designated-machine evidence and the owner's source-selection rule are recorded in the
+[benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026).
+This checklist remains the reproduction procedure.
 
 Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
 [benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker

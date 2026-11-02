@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="316" viewBox="0 0 1050 316">
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="Arial,sans-serif" fill="#152536">
+<text x="20" y="30" font-size="18">B2b ratios (see CSV for ranges and absolute ms)</text>
+<text x="20" y="77" font-size="12">mongo/live c=1</text>
+<rect x="475" y="60" width="48.16" height="23" fill="#357b89"/>
+<text x="533.16" y="77" font-size="12">0.209775 x</text>
+<text x="20" y="113" font-size="12">mongo/live c=10</text>
+<rect x="475" y="96" width="46.09" height="23" fill="#357b89"/>
+<text x="531.09" y="113" font-size="12">0.20077 x</text>
+<text x="20" y="149" font-size="12">postgres/live c=1</text>
+<rect x="475" y="132" width="229.58" height="23" fill="#357b89"/>
+<text x="714.58" y="149" font-size="12">1 x</text>
+<text x="20" y="185" font-size="12">postgres/live c=10</text>
+<rect x="475" y="168" width="229.58" height="23" fill="#357b89"/>
+<text x="714.58" y="185" font-size="12">1 x</text>
+<text x="20" y="221" font-size="12">postgres/view c=1</text>
+<rect x="475" y="204" width="410.05" height="23" fill="#357b89"/>
+<text x="895.05" y="221" font-size="12">1.78607 x</text>
+<text x="20" y="257" font-size="12">postgres/view c=10</text>
+<rect x="475" y="240" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="257" font-size="12">1.82942 x</text>
+</g></svg>

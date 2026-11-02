@@ -3,9 +3,14 @@
 import argparse
 import csv
 import gzip
+import hashlib
 import html
 import json
+import re
+import statistics
+from bisect import bisect_right
 from collections import defaultdict
+from decimal import Decimal
 from pathlib import Path
 
 from benchmarks.resources import annotate
@@ -102,12 +107,170 @@ def noise(rows):
     return result
 
 
+def memory_bytes(value):
+    """Interpret Docker's rounded display values, preserving SI versus IEC units."""
+    units = {
+        "B": 1,
+        "kB": 1000,
+        "KB": 1000,
+        "MB": 1000**2,
+        "GB": 1000**3,
+        "TB": 1000**4,
+        "KiB": 1024,
+        "MiB": 1024**2,
+        "GiB": 1024**3,
+        "TiB": 1024**4,
+    }
+    match = re.fullmatch(r"\s*([0-9]+(?:\.[0-9]+)?)\s*([A-Za-z]+)\s*", value)
+    return int(Decimal(match[1]) * units[match[2]]) if match and match[2] in units else None
+
+
+def memory_settings(directory):
+    """Publish the recorded caps/caches and checksum-verified input footprint."""
+    directory = Path(directory)
+    if not (directory / "host.json").exists() or not (directory / "provenance.json").exists():
+        return []
+    host = json.loads((directory / "host.json").read_text())
+    provenance = json.loads((directory / "provenance.json").read_text())
+    source_name = provenance.get("source", "")
+    source = Path(source_name)
+    if not source.is_dir():
+        relative = source_name.removeprefix("/app/")
+        source = Path(__file__).resolve().parents[1] / (
+            "tests/" + relative if relative.startswith("fixtures/") else relative
+        )
+    input_bytes, input_status = None, "unavailable"
+    if provenance.get("files") and source.is_dir():
+        total = 0
+        for name, expected in provenance["files"].items():
+            path = (source / name).resolve()
+            if not path.is_relative_to(source.resolve()) or not path.is_file():
+                break
+            sha256 = hashlib.sha256()
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    sha256.update(chunk)
+            digest = sha256.hexdigest()
+            if digest != expected:
+                input_status = "checksum_mismatch"
+                break
+            total += path.stat().st_size
+        else:
+            input_bytes, input_status = total, "checksum_verified"
+    containers = [(row["name"].lstrip("/"), row["limits"]) for row in host.get("containers", [])]
+    runner = host.get("runner_actual_limits")
+    if runner:
+        containers.append((host["project"] + "-load-client", runner))
+    mongo = host.get("mongo_server_readback", {})
+    cache_gb = (
+        mongo.get("options", {}).get("storage", {}).get("wiredTiger", {}).get("engineConfig", {}).get("cacheSizeGB")
+    )
+    return [
+        {
+            "container": name,
+            "limit_bytes": limits.get("Memory"),
+            "cpu_limit": limits["NanoCpus"] / 1e9 if limits.get("NanoCpus") is not None else None,
+            "postgres_shared_buffers": provenance.get("settings", {}).get("postgres", {}).get("shared_buffers")
+            if name.endswith("-bench-db-1")
+            else None,
+            "wiredtiger_cache_size_gb_setting": cache_gb if name.endswith("-bench-mongo-1") else None,
+            "wiredtiger_cache_bytes": mongo.get("cache_bytes") if name.endswith("-bench-mongo-1") else None,
+            "source_input_bytes": input_bytes,
+            "source_input_decimal_mb": input_bytes / 1000**2 if input_bytes is not None else None,
+            "source_input_status": input_status,
+            "docker_vm_memory_bytes": host.get("docker_vm", {}).get("MemTotal"),
+            "docker_vm_cpus": host.get("docker_vm", {}).get("NCPU"),
+        }
+        for name, limits in containers
+    ]
+
+
+def memory_rows(directory):
+    """Map memory sample timestamps to merged run windows without interpolation.
+
+    Whole-run rows also include preparation/restoration. Untimed workloads keep
+    blank memory figures rather than borrowing neighbouring workload samples.
+    The median is sample-weighted; bytes are approximate because MemUsage is rounded.
+    """
+    directory = Path(directory)
+    stats = directory / "stats.jsonl"
+    if not stats.exists():
+        return []
+    workloads = defaultdict(list)
+    for row in read_csv(directory / "runs.csv"):
+        output = row["output"]
+        workload = next(
+            (name for name in ("baseline", "BM4", "B1", "B2", "B3", "B4", "B5", "B6") if output.startswith(name)),
+            output,
+        )
+        windows = workloads[workload]
+        if row.get("window_start_ns") and row.get("window_end_ns"):
+            left, right = int(row["window_start_ns"]), int(row["window_end_ns"])
+            if right < left:
+                raise ValueError("Memory attribution requires nonnegative run windows")
+            windows.append((left, right))
+    samples = defaultdict(list)
+    with stats.open(encoding="utf-8") as stream:
+        for line in stream:
+            row = json.loads(line)
+            parts = row.get("MemUsage", "").split("/")
+            if len(parts) != 2 or not row.get("Name"):
+                continue
+            used, limit = (memory_bytes(part) for part in parts)
+            if used is None or limit is None or limit <= 0:
+                continue
+            samples[row["Name"]].append((int(row["time_ns"]), used, limit, row["MemUsage"]))
+
+    def memory_row(scope, workload, container, values, windows):
+        used = [value[1] for value in values]
+        peak = max(values, key=lambda value: value[1]) if values else None
+        limits = sorted({value[2] for value in samples[container]})
+        median = statistics.median(used) if used else None
+        return {
+            "scope": scope,
+            "workload": workload,
+            "container": container,
+            "status": "sampled" if values else "no_samples" if windows else "no_windows",
+            "window_count": len(windows) if scope == "workload" else "",
+            "sample_count": len(values),
+            "median_memory_bytes": median,
+            "peak_memory_bytes": peak[1] if peak else None,
+            "median_memory_gib": median / 1024**3 if median is not None else None,
+            "peak_memory_gib": peak[1] / 1024**3 if peak else None,
+            "limit_bytes": limits[0] if len(limits) == 1 else None,
+            "observed_limits_bytes": json.dumps(limits),
+            "peak_percent_of_limit": 100 * peak[1] / peak[2] if peak else None,
+            "peak_time_ns": peak[0] if peak else None,
+            "peak_memory_text": peak[3] if peak else None,
+        }
+
+    result = [memory_row("run", "all", name, values, []) for name, values in sorted(samples.items())]
+    for workload, intervals in sorted(workloads.items()):
+        merged = []
+        for left, right in sorted(intervals):
+            if merged and left <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(right, merged[-1][1]))
+            else:
+                merged.append((left, right))
+        starts = [left for left, right in merged]
+        for name, values in sorted(samples.items()):
+            selected = []
+            for value in values:
+                index = bisect_right(starts, value[0]) - 1
+                if index >= 0 and value[0] <= merged[index][1]:
+                    selected.append(value)
+            result.append(memory_row("workload", workload, name, selected, merged))
+    return result
+
+
 def report(directory):
     directory = Path(directory)
     destination = directory / "report"
     destination.mkdir(exist_ok=True)
     annotate(directory)
     rows = read_csv(directory / "summary.csv")
+    table(destination / "memory.csv", memory_rows(directory))
+    table(destination / "memory-settings.csv", memory_settings(directory))
     outputs = defaultdict(list)
     for row in rows:
         outputs[row["output"]].append(row)
@@ -188,7 +351,7 @@ def report(directory):
                     "Integrity",
                     "src/orders/migration_sql.py;src/wishlist/migrations/0001_wishlist_restock.py",
                     "src/config/mongo_schema.py;src/reviews/services.py",
-                    "raw.jsonl;report/B3-states.csv",
+                    ("raw.jsonl" if (directory / "raw.jsonl").exists() else "raw.jsonl.gz") + ";report/B3-states.csv",
                 ),
                 (
                     "Transactions and consistency",

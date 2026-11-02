@@ -1,6 +1,6 @@
 # benchmark: Correctness-gated PostgreSQL and MongoDB comparison
 
-status: in-progress
+status: done
 plan owner: Chee Long · implementer: Chee Long · Phase 3B (25 October to 1 November 2026)
 · depends on: `olist-import` for harness/loaders; `catalogue`, `reviews`, `dashboard`, `checkout` for full acceptance
 
@@ -277,6 +277,72 @@ the pilot and full-data runs remain for the next session.
 
 31 October 2026, owner-requested CI follow-up (Codex): [PR #33's Django job](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/41170847257/job/124448283477) stopped at collection because the app image has no benchmarks package; the timing test module now uses pytest.importorskip and qualified helper calls so it skips in that image while the host job still requires its tests to run without skips.
 
+### Designated-machine final and close-out (2 November 2026)
+
+Chee Long directed the final run and this close-out on the designated Windows PC. All six retained directories
+identify the clean measurement commit `b53e5d0`; the BM4 controls were captured before any close-out source edit.
+The [owner decisions](../DECISIONS.md#benchmark-designated-machine-final-and-close-out-2-november-2026) record the
+trimmed pilot, count choice, source rule and unexpected resource observation.
+
+The [pilot provenance](../../benchmarks/results/2026-11-01T220402_b53e5d0a_pilot/provenance.json) records B2 at five
+operations per client while the default remained one hundred. The owner trimmed only the pilot to obtain a timely
+projection; it supplies no final headline. The [script-generated count decision](../../benchmarks/results/2026-11-01T220402_b53e5d0a_pilot/count-decision.json)
+uses every B1/B2 warm-up and measured window and the owner's multiplier/remaining-work allowances. It selects
+100/default and 20/B2 because that projection fits the target; the final provenance records those counts.
+
+The [full final](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/host.json) exited unsuccessfully after an
+**unexpected** MongoDB out-of-memory kill. Its [failure capture](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/failure.json),
+[Docker state](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/failure-docker-state.txt) and
+[failed summary rows](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/summary.csv) remain visible. The owner
+used the single infrastructure retry for a fresh full-data load and a separate
+[final B3/B6 run](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/provenance.json), at the same commit,
+machine and limits. **Use B3 and B6 entirely from final-b3-b6; use every other final comparison output from final.**
+Keep all original B3/B6 records, including failures, as history rather than combining them into the final sample.
+The generated [source-selection table](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/final-source-selection.csv)
+identifies the source directory for each selected cell and checks that none includes a failed run.
+
+The interrupted raw file is now `raw.jsonl.gz`. Its [compression manifest](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/raw-compression.json)
+records the original size/hash, method, date and reason, and verifies the decompressed payload against the original
+before removal of the uncompressed file. Provenance was not edited. Close-out skips nonnumeric stopped-container
+CPU samples, reannotates the failed run and regenerates its report. The other driver reports were regenerated with
+the same memory-table generator; [generation metadata](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/generation.json)
+records the post-processing code hashes and unchanged measurement fields/provenance. The generated
+[full-run memory table](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/memory.csv) and
+[fresh B3/B6 memory table](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/memory.csv) replace
+the exploratory cache-only memory section as the citable figures. The observation and its limitations are in the
+owner decision; it was not a controlled memory test.
+
+Exit-check evidence, item by item:
+
+| Exit-check item | Retained evidence |
+|---|---|
+| Independent golden outputs and B1/B2 equivalence | [Full correctness checks](../../benchmarks/results/2026-11-02T002948_b53e5d0a_final-correctness/report/checks.csv), [final checks](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/checks.csv) and [source/golden hashes](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/provenance.json) |
+| Applicable client/run matrix and operation counts | [Final runs](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/runs.csv), [final workload matrix](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/provenance.json), and [authoritative B3/B6 runs](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/runs.csv) |
+| B3 outcomes and separate B6 demonstrations | [Fresh B3 outcomes/restoration](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/B3-states.csv) and [B6 expected/observed states](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/B6-states.csv) |
+| Plans and storage metrics | [Final query plans](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/plans), [B4 ratios/ranges](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/ratios.csv), and [fresh B5 footprint](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/B5.csv); the contract's representation limits still apply |
+| Hardware, limits, durability, trigger policy and resources | [Original host](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/host.json), [original settings](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/provenance.json), [fresh-run host](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/host.json), and [generated settings/input footprint](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/memory-settings.csv) |
+| Restoration after success and deliberate failure | [B3/B6 check records](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/checks.csv) and [BM4 restoration evidence](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/bm4-verification.json); OOM recovery used a full reload, recorded by the fresh run's initial state/provenance |
+| BM4 rejects incorrect results and violated invariants | [Both expected failed rows](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/summary.csv), [raw/no-accepted-timing verification](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/bm4-verification.json) and [run provenance](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/provenance.json); the nonzero exit is expected for these controls |
+| Per-request database timing, collected after benchmarks stopped | [Joined requests](../../benchmarks/results/2026-11-02T103305_b53e5d0a_request-timing/requests.csv), [per-page aggregates](../../benchmarks/results/2026-11-02T103305_b53e5d0a_request-timing) and [collector provenance](../../benchmarks/results/2026-11-02T103305_b53e5d0a_request-timing/provenance.json) |
+| Precommitted expectations, fairness and evidence per matrix criterion | Amendment f above remains unchanged; [final matrix evidence](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/matrix-evidence.csv), provenance and the authoritative B3/B6 state files support amendments g/h |
+| Generated charts/tables and visible limitations | [Final report](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report), [B3/B6 report](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report), [BM4 report](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/report) and [CPU/noise verdicts](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/amendment-j.csv); saturation flags remain visible and excluded from headlines |
+| Generator condition and tier boundary | Amendment j's owner decision remains no generator/no scaled run, so generator determinism is not applicable. No B7, failover, backup drill or other Tier 2/3 work was added |
+| Close-out code/documentation checks | [Generated validation record](../../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/closeout-validation.json) records real Ruff, host, fresh-fixture and full-Docker-suite results |
+
+The validation record retains the initial host-test failure from temporary repositories placed inside the ignored
+checkout and the passing invocation using an external temporary directory. It also retains an initial failure of
+the existing MongoDB storage-repeatability assertion and the passing fixture suite after a full reload, with code
+and tolerance unchanged. The underlying physical-storage variability remains visible for review.
+
+Codex prepared this close-out uncommitted on `benchmark/close-out`. Claude Code reviewed it before commit, in the
+session that wrote the brief (not a fresh one). The review read the code and documentation diff; scanned every staged
+file for `.env` secret values (none); confirmed that no staged file exceeds 50 MB, that the final-source selection
+takes B3 and B6 only from final-b3-b6 with no failed cell, and that both BM4 rows record failed with no accepted
+timing; regenerated the final and final-b3-b6 reports from copies, byte-identical to the staged files; and reran the
+host, packaging, request-timing and reporting tests with no skips. It found no defect. The only fix was this wording:
+the documentation had still said that the review was pending. Ruff and the Docker suites were not rerun here; the
+cited validation record and CI cover them.
+
 ## Implementation notes (27–28 October 2026)
 
 The isolated services, checksummed loader and independent golden outputs, B1–B6, request timing and generated
@@ -336,8 +402,8 @@ results, fresh storage, per-variant status and the retained limitations. Raw evi
 barriers and correctness/timing gates were [audited](../../benchmarks/results/2026-10-28_d6fc7e44_fix-validation/evidence-checks.txt).
 The CI job now checks the kernel, reloads after mutating tests and uploads only the current printed run directory.
 The 28 October PLAN.md date line and original target dates stay unchanged. Claude Code re-checked the fix round as
-recorded above; hosted outcomes belong to the PR checks. This workstream remains in progress for the designated-machine
-final measurements. No generator, scaled run,
+recorded above; hosted outcomes belong to the PR checks. At that checkpoint the designated-machine final measurements
+were still pending; their completed evidence is recorded in the close-out above. No generator, scaled run,
 HTTP load script, Tier 2/3 work or CI formatter stage is included. Machine memory remains the owner's setting.
 B5 reports the agreed representations separately: MongoDB reviews include text while SQL bench reviews contain
 the analytical columns. These are not equal-payload total-storage claims.

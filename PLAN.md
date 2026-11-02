@@ -433,7 +433,7 @@ Existing effort estimates remain risk estimates, not evidence that the compresse
 **28 October 2026: Phase 3B first correctness-complete pass landed before the 30 October target.**
 [Local full-data B1–B6 evidence](benchmarks/results/2026-10-28T000105_e23a4df4_full-correctness/summary.csv)
 passes every workload and variant, with plans and restoration evidence. Fresh review and the designated-machine
-final measurements remain; section 14 keeps the workstream in progress.
+final measurements remained at that checkpoint; section 14 kept the workstream in progress.
 
 **30 October 2026: Phase 4 exit check passed.** The application is frozen. After the integration and checkout fixes
 (PRs #24, #25) and CI stage 3 (PR #26), [CI is green on main](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/40906382080)
@@ -442,7 +442,16 @@ clone with no `.env` and fresh volumes, following the README in its own Compose 
 seeding, smoke and the browser journeys ([CI review notes](docs/plans/ci.md#review-notes)). That ran on the owner's
 machine; a run on a teammate's machine stays in Phase 5's clean-machine check. Claude Code reviewed each Phase 4 change
 before merge, not in fresh sessions ([CI](docs/plans/ci.md#review-notes) and [checkout](docs/plans/checkout.md#review-notes)
-review notes). Phase 3B stays open for the designated-machine final measurements, which do not change the application.
+review notes). Phase 3B stayed open for the designated-machine final measurements, which do not change the application.
+
+**2 November 2026: Phase 3B exit check passed on the designated machine, in the contingency window.**
+The [item-by-item benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026)
+links the repeated final measurements, the fresh B3/B6 retry after an unexpected OOM, plans, storage, resources,
+[BM4 negative controls](benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/bm4-verification.json) and
+[per-request database timing](benchmarks/results/2026-11-02T103305_b53e5d0a_request-timing/requests.csv).
+The original target date is unchanged. The [owner's source rule and resource observation](docs/DECISIONS.md#benchmark-designated-machine-final-and-close-out-2-november-2026)
+retain the failed attempt and assign B3/B6 to the separate fresh run. Claude Code reviewed the close-out before
+commit; phase closure still follows the completion/merge rule above.
 
 **Checkpoints and completion.** If the import is not verified by 24 October, or the core demo is not working by
 27 October, Chee Long and Erfan re-estimate the remaining work immediately. If a workstream overruns by more than a
@@ -470,7 +479,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | done |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | done |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | done |
-| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | in progress |
+| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | done |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | done |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | ready |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |

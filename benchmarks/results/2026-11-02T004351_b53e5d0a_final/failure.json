@@ -1,0 +1,23 @@
+{
+  "recorded_at": "2026-11-02T08:20:53.138279+08:00",
+  "step": "final",
+  "results_directory": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-02T004351_b53e5d0a_final",
+  "infrastructure_failure": true,
+  "container": "mercer-bench-final-bench-mongo-1",
+  "container_exit_code": 137,
+  "oom_killed": true,
+  "container_finished_at": "2026-11-02T00:01:15.826274761Z",
+  "runner_exit_code": 1,
+  "terminal_runner_json_missing": true,
+  "errors": [
+    "MongoDB ServerSelectionTimeoutError after container exit",
+    "Resource annotation ValueError: CPUPerc -- cannot convert to float"
+  ],
+  "report_directory_missing": true,
+  "correctness_complete": false,
+  "infrastructure_retries_used": 0,
+  "k2_started": false,
+  "teardown_started": false,
+  "owner_retry_override_pending": false,
+  "owner_decision": "owner-decision-b3-b6.json"
+}

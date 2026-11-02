@@ -1,0 +1,13 @@
+engine,representation,data_bytes,index_bytes,cache_bytes
+postgres,catalogue_product,5677056,12500992,536870912
+postgres,orders_checkout,9920512,20652032,536870912
+postgres,orders_order,13238272,19308544,536870912
+postgres,orders_orderline,9404416,7659520,536870912
+postgres,orders_payment,7643136,7823360,536870912
+postgres,reviews,7716864,10665984,536870912
+postgres,bench_attribute_eav,5283840,10657792,536870912
+postgres,bench_attribute_jsonb,3612672,3948544,536870912
+postgres,daily_product_sales,5627904,2965504,536870912
+mongo,products,2260992,1662976,805306368
+mongo,orders,8617984,5255168,805306368
+mongo,reviews,17498112,25841664,805306368

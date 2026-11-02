@@ -1,0 +1,59 @@
+{
+  "calculated_at": "2026-11-02T00:27:42.687061+08:00",
+  "deadline": "2026-11-02T13:00:00+08:00",
+  "pilot_results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-01T220402_b53e5d0a_pilot",
+  "pilot_windows_ns": {
+    "B1": 1622576462435,
+    "B2": 5317590799077
+  },
+  "pilot_windows_seconds": {
+    "B1": 1622.576462435,
+    "B2": 5317.590799077
+  },
+  "all_phase_windows_ns": {
+    "B1/warmup": 268206395143,
+    "B1/measured": 1354370067292,
+    "B2/warmup": 885013609392,
+    "B2/measured": 4432577189685
+  },
+  "window_rows_counted": {
+    "B1": 342,
+    "B2": 126
+  },
+  "estimates": [
+    {
+      "operations_per_client": 100,
+      "b2_operations_per_client": 20,
+      "final_duration_seconds": 29926.88060755445,
+      "reloads_and_correctness_seconds": 1800,
+      "k2_and_wrapup_seconds": 3600,
+      "total_remaining_seconds": 35326.88060755445,
+      "projected_finish_singapore": "2026-11-02T10:16:29.567669+08:00",
+      "fits_1300": true
+    },
+    {
+      "operations_per_client": 50,
+      "b2_operations_per_client": 10,
+      "final_duration_seconds": 16043.440303777224,
+      "reloads_and_correctness_seconds": 1800,
+      "k2_and_wrapup_seconds": 3600,
+      "total_remaining_seconds": 21443.440303777224,
+      "projected_finish_singapore": "2026-11-02T06:25:06.127365+08:00",
+      "fits_1300": true
+    }
+  ],
+  "chosen": {
+    "operations_per_client": 100,
+    "b2_operations_per_client": 20,
+    "final_duration_seconds": 29926.88060755445,
+    "reloads_and_correctness_seconds": 1800,
+    "k2_and_wrapup_seconds": 3600,
+    "total_remaining_seconds": 35326.88060755445,
+    "projected_finish_singapore": "2026-11-02T10:16:29.567669+08:00",
+    "fits_1300": true
+  },
+  "infrastructure_retries_used": 0,
+  "unexpected_events": [
+    "Unrelated output/ and tmp/ artifacts appeared during pilot; owner authorised preserving both under .cache and confirmed other workloads stopped before resumption."
+  ]
+}

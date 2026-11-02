@@ -1,0 +1,3 @@
+output,engine,variant,clients,run,phase,status,accepted
+BM4_corrupted_result,postgres,expected_failure,1,1,measured,failed,False
+BM4_violated_invariant,mongo,expected_failure,10,1,measured,failed,False

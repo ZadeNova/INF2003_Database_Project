@@ -1,0 +1,16 @@
+{
+  "original_filename": "raw.jsonl",
+  "original_size_bytes": 381985043,
+  "sha256": "600bf54d4fc77cf41b02601d140ad4a1522c105b4e68f5786069c590ab39ef9e",
+  "method": "gzip.open(raw.jsonl.gz, 'wb') with Python's default compression; shutil.copyfileobj (same as benchmarks.run)",
+  "date": "2026-11-02T11:11:29.363250+08:00",
+  "reason": "The runner crashed before its own compression step.",
+  "provenance_sha256": "b18cb8cb94d6f207cff82e07bd23fa879965b094ac659fba55f0dc1c6e6495d3",
+  "compressed_filename": "raw.jsonl.gz",
+  "compressed_size_bytes": 22647410,
+  "decompressed_sha256": "600bf54d4fc77cf41b02601d140ad4a1522c105b4e68f5786069c590ab39ef9e",
+  "decompressed_size_bytes": 381985043,
+  "verified_at": "2026-11-02T11:11:38.953039+08:00",
+  "payload_verified": true,
+  "provenance_unchanged": true
+}

@@ -2,6 +2,7 @@
 
 import csv
 import json
+import math
 import statistics
 from pathlib import Path
 
@@ -22,7 +23,12 @@ def runner_cpu_intervals(path):
         now = row["time_ns"]
         start = previous.get(row["Name"], now - 1_000_000_000)
         previous[row["Name"]] = now
-        result.append((start, now, float(row["CPUPerc"].rstrip("%"))))
+        try:
+            cpu = float(str(row.get("CPUPerc", "")).strip().removesuffix("%"))
+        except ValueError:
+            continue
+        if math.isfinite(cpu):
+            result.append((start, now, cpu))
     return result
 
 

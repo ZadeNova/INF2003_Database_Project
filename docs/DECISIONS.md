@@ -264,6 +264,46 @@ precommitted expectations remain unchanged.
 |---|---|---|
 | benchmark-i22 | Amendment k1/k3 (approved by Chee Long, 30 October 2026) supersedes benchmark-i16's counts for final measurements: default 100 operations per client at 1/10/50, falling back to 50 if the baseline/B1/B2 pilot projects beyond one sitting; B2 uses 1/10 clients with 20 operations per client, falling back to 10. B2refresh uses the B2 count at one client. B3 retains fifty buyers. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the default count, recorded per case in workload_matrix. Keep the legacy provenance keys; correctness query passes stay at one client/one operation | Longer windows improve p95 and CPU attribution, while B2 is operator analytics and the fifty-client full-data pipelines risk timeout and excessive duration. Its B4 index experiments are outside the pilot and also need the smaller count. The pilot, final flags and report disclose the chosen limit |
 
+## Benchmark designated-machine final and close-out (2 November 2026)
+
+Chee Long approved these final-run and close-out decisions. The underlying measurements identify clean commit
+`b53e5d0`; report regeneration is recorded separately and does not rewrite measurement provenance.
+
+| ID | Decision | Why and evidence |
+|---|---|---|
+| benchmark-i23 | Trim only the pilot's B2 count to five operations per client, retaining the default one hundred; select the full final counts of one hundred/default and twenty/B2 from the pilot projection | The owner needed a timely pilot covering both slow parts. [Pilot provenance](../benchmarks/results/2026-11-01T220402_b53e5d0a_pilot/provenance.json) records the actual matrix and counts; the [generated decision arithmetic](../benchmarks/results/2026-11-01T220402_b53e5d0a_pilot/count-decision.json) includes all warm-up/measured windows and the owner's remaining-work allowances. Pilot timings are not final headline results |
+| benchmark-i24 | Use B3 and B6 entirely from the separately reloaded `final-b3-b6` run; use every other final comparison output from `final`. Keep all failed cells in the original run visible | After the unexpected OOM, the owner used the single infrastructure retry for only the affected workloads at the same commit, machine and limits. [Original failed summary](../benchmarks/results/2026-11-02T004351_b53e5d0a_final/summary.csv), [fresh B3/B6 checks](../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/checks.csv), and both provenances retain the full history; do not combine the original partial B3 sample into the final B3 result |
+| benchmark-i25 | Record the unexpected out-of-memory kill as a resource observation using already-collected samples; retain identical limits for the scoped retry | Cite the generated [original memory table](../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/memory.csv), [fresh-run memory table](../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/memory.csv), [recorded settings/input footprint](../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/memory-settings.csv) and [Docker failure capture](../benchmarks/results/2026-11-02T004351_b53e5d0a_final/failure-docker-state.txt), rather than typing measured memory figures into prose |
+
+The kill was **unexpected**. Nothing in the benchmark was designed to test memory. The 2 GB per-engine caps were
+chosen beforehand for fairness: identical caps for both engines; the clean Olist data, about 150 MB, fits comfortably;
+PostgreSQL `shared_buffers` 512 MB and WiredTiger cache 0.75 GB follow each engine's guidance; and the three limited
+containers fit the designated machine. The generated settings/input-footprint table above supplies the recorded
+configuration and checksum-verified dataset size; Docker reports the enforced cap in binary units.
+
+> We observed an unexpected out-of-memory kill, investigated it with the resource data the runner already collects, found it consistent with our B2 analysis, and reran the affected tests under identical limits.
+
+Under those identical caps, PostgreSQL's sampled peak stayed well below its limit. MongoDB memory rose during B2
+analytics, stayed high afterwards and approached its cap during the final fifty-client B3 round before Docker
+reported an OOM kill. B3 had passed on the freshly loaded [correctness database](../benchmarks/results/2026-11-02T002948_b53e5d0a_final-correctness/report/B3-states.csv).
+Use `scope=run` rows for whole-run peaks, including preparation/restoration, and `scope=workload` rows for samples
+inside the CSV timing windows. The failed B3 row has no timing range: its association with the final round does not
+identify a particular operation or restoration step as the cause. B5 and B6 rows without windows have blank memory
+figures; no neighbouring samples or values at the cap are invented.
+
+This is an observation, not a controlled memory test. The caches are configured differently, and Docker attributes
+memory to each engine somewhat differently. It does not establish that MongoDB needs twice the memory or that the
+same operation used more memory. The fresh run has a different workload history; its observed success supports
+reporting the affected tests after a fresh load, without claiming a controlled causal explanation.
+
+The failed run's raw payload was compressed after verifying its original hash and then verifying the decompressed
+hash; its [manifest](../benchmarks/results/2026-11-02T004351_b53e5d0a_final/raw-compression.json) records why the
+runner had not reached its own compression step. Annotation skips stopped-container CPU placeholders, and
+`benchmarks.report` now generates memory tables for each driver report. Neither change alters the original
+provenance or removes failed checks. BM4's fresh full-data controls remain deliberately failed with no accepted
+timing; [their verification record](../benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/bm4-verification.json)
+is evidence that the gate rejects incorrect data.
+
 ## dashboard implementation (24 October 2026; review pending)
 
 | ID | Decision | Why |

@@ -1,0 +1,7 @@
+engine,strategy,status,exception_class
+postgres,read_committed,failed,ServerSelectionTimeoutError
+postgres,for_update,failed,ServerSelectionTimeoutError
+postgres,serializable,failed,ServerSelectionTimeoutError
+mongo,read_modify_write,failed,ServerSelectionTimeoutError
+mongo,transaction,failed,ServerSelectionTimeoutError
+mongo,atomic_inc,failed,ServerSelectionTimeoutError

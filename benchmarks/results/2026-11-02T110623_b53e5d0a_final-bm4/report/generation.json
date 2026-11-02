@@ -1,0 +1,34 @@
+{
+  "results_directory": "2026-11-02T110623_b53e5d0a_final-bm4",
+  "generated_at": "2026-11-02T11:54:40.521890+08:00",
+  "source_commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+  "generator_branch": "benchmark/close-out",
+  "generator_uncommitted": true,
+  "generator_source_sha256": {
+    "benchmarks\\report.py": "d872959f8d7b295c1cd9a80ef05fc1d580df7d602c36608ee78d78e1b285a0b2",
+    "benchmarks\\resources.py": "802b58ada01c312a6197ce07244ebf45e3b0187e0baa96c786f95fa23a2a21a9"
+  },
+  "provenance_sha256": "b2862c274994c27c17e79f123a87c38cf97e2b0e6a66566954edae4ada0a4117",
+  "provenance_unchanged": true,
+  "run_fields_except_cpu_annotations_unchanged": true,
+  "failed_summary_rows": [
+    {
+      "output": "BM4_corrupted_result",
+      "engine": "postgres",
+      "variant": "expected_failure",
+      "clients": "1",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "BM4_violated_invariant",
+      "engine": "mongo",
+      "variant": "expected_failure",
+      "clients": "10",
+      "status": "failed",
+      "failed_runs": "1"
+    }
+  ],
+  "memory_table": "memory.csv",
+  "memory_method": "Whole-run rows include preparation/restoration; workload rows use the union of runs.csv timestamp windows; sample-weighted median, no interpolation; rounded Docker MemUsage bytes are approximate; blank figures indicate no windows or no matching samples."
+}

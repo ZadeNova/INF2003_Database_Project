@@ -1,0 +1,164 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 762B done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#2 ...
+
+#3 [auth] library/python:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#2 DONE 1.8s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 274B 0.0s done
+#4 DONE 0.0s
+
+#5 [runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#5 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 10.18kB 0.0s done
+#6 DONE 0.0s
+
+#7 [runtime 5/6] COPY . .
+#7 CACHED
+
+#8 [dev 1/2] COPY requirements-dev.txt .
+#8 CACHED
+
+#9 [runtime 2/6] WORKDIR /app
+#9 CACHED
+
+#10 [runtime 3/6] COPY requirements.txt .
+#10 CACHED
+
+#11 [runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#11 CACHED
+
+#12 [runtime 6/6] RUN python tools/collect_static.py
+#12 CACHED
+
+#13 [dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#13 CACHED
+
+#14 exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:c648f2dfcb6f4ce3e29291d0d110b28670d4d988ece560bb147b636d206aa0e5 done
+#14 exporting config sha256:ecc6fb9fba10580d12476218c4460f4b69b7e606ddd1da50939b7a4813cc864f done
+#14 exporting attestation manifest sha256:45e02c19fa398719d7f640dcc7b3e156130c7eae5926cf1eaf80c261c4797ce5 0.0s done
+#14 exporting manifest list sha256:539cf92f447ba1660fd48a24a833ae950a14ed63efc87d4734731071ecde5357
+#14 exporting manifest list sha256:539cf92f447ba1660fd48a24a833ae950a14ed63efc87d4734731071ecde5357 0.0s done
+#14 naming to docker.io/library/mercer-closeout-tests-app-dev:latest done
+#14 unpacking to docker.io/library/mercer-closeout-tests-app-dev:latest done
+#14 DONE 0.1s
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 762B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 274B done
+#3 DONE 0.0s
+
+#4 [runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#4 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 10.18kB 0.0s done
+#5 DONE 0.0s
+
+#6 [runtime 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [runtime 3/6] COPY requirements.txt .
+#7 CACHED
+
+#8 [runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#8 CACHED
+
+#9 [runtime 5/6] COPY . .
+#9 CACHED
+
+#10 [runtime 6/6] RUN python tools/collect_static.py
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:d8b55ffaf96c3b2a6fd464a16443b2e219d330edec45ae3d0d891cfc4c37c5d4 0.0s done
+#11 exporting config sha256:bdb8c66fcc73196fbf032624fc376c80ab41a0bd5821461c86f669d18eb91d01 0.0s done
+#11 exporting attestation manifest sha256:233c7c6ceddee3f9ce925eedbff5ffe881a51605173acca7b65a3064144822ab 0.0s done
+#11 exporting manifest list sha256:f88e651ea9b9defca9c4ea108c8cdea94f5ceda0a5dedc8e5b70f35f1c4c0ffe 0.0s done
+#11 naming to docker.io/library/mercer-closeout-tests-app:latest done
+#11 unpacking to docker.io/library/mercer-closeout-tests-app:latest done
+#11 DONE 0.1s
+time="2026-11-02T12:11:17+08:00" level=warning msg="Warning: No resource found to remove for project \"mercer-closeout-tests\"."
+ Network mercer-closeout-tests_default Creating 
+ Volume mercer-closeout-tests_mongo_keyfile Creating 
+ Volume mercer-closeout-tests_mongo_keyfile Creating 
+ Volume mercer-closeout-tests_postgres_data Creating 
+ Network mercer-closeout-tests_default Creating 
+ Volume mercer-closeout-tests_mongo_data Creating 
+ Volume mercer-closeout-tests_mongo_data Creating 
+ Volume mercer-closeout-tests_postgres_data Creating 
+ Volume mercer-closeout-tests_mongo_keyfile Created 
+ Volume mercer-closeout-tests_mongo_keyfile Created 
+ Volume mercer-closeout-tests_mongo_data Created 
+ Volume mercer-closeout-tests_mongo_data Created 
+ Volume mercer-closeout-tests_postgres_data Created 
+ Volume mercer-closeout-tests_postgres_data Created 
+ Network mercer-closeout-tests_default Created 
+ Network mercer-closeout-tests_default Created 
+ Container mercer-closeout-tests-mongo-1 Creating 
+ Container mercer-closeout-tests-db-1 Creating 
+ Container mercer-closeout-tests-mongo-1 Created 
+ Container mercer-closeout-tests-db-1 Created 
+ Container mercer-closeout-tests-db-1 Starting 
+ Container mercer-closeout-tests-mongo-1 Starting 
+ Container mercer-closeout-tests-db-1 Started 
+ Container mercer-closeout-tests-mongo-1 Started 
+ Container mercer-closeout-tests-db-1 Waiting 
+ Container mercer-closeout-tests-mongo-1 Waiting 
+ Container mercer-closeout-tests-db-1 Healthy 
+ Container mercer-closeout-tests-mongo-1 Healthy 
+ Container mercer-closeout-tests-db-1 Running 
+ Container mercer-closeout-tests-mongo-1 Running 
+ Container mercer-closeout-tests-db-1 Waiting 
+ Container mercer-closeout-tests-mongo-1 Waiting 
+ Container mercer-closeout-tests-db-1 Healthy 
+ Container mercer-closeout-tests-mongo-1 Healthy 
+ Container mercer-closeout-tests-migrate-run-c89568289e46 Creating 
+ Container mercer-closeout-tests-migrate-run-c89568289e46 Created 
+ Container mercer-closeout-tests-db-1 Running 
+ Container mercer-closeout-tests-mongo-1 Running 
+ Container mercer-closeout-tests-mongo-1 Waiting 
+ Container mercer-closeout-tests-db-1 Waiting 
+ Container mercer-closeout-tests-db-1 Healthy 
+ Container mercer-closeout-tests-mongo-1 Healthy 
+ Container mercer-closeout-tests-migrate-run-dc2be472d919 Creating 
+ Container mercer-closeout-tests-migrate-run-dc2be472d919 Created 
+ Container mercer-closeout-tests-db-1 Stopping 
+ Container mercer-closeout-tests-mongo-1 Stopping 
+ Container mercer-closeout-tests-db-1 Stopped 
+ Container mercer-closeout-tests-db-1 Removing 
+ Container mercer-closeout-tests-db-1 Removed 
+ Container mercer-closeout-tests-mongo-1 Stopped 
+ Container mercer-closeout-tests-mongo-1 Removing 
+ Container mercer-closeout-tests-mongo-1 Removed 
+ Volume mercer-closeout-tests_mongo_data Removing 
+ Volume mercer-closeout-tests_mongo_keyfile Removing 
+ Volume mercer-closeout-tests_postgres_data Removing 
+ Network mercer-closeout-tests_default Removing 
+ Volume mercer-closeout-tests_mongo_data Removed 
+ Volume mercer-closeout-tests_mongo_keyfile Removed 
+ Volume mercer-closeout-tests_postgres_data Removed 
+ Network mercer-closeout-tests_default Removed 

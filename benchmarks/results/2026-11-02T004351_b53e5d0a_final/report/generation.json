@@ -1,0 +1,74 @@
+{
+  "results_directory": "2026-11-02T004351_b53e5d0a_final",
+  "generated_at": "2026-11-02T11:54:35.133978+08:00",
+  "source_commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+  "generator_branch": "benchmark/close-out",
+  "generator_uncommitted": true,
+  "generator_source_sha256": {
+    "benchmarks\\report.py": "d872959f8d7b295c1cd9a80ef05fc1d580df7d602c36608ee78d78e1b285a0b2",
+    "benchmarks\\resources.py": "802b58ada01c312a6197ce07244ebf45e3b0187e0baa96c786f95fa23a2a21a9"
+  },
+  "provenance_sha256": "b18cb8cb94d6f207cff82e07bd23fa879965b094ac659fba55f0dc1c6e6495d3",
+  "provenance_unchanged": true,
+  "run_fields_except_cpu_annotations_unchanged": true,
+  "failed_summary_rows": [
+    {
+      "output": "B3",
+      "engine": "mongo",
+      "variant": "snapshot",
+      "clients": "50",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "mongo",
+      "variant": "atomic_inc",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "mongo",
+      "variant": "read_modify_write",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "mongo",
+      "variant": "transaction",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "postgres",
+      "variant": "for_update",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "postgres",
+      "variant": "read_committed",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    },
+    {
+      "output": "B6",
+      "engine": "postgres",
+      "variant": "serializable",
+      "clients": "2",
+      "status": "failed",
+      "failed_runs": "1"
+    }
+  ],
+  "memory_table": "memory.csv",
+  "memory_method": "Whole-run rows include preparation/restoration; workload rows use the union of runs.csv timestamp windows; sample-weighted median, no interpolation; rounded Docker MemUsage bytes are approximate; blank figures indicate no windows or no matching samples."
+}

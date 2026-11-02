@@ -1,0 +1,109 @@
+{
+  "base_url": "http://127.0.0.1:18082",
+  "commit": "b53e5d0aacb21494e09dc7b82dce1f49dd730d76",
+  "db_share": "100 * (db_pg_ms + db_mongo_ms) / duration_ms; zero when both are zero",
+  "finished_at": "2026-11-02T10:33:05.161510+08:00",
+  "host": {
+    "cpu": "AMD64 Family 25 Model 33 Stepping 0, AuthenticAMD",
+    "docker_version": {
+      "Client": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "Thu Sep  3 21:53:38 2026",
+        "Context": "desktop-linux",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "88096ef",
+        "GoVersion": "go1.26.8",
+        "Os": "windows",
+        "Version": "29.8.0"
+      },
+      "Server": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "2026-09-03T21:51:20.000000000+00:00",
+        "Components": [
+          {
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "amd64",
+              "BuildTime": "Thu Sep  3 21:51:20 2026",
+              "Experimental": "false",
+              "GitCommit": "3ce5872",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            },
+            "Name": "Engine",
+            "Version": "29.8.0"
+          },
+          {
+            "Details": {
+              "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+            },
+            "Name": "containerd",
+            "Version": "v2.3.5"
+          },
+          {
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            },
+            "Name": "runc",
+            "Version": "1.5.1"
+          },
+          {
+            "Details": {
+              "GitCommit": "de40ad0"
+            },
+            "Name": "docker-init",
+            "Version": "0.19.0"
+          }
+        ],
+        "GitCommit": "3ce5872",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Platform": {
+          "Name": "Docker Desktop 4.92.0 (240144)"
+        },
+        "Version": "29.8.0"
+      }
+    },
+    "docker_vm": {
+      "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+      "MemTotal": 10429964288,
+      "NCPU": 12,
+      "OperatingSystem": "Docker Desktop (containerized)"
+    },
+    "hardware": {
+      "cpu": {
+        "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+        "NumberOfCores": 6,
+        "NumberOfLogicalProcessors": 12
+      },
+      "ram": 17084600320
+    },
+    "logical_cpus": 12,
+    "os": "Windows-10-10.0.19045-SP0",
+    "python": "3.13.7"
+  },
+  "median_method": "arithmetic midpoint for even sample counts",
+  "p95_method": "nearest rank",
+  "page_selection": "category, facet and detail use the same visible product and source files",
+  "pages": {
+    "category": "/products/category/health-beauty/",
+    "faceted_search": "/products/?category=12&attr_format=cream",
+    "operator_dashboard": "/operator/dashboard/",
+    "product_detail": "/products/2892/",
+    "product_list": "/products/"
+  },
+  "project": "mercer-request-final",
+  "requests_per_page": 20,
+  "sequential": true,
+  "source_manifest_sha256": "66d35208ee62a541419da00710c5b85f2518068897a539a46b1e6c02bb57a29e",
+  "started_at": "2026-11-02T02:31:51.180231+00:00",
+  "warmup_passes": 1
+}

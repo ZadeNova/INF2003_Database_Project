@@ -1,0 +1,7 @@
+engine,strategy,status,expected_stock,initial_verified,observed_stock,observed_throughput_ops_s,restored,retries
+postgres,read_committed,passed,9,True,9,173.07997194719815,True,0
+postgres,for_update,passed,8,True,8,153.9051824030355,True,0
+postgres,serializable,passed,8,True,8,135.65663406724704,True,1
+mongo,read_modify_write,passed,9,True,9,400.6618131830157,True,0
+mongo,transaction,passed,8,True,8,382.2301216447362,True,1
+mongo,atomic_inc,passed,8,True,8,908.386909236251,True,0

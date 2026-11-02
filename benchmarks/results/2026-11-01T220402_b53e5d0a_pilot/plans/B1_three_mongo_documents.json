@@ -1,0 +1,468 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "$and": [
+              {
+                "attributes.activity": {
+                  "$eq": "running"
+                }
+              },
+              {
+                "attributes.material": {
+                  "$eq": "polyester"
+                }
+              },
+              {
+                "attributes.outdoor": {
+                  "$eq": false
+                }
+              }
+            ]
+          },
+          "indexFilterSet": false,
+          "queryHash": "3E90D885",
+          "planCacheShapeHash": "3E90D885",
+          "planCacheKey": "32A3D5ED",
+          "optimizationTimeMillis": 8,
+          "optimizationTimeMicros": 8103,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": true,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "$and": [
+                    {
+                      "attributes.material": {
+                        "$eq": "polyester"
+                      }
+                    },
+                    {
+                      "attributes.outdoor": {
+                        "$eq": false
+                      }
+                    }
+                  ]
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.activity": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.activity": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.activity\", \"attributes.activity\"]"
+                    ],
+                    "attributes.activity": [
+                      "[\"running\", \"running\"]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": [
+            {
+              "isCached": false,
+              "stage": "SORT",
+              "sortPattern": {
+                "_id": 1
+              },
+              "memLimit": 104857600,
+              "type": "simple",
+              "inputStage": {
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "_id": 1
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "$and": [
+                      {
+                        "attributes.activity": {
+                          "$eq": "running"
+                        }
+                      },
+                      {
+                        "attributes.outdoor": {
+                          "$eq": false
+                        }
+                      }
+                    ]
+                  },
+                  "nss": "bench.products",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "bench.products",
+                    "keyPattern": {
+                      "$_path": 1,
+                      "attributes.material": 1
+                    },
+                    "indexName": "spec_attributes",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "$_path": [],
+                      "attributes.material": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "$_path": [
+                        "[\"attributes.material\", \"attributes.material\"]"
+                      ],
+                      "attributes.material": [
+                        "[\"polyester\", \"polyester\"]"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "isCached": false,
+              "stage": "SORT",
+              "sortPattern": {
+                "_id": 1
+              },
+              "memLimit": 104857600,
+              "type": "simple",
+              "inputStage": {
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "_id": 1
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "$and": [
+                      {
+                        "attributes.activity": {
+                          "$eq": "running"
+                        }
+                      },
+                      {
+                        "attributes.material": {
+                          "$eq": "polyester"
+                        }
+                      }
+                    ]
+                  },
+                  "nss": "bench.products",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "bench.products",
+                    "keyPattern": {
+                      "$_path": 1,
+                      "attributes.outdoor": 1
+                    },
+                    "indexName": "spec_attributes",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "$_path": [],
+                      "attributes.outdoor": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "$_path": [
+                        "[\"attributes.outdoor\", \"attributes.outdoor\"]"
+                      ],
+                      "attributes.outdoor": [
+                        "[false, false]"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "$and": [
+                    {
+                      "attributes.activity": {
+                        "$eq": "running"
+                      }
+                    },
+                    {
+                      "attributes.material": {
+                        "$eq": "polyester"
+                      }
+                    },
+                    {
+                      "attributes.outdoor": {
+                        "$eq": false
+                      }
+                    }
+                  ]
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "indexName": "_id_",
+                  "isMultiKey": false,
+                  "isUnique": true,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 153,
+          "executionTimeMillis": 8,
+          "executionTimeMicros": 8595,
+          "totalKeysExamined": 1019,
+          "totalDocsExamined": 1019,
+          "executionStages": {
+            "isCached": true,
+            "stage": "SORT",
+            "nReturned": 153,
+            "executionTimeMillisEstimate": 4,
+            "works": 1174,
+            "advanced": 153,
+            "needTime": 1020,
+            "needYield": 0,
+            "saveState": 5,
+            "restoreState": 4,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 7038,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 7038,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 153,
+              "executionTimeMillisEstimate": 4,
+              "works": 1020,
+              "advanced": 153,
+              "needTime": 866,
+              "needYield": 0,
+              "saveState": 5,
+              "restoreState": 4,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "$and": [
+                    {
+                      "attributes.material": {
+                        "$eq": "polyester"
+                      }
+                    },
+                    {
+                      "attributes.outdoor": {
+                        "$eq": false
+                      }
+                    }
+                  ]
+                },
+                "nReturned": 153,
+                "executionTimeMillisEstimate": 4,
+                "works": 1020,
+                "advanced": 153,
+                "needTime": 866,
+                "needYield": 0,
+                "saveState": 5,
+                "restoreState": 4,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 1019,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 1019,
+                  "executionTimeMillisEstimate": 0,
+                  "works": 1020,
+                  "advanced": 1019,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 5,
+                  "restoreState": 4,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.activity": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.activity": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.activity\", \"attributes.activity\"]"
+                    ],
+                    "attributes.activity": [
+                      "[\"running\", \"running\"]"
+                    ]
+                  },
+                  "keysExamined": 1019,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 153,
+      "executionTimeMillisEstimate": 5
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 153,
+      "executionTimeMillisEstimate": 5,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "306989889DEB781B541738E4A8BC1E139911E4E838A73AF4B1ACB0AB96913E9C",
+  "peakTrackedMemBytes": 18400,
+  "serverInfo": {
+    "host": "0e47592aedad",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.activity": "running",
+          "attributes.material": "polyester",
+          "attributes.outdoor": false
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1793543531,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "SR020zh/zqFNXAUcU9ad0aTgnD0=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7703202769418584073
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1793543531,
+      "i": 1
+    }
+  }
+}

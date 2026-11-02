@@ -1,0 +1,59 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 762B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 274B done
+#3 DONE 0.0s
+
+#4 [runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#4 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 10.18kB 0.0s done
+#5 DONE 0.0s
+
+#6 [runtime 5/6] COPY . .
+#6 CACHED
+
+#7 [runtime 2/6] WORKDIR /app
+#7 CACHED
+
+#8 [runtime 6/6] RUN python tools/collect_static.py
+#8 CACHED
+
+#9 [runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#9 CACHED
+
+#10 [dev 1/2] COPY requirements-dev.txt .
+#10 CACHED
+
+#11 [runtime 3/6] COPY requirements.txt .
+#11 CACHED
+
+#12 [dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#12 CACHED
+
+#13 exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:c648f2dfcb6f4ce3e29291d0d110b28670d4d988ece560bb147b636d206aa0e5 done
+#13 exporting config sha256:ecc6fb9fba10580d12476218c4460f4b69b7e606ddd1da50939b7a4813cc864f done
+#13 exporting attestation manifest sha256:41f1a5d08d8366c4f1effcf8b59f56b0ecea5e7f308fe725f35248264c8bfccc 0.0s done
+#13 exporting manifest list sha256:ea96541f06a646bef619376c6946ceaac7ff9bb6ac83dfa72edcd1cbe60b77a6 0.0s done
+#13 naming to docker.io/library/mercer-bench-closeout-fixture-app-dev:latest done
+#13 unpacking to docker.io/library/mercer-bench-closeout-fixture-app-dev:latest done
+#13 DONE 0.1s
+ Container mercer-bench-closeout-fixture-bench-runner-run-1d70cb295f32 Creating 
+ Container mercer-bench-closeout-fixture-bench-runner-run-1d70cb295f32 Created 
+ Container mercer-bench-closeout-fixture-bench-runner-run-eb0bb89106b5 Creating 
+ Container mercer-bench-closeout-fixture-bench-runner-run-eb0bb89106b5 Created 
+ Container mercer-bench-closeout-fixture-bench-runner-run-aea7e8b26cfa Creating 
+ Container mercer-bench-closeout-fixture-bench-runner-run-aea7e8b26cfa Created 
+ Container mercer-bench-closeout-fixture-bench-runner-run-0c1b814ae8c9 Creating 
+ Container mercer-bench-closeout-fixture-bench-runner-run-0c1b814ae8c9 Created 

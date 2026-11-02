@@ -1,0 +1,3 @@
+{"ProcessName":"vmmem","Id":28440,"WorkingSetMiB":2944.48}
+✓ Stopping Docker Desktop
+{"docker_stopped":true,"other_wsl_distros_untouched":true,"remaining_vmmem_processes":1}
