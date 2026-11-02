@@ -146,8 +146,11 @@ def memory_settings(directory):
             path = (source / name).resolve()
             if not path.is_relative_to(source.resolve()) or not path.is_file():
                 break
+            sha256 = hashlib.sha256()
             with path.open("rb") as stream:
-                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    sha256.update(chunk)
+            digest = sha256.hexdigest()
             if digest != expected:
                 input_status = "checksum_mismatch"
                 break
