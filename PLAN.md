@@ -482,6 +482,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | done |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | done |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | ready |
+| `improvements` | Prioritised backlog from the 2 November full-stack review (Erfan); each item settled with Chee Long before work starts, approval items through a branch and pull request | the frozen Tier 1 application | 1 | planning |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
