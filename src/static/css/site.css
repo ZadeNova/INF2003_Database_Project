@@ -1698,6 +1698,16 @@ h1 {
     height: auto;
     min-height: 32rem;
     aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+}
+
+/* The icon fallback is cropped into a card corner; in the large frame it sits centred instead. */
+.product-detail .product-detail__media .tile__glyph {
+    position: static;
+    width: min(60%, 24rem);
+    height: auto;
+    aspect-ratio: 1;
 }
 
 .product-detail__info {

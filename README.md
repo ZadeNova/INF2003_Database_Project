@@ -20,8 +20,9 @@ Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.
 
 - Docker Desktop (Windows, macOS) or Docker Engine (Linux) with Compose 2.20 or later, using Linux containers. Start
   Docker Desktop first and wait until it reports the engine is running.
-- Python 3.8 or later on the host, only for `src/tools/init_env.py` and the documentation check. The application runs in
-  Docker. Host quality and browser checks use Python 3.13 and `src/requirements-dev.txt`. On Linux and macOS the command may be `python3`.
+- Python 3.8 or later on the host, only for `src/tools/init_env.py` and the documentation check. Both were run by hand
+  on 3.8 and 3.9 (they use only the standard library); CI runs them on 3.13 only. The application runs in Docker. Host
+  quality and browser checks use Python 3.13 and `src/requirements-dev.txt`. On Linux and macOS the command may be `python3`.
 - Git. Free ports 8000 (the app) and 27017 (MongoDB, bound to 127.0.0.1); change `APP_PORT` or `MONGO_PORT` in `.env`.
 
 ## Set up and run (fresh clone)

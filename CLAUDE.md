@@ -4,3 +4,23 @@
 
 Before starting a task, run the phase check in AGENTS.md against PLAN.md section 13, and check the task against
 [RUBRICS.md](RUBRICS.md): the team is aiming for an A.
+
+## Erfan's workflow (supersedes AGENTS.md "Workflow" and the plan-approval step of the phase check)
+
+Erfan is the sole owner and approver while Chee Long is away; read "owner" and "plan owner" in AGENTS.md as Erfan.
+AGENTS.md stays unedited for Chee Long and Codex. The Rules, Architecture, Documentation map and Running sections
+still apply in full.
+
+1. Discuss and plan.
+2. Review the plan and state the trade-offs, with a recommendation.
+3. Erfan decides. Build nothing before that.
+4. Implement on the current branch.
+5. Review with Opus 5.5 after a large change or when Erfan asks. It runs things, not only reads the diff.
+6. Erfan reviews the findings; one fix round.
+
+- **No new branches** unless Erfan asks. No commits or pushes unless asked. The branch-and-pull-request rule is waived.
+- **Docs follow every change:** update whatever the AGENTS.md documentation map says the change touches, in the same
+  pass, and run `scripts/check_docs.py`. Also update the improvements.md status and Decisions row for backlog items.
+- **Checks to run:** docs and copy changes need `check_docs.py`. Changes touching schema, raw SQL, money, roles,
+  uploads or concurrency also need the full Docker suite.
+- Skipped: the per-workstream close-out (AI_USE line, `status: done`). Lasting decisions still go in `docs/DECISIONS.md`.

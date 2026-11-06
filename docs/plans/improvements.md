@@ -34,7 +34,6 @@ closed benchmark or an owner decision. It needs that sign-off, then a branch and
 | 1 | Deliverables | Report (10 pages), slides and video (10:00 maximum) do not exist; the packager refuses to build without them | Report and presentation are half the grade; implementation is judged through them too | [deliverables](deliverables.md) milestones: report draft by 15 Nov, footage by 18 Nov | L | open |
 | 2 | Demo | Demo story step 1 ("hose nozle") returns no products on full data: no generated name contains "hose" or "nozzle". Typo tolerance itself works ("garden tols") | It opens the video | Choose a query that exists; update [OVERVIEW.md](../OVERVIEW.md#3-the-demo-story) and the script ★ | S | in progress |
 | 3 | Peer review | [CONTRIBUTIONS.md](../../CONTRIBUTIONS.md) records almost only Chee Long; Joash's student ID is missing; others are "not yet recorded" | The final mark is weighted by peer review | Every member records their actual work ★ | S | open |
-| 4 | Integrity | Reuse of the earlier module project has no written confirmation from the professors ([AI_USE.md](../AI_USE.md)) | The brief zeroes plagiarism and fails "total copy of existing code" | Email the professors and keep the reply ★ | S | open |
 | 5 | Benchmark, MongoDB | B2 pipelines are not idiomatic: B2a joins `products` for a `category_id` the order lines already carry ([b2.py](../../benchmarks/workloads/b2.py), [load.py](../../benchmarks/load.py)); B2b–d run one correlated `$lookup` per product or order; PostgreSQL has a materialized variant and MongoDB has none | The aggregation headline is partly an artifact; "rigorous comparison" is graded | Add idiomatic and maintained-summary variants against the same golden outputs; keep the originals; rerun B2 only on the designated machine ★ | M, approval | open |
 | 6 | Analysis | MongoDB's justification is not written, and the timed workloads favour PostgreSQL | Risks "implementations are not justified". Evidence exists: storage ([B5](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/B5.csv)), atomic single-document update ([B6](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/B6-states.csv)), embedding, migration-free schema change, GridFS, time-series TTL | Write the report and slide section ★ | M | open |
 
@@ -43,8 +42,8 @@ closed benchmark or an owner decision. It needs that sign-off, then a branch and
 | # | Area | Item | Why it matters | Fix | Effort | Status |
 |---|---|---|---|---|---|---|
 | 7 | UI | Product and shop names look like identifiers (a hexadecimal suffix on every name) | Visible on every screen of the video | Display-level change; regenerating names would change data checksums and benchmark provenance | M, approval | open |
-| 8 | UI | Product page media panel: a large empty box with the category icon clipped into its corner, in both themes | Looks broken | Override the card crop (`.tile__glyph` in [site.css](../../src/static/css/site.css)) for the detail panel ★ | S, approval | open |
-| 9 | UI | The footer on every page links to the foundation mockups, including a statistics page of invented figures ([base.html](../../src/templates/base.html)) | A marker will click it | Remove the footer section or the routes ★ | S, approval | open |
+| 8 | UI | Product page media panel: a large empty box with the category icon clipped into its corner, in both themes | Looks broken | Override the card crop (`.tile__glyph` in [site.css](../../src/static/css/site.css)) for the detail panel ★ | S, approval | done (unverified in browser) |
+| 9 | UI | The footer on every page links to the foundation mockups, including a statistics page of invented figures ([base.html](../../src/templates/base.html)) | A marker will click it | Remove the footer section or the routes ★ | S, approval | done |
 | 10 | Backend | The operator dashboard takes several seconds: [delivery_analysis](../../src/dashboard/services.py) loads every delivered order and every order score into Python on each request, and the stock panel is paged in Python | Visible on camera; "efficiency" is named in the brief | Decide: materialize at the source, or cache (Redis decision 1) | M | open |
 | 11 | MongoDB | `latest_reviews` is maintained on every review write ([reviews/services.py](../../src/reviews/services.py)) but never read; the product page queries `reviews` directly | The subset pattern and "a product page is one read" claim are not true | Read the subset on the product page, or drop the claim ★ | S–M, approval | open |
 | 12 | MongoDB | The unfiltered trending aggregation is the largest database cost on the home, shop and search pages; the category-filtered version is far cheaper | Paid on almost every page | Short-lived cache (Redis) or a better index ★ | S–M | open |
@@ -68,7 +67,7 @@ closed benchmark or an owner decision. It needs that sign-off, then a branch and
 | 25 | Security | No brute-force protection on login or review posting | Redis rate limiting (Tier 2) | M | open |
 | 26 | Cross-store | PostgreSQL-first writes log, rather than repair, a MongoDB failure | No code change: show `check_specs` in the demo; write it up as a reflection | S | open |
 | 27 | CI | Ruff selects only E, F and I | Add B, S and DJ; fix the findings | M | open |
-| 28 | CI, docs | The README claims host Python 3.8 or later; CI tests host scripts only on 3.13 | State the real minimum, or test it | S | open |
+| 28 | CI, docs | The README claims host Python 3.8 or later; CI tests host scripts only on 3.13 | State the real minimum, or test it | S | done |
 
 ### P3: disclose or leave
 
@@ -131,7 +130,7 @@ freeze, only bug fixes go in, so the submitted code matches the recording.
 |---|---|---|---|---|---|
 | 1 | #1 | Write: start the report fact sheets and the presentation amendment now, in parallel with the fixes below | Chee Long (deliverables amendment) | Ongoing to 28 Nov | Half the grade; cannot wait for a finished project |
 | 2 | #37, #2, #22 (wording only), #28 | Fix: delete the untracked notes; replace the demo query; change "live" to "on submit"; state the real host Python minimum | None (docs) | 4 Nov | Quick, removes three inaccuracies |
-| 3 | #3, #4 | Fix: every member updates CONTRIBUTIONS.md; email the professors about the reuse | None | 8 Nov | Peer-review weighting and integrity risk; minutes of work |
+| 3 | #3 | Fix: every member updates CONTRIBUTIONS.md | None | 8 Nov | Peer-review weighting; minutes of work |
 | 4 | Decision meeting | Decide #5, #7–#11, #16, #18–#21, #42, #45 and Redis (#10, #12, #25) in one sitting with Chee Long | Chee Long | 8 Nov | Unblocks every approval item at once |
 | 5 | #5, #13 | Fix: one benchmark amendment. Idiomatic and maintained-summary B2 variants; report B1 broad's hinted run beside the headline. Skip the compound-wildcard rerun unless it fits the same run | Chee Long; designated machine | 15 Nov | Protects the NoSQL half and the "rigorous comparison" |
 | 6 | #11 | Fix: render the first page of reviews from `latest_reviews`; otherwise remove the "one read" claim | Chee Long | 15 Nov | Makes the MongoDB design claim true; small |
@@ -168,6 +167,9 @@ freeze, only bug fixes go in, so the submitted code matches the recording.
 | 2 | 2 Nov 2026 | Erfan: remove the failing "hose nozle" example from the [OVERVIEW.md](../OVERVIEW.md#3-the-demo-story) demo story without naming a replacement. The video script picks a query verified on full data; that choice is deferred, so the item stays in progress | Docs only; the overview no longer promises a search that returns nothing |
 | 22 | 2 Nov 2026 | Erfan: the overview now says facet counts are shown for each search, not that they update live. The `hx-get` live filtering is dropped, as triaged | Docs only; matches the application's submit-and-reload behaviour |
 | 37 | 2 Nov 2026 | Erfan: the two untracked `RESUME_*` notes were deleted from the repository root; they were never committed | The working-tree documentation check passes again |
+| 28 | 7 Nov 2026 | Erfan: keep "Python 3.8 or later". `init_env.py` and `check_docs.py` were run on 3.8 and 3.9 and pass; the README now says so and that CI runs them on 3.13 only. A 3.8 CI job is not added | Docs only; the claim was true but unverified in CI |
+| 9 | 7 Nov 2026 | Erfan: remove the four mockup links (foundation preview, patterns, states, statistics preview) from the footer; keep "System status" under a "Status" heading. The 404 page's "overview" button now goes to the home page. The routes stay because tests use them | The footer no longer sends a marker to invented figures |
+| 8 | 7 Nov 2026 | Erfan: centre the category icon in the product page media frame (`.product-detail__media` in `site.css`), instead of the card-corner crop | CSS only; photos are unaffected |
 
 ## Review notes
 
