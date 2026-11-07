@@ -37,7 +37,7 @@ orders**, one per seller. The checkout holds the payment; each seller ships thei
 
 This is the path the video follows, and it touches almost every feature:
 
-1. A customer searches with a typo and still finds matching products, then narrows the results with filters; each
+1. A customer searches with a typo ("garden tols") and still finds matching products, then narrows the results with filters; each
    search shows how many products match every filter value. The home page shows trending products.
 2. They add products from three different sellers and pay once: one checkout, three orders, stock reduced exactly.
 3. Each seller logs in and ships their own order; the operator marks them delivered.

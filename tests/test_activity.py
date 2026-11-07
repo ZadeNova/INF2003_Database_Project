@@ -15,6 +15,7 @@ from django.test import Client
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
 
+import activity.services as activity_services
 from activity.services import EVENT_WRITE_CONCERN, seller_insights, trending_pipeline
 from catalogue.models import Product
 from config.mongo_schema import EVENT_TTL_SECONDS, setup_events
@@ -158,6 +159,7 @@ def test_trending_rank_ties_category_and_time_window_match_direct_counts(mongo_d
 def test_event_collection_failure_is_logged_and_does_not_break_product_or_search(mongo_db, caplog):
     item = product()
     mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
     # Real incompatible storage state, not a mocked insert exception. The writer refuses to create
     # ordinary events accidentally; catalogue reads still use their healthy collections.
     mongo_db.create_collection(
@@ -178,9 +180,24 @@ def test_event_collection_failure_is_logged_and_does_not_break_product_or_search
 def test_missing_events_collection_is_not_silently_created_as_regular_storage(mongo_db):
     item = product()
     mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
     try:
         assert Client().get(f"/products/{item.pk}/").status_code == 200
         assert "events" not in mongo_db.list_collection_names()
+    finally:
+        setup_events(mongo_db)
+
+
+def test_collection_check_is_remembered_after_it_passes_and_retried_after_it_fails(mongo_db):
+    item = product()
+    activity_services.EVENTS_READY = False
+    assert Client().get(f"/products/{item.pk}/").status_code == 200
+    assert activity_services.EVENTS_READY is True
+    mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
+    try:
+        assert Client().get(f"/products/{item.pk}/").status_code == 200
+        assert activity_services.EVENTS_READY is False
     finally:
         setup_events(mongo_db)
 

@@ -71,6 +71,20 @@ def test_sold_out_products_stay_in_search_counts(imported, mongo_db):
     assert item.pk in {p.pk for p in response.context["page_obj"]}
 
 
+def test_filters_alone_turn_the_home_page_into_a_search(imported, mongo_db):
+    client = Client()
+    assert client.get("/products/").context["searching"] is False
+    for params in ({"min_price": "1"}, {"max_price": "100000"}, {"rating": "1"}, {"sort": "price"}):
+        assert client.get("/products/", params).context["searching"] is True, params
+    assert client.get("/products/", {"min_price": "99999999"}).context["result_count"] == 0
+
+
+def test_blank_or_spaces_only_values_are_not_a_search(imported, mongo_db):
+    client = Client()
+    for params in ({"q": "   "}, {"q": ""}, {"min_price": "", "sort": ""}):
+        assert client.get("/products/", params).context["searching"] is False, params
+
+
 def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db):
     item, spec = sample(mongo_db)
     attribute, value = next(iter(spec["attributes"].items()))

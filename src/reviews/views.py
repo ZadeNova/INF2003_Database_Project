@@ -38,12 +38,21 @@ class CustomerReviewView(CustomerRequiredMixin, View):
         action = request.POST.get("action")
         form = ReviewForm(request.POST)
         if action == "delete" or form.is_valid():
+            with mongo.client() as client:
+                existing = client[mongo.database_name()].reviews.find_one(
+                    {"order_line_id": line.pk, "customer_id": request.user.pk}, {"taken_down": 1}
+                )
             try:
                 write_review(request.user, line_id, action, form.cleaned_data if action != "delete" else None)
             except ValidationError as error:
                 form.add_error(None, error)
             else:
-                messages.success(request, "Review deleted." if action == "delete" else "Review saved.")
+                if action == "delete":
+                    messages.success(request, "Review deleted.")
+                elif existing and existing.get("taken_down"):
+                    messages.info(request, "Review saved, but it stays hidden until an operator restores it.")
+                else:
+                    messages.success(request, "Review saved.")
                 return redirect("orders:order_detail", pk=line.order_id)
         with mongo.client() as client:
             review = client[mongo.database_name()].reviews.find_one(

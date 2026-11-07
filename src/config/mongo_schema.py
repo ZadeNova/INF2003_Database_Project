@@ -70,6 +70,11 @@ INDEXES = {
         IndexModel([("olist_review_id", ASCENDING)], name="review_olist_source"),
         IndexModel([("product_id", ASCENDING), ("answered_at", DESCENDING)], name="review_product_date"),
         IndexModel([("seller_id", ASCENDING), ("answered_at", DESCENDING)], name="review_seller_date"),
+        # The operator list sorts every review newest first; without this it sorts them all in memory on each page.
+        IndexModel(
+            [("answered_at", DESCENDING), ("olist_review_id", DESCENDING), ("order_line_id", DESCENDING)],
+            name="review_newest",
+        ),
     ],
     "product_specs": [
         IndexModel([("category_id", ASCENDING)], name="spec_category"),

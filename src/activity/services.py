@@ -18,6 +18,7 @@ from orders.models import OrderLine
 
 logger = logging.getLogger("mercer.errors")
 EVENT_WRITE_CONCERN = WriteConcern(w=1, wtimeout=1000)
+EVENTS_READY = False
 
 
 def visitor(request, *, create=False):
@@ -31,6 +32,7 @@ def visitor(request, *, create=False):
 
 
 def record_event(request, event_type, *, product=None, query="", category=None):
+    global EVENTS_READY
     if request.method != "GET" or event_type not in {"view", "search"}:
         return
     identity = visitor(request, create=True)
@@ -45,10 +47,12 @@ def record_event(request, event_type, *, product=None, query="", category=None):
     try:
         with mongo.client() as client:
             events = client[mongo.database_name()].events.with_options(write_concern=EVENT_WRITE_CONCERN)
-            # Never let an insert silently create a regular collection before mongo_setup has run.
-            if events.options().get("timeseries", {}).get("timeField") != "ts":
+            # Never let an insert silently create a regular collection before mongo_setup has run. A passed check is
+            # remembered for the process (the collection is not dropped while the app runs); a failed one is retried.
+            if not EVENTS_READY and events.options().get("timeseries", {}).get("timeField") != "ts":
                 logger.warning("activity.event_write_failed")
                 return
+            EVENTS_READY = True
             events.insert_one(event)
     except PyMongoError:
         # No query, user/session identifier or database exception message enters the log.

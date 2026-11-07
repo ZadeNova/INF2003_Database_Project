@@ -27,6 +27,7 @@ from dashboard.services import (
     dashboard_data,
     delivery_analysis,
     end_of_day,
+    label_month_to_date,
     poor_reviews_pipeline,
     query_rows,
     refresh_sales,
@@ -116,6 +117,26 @@ def test_category_revenue_units_rank_and_calendar_month_change(imported):
             assert abs(row["change_percent"] - change) < Decimal("1e-12")
         else:
             assert row["change_percent"] is None
+
+
+def test_month_to_date_drops_only_the_change_of_the_month_the_reporting_date_cuts_short():
+    rows = [
+        {"month": date(2018, 9, 1), "change_percent": Decimal(5)},
+        {"month": date(2018, 10, 1), "change_percent": Decimal(-60)},
+    ]
+    labelled = label_month_to_date(rows, date(2018, 10, 17))
+    assert [(r["month_to_date"], r["change_percent"]) for r in labelled] == [(False, Decimal(5)), (True, None)]
+    # A reporting date on the last day of the month completes it, so its change stays.
+    assert label_month_to_date(rows[1:], date(2018, 10, 31)) == [{**rows[1], "month_to_date": False}]
+    assert rows[1]["change_percent"] == Decimal(-60)  # the input rows are not modified
+
+
+def test_dashboard_page_marks_the_cut_short_month(imported):
+    as_of = as_of_date()
+    partial = (as_of + timedelta(days=1)).day != 1
+    client = Client()
+    client.force_login(make_operator())
+    assert (b"month to date" in client.get("/operator/dashboard/").content) is partial
 
 
 def test_demo_orders_do_not_move_anchor_and_future_events_do_not_enter_sales(imported):

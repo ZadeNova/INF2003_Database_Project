@@ -17,6 +17,9 @@ from .forms import SearchForm
 from .models import Category
 from .search import PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page, visible_products
 
+# Any of these, once non-blank, turns the shop home page into a search; blank or spaces-only values do not.
+SEARCH_PARAMS = ("q", "category", "min_price", "max_price", "rating", "sort")
+
 
 def _filter_chips(form, data):
     chips = []
@@ -46,7 +49,7 @@ def _listing(request, category=None):
         data["category"] = str(category.pk)
     core = SearchForm(data)
     context = {"search_form": core, "category": category, "categories": Category.objects.order_by("name_en")}
-    searching = bool(data.get("q") or data.get("category"))
+    searching = any(data.get(name, "").strip() for name in SEARCH_PARAMS)
     if not core.is_valid():
         context.update(page_obj=Paginator([], PAGE_SIZE).get_page(1), searching=True)
         return render(request, "catalogue/product_list.html", context, status=400)

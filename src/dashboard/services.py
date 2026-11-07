@@ -63,6 +63,19 @@ def category_performance(as_of):
     return query_rows(CATEGORY_PERFORMANCE, {"as_of": as_of})
 
 
+def label_month_to_date(rows, as_of):
+    """Mark the month the reporting date cuts short and drop its change (part of a month against a whole one).
+
+    The SQL itself stays unchanged: benchmark B2a and its golden output run the same query.
+    """
+    labelled = []
+    for row in rows:
+        next_month = (row["month"].replace(day=28) + timedelta(days=4)).replace(day=1)
+        partial = next_month - timedelta(days=1) > as_of
+        labelled.append({**row, "month_to_date": partial, "change_percent": None if partial else row["change_percent"]})
+    return labelled
+
+
 def order_scores_pipeline(end):
     return [
         {"$match": {"taken_down": {"$ne": True}, "from_order_review": {"$ne": True}, "answered_at": {"$lt": end}}},
@@ -138,7 +151,7 @@ def dashboard_data(as_of, category=None, seller=None):
     ]
     return {
         "stock_rows": stock_planning(as_of, category, seller),
-        "category_rows": category_performance(as_of),
+        "category_rows": label_month_to_date(category_performance(as_of), as_of),
         "delay_rows": buckets,
         "seller_rows": sellers,
         "poor_rows": poor,

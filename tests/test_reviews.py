@@ -96,6 +96,24 @@ def test_undelivered_reviews_are_refused(graph, mongo_db, status):
     assert mongo_db.reviews.count_documents({}) == 0
 
 
+def saved_messages(response):
+    return [str(message) for message in response.context["messages"]]
+
+
+def test_editing_a_taken_down_review_says_it_stays_hidden(graph, mongo_db):
+    buyer, item = graph
+    line = line_for(buyer, item)
+    write_review(buyer, line.pk, "create", {"score": 5, "title": "Good", "text": "Fine"})
+    client = Client()
+    client.force_login(buyer)
+    form = {"action": "edit", "score": 4, "title": "Better", "text": "Still fine"}
+    assert saved_messages(client.post(f"/reviews/line/{line.pk}/", form, follow=True)) == ["Review saved."]
+    moderate_review(make_operator(), line.pk, "takedown", "Evidence checked")
+    response = client.post(f"/reviews/line/{line.pk}/", form, follow=True)
+    assert saved_messages(response) == ["Review saved, but it stays hidden until an operator restores it."]
+    assert mongo_db.reviews.find_one({"order_line_id": line.pk})["taken_down"] is True
+
+
 def test_other_customer_and_duplicate_and_invalid_scores_are_refused(graph, mongo_db):
     buyer, item = graph
     line = line_for(buyer, item)
@@ -257,6 +275,32 @@ def test_seller_rating_match_uses_seller_date_index_and_only_own_documents(impor
     assert stats["nReturned"] == len(expected)
     assert stats["totalDocsExamined"] == mongo_db.reviews.count_documents({"seller_id": seller_id})
     assert mongo_db.reviews.index_information()["review_seller_date"]["key"] == [("seller_id", 1), ("answered_at", -1)]
+
+
+def test_operator_newest_first_list_is_served_by_an_index_without_an_in_memory_sort(mongo_db):
+    for _ in range(2):
+        call_command("mongo_setup", database=mongo_db.name, stdout=StringIO())
+    assert mongo_db.reviews.index_information()["review_newest"]["key"] == [
+        ("answered_at", -1),
+        ("olist_review_id", -1),
+        ("order_line_id", -1),
+    ]
+    explained = mongo_db.command(
+        "explain", {"find": "reviews", "filter": {}, "sort": dict(NEWEST), "limit": 10}, verbosity="queryPlanner"
+    )
+
+    def stages(node):
+        if isinstance(node, dict):
+            if "stage" in node:
+                yield node["stage"]
+            for child in node.values():
+                yield from stages(child)
+        elif isinstance(node, list):
+            for child in node:
+                yield from stages(child)
+
+    found = set(stages(explained["queryPlanner"]["winningPlan"]))
+    assert "IXSCAN" in found and "SORT" not in found
 
 
 @pytest.mark.parametrize("without_historical", [False, True])
