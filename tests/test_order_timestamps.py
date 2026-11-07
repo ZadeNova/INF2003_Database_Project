@@ -1,10 +1,12 @@
 """The delay analysis is computed from order timestamps, so the database refuses to let the web role rewrite them."""
 
+import os
 from datetime import datetime, timezone
 
 import pytest
 from account_helpers import runtime_connection
 from checkout_helpers import customer, paid_order, product
+from django.db import connection
 from psycopg import errors
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -48,6 +50,25 @@ def test_a_legitimate_status_change_still_stamps_its_own_timestamp_whatever_the_
             "SELECT status, shipped_at FROM orders_order WHERE id = %s", [order.pk]
         ).fetchone()
     assert status == "shipped" and shipped_at > datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+
+def test_runtime_cannot_disable_replace_or_drop_the_guard_and_it_is_owner_owned():
+    with runtime_connection() as runtime:
+        for statement in (
+            "ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard",
+            "CREATE OR REPLACE FUNCTION public.protect_order_timestamps() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$",
+            "ALTER FUNCTION public.protect_order_timestamps() SET search_path = pg_temp, public",
+            "DROP FUNCTION public.protect_order_timestamps() CASCADE",
+        ):
+            with pytest.raises(errors.InsufficientPrivilege):
+                runtime.execute(statement)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_get_userbyid(proowner), prosecdef, proconfig, has_function_privilege(%s, oid, 'EXECUTE') "
+            "FROM pg_proc WHERE oid = 'public.protect_order_timestamps()'::regprocedure",
+            [os.environ["POSTGRES_RUNTIME_USER"]],
+        )
+        assert cursor.fetchone() == (os.environ["POSTGRES_USER"], False, ["search_path=public, pg_temp"], False)
 
 
 def test_untouched_timestamps_do_not_block_other_updates():

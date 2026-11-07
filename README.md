@@ -508,11 +508,13 @@ docker compose run --rm migrate python manage.py create_operator <username>
 
 ## Catalogue and seller products
 
-After pulling catalogue changes into an existing setup, add its MongoDB indexes once (the `migrate` service runs
-Django migrations only; `mongo_setup` is idempotent):
+After pulling catalogue or review changes into an existing setup, add the new MongoDB indexes once (the `migrate`
+service runs Django migrations only; `mongo_setup` is idempotent). `seed_demo` is idempotent too: rerun it after pulling
+to create any new demo logins (the three sellers) and refresh their labelled products:
 
 ```sh
 docker compose run --rm migrate python manage.py mongo_setup
+docker compose run --rm migrate python manage.py seed_demo
 ```
 
 ### Catalogue browsing

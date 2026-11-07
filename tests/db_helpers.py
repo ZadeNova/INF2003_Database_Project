@@ -27,7 +27,12 @@ def wait_until_blocked(attempts=100):
 
 @contextmanager
 def timestamp_guard_off():
-    """Let a test place an order in time by switching the lifecycle timestamp guard off (the owner may; runtime may not)."""
+    """Let a test place an order in time by switching the lifecycle timestamp guard off (the owner may; runtime may not).
+
+    This is an autocommitted ALTER TABLE, so the guard is off for every session while the block runs. That is safe only
+    because the suite runs serially; it cannot be made transactional, since PostgreSQL refuses ALTER TABLE while the
+    deferred money-check triggers of the update are still pending.
+    """
     with connection.cursor() as cursor:
         cursor.execute("ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard")
     try:

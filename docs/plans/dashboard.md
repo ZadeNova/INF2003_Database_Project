@@ -108,3 +108,8 @@ skips remain visible; host docs/packaging checks passed (host-docs-packaging-tes
 corresponding plans. mongo_setup installed the new seller-review index in the local application database. The AI use
 log identifies the Claude Code session that supplied this brief as not fresh. All four Phase 3A workstreams stay in
 review with plans in-progress, pending re-review. The lower branches are unchanged; no push, PR or merge was performed.
+
+8 November 2026, amendment from the improvements backlog ([#52, #57](improvements.md)): the app's stock planning is one
+grouped 28-day sum (`STOCK_PLANNING_FAST`) with the same results; the window-function query stays as `STOCK_PLANNING` for
+benchmark B2. The delivery-delay panels now include copied order reviews, because copies in an order share its score;
+MongoDB returns an integer sum and count per order. The contract above is otherwise unchanged.

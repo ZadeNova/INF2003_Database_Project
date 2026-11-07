@@ -43,7 +43,7 @@ def _merge_concurrent_edits(item, cleaned):
         live = getattr(item, name)
         if cleaned[name] == expected:
             merged[name] = live
-        elif live != expected:
+        elif cleaned[name] != live and live != expected:
             raise StaleProductError(
                 f"The {name} changed to {live} while you were editing. Check it and save again.",
                 {"stock": item.stock, "price": item.price},

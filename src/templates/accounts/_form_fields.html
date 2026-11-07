@@ -1,5 +1,5 @@
 {% for field in form %}
-{% if field.is_hidden %}{{ field }}{% else %}
+{% if field.is_hidden %}{{ field }}{% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}{% else %}
 <div class="form-field{% if field.errors %} form-field--invalid{% endif %}">
     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}

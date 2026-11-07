@@ -81,6 +81,8 @@ class SellerProductEditView(SellerRequiredMixin, View):
                 refreshed["expected_price"] = str(error.live["price"])
                 form = self.form(request, item, data=refreshed)
                 form.add_error(None, error)
+                if request.FILES.get("photo"):
+                    form.add_error(None, "Choose your photo again: a browser cannot keep a selected file.")
             except ValidationError as error:
                 form.add_error(None, error)
             else:

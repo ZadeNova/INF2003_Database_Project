@@ -52,9 +52,12 @@ class ProductForm(forms.ModelForm):
         for name, kind in (("stock", int), ("price", Decimal)):
             raw = (cleaned.get("expected_" + name) or "").strip()
             try:
-                cleaned["expected_" + name] = kind(raw) if raw else None
+                value = kind(raw) if raw else None
+                if isinstance(value, Decimal) and not value.is_finite():  # NaN and Infinity cannot be compared safely
+                    raise ValueError
             except (ValueError, ArithmeticError):
                 raise forms.ValidationError("This form is out of date. Reload the page and try again.") from None
+            cleaned["expected_" + name] = value
         if self.template is None:
             raise forms.ValidationError("This category is temporarily unavailable.")
         if cleaned.get("category") and cleaned["category"].pk != self.template["category_id"]:

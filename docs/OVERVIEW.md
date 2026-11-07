@@ -100,7 +100,7 @@ added.
 | T3 | **Checkout and orders** | One cart, one payment, one order per seller; ship, deliver, cancel with refund | Row locking (`FOR UPDATE`) so two buyers never get the last item; a deferred constraint (payments must equal the total); a status-transition trigger; composite foreign keys enforcing one seller per order | `checkout` |
 | T4 | **Reviews** | Review each item once after delivery; ratings update instantly; "Top rated" sorting | Unique index (one review per item); a multi-document transaction updating review and rating together; the subset pattern; a Bayesian rating | `reviews` |
 | T5 | **Wishlist** | Save sold-out items; get a restock alert | A many-to-many table; a trigger; a partial unique index | `wishlist` |
-| T6 | **Dashboard** | Products that will run out before they can be restocked; best categories | Materialized view; window functions (moving-average forecast, `RANK`, `LAG`); a `SECURITY DEFINER` function | `dashboard` |
+| T6 | **Dashboard** | Products that will run out before they can be restocked; best categories | Materialized view; window functions (`RANK`, `LAG`; the moving-average forecast now lives in benchmark B2, the app uses a grouped sum); a `SECURITY DEFINER` function | `dashboard` |
 | T6b | **Late deliveries against reviews** | Sellers at risk of bad reviews | A cross-database analysis: delivery delay from PostgreSQL, scores from MongoDB | `dashboard` |
 | T6c | **Activity** | Recently viewed, trending now, sellers' views-to-sales | A MongoDB time-series collection with automatic 30-day expiry; window ranking | `activity` |
 | T7 | **Benchmark** | Charts comparing the two databases | Same data, same tasks, correctness checked before timing; query plans from both engines | `benchmark` |

@@ -1,15 +1,20 @@
 """Seller CRUD, real cross-store failures, raster uploads, moderation and live category options."""
 
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from decimal import Decimal
 from io import BytesIO, StringIO
 
 import pytest
 from account_helpers import make_customer, make_operator, make_seller
 from bson import Decimal128
+from db_helpers import wait_until_blocked
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connections, transaction
 from django.test import Client
 from gridfs import GridFS
 from PIL import Image, PngImagePlugin
@@ -19,6 +24,7 @@ from accounts.models import AuditLog
 from catalogue.models import Category, Product
 from catalogue.seller_forms import ProductForm
 from catalogue.services import save_product
+from config import mongo
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -154,6 +160,81 @@ def test_a_real_conflict_is_refused_and_the_form_expects_the_live_values_next(sh
     assert item.stock == 20
 
 
+def test_typing_exactly_the_value_someone_else_just_set_is_not_a_conflict(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="5", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 5
+
+
+def test_a_refused_save_says_the_chosen_photo_must_be_chosen_again(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="20", expected_stock="8", expected_price="12.34", photo=photo())
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "Choose your photo again" in response.content.decode()
+
+
+def test_a_save_waits_for_a_sale_in_flight_and_then_keeps_its_stock(shop, mongo_db):
+    """Two real connections: a sale holds the product row while the seller's save arrives, then commits."""
+    seller, category, _, _ = shop
+    item = create(shop)
+    locked, release = threading.Event(), threading.Event()
+
+    def sell():
+        connections.close_all()
+        try:
+            with transaction.atomic():
+                Product.objects.select_for_update().get(pk=item.pk)
+                Product.objects.filter(pk=item.pk).update(stock=5)
+                locked.set()
+                release.wait(timeout=30)
+        finally:
+            connections.close_all()
+
+    def save():
+        # MongoDB test routing is per thread: without it this thread would write to the real application database.
+        with mongo.using_database(mongo_db.name):
+            assert mongo.database_name() == mongo_db.name
+            return _save()
+
+    def _save():
+        connections.close_all()
+        try:
+            cleaned = {
+                "name": item.name,
+                "category": category,
+                "price": Decimal("12.34"),
+                "stock": 8,  # unchanged from what the form showed
+                "freight": Decimal("1.23"),
+                "lead_time_days": 2,
+                "description": "Saved while a sale was in flight",
+                "attributes": {"material": "steel", "capacity": 2, "wireless": False},
+                "photo": None,
+                "expected_stock": 8,
+                "expected_price": Decimal("12.34"),
+            }
+            return save_product(seller, seller.user, cleaned, pk=item.pk)
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sale = pool.submit(sell)
+        assert locked.wait(timeout=30)
+        saving = pool.submit(save)
+        wait_until_blocked()  # the save is now waiting on the sale's row lock
+        release.set()
+        sale.result(timeout=30)
+        saving.result(timeout=30)
+    item.refresh_from_db()
+    assert item.stock == 5  # the sale survived the save
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "Saved while a sale was in flight"
+
+
 def test_a_price_conflict_is_refused_too(shop, mongo_db):
     _, category, _, client = shop
     item = create(shop)
@@ -165,7 +246,17 @@ def test_a_price_conflict_is_refused_too(shop, mongo_db):
     assert str(item.price) == "11.00"
 
 
-@pytest.mark.parametrize("field,value", [("expected_stock", "abc"), ("expected_price", "x")])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("expected_stock", "abc"),
+        ("expected_price", "x"),
+        ("expected_price", "sNaN"),
+        ("expected_price", "-sNaN"),
+        ("expected_price", "NaN"),
+        ("expected_price", "Infinity"),
+    ],
+)
 def test_a_tampered_expected_value_is_a_refused_form_not_a_server_error(shop, mongo_db, field, value):
     _, category, _, client = shop
     item = create(shop)

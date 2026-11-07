@@ -23,4 +23,7 @@ still apply in full.
   pass, and run `scripts/check_docs.py`. Also update the improvements.md status and Decisions row for backlog items.
 - **Checks to run:** docs and copy changes need `check_docs.py`. Changes touching schema, raw SQL, money, roles,
   uploads or concurrency also need the full Docker suite.
+- **Tests that start their own threads** must wrap the thread body in `mongo.using_database(mongo_db.name)`. MongoDB test
+  routing is per thread; an unrouted thread writes to the real application database (this overwrote two dev product
+  specifications once, repaired from the import data).
 - Skipped: the per-workstream close-out (AI_USE line, `status: done`). Lasting decisions still go in `docs/DECISIONS.md`.
