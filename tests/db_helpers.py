@@ -1,6 +1,7 @@
 """Helpers for deterministic PostgreSQL concurrency tests."""
 
 import threading
+from contextlib import contextmanager
 
 from django.db import connection
 
@@ -22,3 +23,15 @@ def wait_until_blocked(attempts=100):
                 return
         threading.Event().wait(0.1)
     raise AssertionError("no session became blocked on a lock")
+
+
+@contextmanager
+def timestamp_guard_off():
+    """Let a test place an order in time by switching the lifecycle timestamp guard off (the owner may; runtime may not)."""
+    with connection.cursor() as cursor:
+        cursor.execute("ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard")
+    try:
+        yield
+    finally:
+        with connection.cursor() as cursor:
+            cursor.execute("ALTER TABLE orders_order ENABLE TRIGGER order_timestamp_guard")

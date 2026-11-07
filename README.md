@@ -581,9 +581,9 @@ events after that date are excluded. Inventory remains the current stock so a se
 
 The stock table averages demand over 28 complete calendar dates, including zero-sale days, and flags cover shorter
 than lead time. Filter it by category or seller number. Category tables show monthly revenue, units, rank and
-month-on-month change; the locally bundled Chart.js chart shows the latest month's leading categories. Revenue is
+month-on-month change (the month the reporting date cuts short shows "month to date" and no percentage); the locally bundled Chart.js chart shows the latest month's leading categories. Revenue is
 item value without freight. Delivery panels join PostgreSQL delivery dates and zip-centre distances with one MongoDB
-score per order, excluding copied order reviews. Seller risk requires at least ten delivered orders by the reporting
+score per order (copies of an order's review share its score, so multi-line orders count). Seller risk requires at least ten delivered orders by the reporting
 date; more than 20% late marks a seller at risk. The panel states how many smaller samples it excludes. The poor-review
 panel lists products averaging at most two stars from at least five reviews.
 

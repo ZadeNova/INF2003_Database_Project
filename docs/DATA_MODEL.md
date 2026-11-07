@@ -283,6 +283,14 @@ The orders `0003_protect_money_deletes` migration additionally revokes runtime D
 retain the DELETE privilege needed by the application. This prevents erasing a paid checkout or bypassing the
 UPDATE-only lifecycle/audit triggers by deleting and reinserting a shipped order (checkout-i11).
 
+**Order timestamp guard (`orders` 0004).** order_timestamp_guard (BEFORE UPDATE, only when a lifecycle column or the status
+changes) runs the invoker-rights function `public.protect_order_timestamps()`. `placed_at` and `estimated_delivery`
+never change. Without a status change none of `paid_at`, `shipped_at`, `delivered_at` and `cancelled_at` may change.
+With one, only the destination timestamp may move, and `order_status_transition` (which fires first, by name) stamps
+it with `now()` whatever the statement said. Violations raise SQLSTATE 23514. The delay analysis is computed from
+these columns, so the web role can no longer make a late delivery look on time; the owner role (migrations, the import,
+tests) can still disable the trigger, and the importer does so while loading, like the other user triggers.
+
 **Product search and audit (`catalogue` 0002).** The trusted pg_trgm extension and the `product_name_trgm` GIN index
 on product.name serve typo-tolerant name search. product_update_audit (AFTER UPDATE, only when price, stock, active or
 taken_down actually changes) runs the owner-owned SECURITY DEFINER function `public.audit_product_update()` with
@@ -321,11 +329,16 @@ first population normally and later REFRESH MATERIALIZED VIEW CONCURRENTLY. The 
 the verified import; a refresh failure reports that the import committed. The operator can also refresh by POST.
 Runtime keeps SELECT on the view and cannot refresh it directly.
 
-The stock query fills zero-sale calendar days before a 28-row AVG window. Exact integer/numeric cross multiplication
+The dashboard's stock query is one grouped sum over the last 28 days (`STOCK_PLANNING_FAST`); the earlier version, which fills
+zero-sale calendar days before a 28-row AVG window per product, stays as `STOCK_PLANNING` for benchmark B2. Both give the same
+rows. Exact integer/numeric cross multiplication
 compares cover with lead time, avoiding rounding at the replenishment boundary. Category revenue uses monthly RANK
 and calendar-aware LAG. Delivery buckets use local calendar-day differences and SQL haversine distance between zip
 centre points; missing geolocation stays null. SQL order rows join one MongoDB mean score per order in Python,
-excluding hidden reviews, copied from_order_review rows and reviews/deliveries after the reporting date. Poor-product
+excluding hidden reviews and reviews/deliveries after the reporting date. Copied from_order_review rows are included: copies
+in one order share its score, so the mean per order is unchanged and multi-line orders are no longer dropped; MongoDB returns
+the integer sum and count per order and the mean is divided in Python. Benchmark B2 still excludes copies in its own
+queries until the Batch 6 amendment. Poor-product
 ratings are another MongoDB aggregation with the same date and moderation boundary.
 
 The named STOCK_PLANNING, CATEGORY_PERFORMANCE, BAYESIAN_RATING and DELAY_BUCKETS SQL definitions live in

@@ -10,7 +10,7 @@ from config.ids import BIGINT_MAX
 
 from .models import Category, Product
 from .seller_forms import ProductForm
-from .services import deactivate_product, save_product
+from .services import StaleProductError, deactivate_product, save_product
 
 
 class SellerProductListView(SellerRequiredMixin, View):
@@ -31,7 +31,7 @@ class SellerProductEditView(SellerRequiredMixin, View):
     def product(self, pk):
         return get_object_or_404(Product, pk=pk, seller=self.seller, taken_down=False) if pk is not None else None
 
-    def form(self, request, item):
+    def form(self, request, item, data=None):
         # The category is still validated by ModelChoiceField; this conversion only chooses template fields.
         raw = request.POST.get("category") if request.method == "POST" else request.GET.get("category")
         try:
@@ -51,7 +51,7 @@ class SellerProductEditView(SellerRequiredMixin, View):
             spec = database.product_specs.find_one({"_id": item.pk}) if item else None
         bound = request.method == "POST"
         form = ProductForm(
-            request.POST if bound else None,
+            (request.POST if data is None else data) if bound else None,
             request.FILES if bound else None,
             instance=item,
             template=template,
@@ -74,6 +74,13 @@ class SellerProductEditView(SellerRequiredMixin, View):
         if form.is_valid():
             try:
                 save_product(self.seller, request.user, form.cleaned_data, pk=pk)
+            except StaleProductError as error:
+                # Keep what the seller typed, but expect the live values from now on so a second save can succeed.
+                refreshed = request.POST.copy()
+                refreshed["expected_stock"] = str(error.live["stock"])
+                refreshed["expected_price"] = str(error.live["price"])
+                form = self.form(request, item, data=refreshed)
+                form.add_error(None, error)
             except ValidationError as error:
                 form.add_error(None, error)
             else:

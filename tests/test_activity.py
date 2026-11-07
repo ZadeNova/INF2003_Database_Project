@@ -9,6 +9,7 @@ from io import StringIO
 import pytest
 from account_helpers import make_operator
 from checkout_helpers import customer, paid_order, product
+from db_helpers import timestamp_guard_off
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client
@@ -208,7 +209,8 @@ def test_insights_views_units_ratio_and_seller_scoping(mongo_db):
     for target in [item, other]:
         mongo_db.events.insert_many([event(target, now - timedelta(hours=2), generated=True) for _ in range(4)])
         _, order = paid_order(buyer, target)
-        Order.objects.filter(pk=order.pk).update(placed_at=now - timedelta(days=1))
+        with timestamp_guard_off():
+            Order.objects.filter(pk=order.pk).update(placed_at=now - timedelta(days=1))
         OrderLine.objects.create(
             order=order, seller=target.seller, product=target, quantity=1, unit_price=10, freight=2
         )
@@ -216,7 +218,8 @@ def test_insights_views_units_ratio_and_seller_scoping(mongo_db):
     _, cancelled = paid_order(buyer, item, status="cancelled")
     OrderLine.objects.create(order=cancelled, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
     _, future = paid_order(buyer, item)
-    Order.objects.filter(pk=future.pk).update(placed_at=now + timedelta(days=1))
+    with timestamp_guard_off():
+        Order.objects.filter(pk=future.pk).update(placed_at=now + timedelta(days=1))
     OrderLine.objects.create(order=future, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
     result = seller_insights(item.seller, now=now)
     assert len(result["insights"]) == 1

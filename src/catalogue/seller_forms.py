@@ -17,6 +17,10 @@ class ProductForm(forms.ModelForm):
     freight = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, label="Shipping fee (S$)")
     stock = forms.IntegerField(min_value=0, max_value=MAX_STOCK, help_text="Up to 99,999 units per product.")
     lead_time_days = forms.IntegerField(label="Ready to ship in (days)", min_value=0, max_value=2**31 - 1)
+    # What the seller saw when the form was opened. Sales change stock while a form is open, so the service
+    # compares these with the live row instead of overwriting it with an old value.
+    expected_stock = forms.CharField(required=False, widget=forms.HiddenInput)
+    expected_price = forms.CharField(required=False, widget=forms.HiddenInput)
 
     class Meta:
         model = Product
@@ -27,6 +31,9 @@ class ProductForm(forms.ModelForm):
         self.template = template
         self.fields["category"].queryset = Category.objects.order_by("name_en")
         self.initial["description"] = (spec or {}).get("description", "")
+        if self.instance.pk and not self.is_bound:
+            self.initial["expected_stock"] = self.instance.stock
+            self.initial["expected_price"] = self.instance.price
         for name, definition in sorted((template or {}).get("attributes", {}).items()):
             self.fields["attr_" + name] = attribute_field(definition, required=definition.get("required", False))
             self.fields["attr_" + name].label = name.replace("_", " ").capitalize()
@@ -42,6 +49,12 @@ class ProductForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+        for name, kind in (("stock", int), ("price", Decimal)):
+            raw = (cleaned.get("expected_" + name) or "").strip()
+            try:
+                cleaned["expected_" + name] = kind(raw) if raw else None
+            except (ValueError, ArithmeticError):
+                raise forms.ValidationError("This form is out of date. Reload the page and try again.") from None
         if self.template is None:
             raise forms.ValidationError("This category is temporarily unavailable.")
         if cleaned.get("category") and cleaned["category"].pk != self.template["category_id"]:

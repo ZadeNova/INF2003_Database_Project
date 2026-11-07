@@ -11,6 +11,7 @@ import psycopg
 import pytest
 from account_helpers import make_operator, runtime_connection
 from checkout_helpers import customer, paid_order, product
+from db_helpers import timestamp_guard_off
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import DataError
@@ -19,7 +20,7 @@ from django.utils import timezone
 
 from catalogue.models import Product
 from catalogue.search import visible_products
-from dashboard.queries import BAYESIAN_RATING, CATEGORY_PERFORMANCE, DELAY_BUCKETS
+from dashboard.queries import BAYESIAN_RATING, CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING
 from dashboard.services import (
     BUCKET_LABELS,
     as_of_date,
@@ -28,6 +29,7 @@ from dashboard.services import (
     delivery_analysis,
     end_of_day,
     label_month_to_date,
+    order_scores_pipeline,
     poor_reviews_pipeline,
     query_rows,
     refresh_sales,
@@ -95,6 +97,28 @@ def test_every_stock_number_and_exact_replenishment_boundary(imported):
     assert next(r for r in stock_planning(as_of) if r["product_id"] == eligible["product_id"])["replenish"]
 
 
+def test_the_fast_stock_query_gives_the_same_answer_as_the_window_query_it_replaces(imported):
+    as_of = as_of_date()
+    assert any(r["daily_demand"] > 0 for r in stock_planning(as_of))  # the comparison is not vacuous
+    for filters in (
+        {},
+        {"category": Product.objects.first().category_id},
+        {"seller": Product.objects.first().seller_id},
+    ):
+        parameters = {"as_of": as_of, "category": None, "seller": None, **filters}
+        fast = stock_planning(as_of, filters.get("category"), filters.get("seller"))
+        window = query_rows(STOCK_PLANNING, parameters)
+        assert [r["product_id"] for r in fast] == [r["product_id"] for r in window]  # same rows, same order
+        for new, old in zip(fast, window):
+            assert (new["stock"], new["lead_time_days"], new["replenish"]) == (
+                old["stock"],
+                old["lead_time_days"],
+                old["replenish"],
+            )
+            assert new["days_cover"] == old["days_cover"]
+            assert abs(new["daily_demand"] - old["daily_demand"]) < Decimal("1e-16")
+
+
 def test_category_revenue_units_rank_and_calendar_month_change(imported):
     as_of = as_of_date()
     grouped = defaultdict(lambda: {"units": 0, "revenue": Decimal(0)})
@@ -146,14 +170,16 @@ def test_demo_orders_do_not_move_anchor_and_future_events_do_not_enter_sales(imp
     buyer = customer("later")
     placed, order = paid_order(buyer, item)
     OrderLine.objects.create(order=order, seller=item.seller, product=item, quantity=100, unit_price=10, freight=2)
-    Order.objects.filter(pk=order.pk).update(placed_at=end_of_day(as_of) + timedelta(days=30))
+    with timestamp_guard_off():
+        Order.objects.filter(pk=order.pk).update(placed_at=end_of_day(as_of) + timedelta(days=30))
     assert as_of_date() == as_of
     refresh_sales()
     assert category_performance(as_of) == before
     assert max(r["day"] for r in query_rows("SELECT day FROM daily_product_sales", {})) <= as_of
     # A cancellation after the cutoff is a later event too: the sale still belongs to the historical window.
     cancelled = Order.objects.filter(status="cancelled").first()
-    Order.objects.filter(pk=cancelled.pk).update(cancelled_at=end_of_day(as_of) + timedelta(days=2))
+    with timestamp_guard_off():
+        Order.objects.filter(pk=cancelled.pk).update(cancelled_at=end_of_day(as_of) + timedelta(days=2))
     refresh_sales()
     actual = query_rows("SELECT * FROM daily_product_sales", {})
     assert {
@@ -174,7 +200,7 @@ def reference_deliveries(as_of, database):
         from datetime import timezone as dt_timezone
 
         answered = review["answered_at"].replace(tzinfo=dt_timezone.utc)
-        if not review.get("taken_down") and not review.get("from_order_review") and answered < end:
+        if not review.get("taken_down") and answered < end:
             score_groups[review["order_id"]].append(review["score"])
     buckets = {key: [] for key in BUCKET_LABELS}
     sellers = defaultdict(lambda: {"orders": 0, "late": 0, "scores": []})
@@ -201,6 +227,20 @@ def reference_deliveries(as_of, database):
             buckets[bucket].append(score)
             seller["scores"].append(score)
     return buckets, sellers
+
+
+def test_orders_whose_reviews_are_copies_are_counted_not_dropped(imported, mongo_db):
+    end = end_of_day(as_of_date())
+    visible = {"taken_down": {"$ne": True}, "answered_at": {"$lt": end}}
+    copied = {r["order_id"] for r in mongo_db.reviews.find({**visible, "from_order_review": True})}
+    originals = {r["order_id"] for r in mongo_db.reviews.find({**visible, "from_order_review": {"$ne": True}})}
+    only_copies = copied - originals
+    assert only_copies  # multi-line orders keep nothing but copies of the order's review
+    scored = {row["_id"]: row for row in mongo_db.reviews.aggregate(order_scores_pipeline(end))}
+    assert only_copies <= set(scored)
+    order_id = next(iter(only_copies))
+    scores = [r["score"] for r in mongo_db.reviews.find({**visible, "order_id": order_id})]
+    assert (scored[order_id]["total"], scored[order_id]["count"]) == (sum(scores), len(scores))
 
 
 def test_delay_bucket_scores_and_each_seller_risk_match_direct_calculation(imported, mongo_db):
@@ -244,16 +284,18 @@ def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, m
         for index in range(count):
             _, order = paid_order(buyer, item, status="delivered")
             delivered = end - timedelta(days=2)
-            Order.objects.filter(pk=order.pk).update(
-                placed_at=delivered - timedelta(days=2),
-                delivered_at=delivered,
-                estimated_delivery=delivered - timedelta(days=int(index < late)),
-            )
+            with timestamp_guard_off():
+                Order.objects.filter(pk=order.pk).update(
+                    placed_at=delivered - timedelta(days=2),
+                    delivered_at=delivered,
+                    estimated_delivery=delivered - timedelta(days=int(index < late)),
+                )
     # A delivery after the reporting date cannot push the small seller over the minimum.
     _, future = paid_order(buyer, items[0], status="delivered")
-    Order.objects.filter(pk=future.pk).update(
-        placed_at=end - timedelta(days=4), delivered_at=end, estimated_delivery=end - timedelta(days=1)
-    )
+    with timestamp_guard_off():
+        Order.objects.filter(pk=future.pk).update(
+            placed_at=end - timedelta(days=4), delivered_at=end, estimated_delivery=end - timedelta(days=1)
+        )
     data = dashboard_data(as_of)
     rows = {row["seller_id"]: row for row in data["seller_rows"]}
     assert items[0].seller_id not in rows
@@ -299,12 +341,14 @@ def test_all_five_half_open_delay_boundaries_and_future_delivery_cutoff(imported
         (14, "late_8_to_14"),
         (15, "late_over_14"),
     ]:
-        Order.objects.filter(pk=order.pk).update(
-            delivered_at=delivered, estimated_delivery=delivered - timedelta(days=delay)
-        )
+        with timestamp_guard_off():
+            Order.objects.filter(pk=order.pk).update(
+                delivered_at=delivered, estimated_delivery=delivered - timedelta(days=delay)
+            )
         row = next(r for r in query_rows(DELAY_BUCKETS, {"end": end}) if r["order_id"] == order.pk)
         assert row["bucket"] == expected
-    Order.objects.filter(pk=order.pk).update(delivered_at=end)
+    with timestamp_guard_off():
+        Order.objects.filter(pk=order.pk).update(delivered_at=end)
     assert order.pk not in {r["order_id"] for r in query_rows(DELAY_BUCKETS, {"end": end})}
 
 

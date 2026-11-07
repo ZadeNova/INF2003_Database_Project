@@ -107,6 +107,73 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
     assert Client().get(f"/products/{item.pk}/").status_code == 200
 
 
+def test_edit_form_carries_what_the_seller_saw_and_hides_it_from_view(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    page = client.get(f"/products/mine/{item.pk}/edit/").content.decode()
+    assert 'name="expected_stock" value="8"' in page and 'name="expected_price" value="12.34"' in page
+    assert "Expected stock" not in page and "Expected price" not in page
+
+
+def test_a_stale_form_keeps_sales_made_while_it_was_open(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)  # three units sold since the form was opened at 8
+    form = data(category, description="Fixed the description", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 5  # not put back to 8
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "Fixed the description"
+    assert not product_audits().filter(after__stock=8).exists()
+
+
+def test_a_field_the_seller_changed_applies_when_nobody_else_changed_it(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    form = data(category, stock="6", price="15.67", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert (item.stock, str(item.price)) == (6, "15.67")
+
+
+def test_a_real_conflict_is_refused_and_the_form_expects_the_live_values_next(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="20", description="Not saved yet", expected_stock="8", expected_price="12.34")
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    body = response.content.decode()
+    assert response.status_code == 400 and "stock changed to 5 while you were editing" in body
+    assert 'name="expected_stock" value="5"' in body and 'value="20"' in body  # typed value kept, live value expected
+    item.refresh_from_db()
+    assert item.stock == 5
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "A seller-written description."
+    retry = data(category, stock="20", expected_stock="5", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", retry).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 20
+
+
+def test_a_price_conflict_is_refused_too(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(price="11.00")
+    form = data(category, price="13.00", expected_stock="8", expected_price="12.34")
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "price changed to 11.00 while you were editing" in response.content.decode()
+    item.refresh_from_db()
+    assert str(item.price) == "11.00"
+
+
+@pytest.mark.parametrize("field,value", [("expected_stock", "abc"), ("expected_price", "x")])
+def test_a_tampered_expected_value_is_a_refused_form_not_a_server_error(shop, mongo_db, field, value):
+    _, category, _, client = shop
+    item = create(shop)
+    form = {**data(category, expected_stock="8", expected_price="12.34"), field: value}
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "out of date" in response.content.decode()
+
+
 def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db):
     seller, category, template, client = shop
     other = make_seller("other")

@@ -57,6 +57,39 @@ DROP TRIGGER order_status_transition ON public.orders_order;
 DROP FUNCTION public.check_order_status_transition();
 """
 
+# The delay analysis is computed from these columns, so the database refuses to let them be rewritten. Without a
+# status change none may move; with one, only the destination timestamp, which order_status_transition (it fires first,
+# by name) stamps with now() whatever the statement said.
+ORDER_TIMESTAMP_GUARD = """
+CREATE FUNCTION public.protect_order_timestamps() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+BEGIN
+    IF OLD.placed_at IS DISTINCT FROM NEW.placed_at
+       OR OLD.estimated_delivery IS DISTINCT FROM NEW.estimated_delivery
+       OR (NEW.status IS DISTINCT FROM OLD.status AND NEW.status <> 'paid' AND OLD.paid_at IS DISTINCT FROM NEW.paid_at)
+       OR (NEW.status IS DISTINCT FROM OLD.status AND NEW.status <> 'shipped' AND OLD.shipped_at IS DISTINCT FROM NEW.shipped_at)
+       OR (NEW.status IS DISTINCT FROM OLD.status AND NEW.status <> 'delivered' AND OLD.delivered_at IS DISTINCT FROM NEW.delivered_at)
+       OR (NEW.status IS DISTINCT FROM OLD.status AND NEW.status <> 'cancelled' AND OLD.cancelled_at IS DISTINCT FROM NEW.cancelled_at)
+       OR (NEW.status IS NOT DISTINCT FROM OLD.status
+           AND (OLD.paid_at, OLD.shipped_at, OLD.delivered_at, OLD.cancelled_at)
+               IS DISTINCT FROM (NEW.paid_at, NEW.shipped_at, NEW.delivered_at, NEW.cancelled_at)) THEN
+        RAISE EXCEPTION 'order lifecycle timestamps cannot be changed directly' USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER order_timestamp_guard BEFORE UPDATE ON public.orders_order
+FOR EACH ROW WHEN ((OLD.status, OLD.placed_at, OLD.estimated_delivery, OLD.paid_at, OLD.shipped_at, OLD.delivered_at,
+                    OLD.cancelled_at)
+                   IS DISTINCT FROM (NEW.status, NEW.placed_at, NEW.estimated_delivery, NEW.paid_at, NEW.shipped_at,
+                                     NEW.delivered_at, NEW.cancelled_at))
+EXECUTE FUNCTION public.protect_order_timestamps();
+REVOKE EXECUTE ON FUNCTION public.protect_order_timestamps() FROM PUBLIC;
+"""
+ORDER_TIMESTAMP_GUARD_REVERSE = """
+DROP TRIGGER order_timestamp_guard ON public.orders_order;
+DROP FUNCTION public.protect_order_timestamps();
+"""
+
 # Both OLD and NEW parents matter for a moved row. Lock parents in ID order before aggregating, so
 # concurrent writers cannot each commit using an earlier view of the other writer's money changes.
 _PARENT_IDS = """

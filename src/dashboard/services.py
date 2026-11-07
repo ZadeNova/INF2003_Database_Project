@@ -9,7 +9,7 @@ from django.utils import timezone
 from catalogue.models import Product
 from config import mongo
 
-from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING
+from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING_FAST
 
 BUCKET_LABELS = {
     "early_over_7": "Early by more than 7 days",
@@ -55,7 +55,7 @@ def sales_populated():
 
 def stock_planning(as_of, category=None, seller=None):
     end_of_day(as_of)  # Reject malformed dates before SQL; category and seller remain bound typed values.
-    return query_rows(STOCK_PLANNING, {"as_of": as_of, "category": category, "seller": seller})
+    return query_rows(STOCK_PLANNING_FAST, {"as_of": as_of, "category": category, "seller": seller})
 
 
 def category_performance(as_of):
@@ -77,9 +77,15 @@ def label_month_to_date(rows, as_of):
 
 
 def order_scores_pipeline(end):
+    """Per order, the integer sum of its visible scores and how many there are.
+
+    Integers keep the average exact without converting every review to Decimal128, which cost more than the
+    aggregation itself. Copies of an order's review share its score, so averaging them leaves the order's score
+    unchanged: they need no filter, and multi-line orders are no longer dropped.
+    """
     return [
-        {"$match": {"taken_down": {"$ne": True}, "from_order_review": {"$ne": True}, "answered_at": {"$lt": end}}},
-        {"$group": {"_id": "$order_id", "score": {"$avg": {"$toDecimal": "$score"}}}},
+        {"$match": {"taken_down": {"$ne": True}, "answered_at": {"$lt": end}}},
+        {"$group": {"_id": "$order_id", "total": {"$sum": "$score"}, "count": {"$sum": 1}}},
     ]
 
 
@@ -94,7 +100,10 @@ def poor_reviews_pipeline(end):
 
 def delivery_analysis(as_of, database):
     end = end_of_day(as_of)
-    scores = {row["_id"]: row["score"].to_decimal() for row in database.reviews.aggregate(order_scores_pipeline(end))}
+    scores = {
+        row["_id"]: Decimal(row["total"]) / row["count"]
+        for row in database.reviews.aggregate(order_scores_pipeline(end))
+    }
     deliveries = query_rows(DELAY_BUCKETS, {"end": end})
     buckets = {
         key: {"key": key, "label": label, "orders": 0, "scores": [], "distances": []}
