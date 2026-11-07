@@ -68,6 +68,7 @@ def change_seller_status(seller_id, action, actor, reason):
 # catalogue labels (append-only shared navigation/audit integration).
 AUDIT_LABELS.update(
     {
+        "product.create": "Product created",
         "product.update": "Product updated",
         "product.activate": "Product activated",
         "product.deactivate": "Product deactivated",
@@ -75,7 +76,7 @@ AUDIT_LABELS.update(
         "product.restore": "Product restored",
     }
 )
-AUDIT_TONES.update({"product.activate": "completed", "product.restore": "completed"})
+AUDIT_TONES.update({"product.create": "completed", "product.activate": "completed", "product.restore": "completed"})
 
 # checkout action labels; seller decisions above retain their existing labels and tones.
 AUDIT_LABELS.update(

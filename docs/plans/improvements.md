@@ -38,7 +38,7 @@ only bug fixes go in.
 | Batch | Items | Theme | Status |
 |---|---|---|---|
 | 1 | #59, #50, #61, #60, #58, #56, #2 | Tiny fixes | done 8 Nov (touched test modules pass; full suite after batch 3) |
-| 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | open |
+| 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | done 8 Nov (full suite run; four existing audit-count tests updated for the new creation row and rerun green) |
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | open |
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
 | 5 | #25, #12 (Redis) | Redis, its own short plan first | open |
@@ -64,10 +64,10 @@ only bug fixes go in.
 
 | # | Area | Finding | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 53 | Routing | [confirmed] HTTP 500 on `/operator/reviews/<20-digit id>/` (BSON integers are 8 bytes). The bigint bounds check is hand-copied into six places and URLs use unbounded `<int:>` | One bigint path converter, used everywhere | S | open |
-| 51 | Integrity | [confirmed] A customer cannot cancel when stock is near the form maximum: the seller form allows stock up to 2³¹−1, the cancellation restock overflows the integer column, HTTP 500, no refund | Cap stock in the form and add a `CHECK`; migration | S | open |
-| 54 | Audit | [confirmed] Creating a product leaves no audit row: the trigger is AFTER UPDATE only, so a first price and stock are never recorded, against the plan's claim that every price and stock change is audited | Add AFTER INSERT to the same function; migration; update [DATA_MODEL.md](../DATA_MODEL.md) | S | open |
-| 69 | Demo | The demo story (steps 2 and 3 of [OVERVIEW.md](../OVERVIEW.md#3-the-demo-story)) has each of three sellers ship their own order, but the Opus 5.5 review reports that only one seller has a login (not yet verified; check `seed_demo` first) ★ | Demo logins for the three sellers the story uses | S | open |
+| 53 | Routing | [confirmed] HTTP 500 on `/operator/reviews/<20-digit id>/` (BSON integers are 8 bytes). The bigint bounds check is hand-copied into six places and URLs use unbounded `<int:>` | One `bigint` path converter and one `BIGINT_MAX` constant ([config/ids.py](../../src/config/ids.py)) used by all 20 id routes and the six hand-written checks | S | done |
+| 51 | Integrity | [confirmed] A customer cannot cancel when stock is near the form maximum: the seller form allows stock up to 2³¹−1, the cancellation restock overflows the integer column, HTTP 500, no refund | Form maximum 99,999 and a database `CHECK` of 1,000,000 (`product_stock_capped`, catalogue 0003). The gap leaves room for restocks, at most 999 per cart line | S | done |
+| 54 | Audit | [confirmed] Creating a product leaves no audit row: the trigger is AFTER UPDATE only, so a first price and stock are never recorded, against the plan's claim that every price and stock change is audited | An AFTER INSERT trigger writes a `product.create` audit row (catalogue 0004); [DATA_MODEL.md](../DATA_MODEL.md) updated | S | done |
+| 69 | Demo | The demo story (steps 2 and 3 of [OVERVIEW.md](../OVERVIEW.md#3-the-demo-story)) has each of three sellers ship their own order, but the Opus 5.5 review reports that only one seller has a login (not yet verified; check `seed_demo` first) ★ | `seed_demo` now promotes `demo-seller`, `demo-seller-2` and `demo-seller-3`; each has two buyable products, relisted with a label only if missing. The demo passwords are now fixed and documented in the README (see Decisions) | S | done |
 
 ## Batch 3: integrity and the dashboard
 
@@ -82,6 +82,15 @@ only bug fixes go in.
 **Checkpoint:** an Opus 5.5 review of everything changed in batches 1–3.
 
 ## Batch 4: UI and MongoDB claims
+
+**Deferred decision (8 Nov): product names, review text and photos.** Names are an adjective, the category label and a
+hexadecimal suffix, so about 34,000 products share only a few hundred distinct names; muting the suffix (#7 as
+written) would leave lists of near-identical titles. English review text is a literal machine translation of
+Portuguese reviews, some of them casually misspelt, and the source data itself is not corrupted. Options when settled:
+(A, recommended) a showcase set of about 20 products across the three demo sellers, given labelled names, photos and
+hand-checked review text in `seed_demo` (no change to the clean data, checksums or closed benchmarks); (B) regenerate
+every name, which changes the clean files and needs a B1 rerun; (C) add a generated attribute to titles as a display
+extra. A teammate will supply the photos (#16), which must match the names. Settle together with #69.
 
 | # | Area | Item | Why it matters | Fix | Effort | Status |
 |---|---|---|---|---|---|---|
@@ -214,6 +223,8 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | 69, 70 | 8 Nov 2026 | Erfan: add the three-seller demo logins and the demo script in the brief's order | The story cannot be filmed as written |
 | Redis, 48 | 8 Nov 2026 | Erfan: Redis is settled before row-level security; RLS (#48) is settled last, because it touches every seller query and the roles. Redis conditions are listed under Batch 5 | Redis is additive and adds key-value use to the NoSQL half; RLS is the riskier change |
 | Batches | 8 Nov 2026 | Erfan: the backlog is organised into batches, settled a few at a time, easiest first. Batch 1 approved with option A for #60, the new index only for #56, and "garden tols" for #2 | Understand each change before it is built |
+| 53, 51, 54, 69 | 8 Nov 2026 | Erfan: implement Batch 2. #51 with option A (form maximum 99,999, database ceiling 1,000,000, chosen as a logical per-listing cap); #54 agreed after the audit-size explanation (rows only on sensitive events, about 0.6 KB each); #69 with fixed, documented demo passwords (the app is never deployed), documented in the README | Recorded in `docs/DECISIONS.md` |
+| 7, 16 | 8 Nov 2026 | Erfan: defer the names, review text and photos decision to Batch 4; option A is the recommendation. Teammate to add photos | Settle with the showcase set and #69 |
 
 ## Review notes
 

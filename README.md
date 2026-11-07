@@ -200,7 +200,7 @@ Compose validates required `BENCH_*` interpolation before filtering profiles, so
 | `POSTGRES_ADMIN_PASSWORD` | Bootstrap superuser, given only to the `db` service |
 | `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
 | `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
-| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Generated demo secrets for seeding and tests; CI exports only these login values to host browser tests, masks them, and filters database credentials; required with no fallback |
+| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Fixed, documented demo logins for seeding and tests (see [demo logins](#demo-logins)); CI exports only these login values to host browser tests, masks them, and filters database credentials; must be set, no fallback |
 | `BENCH_DB` | Fixed `bench`; the harness refuses any other database or host |
 | `BENCH_ADMIN_PASSWORD` | Isolated PostgreSQL bootstrap secret; only bench-db receives it |
 | `BENCH_OWNER_USER`, `BENCH_OWNER_PASSWORD` | Separate benchmark owner, with CREATEDB and pg_checkpoint for templates/checkpoints |
@@ -448,9 +448,22 @@ are separate. Budget for the initial image downloads separately; import reads th
 Memory is bounded by COPY blocks and MongoDB batches during loading; full-data profiling/cleaning additionally holds
 the source tables and needs several GB of Docker memory. A long translation is optional regeneration, not startup work.
 
-Demo usernames are demo-chee-long, demo-erfan, demo-syahfariz, demo-jun-keat, demo-joash (customer role), demo-seller,
-demo-applicant (a labelled pending seller, using DEMO_SELLER_PASSWORD) and demo-operator. Read their passwords locally from the corresponding DEMO_*_PASSWORD variables in the ignored .env;
-passwords have no fallback and are never printed. The seller is linked to a real high-volume Olist seller. Two product
+### Demo logins
+
+`seed_demo` creates these accounts. The passwords are fixed and documented because the application runs only on your own
+machine; they are not secrets (database and Django secrets stay random in the ignored `.env`).
+
+| Role | Usernames | Password |
+|---|---|---|
+| Customer | `demo-chee-long`, `demo-erfan`, `demo-syahfariz`, `demo-jun-keat`, `demo-joash` | `mercer-demo-customer` |
+| Seller (approved, real high-volume Olist sellers) | `demo-seller`, `demo-seller-2`, `demo-seller-3` | `mercer-demo-seller` |
+| Seller (pending, for the approval demo) | `demo-applicant` | `mercer-demo-seller` |
+| Operator | `demo-operator` | `mercer-demo-operator` |
+
+These come from the three `DEMO_*_PASSWORD` values in `.env.example`, which `init_env.py` copies into a new `.env`. An
+existing `.env` keeps its old values: edit them, or delete `.env` and run `init_env.py` again, then rerun `seed_demo`.
+Each of the three sellers is tied to a real Olist seller with stocked products. The first, `demo-seller`, is also the one
+whose products carry the labelled demo adjustments. Two product
 rows explicitly label their sold-out and low-stock/long-lead-time demo adjustments, including any relisting needed to
 make them visible. Imported accounts otherwise have
 unusable passwords. Rerunning `seed_demo` never resets a seller status an operator has already decided. The shop,

@@ -29,3 +29,25 @@ PRODUCT_AUDIT_REVERSE = """
 DROP TRIGGER product_update_audit ON public.catalogue_product;
 DROP FUNCTION public.audit_product_update();
 """
+
+# A new product's first price and stock are recorded too; the UPDATE trigger above reads OLD, which an INSERT lacks.
+PRODUCT_INSERT_AUDIT = """
+CREATE FUNCTION public.audit_product_insert() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+BEGIN
+    INSERT INTO public.audit_log (table_name, row_id, action, actor_id, before, after, reason, created_at)
+    VALUES (TG_TABLE_NAME, NEW.id::text, 'product.create',
+            NULLIF(current_setting('mercer.actor_id', true), '')::bigint, NULL,
+            jsonb_build_object('id', NEW.id, 'seller_id', NEW.seller_id, 'name', NEW.name,
+                'price', NEW.price, 'stock', NEW.stock, 'active', NEW.active, 'taken_down', NEW.taken_down),
+            NULLIF(current_setting('mercer.audit_reason', true), ''), pg_catalog.now());
+    RETURN NULL;
+END $$;
+CREATE TRIGGER product_insert_audit AFTER INSERT ON public.catalogue_product
+FOR EACH ROW EXECUTE FUNCTION public.audit_product_insert();
+REVOKE EXECUTE ON FUNCTION public.audit_product_insert() FROM PUBLIC;
+"""
+PRODUCT_INSERT_AUDIT_REVERSE = """
+DROP TRIGGER product_insert_audit ON public.catalogue_product;
+DROP FUNCTION public.audit_product_insert();
+"""

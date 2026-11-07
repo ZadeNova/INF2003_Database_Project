@@ -12,6 +12,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import CreateView
 
 from catalogue.models import Product, PurchasableProduct
+from config.ids import BIGINT_MAX
 from orders.models import Order
 
 from .audit import AUDIT_LABELS, SELLER_ACTIONS, StaleAction, allowed_actions, change_seller_status
@@ -237,7 +238,7 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
         wanted = {}
         for entry in entries:
             entry.shop = entry.product = None
-            if entry.table_name in lookups and entry.row_id.isdecimal() and 0 < int(entry.row_id) < 2**63:
+            if entry.table_name in lookups and entry.row_id.isdecimal() and 0 < int(entry.row_id) <= BIGINT_MAX:
                 wanted.setdefault(entry.table_name, set()).add(int(entry.row_id))
         found = {table: lookups[table](ids) for table, ids in wanted.items()}
         for entry in entries:

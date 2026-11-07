@@ -6,6 +6,7 @@ from django.http import Http404
 
 from accounts.models import User
 from catalogue.models import PurchasableProduct
+from config.ids import BIGINT_MAX
 
 from .models import RestockAlert
 
@@ -15,7 +16,7 @@ def set_saved(actor, product_id, saved):
         raise PermissionDenied
     try:
         product_id = int(product_id)
-        if not 0 < product_id < 2**63:
+        if not 0 < product_id <= BIGINT_MAX:
             raise ValueError
     except (ValueError, TypeError):
         raise Http404 from None

@@ -7,12 +7,12 @@ from decimal import Decimal
 import pytest
 from checkout_helpers import customer, product
 from django.core.exceptions import PermissionDenied
-from django.db import connection
+from django.db import IntegrityError, connection
 from django.http import Http404
 
 from accounts.audit import change_seller_status
 from accounts.models import AuditLog, Seller, User
-from catalogue.models import Product
+from catalogue.models import STOCK_CEILING, Product
 from config.olist_import import INVARIANTS, sql_invariants
 from orders.models import Checkout, Order, OrderLine, Payment, Refund
 from orders.services import (
@@ -257,6 +257,19 @@ def test_ship_deliver_and_cancel_with_stock_refund_and_audit():
     assert Refund.objects.count() == 1
     assert_balanced()
     assert set(sql_invariants().values()) == {0}
+
+
+def test_cancelling_restocks_up_to_the_stock_ceiling_and_the_database_enforces_it():
+    buyer, item = customer(), product(stock=STOCK_CEILING)
+    add_to_cart(buyer, item.pk, 5)
+    order = buy(buyer).orders.get()
+    item.refresh_from_db()
+    assert item.stock == STOCK_CEILING - 5
+    change_order_status(buyer, order.pk, "cancel", "Changed my mind")
+    item.refresh_from_db()
+    assert item.stock == STOCK_CEILING
+    with pytest.raises(IntegrityError):
+        Product.objects.filter(pk=item.pk).update(stock=STOCK_CEILING + 1)
 
 
 def test_shipped_order_cannot_be_cancelled():

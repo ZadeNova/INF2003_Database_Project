@@ -140,7 +140,9 @@ def test_suspension_hides_products_and_reinstatement_restores_them():
     assert not visible()
     change_seller_status(seller.pk, "reinstate", operator, "Cleared")
     assert visible()
+    # Creating the product wrote its own product.create row; the seller decisions are the two after it.
     assert list(AuditLog.objects.order_by("id").values_list("action", flat=True)) == [
+        "product.create",
         "seller.suspend",
         "seller.reinstate",
     ]

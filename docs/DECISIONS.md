@@ -337,3 +337,12 @@ is evidence that the gate rejects incorrect data.
 | ID | Decision | Why |
 |---|---|---|
 | deliverables-no-written-reuse-approval | Chee Long decided on 31 October 2026 that written approval from the professors is not required for building on the earlier module project. Keep the reuse disclosure in docs/AI_USE.md and report appendix D; this supersedes the written-approval requirement carried over from Phase 0 | Mercer is a substantially different project after most of the earlier project was changed |
+
+## Improvements batch 2 (8 November 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| demo-fixed-passwords | Erfan decided that the three demo passwords are fixed and documented in the README and `.env.example` (`mercer-demo-customer`, `mercer-demo-seller`, `mercer-demo-operator`), instead of random per-machine secrets. The variables are still required, with no code fallback; database and Django secrets stay random in the ignored `.env`. Reverses the earlier "generated demo secrets" design | The application runs only on a marker's or teammate's own machine and is never deployed; anyone must be able to log in without reading `.env` |
+| product-stock-cap | A seller can list at most 99,999 units of a product, and the database ceiling is 1,000,000 (`product_stock_capped`). The gap leaves room for cancellation restocks, which add at most 999 units per cart line | A form maximum of 2,147,483,647 let a cancellation overflow the integer column and fail with no refund. Marketplace listings use small per-listing caps (Etsy is reported at 999) |
+| product-create-audit | Creating a product writes a `product.create` audit row (AFTER INSERT trigger) with the first price and stock | The plan claims every price and stock change is audited; the UPDATE-only trigger missed the first values. Audit growth is small: rows appear only on sensitive events, about 0.6 KB each |
+| bigint-ids | Every id in a route uses one `bigint` path converter and one `BIGINT_MAX` constant (`src/config/ids.py`) | Ids above the 8-byte limit reached MongoDB and caused a 500; the bound was copied by hand in six places |

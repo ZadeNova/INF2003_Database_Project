@@ -6,6 +6,7 @@ from django.views import View
 
 from accounts.mixins import SellerRequiredMixin
 from config import mongo
+from config.ids import BIGINT_MAX
 
 from .models import Category, Product
 from .seller_forms import ProductForm
@@ -41,7 +42,7 @@ class SellerProductEditView(SellerRequiredMixin, View):
                 if item
                 else Category.objects.order_by("name_en").values_list("pk", flat=True).first()
             )
-            selected = selected if selected is not None and 0 < selected < 2**63 else None
+            selected = selected if selected is not None and 0 < selected <= BIGINT_MAX else None
         except (TypeError, ValueError):
             selected = None
         with mongo.client() as client:

@@ -160,7 +160,7 @@ erDiagram
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
 | Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
-| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time. Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
+| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
 | CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
 | Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
@@ -290,6 +290,12 @@ taken_down actually changes) runs the owner-owned SECURITY DEFINER function `pub
 before/after snapshots. Checkout's stock decrements and cancellation restocks therefore leave product audit rows
 with the buyer as actor. Runtime keeps SELECT only on audit_log and cannot execute or replace the function or disable
 its trigger.
+
+**Product creation audit (`catalogue` 0004).** product_insert_audit (AFTER INSERT) runs `public.audit_product_insert()`
+on the same boundary: owner-owned, SECURITY DEFINER, `search_path = public, pg_temp`, PUBLIC EXECUTE revoked. It writes
+action `product.create` with no before snapshot and an after snapshot of id, seller, name, price, stock, active and
+taken_down, so a product's first price and stock are recorded; actor and reason come from the same transaction-local
+settings. The importer disables user triggers while it loads, so bulk loads add no audit rows.
 
 Review moderation uses owner-owned `public.audit_review_moderation(text, text)`, a `SECURITY DEFINER` function with
 `search_path = public, pg_temp`. Runtime has only EXECUTE on this function and SELECT on audit_log; PUBLIC has no

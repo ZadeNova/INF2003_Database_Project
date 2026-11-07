@@ -113,7 +113,7 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
     call_command("seed_demo", stdout=StringIO())
     assert dict(adjusted.values_list("pk", "demo_adjustment")) == labels
     assert get_user_model().objects.count() == before
-    for name in ["demo-" + x for x in MEMBERS] + ["demo-seller", "demo-operator"]:
+    for name in ["demo-" + x for x in MEMBERS] + ["demo-seller", "demo-seller-2", "demo-seller-3", "demo-operator"]:
         user = get_user_model().objects.get(username=name)
         password = os.environ["DEMO_" + user.role.upper() + "_PASSWORD"]
         if not user.check_password(password):
@@ -121,6 +121,10 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
         client = Client()
         response = client.post("/login/", {"username": name, "password": password})
         assert response.status_code == 302 and client.session["_auth_user_id"] == str(user.pk)
+    shops = [Seller.objects.get(user__username=name) for name in ("demo-seller", "demo-seller-2", "demo-seller-3")]
+    assert len({shop.pk for shop in shops}) == 3 and all(shop.status == "approved" for shop in shops)
+    for shop in shops[1:]:  # the story buys from three different shops, so the extra two need purchasable stock
+        assert shop.olist_seller_id and shop.products.filter(active=True, taken_down=False, stock__gt=0).count() >= 2
     seller = Seller.objects.get(user__username="demo-seller")
     assert seller.olist_seller_id and seller.orders.exists()
     assert seller.products.filter(stock=0, demo_adjustment__contains="wishlist").count() == 1

@@ -24,7 +24,8 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def product_audits():
-    return AuditLog.objects.filter(table_name="catalogue_product")
+    """Edits only; creation rows are asserted where a product is created."""
+    return AuditLog.objects.filter(table_name="catalogue_product").exclude(action="product.create")
 
 
 @pytest.fixture
@@ -93,6 +94,9 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
     assert spec["has_generated_content"] is False
     assert spec["attributes"] == {"material": "steel", "capacity": 2, "wireless": False}
     assert isinstance(spec["rating_summary"]["average"], Decimal128)
+    created = AuditLog.objects.get(table_name="catalogue_product", action="product.create")
+    assert (created.row_id, created.actor_id, created.reason) == (str(item.pk), seller.user_id, "Seller saved product")
+    assert created.before is None and created.after["stock"] == 8 and str(created.after["price"]) == "12.34"
     response = client.post(f"/products/mine/{item.pk}/edit/", data(category, price="15.67", stock="5"))
     assert response.status_code == 302
     item.refresh_from_db()
@@ -128,6 +132,7 @@ def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db)
     [
         ("lead_time_days", ""),
         ("stock", "-1"),
+        ("stock", "100000"),
         ("price", "0.00"),
         ("freight", "-0.01"),
         ("attr_material", '{"$ne":null}'),

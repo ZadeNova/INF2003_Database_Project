@@ -19,6 +19,7 @@ from django.utils import timezone
 from accounts.audit import set_audit_context
 from accounts.models import User
 from catalogue.models import Product, PurchasableProduct
+from config.ids import BIGINT_MAX
 
 from .models import MAX_CART_QUANTITY, Cart, CartLine, Checkout, Payment
 
@@ -60,7 +61,7 @@ def object_id(value):
         result = int(value)
     except (ValueError, TypeError, OverflowError):
         raise Http404 from None
-    if result < 1 or result > 9223372036854775807:
+    if result < 1 or result > BIGINT_MAX:
         raise Http404
     return result
 
