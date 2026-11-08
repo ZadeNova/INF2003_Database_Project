@@ -41,11 +41,12 @@ only bug fixes go in.
 | 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | done 8 Nov (full suite run; four existing audit-count tests updated for the new creation row and rerun green) |
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | done 8 Nov (full suite green; dashboard timings re-measured on full data) |
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
-| 5 | #25, #12 (Redis) | Redis, its own short plan first | open |
+| 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | plan drafted, awaiting Erfan |
 | 6 | #5, #13, #17 | Benchmark amendment, designated machine | open |
 | 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | open |
 | 7 | #27, #33, #63 | Code-quality pass, then the full codebase review | open |
 | 8 | #48 (RLS); optional #62, #42, #20 | Row-level security, settled last | open |
+| 8b | #72 | Synthetic scale runs for B1, B4, B5 and B7 (parked): code-side work, only after batches 1–8, before any report, slides or video work | parked |
 | 9 | #38, #47, #70, #46, #39, #15, #41, #6, #43, #44, #26, #40, #1, #14, #3 | Demo, evidence and deliverables, alongside and after the freeze | open |
 | Disclose | #29–#32, #35, #36, #64–#68 | One line each in the report's limitations | open |
 
@@ -149,6 +150,19 @@ settle fail open or closed, `maxmemory` and eviction, real Redis in CI, and drop
 | 42 | **One-command start**: a script that runs `init_env`, `up`, `import_olist` and `seed_demo` in order ★ | A failed marker run costs "working". Optional | S, approval | open |
 | 20 | Adding a product asks for the category twice. Only if the video films the add-product form | Visible only if filmed | S–M | open |
 
+## Batch 8b: synthetic scale runs for the benchmark (parked)
+
+Parked by Erfan on 8 November 2026. It is the last item of the code-side work: attempt it only when batches 1–8 are done and
+green, and before any report, slides or video work (the rest of the 40% implementation line comes first). If the code side
+finishes early, Erfan may pull it forward. Default is no.
+
+| # | Area | Item | Fix | Effort | Status |
+|---|---|---|---|---|---|
+| 72 | Benchmark | The benchmark measures the base Olist volume only, so its attribute-filter, index and storage results show no growth with data (PLAN.md risk: "no clear difference at about 100k rows") | A seeded generator that resamples real products and their attributes (B1, B4, B5) and real review text (B7) to 3× and 10× (about 340k products and more than a million attribute and review rows), labelled `is_generated`, loaded only into throwaway bench databases, identical files for both engines, correctness against the independent reference computation before any timing counts. **Not** B2 (88% of the measured time and needs the whole order graph), B3 or B6. Run on a second night on the designated machine; reopens the 28 October decision against a generator and a scaled run | L (a day for the generator plus a benchmark night) | parked |
+
+If it is not done, the report says so in one sentence under limitations and future work: the data is the real Olist volume,
+and a scaled run was considered and left out for time.
+
 ## Batch 9: demo, evidence and deliverables
 
 The 40% implementation line is judged on the video, slides, report and source code together, so a marker credits mainly
@@ -231,6 +245,7 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | Redis, 48 | 8 Nov 2026 | Erfan: Redis is settled before row-level security; RLS (#48) is settled last, because it touches every seller query and the roles. Redis conditions are listed under Batch 5 | Redis is additive and adds key-value use to the NoSQL half; RLS is the riskier change |
 | Batches | 8 Nov 2026 | Erfan: the backlog is organised into batches, settled a few at a time, easiest first. Batch 1 approved with option A for #60, the new index only for #56, and "garden tols" for #2 | Understand each change before it is built |
 | 53, 51, 54, 69 | 8 Nov 2026 | Erfan: implement Batch 2. #51 with option A (form maximum 99,999, database ceiling 1,000,000, chosen as a logical per-listing cap); #54 agreed after the audit-size explanation (rows only on sensitive events, about 0.6 KB each); #69 with fixed, documented demo passwords (the app is never deployed), documented in the README | Recorded in `docs/DECISIONS.md` |
+| 72 | 8 Nov 2026 | Erfan: park the synthetic scale benchmark (B1, B4, B5, B7 at 3x and 10x; not B2, B3, B6) as Batch 8b, after batches 1–8 and before any report, slides or video work; consider pulling it forward if the code side finishes early | The existing benchmark is already strong and half the grade is the report and presentation; a scale curve is the lowest-return item and costs a benchmark night |
 | Showcase | 8 Nov 2026 | Erfan: the 30 listed products get photos; demo shop names (Paulista Watch & Gift House, Ibitinga Linen & Home, Santo Andre Beauty Studio); featured products lead category pages; the teammate adds up to 12 new products, 1 or 2 new categories and a new merchant of their own choice, through committed files; no seeded reviews for new products | The photo and product lane is data, so it reproduces on a fresh clone |
 | Names review rounds | 8 Nov 2026 | Erfan: approve the fix round from the fresh Opus 5.5 review of the names change (stale benchmark goldens regenerated, `fx-source.xml` kept LF with an `-text` rule, attribute-contradicting names fixed, thin main categories widened), then a second round for three naming problems the first round introduced (repeated word in the fit suffix, operating-system suffix on non-matching nouns, power suffix on earphones; the "Portable" adjective removed where the attribute can be false). Suffixes can now be limited to named nouns. Tiny generic categories (books, music, food, party items) still repeat names on a page: accepted | Reviews found real problems in data that every benchmark run depends on (the stale goldens would have blocked the run and the optional benchmark fixture CI job) |
 | 7, 16 | 8 Nov 2026 | Erfan: defer the names, review text and photos decision to Batch 4; option A is the recommendation. Teammate to add photos | Settle with the showcase set and #69 |
