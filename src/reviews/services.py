@@ -139,11 +139,10 @@ def moderate_review(actor, line_id, action, reason):
 
                 _transact(client, change)
                 mongo_written = True
+                # MongoDB has committed and the cached dashboard blocks are read from it, so invalidate now, whatever
+                # becomes of the audit row's PostgreSQL transaction (an extra invalidation is harmless).
+                redis_store.bump_dashboard()
     except Exception:
         if mongo_written:
             logger.error("reviews.cross_store_commit_unconfirmed", extra={"fields": {"order_line_id": line_id}})
-            redis_store.bump_dashboard()  # MongoDB already changed; the cached dashboard must not outlive it
         raise
-    else:
-        # After both stores have committed, never before; inside an enclosing transaction this waits for its commit.
-        transaction.on_commit(redis_store.bump_dashboard)

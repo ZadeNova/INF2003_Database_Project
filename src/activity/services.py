@@ -19,6 +19,7 @@ from orders.models import OrderLine
 logger = logging.getLogger("mercer.errors")
 EVENT_WRITE_CONCERN = WriteConcern(w=1, wtimeout=1000)
 EVENTS_READY = False
+TRENDING_SHAPE = 1  # raise whenever the cached ranking rows change structure
 TRENDING_PANEL_SIZE = 8
 TRENDING_CACHE_ROWS = 50  # the panel shows 8; the rest is slack for products withdrawn after the ranking was cached
 
@@ -135,6 +136,7 @@ def _trending(database, now, category):
         redis_keys.TRENDING_TTL_SECONDS,
         lambda: list(islice(live(trending_pipeline(now)), TRENDING_CACHE_ROWS)),
         valid=_trending_rows_valid,
+        shape=TRENDING_SHAPE,
     ).value
     shown = _visible_ranked(database, ranked, TRENDING_PANEL_SIZE)
     if len(shown) < TRENDING_PANEL_SIZE and len(ranked) >= TRENDING_CACHE_ROWS:

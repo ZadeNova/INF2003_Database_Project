@@ -106,7 +106,20 @@ def test_the_panel_still_renders_when_redis_is_unreachable(mongo_db, settings):
 def test_cached_rows_in_an_older_shape_are_recomputed_not_a_server_error(mongo_db):
     items = [product(f"shape{n}") for n in range(2)]
     add_views(mongo_db, items, [4, 2])
-    envelope = redis_store.dumps({"value": [{"views": 3}], "computed_at": timezone.now()})  # no "_id"
+    envelope = redis_store.dumps(
+        {"shape": activity_services.TRENDING_SHAPE, "value": [{"views": 3}], "computed_at": timezone.now()}
+    )  # no "_id"
     redis_store.call(lambda client: client.set(redis_store.key("trending"), envelope, ex=60))
     response = Client().get("/products/")
     assert response.status_code == 200 and ranked(response) == [items[0].pk, items[1].pk]
+
+
+def test_cached_rows_written_with_another_shape_number_are_recomputed(mongo_db):
+    items = [product(f"stale{n}") for n in range(2)]
+    add_views(mongo_db, items, [5, 1])
+    rows = [{"_id": items[1].pk, "views": 99, "generated_views": 0, "rank": 1}]  # looks right, but is an older shape
+    envelope = redis_store.dumps(
+        {"shape": activity_services.TRENDING_SHAPE + 1, "value": rows, "computed_at": timezone.now()}
+    )
+    redis_store.call(lambda client: client.set(redis_store.key("trending"), envelope, ex=60))
+    assert ranked(Client().get("/products/")) == [items[0].pk, items[1].pk]  # the live ranking, not the stale entry

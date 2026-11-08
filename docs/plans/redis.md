@@ -1,6 +1,6 @@
 # redis: Rate limiting and two cache-aside reads
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Claude · reviewer: a fresh Opus 5.5 session after the build · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `dashboard` and `activity`; backlog items #25 and #12 in
 [improvements](improvements.md) (Batch 5)
@@ -62,11 +62,12 @@ to `false` (`tools` has no network and never loads Django settings).
 
 **Failure modes, named.** The client resolves the host name in a helper thread with the same 200 ms limit (a socket timeout
 does not cover the lookup, and Docker's resolver can take seconds to give up on a stopped container), and is dropped after a
-failure so the next attempt looks the name up again. An entry whose shape the code no longer expects (a block was renamed
-while Redis kept the old one) is a miss, never an error. Invalidation uses `transaction.on_commit`, so inside an enclosing
-transaction it waits for the real commit and a rollback never bumps. Known limit: the application user may run any Lua
+failure so the next attempt looks the name up again. Every cached entry carries a shape number (a constant beside the code that builds the value, pinned by a test), so an
+entry written by an older structure is a miss, never an error; the structural check stays as a second line. The PostgreSQL-only refresh invalidates with `transaction.on_commit`, so a rollback never bumps; a review takedown
+invalidates straight after MongoDB commits, because the cached blocks are read from MongoDB; the Olist import invalidates
+after its own commit even if the refresh then fails. A lock is released even during a back-off. Known limit: the application user may run any Lua
 script, and a runaway one would block Redis until the container is recreated (the default user is off and there is no admin
-user, by design); the application runs only its own four scripts.
+user, by design); the application runs only its own three scripts.
 
 **Values and keys.** JSON, never pickle: Decimal as a string, dates as ISO, and a test proves cached and fresh data are
 equal including types. A value that fails to decode, or has an old shape, is a miss and is deleted. Every key carries
@@ -177,7 +178,17 @@ socket timeout (now a helper thread with the same limit); a look-alike username 
 counter (case folding removed: Django matches names exactly, so it only created the bypass); an old-shaped cached entry
 caused a 500 (now a miss); `Retry-After` was too short after an overshoot; and several documentation statements were
 wrong. One fix round applied, with the cache labels made consistent, waiters taking over from a failed holder, the lock
-wait raised to 10 seconds and invalidation moved to `transaction.on_commit`. A second fresh review follows.
+wait raised to 10 seconds and invalidation moved to `transaction.on_commit`.
+
+Second fresh Opus 5.5 review: no high-severity defect; the first round's fixes held. It found that the structural check
+covered only part of a cached entry (now a shape number in every entry, pinned by a test), that a lock could be left
+behind when a failure began during a computation (the release now ignores the back-off and a failed save reports
+`down`), that the name-lookup threads could queue (one short-lived thread per lookup, outside the lock), that a long
+username was normalised before being cut (cut first), that a review takedown inside a rolled-back outer transaction
+skipped the bump (it now invalidates straight after the MongoDB commit; the import also bumps after its own commit), and
+that waiters polled with two commands per 50 ms (now one round trip per 100 ms). Documentation drift was corrected and
+the lasting choices recorded in DECISIONS. Left as informational: the extra modules in the Redis 8 image (blocked by the
+ACL) and waiters recomputing when the holder is slower than the 10-second wait (documented; two workers bound it).
 
 Defence lines for the video: why Redis and not PostgreSQL (counters with a TTL do not belong in the system of record, and the
 materialized view already covers history while Redis covers the repeated read); why not an in-process cache (two workers would

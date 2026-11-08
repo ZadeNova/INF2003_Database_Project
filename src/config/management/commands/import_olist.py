@@ -100,8 +100,10 @@ class Command(BaseCommand):
                 f"Import failed ({type(error).__name__}); rows rolled back and trigger state restored. Check input, database health and owner privileges."
             ) from error
         # The import is committed. A refresh failure must never claim that these source rows rolled back.
+        from config import redis_store
         from dashboard.services import refresh_sales
 
+        redis_store.bump_dashboard()  # the imported rows are history: bump even if the refresh below fails
         try:
             refresh_sales()
         except DatabaseError as error:

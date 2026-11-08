@@ -293,14 +293,17 @@ def test_the_review_limit_is_per_customer(shop, settings):
 
 
 def test_retry_after_waits_for_enough_entries_to_leave_when_parallel_requests_overshot_the_limit():
+    # A ten-second window: a stall of several seconds in the Docker VM (which moves Redis's clock too) cannot age the
+    # first entries out before the check.
     for _ in range(2):
-        redis_store.window_record("t", "s", 2, 3)  # t = 0.0
-    time.sleep(1.5)
+        redis_store.window_record("t", "s", 2, 10)  # t = 0
+    time.sleep(2)
     for _ in range(2):
-        redis_store.window_record("t", "s", 2, 3)  # t = 1.5: four entries in a window that allows two
-    blocked = redis_store.window_check("t", "s", 2, 3)
-    # Two entries must leave before one more is allowed: the third in order, recorded at 1.5, leaves at 4.5.
-    assert not blocked.allowed and blocked.count == 4 and 3 <= blocked.retry_after <= 4
+        redis_store.window_record("t", "s", 2, 10)  # t = 2: four entries in a window that allows two
+    blocked = redis_store.window_check("t", "s", 2, 10)
+    # Two entries must leave before one more is allowed: the third in order, recorded at t = 2, leaves at t = 12, about
+    # ten seconds from now. The oldest entry alone (the earlier logic) would say about eight.
+    assert not blocked.allowed and blocked.count == 4 and 9 <= blocked.retry_after <= 11
 
 
 def test_signing_in_to_a_look_alike_name_does_not_touch_the_counter_of_the_account_it_resembles(settings):

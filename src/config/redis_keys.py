@@ -2,7 +2,8 @@
 
 The "Redis keys" table in docs/DATA_MODEL.md is generated from KEYS by scripts/redis_keys_doc.py, and a test fails if
 the two differ. Every key carries the prefix from the REDIS_KEY_PREFIX setting and has an expiry except the version key.
-Values are JSON (never pickle); a stored value that cannot be decoded is a cache miss.
+Values are JSON (never pickle); each cached entry also carries a shape number, and an entry that cannot be decoded or has
+another shape number is a cache miss.
 """
 
 from __future__ import annotations
@@ -30,30 +31,30 @@ KEYS = (
         "login_attempts",
         "limit:login:<hmac>",
         "sorted set of attempt times",
-        "the window (15 minutes), renewed on each attempt",
+        "the window set in `RATE_LIMITS`, renewed on each attempt",
         "a successful login by that username from that address; `clear_rate_limits`",
-        "Sign-in attempts by one username from one address (5 per window)",
+        'Sign-in attempts by one username from one address (limit: `RATE_LIMITS["login"]`)',
     ),
     RedisKey(
         "login_failures_by_address",
         "limit:login_ip:<hmac>",
         "sorted set of failure times",
-        "the window (15 minutes), renewed on each failure",
+        "the window set in `RATE_LIMITS`, renewed on each failure",
         "`clear_rate_limits`",
-        "Failed sign-ins from one address (100 per window; a success never counts)",
+        'Failed sign-ins from one address (limit: `RATE_LIMITS["login_ip"]`; a success never counts)',
     ),
     RedisKey(
         "review_saves",
         "limit:review:<hmac>",
         "sorted set of save times",
-        "the window (1 hour), renewed on each save",
+        "the window set in `RATE_LIMITS`, renewed on each save",
         "`clear_rate_limits`",
-        "Review saves by one customer (10 per window)",
+        'Review saves by one customer (limit: `RATE_LIMITS["review"]`)',
     ),
     RedisKey(
         "trending",
         "trending",
-        "JSON: the top 50 ranked rows of the unfiltered trending aggregation",
+        "JSON: the top ranked rows of the unfiltered trending aggregation",
         "60 seconds",
         "the expiry only; visibility and photos are read live",
         "The largest database cost on the home and search pages",

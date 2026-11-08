@@ -16,6 +16,7 @@ from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING_FAST
 DASHBOARD_LOCK_WAIT_SECONDS = (
     10  # a request waits at most this long for another to finish computing (worker timeout: 30)
 )
+HISTORY_SHAPE = 1  # raise whenever `history_blocks` changes its structure: older cached entries then become misses
 HISTORY_KEYS = {"category_rows", "delay_rows", "seller_rows", "seller_excluded_count", "poor_reviews"}
 
 
@@ -203,6 +204,7 @@ def cached_history(as_of):
         lambda: history_blocks(as_of),
         lock_wait=DASHBOARD_LOCK_WAIT_SECONDS,
         valid=_history_valid,
+        shape=HISTORY_SHAPE,
     )
 
 

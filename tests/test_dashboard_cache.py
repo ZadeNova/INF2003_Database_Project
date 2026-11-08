@@ -13,7 +13,15 @@ from django.utils import timezone
 from accounts.models import AuditLog, Seller
 from catalogue.models import Product
 from config import mongo, redis_keys, redis_store
-from dashboard.services import as_of_date, cached_history, dashboard_data, refresh_sales
+from dashboard.services import (
+    HISTORY_KEYS,
+    HISTORY_SHAPE,
+    as_of_date,
+    cached_history,
+    dashboard_data,
+    history_blocks,
+    refresh_sales,
+)
 from reviews.services import moderate_review
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -99,7 +107,7 @@ def test_product_and_shop_names_are_read_live_from_a_cached_entry(imported):
         "poor_reviews": [{"product_id": item.pk, "count": 6, "average": Decimal("1.50")}],
     }
     full_key = f"dashboard:{redis_store.dashboard_version()}:{as_of.isoformat()}"
-    envelope = redis_store.dumps({"value": blocks, "computed_at": timezone.now()})
+    envelope = redis_store.dumps({"shape": HISTORY_SHAPE, "value": blocks, "computed_at": timezone.now()})
     redis_store.call(lambda client: client.set(redis_store.key(full_key), envelope, ex=60))
     before = dashboard_data(as_of)
     assert before["cache_status"] == "hit" and before["poor_rows"][0]["product"].name == item.name
@@ -203,7 +211,55 @@ def test_a_takedown_that_committed_in_mongodb_but_failed_in_postgresql_still_inv
 
 def test_an_entry_in_an_older_shape_is_recomputed_not_a_server_error(imported):
     as_of = as_of_date()
-    envelope = redis_store.dumps({"value": {"category_rows": []}, "computed_at": timezone.now()})
+    envelope = redis_store.dumps(
+        {"shape": HISTORY_SHAPE, "value": {"category_rows": []}, "computed_at": timezone.now()}
+    )
     full_key = f"dashboard:{redis_store.dashboard_version()}:{as_of.isoformat()}"
     redis_store.call(lambda client: client.set(redis_store.key(full_key), envelope, ex=60))
     assert (status(as_of), status(as_of)) == ("miss", "hit")  # recomputed once, then served from the new entry
+
+
+# Pinned structure of the cached blocks for each shape number. Changing `history_blocks` without raising HISTORY_SHAPE
+# would let a Redis that still holds the old entries serve a value the page cannot read; this test fails instead.
+SHAPES = {
+    1: {
+        "category_rows": {
+            "category", "category_id", "change_percent", "month", "month_to_date", "previous_month",
+            "previous_revenue", "revenue", "revenue_rank", "units",
+        },
+        "delay_rows": {"average_score", "distance_km", "key", "label", "orders", "reviewed_orders"},
+        "seller_rows": {"at_risk", "average_score", "late", "late_percent", "late_share", "orders", "seller_id"},
+        "poor_reviews": {"average", "count", "product_id"},
+    }
+}  # fmt: skip
+
+
+def test_the_cached_blocks_have_the_structure_pinned_for_their_shape_number(imported):
+    blocks = history_blocks(as_of_date())
+    assert set(blocks) == HISTORY_KEYS
+    for name, row_keys in SHAPES[HISTORY_SHAPE].items():
+        for row in blocks[name]:
+            assert set(row) == row_keys, f"{name} changed: raise HISTORY_SHAPE and add the new structure to SHAPES"
+    assert blocks["delay_rows"]  # the five delay buckets always exist, so this check always has rows to compare
+
+
+def test_an_entry_with_another_shape_number_is_recomputed(imported):
+    as_of = as_of_date()
+    assert (status(as_of), status(as_of)) == ("miss", "hit")
+    full_key = redis_store.key(f"dashboard:{redis_store.dashboard_version()}:{as_of.isoformat()}")
+    current = redis_store.loads(redis_store.call(lambda client: client.get(full_key)))
+    stale = redis_store.dumps({**current, "shape": HISTORY_SHAPE + 1})
+    redis_store.call(lambda client: client.set(full_key, stale, ex=60))
+    assert (status(as_of), status(as_of)) == ("miss", "hit")
+
+
+def test_a_takedown_invalidates_even_if_its_enclosing_transaction_rolls_back(imported, mongo_db):
+    as_of = as_of_date()
+    line_id = mongo_db.reviews.find_one({"taken_down": {"$ne": True}})["order_line_id"]
+    operator = make_operator()
+    assert (status(as_of), status(as_of)) == ("miss", "hit")
+    with pytest.raises(RuntimeError), transaction.atomic():
+        moderate_review(operator, line_id, "takedown", "Test reason")
+        raise RuntimeError("the outer transaction rolls back")
+    assert mongo_db.reviews.find_one({"order_line_id": line_id})["taken_down"] is True  # MongoDB cannot roll back
+    assert status(as_of) == "miss"

@@ -41,7 +41,7 @@ def normalise_username(value):
     Case is deliberately kept. Django matches usernames exactly, so "Jessica" is not the account "jessica"; folding case
     would only let look-alike names (such as "jeßica", which folds to "jessica") share, and so reset, one counter.
     """
-    return unicodedata.normalize("NFKC", value or "").strip()[:150]
+    return unicodedata.normalize("NFKC", (value or "").strip()[:150])  # bounded first: the input is not trusted
 
 
 def retry_text(seconds):

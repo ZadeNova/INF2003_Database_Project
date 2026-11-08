@@ -123,7 +123,7 @@ before a timing counts, and results are reported at 1, 10 and 50 concurrent user
 
 | Feature | What it adds | Why it is worth it |
 |---|---|---|
-| **Redis** | Caching for the dashboard and reviews; rate limiting on login and review posting | A third kind of database (key-value), measured with the cache on and off |
+| **Redis** | Caching for the operator dashboard and the trending panel; rate limiting on login and review posting | A third kind of database (key-value), measured with the cache on and off |
 | **Observability** | Traces and a Grafana dashboard of every query, PostgreSQL against MongoDB | Shows where time goes per request; industry-standard tooling (OpenTelemetry) |
 | **Row-level security** | The database itself stops a seller from seeing another seller's data | Isolation enforced by PostgreSQL, not only by the app |
 | **Replication and failover** | Three MongoDB nodes and a PostgreSQL replica; stop the primary on camera and watch the app keep working; a timed backup and restore | Replication is core database theory; makes the durability comparison meaningful |

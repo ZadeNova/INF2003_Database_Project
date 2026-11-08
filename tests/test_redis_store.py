@@ -18,6 +18,7 @@ import redis
 from django.conf import settings as django_settings
 
 from config import mongo, redis_keys, redis_store
+from config.db_timing import DatabaseTiming, current_timing
 from config.jsonlog import JsonFormatter
 
 
@@ -329,7 +330,9 @@ def test_an_address_given_as_an_ip_needs_no_lookup(settings):
 
 @pytest.mark.parametrize("rejects", [lambda value: "new" in value, lambda value: value["new"] is not None])
 def test_an_entry_the_caller_no_longer_understands_is_a_miss_even_if_checking_it_raises(rejects):
-    envelope = redis_store.dumps({"value": {"old": 1}, "computed_at": datetime(2026, 1, 1, tzinfo=utc_timezone.utc)})
+    envelope = redis_store.dumps(
+        {"shape": 1, "value": {"old": 1}, "computed_at": datetime(2026, 1, 1, tzinfo=utc_timezone.utc)}
+    )
     raw().set(redis_store.key("unit"), envelope, ex=60)
     result = redis_store.cached("unit", 30, lambda: {"new": 2}, valid=rejects)
     assert (result.status, result.value) == ("miss", {"new": 2})
@@ -358,3 +361,58 @@ def test_a_waiting_request_takes_the_lock_over_when_the_holder_fails(mongo_db):
         result, elapsed = waited.result()
     assert (result.status, result.value) == ("miss", "recomputed")
     assert elapsed < 2  # it took over soon after the lock was released, not after the full wait
+
+
+def test_an_entry_written_with_another_shape_number_is_a_miss_even_if_it_looks_right():
+    envelope = redis_store.dumps(
+        {"shape": 1, "value": {"same": "looking"}, "computed_at": datetime(2026, 1, 1, tzinfo=utc_timezone.utc)}
+    )
+    raw().set(redis_store.key("unit"), envelope, ex=60)
+    assert redis_store.cached("unit", 30, lambda: "fresh", shape=1).value == {"same": "looking"}
+    result = redis_store.cached("unit", 30, lambda: "fresh", shape=2)  # the code that reads it now expects shape 2
+    assert (result.status, result.value) == ("miss", "fresh")
+    assert redis_store.cached("unit", 30, lambda: "never", shape=2).value == "fresh"  # and rewrote it as shape 2
+
+
+def test_the_lock_is_released_even_when_a_failure_starts_a_backoff_while_the_holder_computes():
+    lock = redis_store.key("lock:unit")
+
+    def compute():
+        assert 30_000 < raw().pttl(lock) <= redis_keys.LOCK_TTL_MS  # the lock really lives for its registered lifetime
+        redis_store._state["down_until"] = time.monotonic() + 30  # another call failed meanwhile: Redis is skipped
+        return "value"
+
+    result = redis_store.cached("unit", 30, compute, lock_wait=2)
+    assert (result.status, result.value) == ("down", "value")  # nothing could be cached, and it says so
+    assert raw().get(lock) is None  # yet the lock did not stay behind to make every other request wait 35 seconds
+
+
+def test_a_waiting_request_polls_in_one_round_trip_every_tenth_of_a_second(mongo_db):
+    def holder():
+        with mongo.using_database(mongo_db.name):
+            return redis_store.cached("unit", 30, lambda: time.sleep(0.9) or "done", lock_wait=5)
+
+    def waiter():
+        with mongo.using_database(mongo_db.name):
+            time.sleep(0.15)
+            timing = DatabaseTiming()
+            token = current_timing.set(timing)
+            try:
+                return redis_store.cached("unit", 30, lambda: "never", lock_wait=5), timing
+            finally:
+                current_timing.reset(token)
+
+    with ThreadPoolExecutor(2) as pool:
+        first, second = pool.submit(holder), pool.submit(waiter)
+        first.result()
+        result, timing = second.result()
+    assert result.status == "wait" and timing.cache == ["wait"]
+    assert timing.redis_commands <= 16  # a read, a lock attempt, about eight polls and the answer: not two per 50 ms
+
+
+def test_a_name_longer_than_a_username_can_be_is_cut_before_it_is_processed():
+    from config import ratelimit
+
+    started = time.perf_counter()
+    cut = ratelimit.normalise_username("ａ" * 2_500_000)
+    assert time.perf_counter() - started < 0.05 and len(cut) == 150

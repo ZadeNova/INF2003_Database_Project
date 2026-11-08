@@ -16,8 +16,6 @@ import secrets
 import socket
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
@@ -87,14 +85,12 @@ def _signature():
     return (settings.REDIS_HOST, settings.REDIS_PORT, settings.REDIS_DB, settings.REDIS_USER, settings.REDIS_PASSWORD)
 
 
-_resolver = ThreadPoolExecutor(max_workers=2, thread_name_prefix="redis-dns")
-
-
 def _address(host, timeout):
     """The IP address of `host`, found within `timeout` seconds.
 
     A socket's connect timeout does not cover the name lookup, and Docker's resolver can take several seconds to give up
-    on a name that is not there (a stopped Redis). The lookup runs in a helper thread so it gets the same short limit.
+    on a name that is not there (a stopped Redis). Each lookup runs in its own short-lived daemon thread, so a lookup
+    that outlives the limit cannot queue later ones behind it; the back-off allows one lookup per window per worker.
     """
     import redis
 
@@ -103,13 +99,22 @@ def _address(host, timeout):
         return host
     except ValueError:
         pass
-    future = _resolver.submit(socket.getaddrinfo, host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-    try:
-        return future.result(timeout=timeout)[0][4][0]
-    except FutureTimeout:
-        raise redis.TimeoutError("name lookup timed out") from None
-    except OSError:
-        raise redis.ConnectionError("name lookup failed") from None
+    outcome = {}
+
+    def lookup():
+        try:
+            outcome["address"] = socket.getaddrinfo(host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
+        except OSError as error:
+            outcome["error"] = error
+
+    thread = threading.Thread(target=lookup, name="redis-dns", daemon=True)
+    thread.start()
+    thread.join(timeout)
+    if thread.is_alive():
+        raise redis.TimeoutError("name lookup timed out")
+    if "address" not in outcome:
+        raise redis.ConnectionError("name lookup failed")
+    return outcome["address"]
 
 
 def _client():
@@ -120,14 +125,18 @@ def _client():
     """
     signature = _signature()
     with _guard:
-        if _state["signature"] != signature:
-            import redis
-            from redis.backoff import NoBackoff
-            from redis.retry import Retry
+        if _state["signature"] == signature:
+            return _state["client"]
+    import redis
+    from redis.backoff import NoBackoff
+    from redis.retry import Retry
 
-            timeout = settings.REDIS_TIMEOUT_SECONDS
+    timeout = settings.REDIS_TIMEOUT_SECONDS
+    address = _address(settings.REDIS_HOST, timeout)  # outside the lock: other threads are not held up by a slow lookup
+    with _guard:
+        if _state["signature"] != signature:
             _state["client"] = redis.Redis(
-                host=_address(settings.REDIS_HOST, timeout),
+                host=address,
                 port=settings.REDIS_PORT,
                 db=settings.REDIS_DB,
                 username=settings.REDIS_USER,
@@ -169,13 +178,14 @@ def _log_unavailable(error):
         logger.warning("redis.unavailable", extra={"fields": {"error": type(error).__name__}})
 
 
-def call(operation, default=FAILED):
+def call(operation, default=FAILED, *, force=False):
     """Run operation(client) and return its result, or `default` if Redis is disabled, backing off or failing.
 
     Connection failures and timeouts start the back-off; other Redis errors (out of memory, a missing script, a
-    refused command) skip only this call.
+    refused command) skip only this call. `force` ignores a running back-off, for the one call that must still be tried
+    (releasing a lock that this request took before the failure began).
     """
-    if not settings.REDIS_ENABLED or time.monotonic() < _state["down_until"]:
+    if not settings.REDIS_ENABLED or (not force and time.monotonic() < _state["down_until"]):
         return default
     import redis
 
@@ -269,55 +279,75 @@ def bypass(compute):
     return Cached(compute(), status, timezone.now())
 
 
-def _read(full_key, valid=None):
-    """(value, computed_at), or None when the entry is absent or unusable, or FAILED when Redis did not answer.
+def _decode(full_key, raw, valid, shape):
+    """(value, computed_at) from a stored entry, or None if it is absent or unusable (it is then deleted).
 
-    An entry is unusable if it is not the JSON envelope this code writes or `valid(value)` says its shape is not the one
-    the caller expects (a block was renamed since it was cached): it is deleted and counts as a miss, never as an error.
+    Every entry carries the shape number of the code that wrote it. A different number means the cached value has the
+    structure of an older (or newer) version of the code, so it is a miss, never an error; that is what lets the shape
+    of a cached block change without waiting out the lifetime of the old entries. `valid(value)` is a second check.
     """
-    raw = call(lambda client: client.get(full_key))
-    if raw is FAILED or raw is None:
-        return raw
+    if raw is None:
+        return None
     try:
         envelope = loads(raw)
+        if envelope["shape"] != shape:
+            raise ValueError("another shape")
         value, computed_at = envelope["value"], envelope["computed_at"]
         if valid is not None and not valid(value):
-            raise ValueError("unexpected shape")
+            raise ValueError("unexpected structure")
         return value, computed_at
     except (ValueError, KeyError, TypeError, AttributeError):
         call(lambda client: client.delete(full_key))
         return None
 
 
-def _store(full_key, value, now, ttl):
-    text = dumps({"value": value, "computed_at": now})
-    call(lambda client: client.set(full_key, text, ex=ttl))
+def _read(full_key, valid=None, shape=1):
+    """(value, computed_at), None when absent or unusable, or FAILED when Redis did not answer."""
+    raw = call(lambda client: client.get(full_key))
+    return raw if raw is FAILED else _decode(full_key, raw, valid, shape)
 
 
-def _compute_and_store(full_key, ttl, compute):
+def _poll(full_key, lock_key, valid, shape):
+    """The entry (as `_read`) and the lock's current owner, in one round trip, for a request waiting on the lock."""
+    result = call(lambda client: client.pipeline(transaction=False).get(full_key).get(lock_key).execute())
+    if result is FAILED:
+        return FAILED, None
+    raw, holder = result
+    return _decode(full_key, raw, valid, shape), holder
+
+
+def _store(full_key, value, now, ttl, shape):
+    """True if Redis accepted the entry."""
+    text = dumps({"shape": shape, "value": value, "computed_at": now})
+    return call(lambda client: client.set(full_key, text, ex=ttl)) is True
+
+
+def _compute_and_store(full_key, ttl, compute, shape):
     value, now = compute(), timezone.now()
-    _store(full_key, value, now, ttl)
-    note_cache("miss")
-    return Cached(value, "miss", now)
+    stored = _store(full_key, value, now, ttl, shape)
+    status = "miss" if stored else "down"  # nothing was cached: say so rather than report a miss
+    note_cache(status)
+    return Cached(value, status, now)
 
 
-def cached(suffix, ttl, compute, *, lock_wait=None, valid=None):
+def cached(suffix, ttl, compute, *, lock_wait=None, valid=None, shape=1):
     """Cache-aside. `compute()` runs on a miss; with `lock_wait` seconds only one request computes while others wait.
 
     The value must survive a JSON round trip (Decimal, date and datetime are handled; tuples come back as lists).
-    `valid(value)` rejects an old-shaped entry, which is then treated as a miss.
+    `shape` is the version of the value's structure: raise it whenever the computed value changes shape, and entries
+    written by the old code become misses. `valid(value)` is a second, structural check.
     """
     if not settings.REDIS_ENABLED:
         return bypass(compute)
     full_key = key(suffix)
-    found = _read(full_key, valid)
+    found = _read(full_key, valid, shape)
     if found is FAILED:
         return bypass(compute)
     if found is not None:
         note_cache("hit")
         return Cached(found[0], "hit", found[1])
     if lock_wait is None:
-        return _compute_and_store(full_key, ttl, compute)
+        return _compute_and_store(full_key, ttl, compute, shape)
     lock_key = key("lock:" + suffix)
     token = secrets.token_hex(16)
     deadline = time.monotonic() + lock_wait
@@ -329,29 +359,29 @@ def cached(suffix, ttl, compute, *, lock_wait=None, valid=None):
         if took_lock:
             try:
                 if waited:  # the previous holder may have stored the value just before releasing the lock
-                    found = _read(full_key, valid)
+                    found = _read(full_key, valid, shape)
                     if found is not None and found is not FAILED:
                         note_cache("wait")
                         return Cached(found[0], "wait", found[1])
-                return _compute_and_store(full_key, ttl, compute)
+                return _compute_and_store(full_key, ttl, compute, shape)
             finally:
-                call(lambda client: _script(client, "release", RELEASE_SCRIPT)(keys=[lock_key], args=[token]))
+                # Even during a back-off: a lock left behind would make every other request wait for its full lifetime.
+                call(
+                    lambda client: _script(client, "release", RELEASE_SCRIPT)(keys=[lock_key], args=[token]), force=True
+                )
         waited = True
         while time.monotonic() < deadline:  # someone else is computing: wait for the value, or for the lock to go
-            time.sleep(0.05)
-            found = _read(full_key, valid)
+            time.sleep(0.1)
+            found, holder = _poll(full_key, lock_key, valid, shape)
             if found is FAILED:
                 return bypass(compute)
             if found is not None:
                 note_cache("wait")
                 return Cached(found[0], "wait", found[1])
-            holder = call(lambda client: client.get(lock_key))
-            if holder is FAILED:
-                return bypass(compute)
             if holder is None:
                 break  # released without a value (the holder failed): try to take it
         else:
-            return _compute_and_store(full_key, ttl, compute)  # the holder did not finish in time: compute it here
+            return _compute_and_store(full_key, ttl, compute, shape)  # the holder was too slow: compute it here
 
 
 # Dashboard version ------------------------------------------------------------------------------------------------

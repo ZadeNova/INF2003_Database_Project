@@ -41,7 +41,7 @@ only bug fixes go in.
 | 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | done 8 Nov (full suite run; four existing audit-count tests updated for the new creation row and rerun green) |
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | done 8 Nov (full suite green; dashboard timings re-measured on full data) |
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
-| 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | built 8 Nov; first Opus review fixed (one round); second review pending; measurement scripts move to Batch 6 |
+| 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | done 8 Nov (two Opus reviews, two fix rounds, full suite green); the measurement scripts are part of Batch 6 |
 | 6 | #5, #13, #17 | Benchmark amendment, designated machine | open |
 | 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | open |
 | 7 | #27, #33, #63 | Code-quality pass, then the full codebase review | open |
@@ -111,8 +111,8 @@ Settled before RLS (Decisions, 8 Nov). Needs its own short plan with trade-offs 
 
 | # | Area | Item | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 25 | Security | No brute-force protection on login or review posting | Redis rate limiting (atomic sliding window in a Lua script) | M | built 8 Nov ([redis](redis.md)); review pending |
-| 12 | MongoDB | The unfiltered trending aggregation is the largest database cost on the home, shop and search pages | Short-lived Redis cache with explicit invalidation, measured cache on against off | S–M | built 8 Nov; the measurement runs in the benchmark programme |
+| 25 | Security | No brute-force protection on login or review posting | Redis rate limiting (atomic sliding window in a Lua script) | M | done 8 Nov ([redis](redis.md)) |
+| 12 | MongoDB | The unfiltered trending aggregation is the largest database cost on the home, shop and search pages | Short-lived Redis cache with explicit invalidation, measured cache on against off | S–M | done 8 Nov; the measurement runs in the benchmark programme (Batch 6 builds its tooling) |
 
 Conditions for the plan: fix the slow dashboard query (#10) first, keep Redis off checkout and stock (rule 2), keep it
 out of the B-series benchmarks (rule 10), measure cache on against off on one machine with the request-timing collector,
@@ -257,6 +257,7 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | 7, 16 | 8 Nov 2026 | Erfan: B-lite names (all 74 categories), SKU line, showcase of 30 products (15 categories x 2), readable names for the three demo shops, review text left as imported, photo rules (free-to-use sources only, JPEG/PNG/WebP up to 2 MB, at least 800 px, licence manifest, credits in the README). The #16 branch is created after the showcase list is settled; the benchmark rerun on Erfan's PC covers the regenerated data | Names affect every screen; photos must match them |
 | Benchmark rerun | 8 Nov 2026 | Erfan: the whole benchmark is rerun on his desktop after Batch 8, on one clean commit: pilot, then three sessions at 50 and 10 operations per client, headline the median across sessions, pooled p95 and p99 gated by sample size, start and end baselines, old results archived and compared for unchanged workloads (benchmark amendment l). The Redis measurement protocol is part of it and `redis.md` is approved | Reproducibility across independent sessions on the machine that produces the final evidence |
 | Redis review 1 | 8 Nov 2026 | Erfan: approve the whole fix round from the first fresh Opus 5.5 review of Batch 5 (Redis start-up after a restart, name-lookup timeout, look-alike username bypass, old-shaped cache entries, `Retry-After` after an overshoot, documentation, and three hardening items) | One fix round, as the workflow allows |
+| Redis review 2 | 8 Nov 2026 | Erfan: approve the fix round from the second fresh Opus 5.5 review of Batch 5 (a shape number in every cached entry, lock release during a back-off, name-lookup threads, bounded username normalisation, review takedown and import invalidation, cheaper waiting, documentation) and treat it as the last one | No high-severity finding remained; a third review would meet diminishing returns |
 | 18, 8, 21, 34 | 8 Nov 2026 | Erfan: settle these four first; the rest of Batch 4 is explained for him to approve | Quick UI fixes that need no further decision |
 
 ## Review notes
