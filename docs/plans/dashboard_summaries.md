@@ -1,6 +1,6 @@
 # dashboard_summaries: Delivery and score summaries in both engines
 
-status: in-progress
+status: done
 plan owner: Erfan · implementer: Claude · reviewer: a fresh Opus 5.5 session after the build · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `dashboard`, `reviews`; backlog item #10 step 2 in
 [improvements](improvements.md) (built first in Batch 6)
@@ -83,4 +83,21 @@ and the `$out` pipeline move into the benchmark as the maintained-summary varian
 
 ## Review notes
 
-(To be filled after the Opus review.)
+9 November 2026, a fresh Opus 5.5 session for Erfan, running things against the real stack: the targeted test modules, the
+migration drift check, scratch tests of the edge cases (a delivery exactly at the cut-off, the Singapore boundary, null
+geolocation, a missing reporting date), the privileges of the application's PostgreSQL and MongoDB users, MongoDB
+unreachable during a refresh, and the committed timing script. It found no correctness defect: the summary path matched
+the source on every case and on the full data. Findings, all approved by Erfan and fixed in one round:
+
+- Timings had been typed into three places (the plan, the Decisions row and a docstring); they are now qualitative, and
+  the measured figures are the output of [time_dashboard_history.py](../../scripts/time_dashboard_history.py).
+- The tests the plan promised for migration reversal and simultaneous refreshes were missing; both were added.
+- A docstring still named `$merge`, and PLAN.md and this file disagreed on status.
+- A truncate-style reset followed by a failed post-import refresh could leave a stale summary that the date check would
+  trust; the import now empties the score summary before it refreshes.
+- Confirmed and accepted, now under "Known limits": a bulk refresh overlapping a takedown can write the older value, and
+  a refresh waits for review transactions in flight.
+
+Also verified outside the review: the benchmark loader builds both summaries in the isolated bench databases, the
+benchmark fixture tests pass, and the benchmark correctness mode passes on the fixture; the full Docker suite is green
+after the fix round (counts are printed by the run, never typed here).
