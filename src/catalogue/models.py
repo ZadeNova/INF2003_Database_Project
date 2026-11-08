@@ -11,7 +11,13 @@ class Category(models.Model):
     hand_translated = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name_en
+        return self.display_name
+
+    @property
+    def display_name(self):
+        from .category_names import display_name
+
+        return display_name(self.name_en)
 
     @property
     def icon_name(self):

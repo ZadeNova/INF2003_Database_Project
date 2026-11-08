@@ -3116,6 +3116,11 @@ h2 {
 .product-card .name-tag { margin-left:0; white-space:normal; }
 .product-detail__figure { min-width:0; margin:0; border-right:var(--border-structural) solid var(--card-border); }
 .product-detail__info { min-width:0; }
+/* Side by side, the media tile fills the figure's full height so no empty strip sits under a square image. */
+@media (min-width:768px) {
+    .product-detail__figure { display:grid; }
+    .product-detail .product-detail__media { aspect-ratio:auto; height:100%; }
+}
 .catalogue-counts { margin-top:var(--space-4); }
 ul.catalogue-counts, .catalogue-counts ul { padding:0; list-style:none; }
 .catalogue-counts li { display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-2); margin-top:var(--space-2); }

@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import connection
 from django.utils import timezone
 
+from catalogue.category_names import display_name
 from catalogue.models import Product
 from config import mongo
 
@@ -146,6 +147,11 @@ def delivery_analysis(as_of, database):
     )
 
 
+def _readable_categories(rows):
+    """Show corrected category names on the page; the SQL (and benchmark B2, which runs it) is unchanged."""
+    return [{**row, "category": display_name(row["category"])} for row in rows]
+
+
 def dashboard_data(as_of, category=None, seller=None):
     with mongo.client() as client:
         database = client[mongo.database_name()]
@@ -159,8 +165,8 @@ def dashboard_data(as_of, category=None, seller=None):
         if row["_id"] in products
     ]
     return {
-        "stock_rows": stock_planning(as_of, category, seller),
-        "category_rows": label_month_to_date(category_performance(as_of), as_of),
+        "stock_rows": _readable_categories(stock_planning(as_of, category, seller)),
+        "category_rows": _readable_categories(label_month_to_date(category_performance(as_of), as_of)),
         "delay_rows": buckets,
         "seller_rows": sellers,
         "poor_rows": poor,

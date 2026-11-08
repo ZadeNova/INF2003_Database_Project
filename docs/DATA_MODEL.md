@@ -385,7 +385,7 @@ Descriptions, attributes, rating summaries and the latest five reviews are **emb
 because the detail page needs one MongoDB read. The complete, potentially unbounded review history is **referenced** in
 reviews by product ID. Latest-review copies are a subset within MongoDB, not a copy of PostgreSQL data. An original
 order review is copied to every collapsed order line; from_order_review labels multi-line adaptation. Reviews of
-undelivered orders remain historical evidence. The reviews workstream maintains the running count, sum, histogram, average, Bayesian score and latest five in one snapshot MongoDB transaction, retrying write conflicts. Optional taken_down/takedown_reason fields hide moderated reviews from every public summary. Review edits preserve identity and creation time; answered_at orders the latest changes.
+undelivered orders remain historical evidence. The reviews workstream maintains the running count, sum, histogram, average, Bayesian score and latest five in one snapshot MongoDB transaction, retrying write conflicts. The product page reads that subset (written reviews only; bare star ratings collapse into a count line) and queries the `reviews` collection only for the full list. Optional taken_down/takedown_reason fields hide moderated reviews from every public summary. Review edits preserve identity and creation time; answered_at orders the latest changes.
 
 Cross-store reconciliation verifies each review's line/order/checkout/product/seller/customer tuple, every spec's
 product/category and each category template. Raw-versus-imported delivery analysis counts one review per checkout,

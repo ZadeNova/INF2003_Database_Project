@@ -4,7 +4,7 @@
 <div class="page account-page catalogue-page">
     <a href="{% url 'catalogue:operator_products' %}">Back to products</a>
     <div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">{{ product.name }}</h1>{% include "accounts/_shop_name.html" with seller=product.seller only %}</div><span class="badge badge--neutral">{% if product.taken_down %}Taken down{% elif product.active %}Active{% else %}Inactive{% endif %}</span></div>
-    <div class="panel"><dl class="detail-list"><dt>Category</dt><dd>{{ product.category.name_en }}</dd><dt>Price</dt><dd>{{ product.display_price }}</dd><dt>Stock</dt><dd>{{ product.stock }}</dd>{% if product.taken_down %}<dt>Reason</dt><dd>{{ product.taken_down_reason }}</dd>{% endif %}</dl></div>
+    <div class="panel"><dl class="detail-list"><dt>Category</dt><dd>{{ product.category.display_name }}</dd><dt>Price</dt><dd>{{ product.display_price }}</dd><dt>Stock</dt><dd>{{ product.stock }}</dd>{% if product.taken_down %}<dt>Reason</dt><dd>{{ product.taken_down_reason }}</dd>{% endif %}</dl></div>
     <form class="panel catalogue-editor" method="post">{% csrf_token %}<h2>{% if product.taken_down %}Restore this product{% else %}Take this product down{% endif %}</h2><p>{% if product.taken_down %}It can return to the shop if the seller is approved and the product is active.{% else %}It will leave the shop immediately. The seller will see your reason.{% endif %}</p>{% include "accounts/_form_fields.html" %}<button class="button button--dark" name="action" value="{% if product.taken_down %}restore{% else %}takedown{% endif %}">{% if product.taken_down %}Restore product{% else %}Take down product{% endif %}</button></form>
 </div>
 {% endblock %}

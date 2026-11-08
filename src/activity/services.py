@@ -193,6 +193,10 @@ def seller_insights(seller, *, now=None):
                 "generated_views": views.get(item.pk, {}).get("generated_views", 0),
             }
         )
+    # Most-viewed first, then best conversion; newest product breaks ties (all ties when event data is unavailable).
+    rows.sort(
+        key=lambda row: (row["views"] or 0, row["conversion_percent"] or Decimal(0), row["product"].pk), reverse=True
+    )
     return {
         "insights": rows,
         "events_unavailable": unavailable,

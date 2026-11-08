@@ -11,7 +11,7 @@ from gridfs.errors import NoFile
 from accounts.models import Seller
 from activity.services import browsing_panels, record_event
 from config import mongo
-from reviews.queries import review_page, seller_rating
+from reviews.queries import WRITTEN, latest_written_reviews, review_page, seller_rating
 
 from .forms import SearchForm
 from .models import Category
@@ -29,7 +29,7 @@ def _filter_chips(form, data):
         if name == "sort" or not data.get(name) or value is None or value == "":
             continue
         if name == "category":
-            label = value.name_en
+            label = value.display_name
         elif getattr(field, "choices", None):
             label = dict(field.choices).get(data.get(name), value)
         else:
@@ -118,13 +118,25 @@ def category_detail(request, slug):
     return _listing(request, get_object_or_404(Category, slug=slug))
 
 
+def rating_total_of(spec):
+    return (spec or {}).get("rating_summary", {}).get("count", 0)
+
+
 @require_safe
 def product_detail(request, pk):
     product = get_object_or_404(visible_products(), pk=pk)
     with mongo.client() as client:
         database = client[mongo.database_name()]
         spec = database.product_specs.find_one({"_id": product.pk})
-        page = review_page(database, {"product_id": product.pk}, request.GET.get("page"))
+        # The page opens on the specification's own latest reviews (one MongoDB read in total); the full list,
+        # written reviews only, is requested with ?all=1 or any ?page=.
+        all_reviews = "all" in request.GET or "page" in request.GET
+        if all_reviews:
+            page = review_page(database, {"product_id": product.pk, **WRITTEN}, request.GET.get("page"))
+            reviews, bare = list(page), max(rating_total_of(spec) - page.paginator.count, 0)
+        else:
+            page = None
+            reviews, bare = latest_written_reviews(spec, product)
     language = "pt" if request.GET.get("lang") == "pt" else "en"
     histogram = [
         {"score": score, "count": (spec or {}).get("rating_summary", {}).get("distribution", {}).get(str(score), 0)}
@@ -138,6 +150,10 @@ def product_detail(request, pk):
             "product": product,
             "spec": spec,
             "reviews_page": page,
+            "reviews": reviews,
+            "bare_ratings": bare,
+            "all_reviews": all_reviews,
+            "rating_total": rating_total_of(spec),
             "review_language": language,
             "histogram": histogram,
             **browsing_panels(request, category=product.category_id),

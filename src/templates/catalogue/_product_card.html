@@ -3,12 +3,12 @@
         <div class="tile" role="img" aria-label="{{ product.name }}">{% if product.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' product.photo_file_id %}" alt="{{ product.name }}" loading="lazy">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
     </a>
     <div class="product-card__body">
-        <a class="product-card__category" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.name_en }}</a>
+        <a class="product-card__category" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.display_name }}</a>
         <h2 class="product-card__name"><a href="{% url 'catalogue:product_detail' product.pk %}">{{ product.name }}</a></h2>
-        {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url only %}
+        {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url covered=product.has_generated_content only %}
         <p class="product-card__price">{{ product.display_price }}</p>
         <p class="product-card__stock">{% if product.stock %}In stock{% else %}Sold out{% endif %}</p>
         {% include "wishlist/_button.html" %}
-        {% if product.has_generated_content %}<p class="product-card__generated">Generated name and stock.</p>{% endif %}
+        {% if product.has_generated_content %}<p class="product-card__generated">Generated name, shop and stock.</p>{% endif %}
     </div>
 </article>

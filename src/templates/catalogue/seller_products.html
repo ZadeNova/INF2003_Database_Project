@@ -8,7 +8,7 @@
         <div class="optable__row optable__row--head optable__row--products"><span>Product</span><span>Category</span><span>Price</span><span>Stock</span><span>Status</span></div>
         {% for product in page_obj %}<div class="optable__row optable__row--products">
             <span class="stacked">{% if product.taken_down %}<strong>{{ product.name }}</strong><span>{{ product.taken_down_reason }}</span>{% else %}<a class="optable__name" href="{% url 'catalogue:product_edit' product.pk %}">{{ product.name }}</a>{% endif %}{% if product.has_generated_content %}<span class="name-tag">Generated content</span>{% endif %}</span>
-            <span>{{ product.category.name_en }}</span><span>{{ product.display_price }}</span><span>{{ product.stock }}</span><span class="badge badge--{% if product.active and not product.taken_down %}completed{% else %}neutral{% endif %}">{% if product.taken_down %}Taken down{% elif product.active %}Active{% else %}Inactive{% endif %}</span>
+            <span>{{ product.category.display_name }}</span><span>{{ product.display_price }}</span><span>{{ product.stock }}</span><span class="badge badge--{% if product.active and not product.taken_down %}completed{% else %}neutral{% endif %}">{% if product.taken_down %}Taken down{% elif product.active %}Active{% else %}Inactive{% endif %}</span>
         </div>{% empty %}<div class="optable__empty"><p>No products found. Add your first product.</p></div>{% endfor %}
     </div>
     {% include "catalogue/_pager.html" %}
