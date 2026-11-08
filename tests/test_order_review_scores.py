@@ -1,13 +1,19 @@
 """The MongoDB per-order review score summary: its schema and the bulk `$out` refresh."""
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from io import StringIO
+from pathlib import Path
 
 import pytest
 from db_helpers import timestamp_guard_off
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.db import connection
 from django.db.models import F
 from pymongo.errors import PyMongoError, WriteError
 
-from config import redis_store
+from config import mongo, redis_store
 from config.mongo_schema import VALIDATORS, ensure_collection, setup
 from dashboard import services
 from dashboard.services import ORDER_SCORES, as_of_date, end_of_day, order_scores_pipeline, query_rows, refresh_sales
@@ -132,3 +138,34 @@ def test_a_failed_mongodb_step_rolls_the_views_back_and_leaves_the_cache_alone(i
         refresh_sales()
     assert query_rows(DELIVERIES, {}) == before  # the refresh of the delivery view was rolled back with it
     assert redis_store.dashboard_version() == version  # and nothing was invalidated
+
+
+def test_simultaneous_refreshes_all_finish_and_leave_both_summaries_consistent(imported, mongo_db):
+    def refresh(_):
+        with mongo.using_database(mongo_db.name):
+            try:
+                refresh_sales()
+            finally:
+                connection.close()
+
+    with ThreadPoolExecutor(3) as pool:
+        list(pool.map(refresh, range(3)))  # the advisory lock serialises them; any failure is raised here
+    as_of = as_of_date()
+    assert {key: (doc["total"], doc["count"]) for key, doc in stored(mongo_db).items()} == {
+        row["_id"]: (row["total"], row["count"])
+        for row in mongo_db.reviews.aggregate(order_scores_pipeline(end_of_day(as_of)))
+    }
+    assert mongo_db[ORDER_SCORES].options()["validator"] == VALIDATORS[ORDER_SCORES]
+    assert services.summary_inputs(as_of, mongo_db) is not None
+
+
+def test_the_import_empties_a_leftover_summary_so_a_failed_refresh_cannot_leave_it_trusted(mongo_db, monkeypatch):
+    mongo_db[ORDER_SCORES].insert_one({**GOOD, "_id": 999_999_999})  # left over from an earlier load
+
+    def broken():
+        raise PyMongoError("simulated outage")
+
+    monkeypatch.setattr(services, "refresh_sales", broken)
+    with pytest.raises(CommandError):
+        call_command("import_olist", source=Path("/app/tests/fixtures/olist/clean"), stdout=StringIO())
+    assert stored(mongo_db) == {}

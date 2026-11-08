@@ -81,8 +81,8 @@ def refresh_order_scores(database, as_of):
 
     `$out` replaces the collection atomically and keeps its validator and indexes, so a reader sees the old summary or
     the new one, never half of it, and a refused or failed run leaves the old summary in place. It also drops orders
-    whose visible reviews are gone, with no sweep. (`$merge` rewrites every document of a full rebuild and was about
-    four times slower on the full data.) Without a reporting date (no Olist orders yet) the summary is empty.
+    whose visible reviews are gone, with no sweep. (`$merge` rewrites every document of a full rebuild and measured
+    slower on the full data.) Without a reporting date (no Olist orders yet) the summary is empty.
     """
     ensure_collection(
         database, ORDER_SCORES

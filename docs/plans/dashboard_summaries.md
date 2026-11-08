@@ -21,7 +21,7 @@ optimisation, not new data: the live path stays as the fallback and the test ora
 |---|---|---|
 | 1 | **PostgreSQL view** | `order_delivery_summary` in the `dashboard` app, one row per delivered order up to the reporting date (`dashboard_as_of()`): order, seller, delay days, bucket, distance in km and the reporting date. Shop names are not stored (they are read live). A unique index on the order makes `REFRESH MATERIALIZED VIEW CONCURRENTLY` possible. The refresh runs in a `SECURITY DEFINER` function with a pinned `search_path`, under the existing advisory lock, granted only to the runtime role; the runtime role gets `SELECT`. Built in a new migration |
 | 2 | **MongoDB summary** | Collection `order_review_scores`, one document per order that has visible scores: the integer `total` and `count` of those scores up to the reporting date, and the reporting date as an ISO string. A strict `$jsonSchema` validator in `mongo_schema.py` like the other collections; only the `_id` index. Derived from MongoDB's own reviews, so nothing is copied between stores |
-| 3 | **Bulk refresh** | "Refresh sales history" and the Olist import refresh both summaries in one PostgreSQL transaction: the two views, then one aggregation over the reviews ending in `$out`. `$out` replaces the collection atomically and keeps its validator and indexes, so a reader sees the old summary or the new one and a refused result leaves the old one in place; an order whose visible reviews are gone simply is not in the new result. If the MongoDB step fails the views roll back. The Redis version bump follows the commit as today. *Changed from the first draft (`$merge` with a run stamp and a sweep): measured on the full data, `$merge` took about 4.5 s because a full rebuild rewrites every document, `$out` about 0.8 s, and `$out` needs no stamp, sweep or interleaving guard* |
+| 3 | **Bulk refresh** | "Refresh sales history" and the Olist import refresh both summaries in one PostgreSQL transaction: the two views, then one aggregation over the reviews ending in `$out`. `$out` replaces the collection atomically and keeps its validator and indexes, so a reader sees the old summary or the new one and a refused result leaves the old one in place; an order whose visible reviews are gone simply is not in the new result. If the MongoDB step fails the views roll back. The Redis version bump follows the commit as today. *Changed from the first draft (`$merge` with a run stamp and a sweep): a full rebuild rewrites every document, which `$merge` measured slower than `$out` on the full data, and `$out` needs no stamp, sweep or interleaving guard* |
 | 4 | **Per-order recompute** | Every review write that can change a historical score recomputes that one order's summary inside the same MongoDB transaction: operator takedown and restore ([reviews/services.py](../../src/reviews/services.py) `moderate_review`) and customer edit and delete (`write_review`). It reads the order's few reviews and replaces one document ("recompute, do not increment", so it cannot drift). A rolled-back transaction leaves the summary unchanged. `$out` and `$merge` cannot run inside a transaction (verified in the spike: error 263), so the per-order change reads and replaces one document instead; it deletes the document when no visible review is left |
 | 5 | **Read path** | `delivery_analysis` reads the view and the collection and does the same Python join as today. The result is the same shape, so the cached blocks do not change (the Redis shape number stays unless the structure does) |
 | 6 | **Fallback and oracle** | The current live path stays. The dashboard uses it when either summary is missing, or the two carry different reporting dates (for example after a half-failed refresh). Tests assert both paths return identical blocks |
@@ -71,6 +71,15 @@ and the `$out` pipeline move into the benchmark as the maintained-summary varian
 | Review changes | Recompute the affected order's summary in the same MongoDB transaction, on takedown, restore, edit and delete | A takedown must show on the dashboard at once; incrementing could drift |
 | Live path | Kept as fallback and test oracle | Graceful degradation and a permanent correctness check |
 | Plan file | This file | The backlog row required a short plan first |
+
+## Known limits
+
+- A bulk refresh that overlaps a review takedown can write the pre-takedown value over the freshly recomputed document.
+  Both are operator actions and the overlap is short; the next refresh corrects it.
+- A refresh's `$out` waits for review transactions in flight, because each reads the summary's reporting date first.
+  Review writes are short and rare.
+- The reporting-date check cannot see a summary that is stale at the same date. Every writer of `reviews` (the import and
+  the two review services) is covered, and the import empties a leftover summary before it refreshes.
 
 ## Review notes
 

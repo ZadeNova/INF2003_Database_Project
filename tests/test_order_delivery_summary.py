@@ -7,6 +7,7 @@ import pytest
 from account_helpers import runtime_connection
 from checkout_helpers import customer, paid_order, product
 from db_helpers import timestamp_guard_off
+from django.core.management import call_command
 from django.db import connection
 from django.db.models import F
 from django.utils import timezone
@@ -97,3 +98,20 @@ def test_runtime_can_read_and_refresh_through_the_function_only(imported):
             ["refresh_order_delivery_summary"],
         ).fetchall()
         assert (0,) not in acl  # PUBLIC has no EXECUTE
+
+
+def test_the_migration_reverses_and_applies_again_with_the_runtime_grants(imported):
+    try:
+        call_command("migrate", "dashboard", "0001", verbosity=0)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT to_regclass('public.order_delivery_summary'), "
+                "to_regproc('public.refresh_order_delivery_summary'), to_regclass('public.daily_product_sales')"
+            )
+            view, function, sales = cursor.fetchone()
+        assert (view, function) == (None, None) and sales is not None  # only this migration's objects went
+    finally:
+        call_command("migrate", "dashboard", verbosity=0)
+    with runtime_connection() as runtime:  # applied again: unpopulated until the first refresh, grants restored
+        runtime.execute("SELECT public.refresh_order_delivery_summary()")
+        assert runtime.execute("SELECT count(*) FROM public.order_delivery_summary").fetchone()[0] > 0

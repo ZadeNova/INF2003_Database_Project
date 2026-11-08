@@ -101,10 +101,13 @@ class Command(BaseCommand):
             ) from error
         # The import is committed. A refresh failure must never claim that these source rows rolled back.
         from config import redis_store
-        from dashboard.services import refresh_sales
+        from dashboard.services import ORDER_SCORES, refresh_sales
 
         redis_store.bump_dashboard()  # the imported rows are history: bump even if the refresh below fails
         try:
+            # A summary left over from an earlier load must never be trusted if the refresh below fails.
+            with mongo.client() as client:
+                client[mongo.database_name()][ORDER_SCORES].delete_many({})
             refresh_sales()
         except (DatabaseError, PyMongoError) as error:
             raise CommandError(

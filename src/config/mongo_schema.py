@@ -134,7 +134,7 @@ def create_validated(database, name):
 
 
 def ensure_collection(database, name):
-    """Create a validated collection if it is missing, so that a `$merge` never creates it without its validator."""
+    """Create a validated collection if it is missing, so that an `$out` never creates it without its validator."""
     if name not in database.list_collection_names():
         try:
             create_validated(database, name)

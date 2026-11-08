@@ -346,7 +346,8 @@ another reporting date, and a test proves both paths give identical blocks. Ever
 historical score (takedown, restore, a customer's edit or delete) recomputes that one order's document inside the
 review's own MongoDB transaction and, when the summary changed, invalidates the cached dashboard blocks. History that
 enters the tables without the import (it only arrives through the import) shows after the next "Refresh sales history",
-as the sales view does.
+as the sales view does. A bulk refresh that overlaps a takedown can briefly write the pre-takedown value over the
+recomputed document; the next refresh corrects it.
 
 The dashboard's stock query is one grouped sum over the last 28 days (`STOCK_PLANNING_FAST`); the earlier version, which fills
 zero-sale calendar days before a 28-row AVG window per product, stays as `STOCK_PLANNING` for benchmark B2. Both give the same
