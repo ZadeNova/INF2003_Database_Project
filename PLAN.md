@@ -483,6 +483,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | done |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | ready |
 | `improvements` | Prioritised backlog from the 2 and 8 November full-stack reviews (Erfan, sole approver while Chee Long is away); settled and built in batches on the current branch, see [the plan](docs/plans/improvements.md) | the frozen Tier 1 application | 1 | in progress (batches 1 to 3 built) |
+| `product_photos` | Photos for 30 Olist products and a teammate's merchant with up to 12 new products, loaded from committed files by `seed_showcase`; optional 3D models as a stretch; see [the plan](docs/plans/product_photos.md) | the frozen Tier 1 application | 1 | loader built; data lane open |
 | `redis` | Redis cache-aside and rate limiting | `dashboard` | 2 | not started |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard | `checkout` | 2 | not started |
