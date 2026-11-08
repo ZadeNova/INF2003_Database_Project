@@ -128,3 +128,16 @@ def test_insights_sort_by_views_then_conversion(mongo_db):
     order = [row["product"].pk for row in seller_insights(quiet.seller, now=now)["insights"]]
     # Equal views and conversion fall back to the newer product first; the quiet product is last.
     assert order == [tied.pk, busy.pk, quiet.pk]
+
+
+def test_imported_products_show_a_short_sku_and_new_products_do_not(mongo_db):
+    item = product("lamp")
+    Product.objects.filter(pk=item.pk).update(olist_product_id="fec3b4abcdef0123456789abcdef0123")
+    body = listing(item)
+    assert "SKU FEC3B4" in body
+    assert "SKU FEC3B4" in Client().get(f"/products/{item.pk}/").content.decode()
+    other = product("desk")
+    assert other.sku is None
+    assert (
+        "SKU None" not in listing(other) and "SKU None" not in Client().get(f"/products/{other.pk}/").content.decode()
+    )

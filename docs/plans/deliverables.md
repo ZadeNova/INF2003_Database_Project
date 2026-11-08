@@ -56,6 +56,26 @@ the full one goes in appendix B.
 Appendices (outside the page count): A theory map; B full ER diagram and cleaning ledger; C generated benchmark
 tables; D AI use and the reuse disclosure; references, including the Olist licence.
 
+### Notes to carry into the report and video (collected during the improvements backlog)
+
+Added 8 November 2026 on Erfan's instruction, so nothing is forgotten when the report is written.
+
+- **Dataset framing (section 2, and the video's background part).** Olist is real, multi-table and large (orders,
+  payments, deliveries, reviews, sellers, geography), which is what "appropriate and sufficient data" asks for. Say
+  plainly what is real and what is generated: Olist anonymised product names, descriptions, photos and stock, so those
+  are generated, labelled on every page (AGENTS.md rule 9) and flagged in the data (`has_generated_content`). Describe the
+  generator and the flags as the method, not as a patch.
+- **Use the scale as a strength.** The full-data benchmarks, the whole-dataset review aggregation and the 34,000-product
+  search are what make B1 and B2 meaningful; a toy dataset could not show them.
+- **Limitations (section 9).** One main dataset (a second was considered and dropped to protect scope); generated product
+  text; machine-translated reviews with occasional odd phrasing, labelled as such; Olist category names corrected only on
+  display (a display-name map), never in the stored data.
+- **Demo path.** The video walks the showcase products on the home page (proper names and photos), not arbitrary
+  products. The showcase is demonstration data set by `seed_demo`; the clean data and checksums are untouched.
+- **Benchmark provenance.** The 2 November run came from another machine and is superseded; the final run is on the
+  designated machine named in `host.json`. Mention the earlier out-of-memory kill and the identical-limits rerun as an
+  honest method note.
+
 ### Video outline (target 9:30)
 
 | Part | Time | Covers |

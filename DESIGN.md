@@ -149,7 +149,7 @@ All public catalogue grids use four columns at 1280px and wider, three from 768p
 768px, including phones. Rows stretch to align the cards; card names and labels remain readable without truncation.
 Grid gaps are 24px on larger screens and 16px on phones. The facet column is separate from these product columns.
 
-Each card has a 4:3 media well, category link, wrapping product name, linked shop name, mono price, stock label and
+Each card has a 4:3 media well, category link, wrapping product name, a muted mono SKU line (imported products), linked shop name, mono price, stock label and
 generated-content label when applicable. Category media uses the existing Phosphor sprite mapping. Seller uploads
 are contained within the same media well, with no cropping or enlargement interaction. The photo, name and category
 links remain keyboard-accessible. Hover changes the border only.

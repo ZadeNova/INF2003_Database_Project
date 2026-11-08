@@ -2,6 +2,12 @@
 
 Adding/reordering other rows never changes a product's generated content. Templates
 are maintained separately in data/derived/olist/templates/categories.json.
+
+A product name is an adjective, an optional attribute word and a noun from the category's list in the template's
+"names" block, plus an optional ", variant" from a drawn attribute (a size, a volume). A noun may be tied to the
+drawn attributes ("where"), so the name never contradicts them. The SKU that used to end every name is not part of
+the name; it is the first six letters of the source product id, shown by the application. The random draws for names
+come after every earlier draw, so attributes, stock and lead times are the same as before the names changed.
 """
 
 import argparse
@@ -13,6 +19,28 @@ from pathlib import Path
 from olist_common import ROOT, checksums, read_csv, write_csv, write_ndjson
 
 SEED = 82
+
+
+def readable_name(rng, spec, default_words, attributes):
+    """Adjective, optional attribute word, noun; only nouns that fit the drawn attributes are eligible."""
+    nouns = spec["nouns"]
+    fitting = [
+        noun
+        for noun in nouns
+        if isinstance(noun, str) or all(attributes.get(key) in allowed for key, allowed in noun["where"].items())
+    ]
+    noun = rng.choice(fitting or nouns)
+    noun = noun if isinstance(noun, str) else noun["noun"]
+    parts = [rng.choice(spec.get("words", default_words))]
+    attribute = attributes.get(spec.get("name_attribute"))
+    if isinstance(attribute, str):
+        parts.append(attribute)
+    parts.append(noun)
+    name = " ".join(parts)
+    suffix = spec.get("suffix")
+    if suffix and attributes.get(suffix["attribute"]) is not None:
+        name += ", " + suffix["text"].format(attributes[suffix["attribute"]])
+    return name
 
 
 def generate(output, template_path):
@@ -36,10 +64,14 @@ def generate(output, template_path):
         attributes = {
             name: rng.choice(definition["values"]) for name, definition in sorted(template["attributes"].items())
         }
-        word = rng.choice(template["words"])
-        row["name"] = f"{word} {category['name_en']} {row['olist_product_id'][:6].upper()}"
+        word = rng.choice(template["words"])  # kept so every later draw is unchanged
         row["stock"] = rng.randint(20, 200)
         row["lead_time_days"] = rng.randint(3, 14)
+        naming = templates["names"]["categories"].get(category["name_pt"])
+        if naming is None:
+            row["name"] = f"{word} {category['name_en']}"
+        else:
+            row["name"] = readable_name(rng, naming, templates["names"]["default_words"], attributes)
         row["has_generated_content"] = True
         attributes_text = "; ".join(f"{k.replace('_', ' ')}: {v}" for k, v in attributes.items())
         spec = specs[int(row["id"])]
@@ -69,7 +101,7 @@ def generate(output, template_path):
     ledger["output_counts"]["category_templates"] = len(documents)
     ledger["generation"] = {
         "seed": SEED,
-        "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes",
+        "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes, then names from per-category nouns",
         "template_sha256": hashlib.sha256(Path(template_path).read_bytes()).hexdigest(),
     }
     from olist_common import write_json

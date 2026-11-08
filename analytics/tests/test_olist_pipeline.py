@@ -1,6 +1,7 @@
 """The real deterministic fixture exercises every approved cleaning rule."""
 
 import json
+import re
 from collections import Counter, defaultdict
 from decimal import Decimal
 from pathlib import Path
@@ -292,6 +293,50 @@ def test_two_equivalent_runs_are_byte_identical_and_generation_idempotent(pipeli
     before = checksums(same, verify=True)
     generate(same, TEMPLATES)
     assert checksums(same, verify=True) == before
+
+
+def test_every_category_has_names_whose_nouns_fit_every_drawn_attribute_combination():
+    import itertools
+
+    templates = json.loads(TEMPLATES.read_text())
+    categories = {r["name_pt"] for r in read_csv(ROOT / "data/derived/olist/clean/categories.csv")}
+    names = templates["names"]["categories"]
+    assert set(names) == categories, "every category needs a noun list"
+    for name, spec in names.items():
+        own = templates["categories"].get(name)
+        assert spec["nouns"] and len(spec.get("words", templates["names"]["default_words"])) >= 8, name
+        attributes = (own or templates["generic"])["attributes"]
+        if spec.get("name_attribute"):
+            assert attributes[spec["name_attribute"]]["type"] == "string", name
+        if "suffix" in spec:
+            assert spec["suffix"]["attribute"] in attributes, name
+        keys = sorted(attributes)
+        for combination in itertools.product(*(attributes[key]["values"] for key in keys)):
+            drawn = dict(zip(keys, combination))
+            assert any(
+                isinstance(noun, str) or all(drawn.get(k) in allowed for k, allowed in noun["where"].items())
+                for noun in spec["nouns"]
+            ), (name, drawn)
+
+
+def test_generated_names_are_readable_and_agree_with_the_drawn_attributes(pipeline):
+    _, _, _, tables, docs = pipeline
+    templates = json.loads(TEMPLATES.read_text())
+    by_id = {r["id"]: r for r in tables["categories"]}
+    specs = {spec["_id"]: spec for spec in docs["product_specs"]}
+    for row in tables["products"]:
+        name, attributes = row["name"], specs[int(row["id"])]["attributes"]
+        assert not re.search(r"[0-9A-F]{6}", name), name  # the hex id is a SKU line in the app, not part of the name
+        assert name[0].isupper() and len(name) <= 200
+        names = templates["names"]["categories"][by_id[row["category_id"]]["name_pt"]]
+        nouns = [(n, {}) if isinstance(n, str) else (n["noun"], n["where"]) for n in names["nouns"]]
+        assert any(
+            noun in name and all(attributes.get(k) in allowed for k, allowed in where.items()) for noun, where in nouns
+        ), name
+        word = attributes.get(names.get("name_attribute"))
+        if isinstance(word, str):
+            assert f" {word} " in name, (name, word)
+        assert name in specs[int(row["id"])]["description"]
 
 
 def test_generated_content_and_bayesian_subset(pipeline):

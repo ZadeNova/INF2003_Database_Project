@@ -84,21 +84,21 @@ only bug fixes go in.
 
 ## Batch 4: UI and MongoDB claims
 
-**Deferred decision (8 Nov): product names, review text and photos.** Names are an adjective, the category label and a
-hexadecimal suffix, so about 34,000 products share only a few hundred distinct names; muting the suffix (#7 as
-written) would leave lists of near-identical titles. English review text is a literal machine translation of
-Portuguese reviews, some of them casually misspelt, and the source data itself is not corrupted. Options when settled:
-(A, recommended) a showcase set of about 20 products across the three demo sellers, given labelled names, photos and
-hand-checked review text in `seed_demo` (no change to the clean data, checksums or closed benchmarks); (B) regenerate
-every name, which changes the clean files and needs a B1 rerun; (C) add a generated attribute to titles as a display
-extra. A teammate will supply the photos (#16), which must match the names. Settle together with #69.
+**Settled 8 Nov: product names, review text and photos (Erfan).** Names were an adjective, the category label and a
+hexadecimal suffix, so about 34,000 products shared only 275 distinct names. Chosen: **B-lite**, regenerate the names for
+all 74 categories from per-category noun lists tied to each product's drawn attributes (6,803 distinct names; the
+attributes, stock, lead times and every other field are byte-identical), show the old hexadecimal as a muted SKU line, then
+photograph a showcase of 30 products (2 in each of the 15 main categories; 24 of them featured on the home page, so a
+filter by any main category opens on pictures). Review text stays as imported (machine-translated, labelled); showcase
+products are picked for readable reviews. The three demo shops get readable generated names. The benchmark is rerun on
+Erfan's PC after Batch 6, so the changed clean data costs no extra rerun. The photos (#16) are delegated to a teammate.
 
 | # | Area | Item | Why it matters | Fix | Effort | Status |
 |---|---|---|---|---|---|---|
 | 11 | MongoDB | `latest_reviews` is maintained on every review write ([reviews/services.py](../../src/reviews/services.py)) but never read; the product page queries `reviews` directly | The subset pattern and "a product page is one read" claim are not true | Settled 8 Nov, option A: the product page opens on the specification's `latest_reviews` (one MongoDB read; a test fails if the reviews collection is queried), and `?all=1` pages the full list from `reviews` ([queries.py](../../src/reviews/queries.py)) | S–M | done |
 | 19 | UI | Review lists are mostly score-only rows, so product pages look empty | Looks empty on camera | Settled 8 Nov, option 1: the public product page shows written reviews and collapses bare star ratings into one line ("Plus 3 recent star ratings without a comment"; in the full list, the count of ratings without a comment). Operator and seller lists keep every row | S | done |
 | 21 | UI | Seller insights is sorted by product id; the dashboard filter asks for a typed seller number and shows Django's empty label | Both pages appear in the demo story | Settled 8 Nov: Seller Insights sorts by views, then conversion; the dashboard category filter reads "All categories"; the typed seller number is now a "Shop" dropdown of the 50 approved shops with the most products (any other value is refused) | S | done |
-| 7 | UI | Product and shop names look like identifiers (a hexadecimal suffix on every name) | Visible on every screen of the video | Show the suffix as a muted SKU line; regenerating names would change data checksums and benchmark provenance | M, approval | open |
+| 7 | UI | Product and shop names look like identifiers (a hexadecimal suffix on every name) | Visible on every screen of the video | Settled 8 Nov: B-lite. Names regenerated from noun lists (generator, template and fixture, byte-for-byte reproduction checked), SKU line on cards, the detail page and the seller list; the showcase list and the demo shop names follow | M-L | names done; showcase and shop names open |
 | 18 | UI | Generated-content labels appear three times per card; descriptions read like placeholder text | Clutter on every card | Settled 8 Nov: a card shows one line ("Generated name, shop and stock.") and no separate shop tag; the detail page keeps one footnote that now names the shop name; the tag stays where nothing else covers it (AGENTS.md rule 9). The description sentence is data and stays | S | done |
 | 34 | Data | Some category names read oddly ("Home Appliances 2", "Construction Tools Tools") | Looks careless | Settled 8 Nov: a display-name map in [category_names.py](../../src/catalogue/category_names.py) (20 entries) shown on every page, the filter dropdowns and the dashboard; stored names, slugs and checksums unchanged | S | done |
 | 8 | UI | Product page media panel: icon clipped into a corner. Fixed with CSS on 7 Nov | Looked broken | Browser-checked 8 Nov (light, dark, phone). The media tile now also fills the column height on desktop, so no empty strip sits under the image | S | done |
@@ -237,6 +237,7 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | Batch 3 review | 8 Nov 2026 | Erfan: approve the whole fix round from the fresh Opus 5.5 review of batches 1 to 3: refuse non-finite expected prices, correct the dashboard note and the stale docs, run `mongo_setup` and `seed_demo` locally, add privilege and concurrency tests, show hidden-field errors, treat a typed value equal to the live one as no conflict, make the test helper transactional | One fix round, as the workflow allows |
 | 16 | 8 Nov 2026 | Erfan: a teammate settles and carries out #16 (photos); Erfan settles the rest of Batch 4, and other batches continue meanwhile. Open dependencies recorded for the teammate: the photos must match the product names (#7, #18) and the showcase set, they reverse catalogue amendment k, and they need a committed folder plus a licence manifest so the zip reproduces them | Photos are sourcing work that does not block the rest of the batch |
 | 11, 19 | 8 Nov 2026 | Erfan: #11 option A (read the subset), #19 option 1 (written reviews, bare ratings collapsed). #7 and #16 deferred to later | Combined: page 1 is the stored latest five, so a page whose newest five are all bare ratings shows only the collapsed line and a link to the full list |
+| 7, 16 | 8 Nov 2026 | Erfan: B-lite names (all 74 categories), SKU line, showcase of 30 products (15 categories x 2), readable names for the three demo shops, review text left as imported, photo rules (free-to-use sources only, JPEG/PNG/WebP up to 2 MB, at least 800 px, licence manifest, credits in the README). The #16 branch is created after the showcase list is settled; the benchmark rerun on Erfan's PC covers the regenerated data | Names affect every screen; photos must match them |
 | 18, 8, 21, 34 | 8 Nov 2026 | Erfan: settle these four first; the rest of Batch 4 is explained for him to approve | Quick UI fixes that need no further decision |
 
 ## Review notes

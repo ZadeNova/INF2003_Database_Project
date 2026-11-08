@@ -3111,6 +3111,7 @@ h2 {
 .catalogue-photo { display:block; width:100%; height:100%; object-fit:contain; }
 .product-card .tile { height:auto; aspect-ratio:4 / 3; }
 .product-card__body > * { min-width:0; }
+.sku { margin:0; color:var(--color-text-secondary); font-family:var(--font-mono); font-size:1.2rem; letter-spacing:0.04em; }
 .product-card__stock, .product-card__generated { margin:0; color:var(--color-text-secondary); font-size:1.2rem; line-height:1.5; }
 .product-card .shop-name { min-width:0; overflow-wrap:anywhere; }
 .product-card .name-tag { margin-left:0; white-space:normal; }

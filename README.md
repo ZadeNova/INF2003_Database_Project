@@ -473,6 +473,10 @@ remain available as visual samples.
 Relisting labels also use retained imported order history, so rerunning `seed_demo` repairs labels omitted by an
 earlier seeder even when it already set the product active.
 
+Generated product names changed on 8 November 2026 (readable names instead of a hexadecimal suffix; the SKU is now a
+separate line). After pulling that change, databases built from the old data must be reset and reloaded with the
+commands below, then `seed_demo`; nothing else about the data changed.
+
 For a fresh import, first verify the project is mercer and that its named volumes belong to this clone. The following
 **deletes this project's local database data**; it leaves raw/derived repository files intact:
 
@@ -664,7 +668,7 @@ docker compose --profile tools run --rm tools pytest -q -p no:cacheprovider anal
 The ECB execution-day reference response, its true publication date, and the BRL-to-SGD cross rate are stored in
 `data/derived/olist/fx.json` and the adjacent XML. Regeneration reuses this fixed rate, not a new network quote.
 The cleaning ledger accounts for every source row and explains all transformations. Generated product content uses
-seed 82 and the category definitions in `data/derived/olist/templates/categories.json`. SHA-256 manifests protect raw,
+seed 82 and the category definitions and name lists in `data/derived/olist/templates/categories.json`. SHA-256 manifests protect raw,
 clean and complete derived outputs. Pipeline tests repeat cleaning and generation on the test fixture. To check the
 full dataset separately, run both stages into two directories and compare their manifests with the prepared data:
 

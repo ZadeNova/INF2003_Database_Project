@@ -17,9 +17,9 @@
     "source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
   },
   "generation": {
-    "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes",
+    "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes, then names from per-category nouns",
     "seed": 82,
-    "template_sha256": "14394682030ecbefe75af8cc41930e5cc387f64502554773a046856e71c83750"
+    "template_sha256": "b11060dce78704d52dd913c8bb90689e03eba993d23110f82cdc8c50b59c34bc"
   },
   "output_counts": {
     "categories": 74,

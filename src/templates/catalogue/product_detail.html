@@ -11,6 +11,7 @@
         <div class="product-detail__info">
             <a class="eyebrow" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.display_name }}</a>
             <h1 class="product-detail__name">{{ product.name }}</h1>
+            {% if product.sku %}<p class="sku">SKU {{ product.sku }}</p>{% endif %}
             {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url covered=product.has_generated_content only %}
             <p class="product-detail__price">{{ product.display_price }}</p>
             <p>Shipping: S${{ product.freight }}</p>

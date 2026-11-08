@@ -67,6 +67,11 @@ class Product(models.Model):
         ]
 
     @property
+    def sku(self):
+        """Short reference shown beside a name: the start of the Olist product id, for imported products only."""
+        return self.olist_product_id[:6].upper() if self.olist_product_id else None
+
+    @property
     def display_price(self):
         return f"S${self.price:.2f}"
 
