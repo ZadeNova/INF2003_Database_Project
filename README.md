@@ -642,9 +642,14 @@ date; more than 20% late marks a seller at risk. The panel states how many small
 panel lists products averaging at most two stars from at least five reviews.
 
 `import_olist` refreshes daily product sales after the verified import commits. For a database imported before this
-feature, press "Refresh sales history" once; migrations alone leave the materialized view unpopulated. The button
-also refreshes after a restock. It uses a restricted owner-owned function, so the web role still has no direct refresh
+feature, press "Refresh sales history" once; migrations alone leave the materialized views (daily product sales and
+the delivery summary) unpopulated. The button also refreshes after a restock. It uses a restricted owner-owned function, so the web role still has no direct refresh
 privilege. A refresh failure after import is reported as a committed import requiring a refresh retry.
+
+The dashboard's delivery panel reads two maintained summaries (the `order_delivery_summary` view and the MongoDB
+`order_review_scores` collection) that the same refresh rebuilds. If either is missing, empty or built for another
+reporting date, the panel is computed from the orders and reviews instead, only more slowly. To time both ways on the
+data in your stack: `docker compose exec -T web python manage.py shell < scripts/time_dashboard_history.py`.
 
 The dashboard takes a few seconds on the full data; preload `/operator/dashboard/` before filming. This is accepted
 for Tier 1. Caching remains in the Tier 2 redis workstream.

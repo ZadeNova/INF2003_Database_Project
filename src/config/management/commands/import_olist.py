@@ -106,11 +106,11 @@ class Command(BaseCommand):
         redis_store.bump_dashboard()  # the imported rows are history: bump even if the refresh below fails
         try:
             refresh_sales()
-        except DatabaseError as error:
+        except (DatabaseError, PyMongoError) as error:
             raise CommandError(
-                "Import committed, but sales history refresh failed. Use the operator refresh button after checking PostgreSQL."
+                "Import committed, but sales history refresh failed. Use the operator refresh button after checking PostgreSQL and MongoDB."
             ) from error
-        self.stdout.write("Daily product sales refreshed.")
+        self.stdout.write("Daily product sales, delivery summary and review score summary refreshed.")
         duration = time.perf_counter() - started
         self.stdout.write(f"Olist import complete in {duration:.3f} seconds.")
         self.stdout.write(

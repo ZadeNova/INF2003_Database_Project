@@ -296,6 +296,7 @@ def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, m
         Order.objects.filter(pk=future.pk).update(
             placed_at=end - timedelta(days=4), delivered_at=end, estimated_delivery=end - timedelta(days=1)
         )
+    refresh_sales()  # history is read from the maintained summaries, which the operator's refresh rebuilds
     data = dashboard_data(as_of)
     rows = {row["seller_id"]: row for row in data["seller_rows"]}
     assert items[0].seller_id not in rows

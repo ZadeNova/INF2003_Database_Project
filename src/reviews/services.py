@@ -13,6 +13,7 @@ from pymongo.write_concern import WriteConcern
 from accounts.audit import set_audit_context
 from accounts.models import User
 from config import mongo, redis_store
+from dashboard.services import recompute_order_score
 from orders.models import Order, OrderLine
 
 from .ratings import summary_pipeline
@@ -100,13 +101,18 @@ def write_review(actor, line_id, action, cleaned=None):
                     database.reviews.replace_one({"order_line_id": line.pk}, after, session=session)
                 else:
                     database.reviews.insert_one(after, session=session)
+            summary_changed[:] = [recompute_order_score(database, line.order_id, session)]
             _summary(database, session, line.product_id, before, after)
             return after
 
+        summary_changed = [False]  # set by the committed attempt: the callback runs again after a write conflict
         try:
-            return _transact(client, change)
+            result = _transact(client, change)
         except DuplicateKeyError:
             raise ValidationError("This item already has a review. Edit it instead.") from None
+        if summary_changed[0]:
+            redis_store.bump_dashboard()  # a historical review changed what the cached dashboard blocks were built from
+        return result
 
 
 def moderate_review(actor, line_id, action, reason):
@@ -135,6 +141,7 @@ def moderate_review(actor, line_id, action, reason):
                         raise ValidationError("This review has already changed. Reload and try again.")
                     after = {**before, "taken_down": target, "takedown_reason": reason.strip() if target else ""}
                     database.reviews.replace_one({"order_line_id": line_id}, after, session=session)
+                    recompute_order_score(database, before["order_id"], session)
                     _summary(database, session, before["product_id"], before, after)
 
                 _transact(client, change)

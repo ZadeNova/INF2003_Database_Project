@@ -329,6 +329,25 @@ first population normally and later REFRESH MATERIALIZED VIEW CONCURRENTLY. The 
 the verified import; a refresh failure reports that the import committed. The operator can also refresh by POST.
 Runtime keeps SELECT on the view and cannot refresh it directly.
 
+`order_delivery_summary` ([plan](plans/dashboard_summaries.md)) is a second materialized view with one row per delivered
+order up to the reporting date: order_id, seller_id, delay_days (local calendar days from the estimate to the delivery),
+distance_km (the same haversine, null when a zip prefix has no geolocation), bucket and as_of (the reporting date). It holds
+the rows the live `DELAY_BUCKETS` query returns, minus the shop name, which is always read live, and a test compares the
+two. Like the sales view it is created WITH NO DATA, has the unique B-tree index `order_delivery_summary_order` on
+(order_id) so it can refresh concurrently, and is refreshed by `public.refresh_order_delivery_summary()` (owner-owned
+SECURITY DEFINER, search_path public, pg_temp, the same advisory lock, PUBLIC EXECUTE revoked, runtime EXECUTE and SELECT
+granted). The application refreshes both views in one transaction ("Refresh sales history", and the Olist import), and in the same
+transaction rebuilds the MongoDB `order_review_scores` summary.
+
+The delivery-delay panel reads these two summaries and joins them in Python (`summary_inputs` in
+[dashboard/services.py](../src/dashboard/services.py)). It computes from the source instead (`live_inputs`: the
+`DELAY_BUCKETS` query and an aggregation over the reviews) when either summary is missing or empty, or was built for
+another reporting date, and a test proves both paths give identical blocks. Every review write that can change a
+historical score (takedown, restore, a customer's edit or delete) recomputes that one order's document inside the
+review's own MongoDB transaction and, when the summary changed, invalidates the cached dashboard blocks. History that
+enters the tables without the import (it only arrives through the import) shows after the next "Refresh sales history",
+as the sales view does.
+
 The dashboard's stock query is one grouped sum over the last 28 days (`STOCK_PLANNING_FAST`); the earlier version, which fills
 zero-sale calendar days before a 28-row AVG window per product, stays as `STOCK_PLANNING` for benchmark B2. Both give the same
 rows. Exact integer/numeric cross multiplication
@@ -372,9 +391,10 @@ its test_ database. Tests use real test_mercer and clear only their documents.
 
 | Collection | Identity, contents and indexes |
 |---|---|
-| reviews | _id and order_line_id identify a line review. Unique index on order_line_id; non-unique Olist review ID index, since source IDs repeat; compound (product_id, answered_at descending) and review_seller_date (seller_id, answered_at descending) for shop ratings and seller review pages; review_newest (answered_at, Olist review ID and order_line_id, all descending) serves the operator's newest-first list without an in-memory sort. References order, checkout, product, seller and customer IDs in PostgreSQL. Score 1–5; Portuguese/English title/text, machine_translated, from_order_review, source ID, created_at and answered_at |
+| reviews | _id and order_line_id identify a line review. Unique index on order_line_id; non-unique Olist review ID index, since source IDs repeat; compound (product_id, answered_at descending) and review_seller_date (seller_id, answered_at descending) for shop ratings and seller review pages; review_newest (answered_at, Olist review ID and order_line_id, all descending) serves the operator's newest-first list without an in-memory sort; review_order (order_id) serves the per-order recompute of order_review_scores after a review write. References order, checkout, product, seller and customer IDs in PostgreSQL. Score 1–5; Portuguese/English title/text, machine_translated, from_order_review, source ID, created_at and answered_at |
 | product_specs | _id is the PostgreSQL product ID. Required category_id, description, flexible attributes, nullable photo_file_id, rating_summary, latest_reviews and has_generated_content. Index on category_id. No transactional price, stock or product name is stored here |
 | platform_stats | Singleton bayesian document with m (mean score) and C (median review count across retained seller-products, including zero-review products). Exact Decimal128 values are fixed at cleaning time |
+| order_review_scores | _id is the order ID. Integer total and count of the order's visible review scores up to the reporting date (count at least 1) and as_of, that date as an ISO string; strict validator, only the _id index. An on-demand materialized view over reviews ([plan](plans/dashboard_summaries.md)): `refresh_sales` rebuilds it with an aggregation ending in `$out`, which replaces the collection atomically and keeps its validator, so an order with no visible review is simply absent. Derived, never edited by hand, and rebuildable at any time |
 | category_templates | _id is category ID; unique category_id, attribute definitions, rich flag, generation label and version. Rich templates for the source profile's top categories; generic template elsewhere. Template documents can evolve without a collection-validator change |
 
 Specification validators constrain the outer shape, required summary fields and a latest-review array of at most five.

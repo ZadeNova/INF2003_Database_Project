@@ -105,3 +105,9 @@ SELECT *, CASE WHEN delay_days < -7 THEN 'early_over_7'
                WHEN delay_days <= 14 THEN 'late_8_to_14' ELSE 'late_over_14' END AS bucket
 FROM deliveries ORDER BY order_id
 """
+
+# The delivery rows from the maintained summary (migration dashboard 0002): the live DELAY_BUCKETS rows without the shop
+# name, in order id order so that sums over them come out the same as over the live query.
+DELIVERY_SUMMARY = """
+SELECT order_id, seller_id, delay_days, distance_km, bucket, as_of FROM public.order_delivery_summary ORDER BY order_id
+"""

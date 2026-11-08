@@ -10,9 +10,11 @@ from accounts.models import Seller
 from catalogue.category_names import display_name
 from catalogue.models import Product
 from config import mongo, redis_keys, redis_store
+from config.mongo_schema import ensure_collection
 
-from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING_FAST
+from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, DELIVERY_SUMMARY, STOCK_PLANNING_FAST
 
+ORDER_SCORES = "order_review_scores"
 DASHBOARD_LOCK_WAIT_SECONDS = (
     10  # a request waits at most this long for another to finish computing (worker timeout: 30)
 )
@@ -61,17 +63,53 @@ def query_rows(query, parameters):
 
 
 def refresh_sales():
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT public.refresh_daily_product_sales()")
+    # The two views and the MongoDB score summary are refreshed under one PostgreSQL transaction. Its advisory lock
+    # (taken by the first refresh function and held to the commit) also serialises two refreshes. If the MongoDB step
+    # fails the views roll back, and `$out` has left the old summary in place; the next refresh rebuilds everything.
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT public.refresh_daily_product_sales()")
+            cursor.execute("SELECT public.refresh_order_delivery_summary()")
+        with mongo.client() as client:
+            refresh_order_scores(client[mongo.database_name()], as_of_date())
     # After the refresh has committed, never before; inside an enclosing transaction this waits for its commit.
     transaction.on_commit(redis_store.bump_dashboard)
 
 
-def sales_populated():
-    # PostgreSQL exposes materialization state through its system catalogue.
+def refresh_order_scores(database, as_of):
+    """Rebuild the per-order review score summary: an on-demand materialized view, rebuilt with `$out`.
+
+    `$out` replaces the collection atomically and keeps its validator and indexes, so a reader sees the old summary or
+    the new one, never half of it, and a refused or failed run leaves the old summary in place. It also drops orders
+    whose visible reviews are gone, with no sweep. (`$merge` rewrites every document of a full rebuild and was about
+    four times slower on the full data.) Without a reporting date (no Olist orders yet) the summary is empty.
+    """
+    ensure_collection(
+        database, ORDER_SCORES
+    )  # `$out` would otherwise create a missing collection without its validator
+    if as_of is None:
+        database[ORDER_SCORES].delete_many({})
+        return
+    list(  # an $out aggregation returns no documents; consuming the cursor runs it
+        database.reviews.aggregate(
+            order_scores_pipeline(end_of_day(as_of)) + [{"$set": {"as_of": as_of.isoformat()}}, {"$out": ORDER_SCORES}]
+        )
+    )
+
+
+def _view_populated(view):
+    # PostgreSQL exposes materialization state through its system catalogue; the name is a fixed constant below.
     with connection.cursor() as cursor:
-        cursor.execute("SELECT relispopulated FROM pg_class WHERE oid = 'public.daily_product_sales'::regclass")
+        cursor.execute("SELECT relispopulated FROM pg_class WHERE oid = %s::regclass", [view])
         return cursor.fetchone()[0]
+
+
+def sales_populated():
+    return _view_populated("public.daily_product_sales")
+
+
+def delivery_summary_populated():
+    return _view_populated("public.order_delivery_summary")
 
 
 def stock_planning(as_of, category=None, seller=None):
@@ -119,13 +157,64 @@ def poor_reviews_pipeline(end):
     ]
 
 
-def delivery_analysis(as_of, database):
+def recompute_order_score(database, order_id, session=None):
+    """Bring one order's summary document in line with its visible reviews, inside the caller's transaction.
+
+    Called after every review write that can change a historical score (takedown, restore, edit, delete). It reads the
+    order's reviews and replaces one document, rather than adding or subtracting the change, so it cannot drift. The
+    document gets the summary's own reporting date. Returns whether the summary changed. Before the first refresh there
+    is no summary and nothing to maintain.
+    """
+    collection = database[ORDER_SCORES]
+    reference = collection.find_one({}, {"as_of": 1}, session=session)
+    if reference is None:
+        return False
+    end = end_of_day(date.fromisoformat(reference["as_of"]))
+    previous = collection.find_one({"_id": order_id}, session=session)
+    pipeline = [{"$match": {"order_id": order_id}}, *order_scores_pipeline(end)]
+    fresh = next(iter(database.reviews.aggregate(pipeline, session=session)), None)
+    if fresh is None:
+        collection.delete_one({"_id": order_id}, session=session)
+        return previous is not None
+    document = {**fresh, "as_of": reference["as_of"]}
+    collection.replace_one({"_id": order_id}, document, upsert=True, session=session)
+    return previous != document
+
+
+def live_inputs(as_of, database):
+    """The order scores and delivery rows computed from the reviews and the orders themselves (the source of truth)."""
     end = end_of_day(as_of)
     scores = {
         row["_id"]: Decimal(row["total"]) / row["count"]
         for row in database.reviews.aggregate(order_scores_pipeline(end))
     }
-    deliveries = query_rows(DELAY_BUCKETS, {"end": end})
+    return scores, query_rows(DELAY_BUCKETS, {"end": end})
+
+
+def summary_inputs(as_of, database):
+    """The same two inputs read from the maintained summaries, or None when they cannot be trusted.
+
+    They cannot be trusted when either is missing or empty, or when either was built for another reporting date (for
+    example after a half-failed refresh): the dashboard then computes from the source instead.
+    """
+    if not delivery_summary_populated():
+        return None
+    reference = database[ORDER_SCORES].find_one({}, {"as_of": 1})
+    if reference is None or reference["as_of"] != as_of.isoformat():
+        return None
+    deliveries = query_rows(DELIVERY_SUMMARY, {})
+    if not deliveries or {row["as_of"] for row in deliveries} != {as_of}:
+        return None
+    scores = {
+        document["_id"]: Decimal(document["total"]) / document["count"]
+        for document in database[ORDER_SCORES].find({}, {"total": 1, "count": 1})
+    }
+    return scores, deliveries
+
+
+def delivery_analysis(as_of, database, *, use_summaries=True):
+    inputs = summary_inputs(as_of, database) if use_summaries else None
+    scores, deliveries = inputs if inputs is not None else live_inputs(as_of, database)
     buckets = {
         key: {"key": key, "label": label, "orders": 0, "scores": [], "distances": []}
         for key, label in BUCKET_LABELS.items()
@@ -135,7 +224,7 @@ def delivery_analysis(as_of, database):
         bucket, seller = buckets[row["bucket"]], sellers[row["seller_id"]]
         bucket["orders"] += 1
         seller["orders"] += 1
-        seller["seller_id"], seller["shop_name"] = row["seller_id"], row["shop_name"]
+        seller["seller_id"] = row["seller_id"]
         seller["late"] += int(row["delay_days"] > 0)
         if row["distance_km"] is not None:
             bucket["distances"].append(Decimal(str(row["distance_km"])))
@@ -182,7 +271,7 @@ def history_blocks(as_of):
     return {
         "category_rows": _readable_categories(label_month_to_date(category_performance(as_of), as_of)),
         "delay_rows": buckets,
-        "seller_rows": [{key: value for key, value in row.items() if key != "shop_name"} for row in sellers],
+        "seller_rows": sellers,
         "seller_excluded_count": excluded,
         "poor_reviews": [
             {"product_id": row["_id"], "count": row["count"], "average": row["average"].to_decimal()} for row in poor
