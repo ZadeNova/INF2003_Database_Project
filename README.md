@@ -497,7 +497,8 @@ clone gets the same pictured catalogue and nothing depends on one person's datab
   products that get photos (`olist_photos`: product id and the exact expected name; if the data is ever regenerated the
   load stops instead of matching a photo to the wrong name).
 - `data/demo_photos/`: the photo files and `licences.csv` (columns `file,author,source_url,licence`, one complete row for
-  every photo). Photos are JPEG, PNG or WebP, at most 2 MB, from free-to-use sources only. An Olist product's photo is
+  every photo). Photos are JPEG, PNG or WebP, at most 2 MB (aim for about 1200 px wide and under 500 KB, so the repository and the
+  submission stay small), from free-to-use sources only. An Olist product's photo is
   named `<product id>.jpg` (or `.png`, `.webp`); a new product names its file in `catalogue.json`.
 
 Products go through the same code as the seller screens (price, stock, attribute and photo rules, audit rows) and keep the

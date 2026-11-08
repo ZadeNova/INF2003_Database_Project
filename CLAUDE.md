@@ -27,3 +27,8 @@ still apply in full.
   routing is per thread; an unrouted thread writes to the real application database (this overwrote two dev product
   specifications once, repaired from the import data).
 - Skipped: the per-workstream close-out (AI_USE line, `status: done`). Lasting decisions still go in `docs/DECISIONS.md`.
+- **Teammate lane (photos and demo products).** The branch `improvements/photos` is worked on by a teammate and touches only
+  `data/demo_photos/**` and the `merchants`, `categories` and `products` lists of `data/demo_showcase/catalogue.json`. Claude
+  does not edit those lists or the photos, and the teammate does not edit code, docs or the other parts of the file. Erfan
+  merges the branch; after a merge run `seed_showcase`, `scripts/check_docs.py` and the full suite once.
+
