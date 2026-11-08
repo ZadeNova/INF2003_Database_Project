@@ -331,6 +331,12 @@ The completed designated-machine evidence and the owner's source-selection rule 
 [benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026).
 This checklist remains the reproduction procedure.
 
+The fresh run on the project owner's desktop follows [amendment l](docs/plans/benchmark.md#decisions): one clean commit after
+the last code batch, a pilot, then three sessions, each of steps 4 to 5 below with 50 operations per client (B2: 10); the
+baselines run at the start and end of every session, and the headline is the median across sessions. Set the Docker VM to
+12 CPUs, 24 GB of memory and no swap first, and check the usable memory against the gate in step 1. Steps 6 onward (the
+per-request timing and the Redis experiment) run only after every benchmark engine is stopped.
+
 Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
 [benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker
 VM settings checked. The commands below use dedicated projects; leave existing application projects alone.

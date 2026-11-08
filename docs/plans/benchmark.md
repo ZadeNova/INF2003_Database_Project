@@ -121,7 +121,7 @@ Chee Long accepted these decisions on 22 October 2026; plan approved the same da
 | ID | Accepted decision |
 |---|---|
 | placement | Dedicated `bench` profile, services and credentials described above (BM1) |
-| a | Final runs on Chee Long's Windows laptop with Docker Desktop: plugged in, high-performance power plan, other apps closed; record specs |
+| a | Final runs on Chee Long's Windows laptop with Docker Desktop: plugged in, high-performance power plan, other apps closed; record specs (the fresh run uses Erfan's desktop: amendment l1) |
 | b | Each engine: 2 CPUs/2 GB, PostgreSQL `shared_buffers` 512 MB, WiredTiger cache 0.75 GB. Load client in its own limited container, limits recorded. Explicit cache settings recorded; Docker Desktop VM at least 8 GB RAM/6 CPUs |
 | c | Full retained Olist base, every attribute represented in EAV and JSONB; generator deferred by amendment j; scaled runs only in Tier 2 |
 | d | Seeded fixed parameter sets per workload (B1 selective to broad); one untimed warm-up pass, then five measured runs with fixed operation counts per client count. Report median across runs of per-run p50, p95 and throughput, with their ranges. Count retries separately; latency runs from first attempt to success. After mutating B3/B6 runs, restore PostgreSQL from a template database and MongoDB from NDJSON or a dump, including after failures; verify initial state before every run. Warm-up must leave that initial logical state intact; rewarm restored databases. Warm-cache measurement only |
@@ -159,6 +159,27 @@ runner records today.
 
 Out of scope: no HTTP load test (amendment j stays), no concurrency in k2 and no change to the B1–B6 queries or their
 gates; k3 changes B2's client matrix and the operation count for B2 and its B4 cases.
+
+**Fresh-run amendment l (proposed by Claude and approved by Erfan, 8 November 2026).** The project owner is now Erfan, the
+data and the application changed after the 2 November run (regenerated names, new B2 variants, Redis, full-text search), and
+the earlier run was made on another machine. The whole benchmark is therefore repeated on one clean commit, after the last
+code batch, so no code change can follow it. Amendments a to k stay in force except where a row below says otherwise.
+
+| ID | Decision | Why |
+|---|---|---|
+| l1 | **Machine.** Erfan's desktop (Ryzen 7 5700X3D, 32 GB) replaces decision a's laptop. The Docker VM gets 12 CPUs, 24 GB and swap off; the power plan is high performance, sleep and Windows Update are off, other heavy applications are closed, and Docker's data sits on an SSD. The container limits of decision b are unchanged (2 CPUs and 2 GB per engine and for the runner), except as l8 allows. The VM settings and the storage type go in the provenance | Spare VM resources reduce host noise and client saturation without changing what each engine is given; the large cache of this processor is stated as a difference from the laptop |
+| l2 | **One clean commit, after Batch 8.** Every session runs with `--require-clean` on the same commit, and no code changes between the first session and the last | A result then describes the code that is submitted |
+| l3 | **Three sessions, 50 and 10 operations per client** (B2 and its B2-derived B4 cases at 10, the rest at 50), the pilot confirming that this fits. Each session keeps the five measured runs of decision d. The headline is the median across sessions of the run-level medians; every session is kept, a session with a failure is reported and excluded from the headline with its number stated, and no session is chosen for being the best. The rule is fixed before the first session | Independent sessions say more about reproducibility than one longer run, and a rule fixed in advance cannot be tuned to the data |
+| l4 | **Pooled tail percentiles.** From the raw latencies of all accepted runs and sessions, p95 is shown only with at least 100 pooled samples and p99 only with at least 500; below that the table shows the median, range and maximum, labelled "not enough data". The per-run p50 and p95 of decision d stay | With 100 operations in a run, p99 is the single slowest operation |
+| l5 | **Drift controls.** The three baselines (Python no-op, `SELECT 1`, MongoDB ping) run at the start and end of every session, and a session whose end differs from its start by more than the baseline noise band is flagged. Engine order is alternated across the five measured runs if the harness change is trivial; if it is not, this is not done and the report says so | The same machine still drifts over hours (heat, background tasks, buffers); the check shows whether it did, and alternation spreads any drift across both engines |
+| l6 | **Pinning pilot.** The pilot compares the baselines with and without each container pinned to its own virtual CPUs (Compose `cpuset`); the pinning is adopted for the sessions only if the spread of the baselines falls, and the choice is recorded | Under WSL2 the virtual CPUs map to host threads in a way we do not control, so the benefit is tested, not assumed |
+| l7 | **Old results.** After the first fresh session is committed: tag the current commit, move the 2 November run directories into `benchmarks/results/archive/`, repair every link to them (`check_docs.py` finds breaks) and mark the 2 November close-out superseded. The archived B1, B4 and B5 ratios are compared with the fresh ones in an appendix, labelled as another machine and another build of the data | Cross-machine agreement is evidence the ratios are not a quirk of one computer; only unchanged workloads are comparable |
+| l8 | **New workloads and parts.** B2 idiomatic and maintained-summary variants (#5, beside the originals), the B1 hinted run (#13) and B7 full-text search (#71, if it goes ahead) join the matrix with their own golden checks. The per-request collector (#17) and the Redis experiment (the [redis plan](redis.md)) run after the benchmark engines are stopped, never alongside. The 2 November run lost its MongoDB container to its memory limit (exit code 137): the pilot runs B2 first, and if a container is killed the memory limit is raised equally for both engines, recorded and applied to every session | A killed container wastes hours; an equal rise keeps the comparison fair |
+
+Threats to validity, to be written in the report: one machine under Docker on Windows; warm database buffers only; closed-loop
+clients, so some queueing delay is hidden; the Olist volume fits in memory (B5's sizes show it); every attribute is generated; a
+single-node replica set; a processor with a large cache; no second machine for the load generator (the clients run in a capped
+container, are checked for saturation and are bracketed by the baselines).
 
 ## Review notes
 

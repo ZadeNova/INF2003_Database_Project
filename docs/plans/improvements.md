@@ -41,7 +41,7 @@ only bug fixes go in.
 | 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | done 8 Nov (full suite run; four existing audit-count tests updated for the new creation row and rerun green) |
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | done 8 Nov (full suite green; dashboard timings re-measured on full data) |
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
-| 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | plan drafted, awaiting Erfan |
+| 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | plan approved 8 Nov (implementation and measurement protocol); build next |
 | 6 | #5, #13, #17 | Benchmark amendment, designated machine | open |
 | 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | open |
 | 7 | #27, #33, #63 | Code-quality pass, then the full codebase review | open |
@@ -111,8 +111,8 @@ Settled before RLS (Decisions, 8 Nov). Needs its own short plan with trade-offs 
 
 | # | Area | Item | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 25 | Security | No brute-force protection on login or review posting | Redis rate limiting (atomic counters that expire) | M | open |
-| 12 | MongoDB | The unfiltered trending aggregation is the largest database cost on the home, shop and search pages | Short-lived Redis cache with explicit invalidation, measured cache on against off | S–M | open |
+| 25 | Security | No brute-force protection on login or review posting | Redis rate limiting (atomic sliding window in a Lua script) | M | planned ([redis](redis.md)) |
+| 12 | MongoDB | The unfiltered trending aggregation is the largest database cost on the home, shop and search pages | Short-lived Redis cache with explicit invalidation, measured cache on against off | S–M | planned ([redis](redis.md)) |
 
 Conditions for the plan: fix the slow dashboard query (#10) first, keep Redis off checkout and stock (rule 2), keep it
 out of the B-series benchmarks (rule 10), measure cache on against off on one machine with the request-timing collector,
@@ -255,6 +255,7 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | 16 | 8 Nov 2026 | Erfan: a teammate settles and carries out #16 (photos); Erfan settles the rest of Batch 4, and other batches continue meanwhile. Open dependencies recorded for the teammate: the photos must match the product names (#7, #18) and the showcase set, they reverse catalogue amendment k, and they need a committed folder plus a licence manifest so the zip reproduces them | Photos are sourcing work that does not block the rest of the batch |
 | 11, 19 | 8 Nov 2026 | Erfan: #11 option A (read the subset), #19 option 1 (written reviews, bare ratings collapsed). #7 and #16 deferred to later | Combined: page 1 is the stored latest five, so a page whose newest five are all bare ratings shows only the collapsed line and a link to the full list |
 | 7, 16 | 8 Nov 2026 | Erfan: B-lite names (all 74 categories), SKU line, showcase of 30 products (15 categories x 2), readable names for the three demo shops, review text left as imported, photo rules (free-to-use sources only, JPEG/PNG/WebP up to 2 MB, at least 800 px, licence manifest, credits in the README). The #16 branch is created after the showcase list is settled; the benchmark rerun on Erfan's PC covers the regenerated data | Names affect every screen; photos must match them |
+| Benchmark rerun | 8 Nov 2026 | Erfan: the whole benchmark is rerun on his desktop after Batch 8, on one clean commit: pilot, then three sessions at 50 and 10 operations per client, headline the median across sessions, pooled p95 and p99 gated by sample size, start and end baselines, old results archived and compared for unchanged workloads (benchmark amendment l). The Redis measurement protocol is part of it and `redis.md` is approved | Reproducibility across independent sessions on the machine that produces the final evidence |
 | 18, 8, 21, 34 | 8 Nov 2026 | Erfan: settle these four first; the rest of Batch 4 is explained for him to approve | Quick UI fixes that need no further decision |
 
 ## Review notes
