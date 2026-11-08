@@ -339,6 +339,28 @@ def test_generated_names_are_readable_and_agree_with_the_drawn_attributes(pipeli
         assert name in specs[int(row["id"])]["description"]
 
 
+def test_committed_names_never_repeat_a_word_and_suffixes_only_follow_their_nouns():
+    templates = json.loads(TEMPLATES.read_text())
+    for name, spec in templates["names"]["categories"].items():
+        suffix = spec.get("suffix")
+        if suffix and "nouns" in suffix:
+            known = {noun if isinstance(noun, str) else noun["noun"] for noun in spec["nouns"]}
+            assert set(suffix["nouns"]) <= known, name
+    ignore = {"for", "the", "of", "and"}
+    products = read_csv(ROOT / "data/derived/olist/clean/products.csv")
+    categories = {r["id"]: r["name_pt"] for r in read_csv(ROOT / "data/derived/olist/clean/categories.csv")}
+    for row in products:
+        words = [w for w in re.findall(r"[a-z0-9+-]+", row["name"].lower()) if w not in ignore]
+        assert len(words) == len(set(words)), row["name"]
+        # A restricted suffix is present exactly on the nouns it lists.
+        spec = templates["names"]["categories"][categories[row["category_id"]]]
+        suffix = spec.get("suffix")
+        if suffix and "nouns" in suffix:
+            marker = re.escape(suffix.get("separator", ", ") + suffix["text"]).replace(re.escape("{}"), ".+")
+            has_suffix = re.search(marker + "$", row["name"]) is not None
+            assert has_suffix == any(noun in row["name"] for noun in suffix["nouns"]), row["name"]
+
+
 def test_generated_content_and_bayesian_subset(pipeline):
     _, _, _, tables, docs = pipeline
     templates = json.loads(TEMPLATES.read_text())

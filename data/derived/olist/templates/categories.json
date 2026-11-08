@@ -151,29 +151,29 @@
           "face moisturiser", "body moisturiser", "hand moisturiser", "cleanser",
           {"noun": "after-sun soother", "where": {"format": ["gel", "lotion"]}},
           {"noun": "night treatment", "where": {"format": ["cream", "gel"]}},
-          {"noun": "foot care", "where": {"format": ["cream", "lotion"]}}
+          {"noun": "foot treatment", "where": {"format": ["cream", "lotion"]}}
         ]
       },
       "esporte_lazer": {
-        "words": ["Active", "Sporty", "Endurance", "Outdoor", "Lightweight", "Compact", "Durable", "Everyday"],
+        "words": ["Active", "Sporty", "Endurance", "Rugged", "Lightweight", "Compact", "Durable", "Everyday"],
         "name_attribute": "material",
-        "suffix": {"attribute": "activity", "text": "for {}"},
+        "suffix": {"attribute": "activity", "text": "for {}", "separator": " "},
         "nouns": [
           {"noun": "water bottle", "where": {"material": ["steel"]}},
           {"noun": "dumbbell set", "where": {"material": ["steel"], "activity": ["fitness"]}},
           {"noun": "backpack", "where": {"material": ["nylon", "polyester"], "activity": ["camping", "running"]}},
           {"noun": "gym bag", "where": {"material": ["nylon", "polyester"], "activity": ["fitness"]}},
-          {"noun": "camping tent", "where": {"material": ["nylon", "polyester"], "activity": ["camping"], "outdoor": [true]}},
-          {"noun": "camping cookware set", "where": {"material": ["steel"], "activity": ["camping"], "outdoor": [true]}},
+          {"noun": "tent", "where": {"material": ["nylon", "polyester"], "activity": ["camping"], "outdoor": [true]}},
+          {"noun": "cookware set", "where": {"material": ["steel"], "activity": ["camping"], "outdoor": [true]}},
           {"noun": "jump rope", "where": {"material": ["nylon"], "activity": ["fitness"]}},
-          {"noun": "running belt", "where": {"material": ["nylon", "polyester"], "activity": ["running"]}},
+          {"noun": "waist belt", "where": {"material": ["nylon", "polyester"], "activity": ["running"]}},
           {"noun": "sports towel", "where": {"material": ["polyester"], "activity": ["fitness", "running"]}}
         ]
       },
       "moveis_decoracao": {
         "words": ["Modern", "Urban", "Calm", "Warm", "Cosy", "Elegant", "Everyday", "Simple"],
         "name_attribute": "style",
-        "suffix": {"attribute": "room", "text": "for the {}"},
+        "suffix": {"attribute": "room", "text": "for the {}", "separator": " "},
         "nouns": [
           {"noun": "bookshelf", "where": {"material": ["wood", "metal"]}},
           {"noun": "floor lamp", "where": {"material": ["metal"]}},
@@ -188,10 +188,11 @@
       },
       "informatica_acessorios": {
         "words": ["Compact", "Slim", "Office", "Portable", "Quiet", "Ergonomic", "Sturdy", "Everyday"],
+        "suffix": {"attribute": "compatibility", "text": "{} compatibility", "nouns": ["optical mouse", "wireless mouse", "Bluetooth keyboard", "wired keyboard", "USB hub", "webcam", "Bluetooth headset"]},
         "nouns": [
           "laptop stand", "laptop sleeve", "mouse pad", "cable organiser",
-          {"noun": "USB hub", "where": {"connection": ["USB"]}},
-          {"noun": "USB flash drive", "where": {"connection": ["USB"]}},
+          {"noun": "USB hub", "where": {"connection": ["USB"], "wireless": [false]}},
+          {"noun": "USB flash drive", "where": {"connection": ["USB"], "wireless": [false]}},
           {"noun": "optical mouse", "where": {"connection": ["USB", "wired"], "wireless": [false]}},
           {"noun": "wireless mouse", "where": {"connection": ["USB", "Bluetooth"], "wireless": [true]}},
           {"noun": "Bluetooth keyboard", "where": {"connection": ["Bluetooth"], "wireless": [true]}},
@@ -240,6 +241,7 @@
       },
       "ferramentas_jardim": {
         "words": ["Outdoor", "Green", "Sturdy", "Everyday", "Handy", "Compact", "Classic", "Durable"],
+        "name_attribute": "material",
         "nouns": [
           {"noun": "garden hand tool set", "where": {"tool_type": ["hand tool"]}},
           {"noun": "garden trowel", "where": {"tool_type": ["hand tool"], "material": ["steel", "aluminium"]}},
@@ -254,7 +256,9 @@
         ]
       },
       "automotivo": {
-        "words": ["Heavy-duty", "Universal", "Urban", "Everyday", "Sturdy", "Compact", "Practical", "Reliable"],
+        "words": ["Heavy-duty", "Urban", "Everyday", "Sturdy", "Durable", "Practical", "Reliable", "Handy"],
+        "name_attribute": "material",
+        "suffix": {"attribute": "fit", "text": "{} fit"},
         "nouns": [
           {"noun": "car floor mat set", "where": {"use": ["interior"], "material": ["rubber"]}},
           {"noun": "dashboard phone holder", "where": {"use": ["interior"], "material": ["plastic", "metal"]}},
@@ -283,9 +287,10 @@
       },
       "cool_stuff": {
         "words": ["Curious", "Creative", "Novel", "Quirky", "Handy", "Playful", "Neat", "Clever"],
+        "name_attribute": "material",
         "nouns": [
           {"noun": "luggage tag", "where": {"theme": ["travel"], "material": ["metal", "plastic"]}},
-          {"noun": "wooden world map", "where": {"theme": ["travel"], "material": ["wood"]}},
+          {"noun": "world map", "where": {"theme": ["travel"], "material": ["wood"]}},
           {"noun": "desk organiser", "where": {"theme": ["desk"]}},
           {"noun": "pen holder", "where": {"theme": ["desk"]}},
           {"noun": "phone stand", "where": {"theme": ["desk"]}},
@@ -320,15 +325,16 @@
         ]
       },
       "eletronicos": {
-        "words": ["Compact", "Smart", "Handy", "Slim", "Everyday", "Portable", "Bright", "Reliable"],
+        "words": ["Compact", "Smart", "Handy", "Slim", "Everyday", "Modern", "Bright", "Reliable"],
+        "suffix": {"attribute": "power", "text": "{} powered", "nouns": ["Bluetooth speaker", "Wi-Fi plug", "LED desk lamp", "digital alarm clock", "desk fan", "pocket radio"]},
         "nouns": [
           {"noun": "Bluetooth speaker", "where": {"connection": ["Bluetooth"]}},
-          {"noun": "Wi-Fi smart plug", "where": {"connection": ["Wi-Fi"], "power": ["mains"]}},
-          {"noun": "wired earphones", "where": {"connection": ["wired"]}},
+          {"noun": "Wi-Fi plug", "where": {"connection": ["Wi-Fi"], "power": ["mains"]}},
+          {"noun": "wired earphones", "where": {"connection": ["wired"], "power": ["USB", "battery"]}},
           {"noun": "LED desk lamp", "where": {"power": ["USB", "mains"]}},
           {"noun": "digital alarm clock", "where": {"power": ["battery", "mains"]}},
-          {"noun": "USB fan", "where": {"power": ["USB"]}},
-          {"noun": "pocket radio", "where": {"power": ["battery"]}}
+          {"noun": "desk fan", "where": {"power": ["USB", "mains"]}},
+          {"noun": "pocket radio", "where": {"power": ["battery"], "portable": [true]}}
         ]
       },
       "papelaria": {
@@ -417,7 +423,7 @@
       "moveis_sala": {
         "name_attribute": "colour",
         "nouns": [
-          "sofa cushion set", "coffee table", "tv stand", "sideboard", "bookcase"
+          "sofa cushion set", "coffee table", "TV stand", "sideboard", "bookcase"
         ]
       },
       "livros_tecnicos": {
@@ -569,7 +575,7 @@
       "pcs": {
         "name_attribute": "colour",
         "nouns": [
-          "desktop computer", "mini pc", "all-in-one computer"
+          "desktop computer", "mini PC", "all-in-one computer"
         ]
       },
       "cine_foto": {
@@ -580,7 +586,7 @@
       },
       "musica": {
         "nouns": [
-          "vinyl record", "music cd", "sheet music book", "songbook"
+          "vinyl record", "music CD", "sheet music book", "songbook"
         ]
       },
       "fashion_roupa_feminina": {
@@ -663,7 +669,7 @@
       },
       "cds_dvds_musicais": {
         "nouns": [
-          "musical cd", "concert dvd"
+          "musical CD", "concert DVD"
         ]
       }
     }

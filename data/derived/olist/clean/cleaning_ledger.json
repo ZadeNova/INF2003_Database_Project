@@ -19,7 +19,7 @@
   "generation": {
     "algorithm": "per-product SHA256 seed, random.Random, sorted template attributes, then names from per-category nouns",
     "seed": 82,
-    "template_sha256": "b11060dce78704d52dd913c8bb90689e03eba993d23110f82cdc8c50b59c34bc"
+    "template_sha256": "2d39f6800b343d59b48729a3ed961e37664f078676f285cf9365f7c15f0a389a"
   },
   "output_counts": {
     "categories": 74,

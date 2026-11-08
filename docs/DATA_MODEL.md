@@ -160,7 +160,7 @@ erDiagram
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
 | Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
-| Product / catalogue_product | Generated names are an adjective, an attribute word, a noun and sometimes a variant ("Soft cotton sheet set, queen size"), from per-category lists in the template file; the page shows the first six characters of olist_product_id as the SKU line. Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
+| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
 | CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
 | Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
@@ -486,7 +486,11 @@ publication later that day; dates are recorded honestly rather than relabelling 
 
 Names, descriptions, attributes, stock and lead times are generated with fixed seed 82 and labelled. A SHA-256 seed per
 source product/seller isolates a product from unrelated row ordering. Templates are maintained in
-`data/derived/olist/templates/categories.json`; generated category documents use the same definitions. Demo stock/lead
+`data/derived/olist/templates/categories.json`; generated category documents use the same definitions. A product name is an
+adjective, an optional attribute word and a noun from that category's list, plus sometimes a variant taken from a drawn
+attribute ("Soft cotton sheet set, queen size"); a noun tied to attributes is chosen only when they fit, so a name never
+contradicts the product's attributes. The application shows the first six characters of olist_product_id as a separate
+SKU line. Demo stock/lead
 time adjustments have explicit labels and do not change historical transactions. Olist has no cancellation timestamp;
 imported cancellation/refund dates conservatively use purchase time, recorded in the ledger.
 

@@ -4,9 +4,9 @@ Adding/reordering other rows never changes a product's generated content. Templa
 are maintained separately in data/derived/olist/templates/categories.json.
 
 A product name is an adjective, an optional attribute word and a noun from the category's list in the template's
-"names" block, plus an optional ", variant" from a drawn attribute (a size, a volume). A noun may be tied to the
+"names" block, plus an optional ", variant" from a drawn attribute (a size, a volume), for the nouns it applies to. A noun may be tied to the
 drawn attributes ("where"), so the name never contradicts them. The SKU that used to end every name is not part of
-the name; it is the first six letters of the source product id, shown by the application. The random draws for names
+the name; it is the first six characters of the source product id, shown by the application. The random draws for names
 come after every earlier draw, so attributes, stock and lead times are the same as before the names changed.
 """
 
@@ -30,16 +30,16 @@ def readable_name(rng, spec, default_words, attributes):
         if isinstance(noun, str) or all(attributes.get(key) in allowed for key, allowed in noun["where"].items())
     ]
     noun = rng.choice(fitting or nouns)
-    noun = noun if isinstance(noun, str) else noun["noun"]
+    noun_text = noun if isinstance(noun, str) else noun["noun"]
     parts = [rng.choice(spec.get("words", default_words))]
     attribute = attributes.get(spec.get("name_attribute"))
     if isinstance(attribute, str):
         parts.append(attribute)
-    parts.append(noun)
+    parts.append(noun_text)
     name = " ".join(parts)
     suffix = spec.get("suffix")
-    if suffix and attributes.get(suffix["attribute"]) is not None:
-        name += ", " + suffix["text"].format(attributes[suffix["attribute"]])
+    if suffix and noun_text in suffix.get("nouns", [noun_text]) and attributes.get(suffix["attribute"]) is not None:
+        name += suffix.get("separator", ", ") + suffix["text"].format(attributes[suffix["attribute"]])
     return name
 
 
