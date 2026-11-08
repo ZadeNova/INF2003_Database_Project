@@ -284,6 +284,12 @@ B5 runs first and refuses any project with a nonzero restores_since_load counter
 explicit automatic checkpoint interval plus a margin; the round-trip client needs no extra database privilege.
 B4 restores the original index catalogue in a finally block.
 
+B2 times its queries as first written and, beside them, an idiomatic computation and a maintained summary for each
+engine ([amendment m](docs/plans/benchmark.md#decisions)). The pairs that headline each comparison are fixed in
+[benchmarks/headline.py](benchmarks/headline.py), recorded in the provenance and printed by the report as
+`report/b2-headline.csv`; the originals are reported separately. The load builds the summaries on both engines and
+B2refresh times rebuilding each of them.
+
 The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
 CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
 driver versions and container limits. All workers connect and ping before a barrier; each first result is

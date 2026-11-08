@@ -116,8 +116,7 @@ def compute(source):
         if review.get("taken_down", False) or review["answered_at"] >= end:
             continue
         ratings[review["product_id"]].append(review["score"])
-        if not review["from_order_review"]:
-            order_scores[review["order_id"]].append(review["score"])
+        order_scores[review["order_id"]].append(review["score"])  # copies count, as in the app
     stats = next(ndjson(source, "platform_stats"))
     grouped = defaultdict(list)
     for pid, product in products.items():

@@ -1,6 +1,6 @@
 bucket,orders,reviewed_orders,average_score
-early_over_7,71776,67462,4.351843
-early_up_to_7_or_on_time,18445,17390,4.199195
-late_1_to_7,3645,3462,2.720393
-late_8_to_14,1454,1404,1.663818
-late_over_14,1345,1278,1.703443
+early_over_7,71776,70910,4.298999
+early_up_to_7_or_on_time,18445,17892,4.176224
+late_1_to_7,3645,3548,2.704622
+late_8_to_14,1454,1421,1.660802
+late_over_14,1345,1295,1.716602

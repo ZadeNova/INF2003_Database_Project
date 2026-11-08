@@ -5,10 +5,16 @@ from decimal import Decimal
 
 from bson import Decimal128
 
-from benchmarks import db
+from benchmarks import db, summaries
 from benchmarks.query import Query
 from benchmarks.source import ZONE
-from dashboard.queries import BAYESIAN_RATING, CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING
+from dashboard.queries import (
+    BAYESIAN_RATING,
+    CATEGORY_PERFORMANCE,
+    DELAY_BUCKETS,
+    STOCK_PLANNING,
+    STOCK_PLANNING_FAST,
+)
 
 
 def view_select():
@@ -44,7 +50,7 @@ def queries(as_of, stats):
         + DELAY_BUCKETS.strip()
         + """), scores AS (
       SELECT order_id, avg(score::numeric) AS score FROM reviews
-      WHERE NOT taken_down AND NOT from_order_review AND answered_at < %(end)s GROUP BY order_id)
+      WHERE NOT taken_down AND answered_at < %(end)s GROUP BY order_id)
       SELECT d.bucket, count(*) AS orders, count(s.score) AS reviewed_orders, avg(s.score) AS average_score
       FROM delays d LEFT JOIN scores s ON s.order_id=d.order_id GROUP BY d.bucket ORDER BY d.bucket"""
     )
@@ -56,12 +62,15 @@ def queries(as_of, stats):
         Query("B2c", "postgres", "live", BAYESIAN_RATING, parameters, golden="B2c"),
         Query("B2d", "postgres", "live", delay, parameters, golden="B2d"),
         Query("B2refresh", "postgres", "refresh", "SELECT public.refresh_daily_product_sales()", {}),
+        # The query the application runs: one grouped sum over the last 28 days, live and on the maintained view.
+        Query("B2b", "postgres", "idiomatic", live_query(STOCK_PLANNING_FAST, definition), parameters, golden="B2b"),
+        Query("B2b", "postgres", "summary", STOCK_PLANNING_FAST, parameters, golden="B2b"),
     ]
     valid = {"placed_at": {"$lt": end}, "$or": [{"status": {"$ne": "cancelled"}}, {"cancelled_at": {"$gte": end}}]}
     month = {"$dateTrunc": {"date": "$placed_at", "unit": "month", "timezone": "Asia/Singapore"}}
-    category = [
-        {"$match": valid},
-        {"$unwind": "$lines"},
+    category_head = [{"$match": valid}, {"$unwind": "$lines"}]
+    # As first written: group by product, join the product for its category, group again.
+    category_as_written = [
         {
             "$group": {
                 "_id": {"product": "$lines.product_id", "month": month},
@@ -78,6 +87,8 @@ def queries(as_of, stats):
                 "revenue": {"$sum": "$revenue"},
             }
         },
+    ]
+    category_tail = [
         {"$set": {"category_id": "$_id.category", "month": "$_id.month"}},
         {
             "$setWindowFields": {
@@ -142,7 +153,24 @@ def queries(as_of, stats):
             }
         },
     ]
+    category = category_head + category_as_written + category_tail
+    # Idiomatic: the order line already carries its category (a denormalised, read-optimised document), so group by
+    # category and month directly and join nothing.
+    category_idiomatic = (
+        category_head
+        + [
+            {
+                "$group": {
+                    "_id": {"category": "$lines.category_id", "month": month},
+                    "units": {"$sum": "$lines.quantity"},
+                    "revenue": {"$sum": {"$multiply": ["$lines.quantity", "$lines.unit_price"]}},
+                }
+            }
+        ]
+        + category_tail
+    )
     result.append(Query("B2a", "mongo", "live", collection="orders", pipeline=category, golden="B2a"))
+    result.append(Query("B2a", "mongo", "idiomatic", collection="orders", pipeline=category_idiomatic, golden="B2a"))
     recent = {**valid, "placed_at": {"$gte": start, "$lt": end}}
     stock = [
         {"$match": {"purchasable": True}},
@@ -235,7 +263,56 @@ def queries(as_of, stats):
         },
     ]
     result.append(Query("B2b", "mongo", "live", pipeline=stock, golden="B2b"))
-    ratings = [
+    # Idiomatic: group the recent order lines by product first (one pass over a bounded date range), bring in the purchasable
+    # products with `$unionWith` (an unsold product keeps zero units), and merge each product's sales with its stock and
+    # lead time in one `$group` by product id. No per-product lookup.
+    stock_idiomatic = [
+        {"$match": recent},
+        {"$unwind": "$lines"},
+        {"$group": {"_id": "$lines.product_id", "units_28": {"$sum": "$lines.quantity"}}},
+        {
+            "$unionWith": {
+                "coll": "products",
+                "pipeline": [
+                    {"$match": {"purchasable": True}},
+                    {"$project": {"units_28": {"$literal": 0}, "stock": 1, "lead_time_days": 1, "purchasable": 1}},
+                ],
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "units_28": {"$sum": "$units_28"},
+                "stock": {"$max": "$stock"},
+                "lead_time_days": {"$max": "$lead_time_days"},
+                "purchasable": {"$max": "$purchasable"},
+            }
+        },
+        {"$match": {"purchasable": True}},  # sold products that are not purchasable carry no stock fields
+        {
+            "$project": {
+                "_id": 0,
+                "product_id": "$_id",
+                "daily_demand": {"$divide": [{"$toDecimal": "$units_28"}, 28]},
+                "days_cover": {
+                    "$cond": [
+                        {"$gt": ["$units_28", 0]},
+                        {"$divide": [{"$toDecimal": {"$multiply": ["$stock", 28]}}, {"$toDecimal": "$units_28"}]},
+                        None,
+                    ]
+                },
+                "replenish": {
+                    "$and": [
+                        {"$gt": ["$units_28", 0]},
+                        {"$lt": [{"$multiply": ["$stock", 28]}, {"$multiply": ["$lead_time_days", "$units_28"]}]},
+                    ]
+                },
+            }
+        },
+    ]
+    result.append(Query("B2b", "mongo", "idiomatic", collection="orders", pipeline=stock_idiomatic, golden="B2b"))
+    # As first written: one correlated sub-query into `reviews` for every product.
+    ratings_head = [
         {
             "$lookup": {
                 "from": "reviews",
@@ -255,6 +332,8 @@ def queries(as_of, stats):
                 "entities": [{"entity": "product", "identity": "$_id"}, {"entity": "seller", "identity": "$seller_id"}],
             }
         },
+    ]
+    ratings_tail = [
         {"$unwind": "$entities"},
         {"$group": {"_id": "$entities", "review_count": {"$sum": "$count"}, "score_sum": {"$sum": "$total"}}},
         {
@@ -279,7 +358,39 @@ def queries(as_of, stats):
             }
         },
     ]
+    ratings = ratings_head + ratings_tail
+    # Idiomatic: one pass over the reviews grouped by product, then the products (with their seller) brought in with
+    # `$unionWith` and merged by product id in one `$group`, so a product without reviews keeps zero. No per-product
+    # lookup; the same product and seller roll-up follows.
+    ratings_idiomatic = [
+        {"$match": {"taken_down": {"$ne": True}, "answered_at": {"$lt": end}}},
+        {"$group": {"_id": "$product_id", "count": {"$sum": 1}, "total": {"$sum": "$score"}}},
+        {
+            "$unionWith": {
+                "coll": "products",
+                "pipeline": [{"$project": {"count": {"$literal": 0}, "total": {"$literal": 0}, "seller_id": 1}}],
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "count": {"$sum": "$count"},
+                "total": {"$sum": "$total"},
+                "seller_id": {"$max": "$seller_id"},
+            }
+        },
+        {"$match": {"seller_id": {"$ne": None}}},  # reviews of a product that does not exist
+        {
+            "$set": {
+                "entities": [
+                    {"entity": "product", "identity": "$_id"},
+                    {"entity": "seller", "identity": "$seller_id"},
+                ]
+            }
+        },
+    ] + ratings_tail
     result.append(Query("B2c", "mongo", "live", pipeline=ratings, golden="B2c"))
+    result.append(Query("B2c", "mongo", "idiomatic", collection="reviews", pipeline=ratings_idiomatic, golden="B2c"))
     delays = [
         {"$match": {"status": "delivered", "placed_at": {"$lt": end}, "delivered_at": {"$lt": end}}},
         {
@@ -300,7 +411,7 @@ def queries(as_of, stats):
                 "localField": "_id",
                 "foreignField": "order_id",
                 "pipeline": [
-                    {"$match": {"taken_down": False, "from_order_review": False, "answered_at": {"$lt": end}}},
+                    {"$match": {"taken_down": False, "answered_at": {"$lt": end}}},
                     {"$group": {"_id": None, "score": {"$avg": {"$toDecimal": "$score"}}}},
                 ],
                 "as": "scores",
@@ -333,6 +444,92 @@ def queries(as_of, stats):
         {"$project": {"_id": 0, "bucket": "$_id", "orders": 1, "reviewed_orders": 1, "average_score": 1}},
     ]
     result.append(Query("B2d", "mongo", "live", collection="orders", pipeline=delays, golden="B2d"))
+    # Idiomatic: no per-order sub-query. Group the visible reviews by order once (an integer sum and count), add the
+    # delivered orders with their delay through `$unionWith`, and merge the two kinds of document by order id in one
+    # `$group`; an order with no review simply keeps a count of zero. The average is divided once per order.
+    delays_idiomatic = [
+        {"$match": {"taken_down": False, "answered_at": {"$lt": end}}},
+        {"$group": {"_id": "$order_id", "total": {"$sum": "$score"}, "count": {"$sum": 1}}},
+        {"$unionWith": {"coll": "orders", "pipeline": [delays[0], delays[1], {"$project": {"delay": 1}}]}},
+        {
+            "$group": {
+                "_id": "$_id",
+                "total": {"$sum": "$total"},
+                "count": {"$sum": "$count"},
+                "delay": {"$max": "$delay"},
+            }
+        },
+        {"$match": {"delay": {"$ne": None}}},  # reviews of orders that are not delivered by the reporting date
+        {
+            "$set": {
+                "score": {"$cond": [{"$gt": ["$count", 0]}, {"$divide": [{"$toDecimal": "$total"}, "$count"]}, None]},
+                "bucket": delays[3]["$set"]["bucket"],
+            }
+        },
+        delays[4],
+        delays[5],
+    ]
+    result.append(Query("B2d", "mongo", "idiomatic", collection="reviews", pipeline=delays_idiomatic, golden="B2d"))
+    # Maintained summaries (amendment m). PostgreSQL's daily_product_sales view is the "view" variant of B2a and B2b;
+    # MongoDB gets the same summary as a collection, and both engines get a per-order delivery and score summary.
+    result.append(
+        Query(
+            "B2d",
+            "postgres",
+            "summary",
+            "SELECT bucket, count(*) AS orders, count(score_total) AS reviewed_orders, "
+            "avg(score_total::numeric / review_count) AS average_score "
+            "FROM bench_order_delivery_scores GROUP BY bucket ORDER BY bucket",
+            {},
+            golden="B2d",
+        )
+    )
+    category_summary = [
+        {
+            "$group": {
+                "_id": {
+                    "category": "$category_id",
+                    "month": {"$dateTrunc": {"date": "$day", "unit": "month", "timezone": "Asia/Singapore"}},
+                },
+                "units": {"$sum": "$units"},
+                "revenue": {"$sum": "$revenue"},
+            }
+        }
+    ] + category_tail
+    result.append(Query("B2a", "mongo", "summary", collection=summaries.DAILY, pipeline=category_summary, golden="B2a"))
+    stock_summary = [
+        {"$match": {"day": {"$gte": start, "$lt": end}}},
+        {"$group": {"_id": "$product_id", "units_28": {"$sum": "$units"}}},
+    ] + stock_idiomatic[3:]  # the same union with the unsold purchasable products and the same product join
+    result.append(Query("B2b", "mongo", "summary", collection=summaries.DAILY, pipeline=stock_summary, golden="B2b"))
+    delays_summary = [
+        {
+            "$group": {
+                "_id": "$bucket",
+                "orders": {"$sum": 1},
+                "reviewed_orders": {"$sum": {"$cond": [{"$gt": ["$count", 0]}, 1, 0]}},
+                "average_score": {
+                    "$avg": {"$cond": [{"$gt": ["$count", 0]}, {"$divide": [{"$toDecimal": "$total"}, "$count"]}, None]}
+                },
+            }
+        },
+        {"$project": {"_id": 0, "bucket": "$_id", "orders": 1, "reviewed_orders": 1, "average_score": 1}},
+    ]
+    result.append(
+        Query("B2d", "mongo", "summary", collection=summaries.ORDER_SCORES, pipeline=delays_summary, golden="B2d")
+    )
+    # What keeping each summary current costs, measured separately for each engine.
+    result += [
+        Query("B2refresh", "postgres", "refresh_scores", "SELECT bench_refresh_order_delivery_scores()", {}),
+        Query("B2refresh", "mongo", "refresh", collection="orders", pipeline=summaries.daily_sales_pipeline(as_of)),
+        Query(
+            "B2refresh",
+            "mongo",
+            "refresh_scores",
+            collection="reviews",
+            pipeline=summaries.order_scores_pipeline(as_of),
+        ),
+    ]
     # Deterministic driver row order makes later results comparable by plain equality, without canonicalisation.
     sorts = {
         "B2a": {"month": 1, "revenue_rank": 1, "category_id": 1},
@@ -341,6 +538,6 @@ def queries(as_of, stats):
         "B2d": {"bucket": 1},
     }
     for query in result:
-        if query.engine == "mongo":
+        if query.engine == "mongo" and query.output in sorts:  # a refresh pipeline ends in $out and returns no rows
             query.pipeline.append({"$sort": sorts[query.output]})
     return result

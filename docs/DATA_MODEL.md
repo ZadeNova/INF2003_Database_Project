@@ -357,8 +357,8 @@ and calendar-aware LAG. Delivery buckets use local calendar-day differences and 
 centre points; missing geolocation stays null. SQL order rows join one MongoDB mean score per order in Python,
 excluding hidden reviews and reviews/deliveries after the reporting date. Copied from_order_review rows are included: copies
 in one order share its score, so the mean per order is unchanged and multi-line orders are no longer dropped; MongoDB returns
-the integer sum and count per order and the mean is divided in Python. Benchmark B2 still excludes copies in its own
-queries until the Batch 6 amendment. Poor-product
+the integer sum and count per order and the mean is divided in Python. Benchmark B2d counts copies the same way
+(aligned with the application on 9 November; its golden output equals the dashboard's buckets on the full data). Poor-product
 ratings are another MongoDB aggregation with the same date and moderation boundary.
 
 The named STOCK_PLANNING, CATEGORY_PERFORMANCE, BAYESIAN_RATING and DELAY_BUCKETS SQL definitions live in
@@ -495,7 +495,9 @@ manifest in PostgreSQL bench_meta and MongoDB meta must agree with each other an
 | PostgreSQL bench_meta | Singleton id=1, manifest jsonb containing the source path, checksums.txt hash and each clean file hash |
 | PostgreSQL bench_attribute_eav | Composite PK (product_id, key), product FK, value_text/value_int/value_bool; num_nonnulls CHECK requires exactly one typed value. Partial composite B-trees on (key, typed value, product_id) |
 | PostgreSQL bench_attribute_jsonb | Product PK/FK, attributes object JSONB with an object-type CHECK. GIN jsonb_path_ops plus expression B-trees for age_months, age_years, volume_ml and capacity_ml integer ranges |
-| PostgreSQL reviews | Bench analytical copy only: id PK, product/order FKs, score CHECK 1–5, answered_at, from_order_review, taken_down. Product/date B-tree and visible/non-copied partial date/order index |
+| PostgreSQL reviews | Bench analytical copy only: id PK, product/order FKs, score CHECK 1–5, answered_at, from_order_review, taken_down. Product/date B-tree and a partial date/order index on visible reviews |
+| PostgreSQL bench_order_delivery_scores | Materialized view, one row per delivered order: order_id, delay bucket, integer sum and count of its visible review scores (null when it has none). Built from the application's order_delivery_summary view and the bench review copy at the same cut-off; unique index on order_id and a function that refreshes it concurrently. Bench-only: the cross-store form the application uses cannot be one query in a single engine |
+| MongoDB daily_product_sales, order_delivery_scores | Maintained summaries of B2, built when the project is loaded and rebuilt with `$out` by B2refresh: units and revenue per product and Singapore day with the line's category (unique index on product and day), and delay bucket with the integer score sum and count per delivered order |
 | MongoDB meta | Source singleton with the same loaded manifest as bench_meta; state singleton with restores_since_load, restoration_in_progress and physical_state_changed_at. The counter increments before a restore attempt; only a fresh load sets it to zero |
 | MongoDB products | _id, seller_id, category_id, Decimal128 price/freight, stock, lead_time_days, purchasable, embedded attributes, has_generated_content and is_generated=false. Validator checks decimal money, nonnegative integer stock and object attributes. App-style attributes.$** wildcard index and partial (purchasable, _id) index |
 | MongoDB orders | One document per seller order: _id, checkout/customer/seller ids, status/dates, Decimal128 paid_amount and embedded product/quantity/Decimal128 price/freight lines. Lines also carry category_id as an explicit bench-only extended reference. Validator requires nonempty lines and nonnegative decimal paid_amount. Compound status/date and lines.product_id/date indexes |
@@ -509,7 +511,8 @@ benchmark evidence only and never introduce application synchronisation.
 
 B2 imports the app's four named SQL definitions. Live sales CTEs shadow the materialized view; view reads and its
 refresh remain separate outputs. Equivalent pipelines use rank, shift and calendar range windows, with explicit
-Asia/Singapore boundaries and lookups for references. The independent Python oracle, decimal canonicalisation and
+Asia/Singapore boundaries; the idiomatic variants group first and merge by primary key (`$unionWith` and `$group`)
+instead of looking each reference up, and the summary variants read the maintained summaries (amendment m). The independent Python oracle, decimal canonicalisation and
 output subsets live in benchmarks/reference and benchmarks/golden/schema.json. B4's saved before/after plans and
 B5's physical table/collection sizes provide index/storage evidence; storage comparisons state the differing fields
 and WiredTiger compression. B3 records actual USER trigger state for each PostgreSQL variant and always retains

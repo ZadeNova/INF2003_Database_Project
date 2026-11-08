@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
-from benchmarks import db
+from benchmarks import db, headline
 from benchmarks.canonical import SCHEMA_PATH, csv_bytes
 from benchmarks.concurrency import PreparedRun
 from benchmarks.query import Query
@@ -281,6 +281,10 @@ def run(args):
             validation_operations_per_client=1,
             operations_by_clients={str(n): n * args.operations_per_client for n in (1, 10, 50)},
             fixed_b3_buyers=50,
+            b2_headline={
+                name: {layer: list(pair) for layer, pair in layers.items()}
+                for name, layers in headline.HEADLINE.items()
+            },
             measured_runs=5,
             clients=[1, 10, 50],
             libraries={name: importlib.metadata.version(name) for name in ("psycopg", "pymongo", "Django")},
@@ -308,7 +312,10 @@ def run(args):
 
         def refresh_check():
             for query in b2_queries:
-                if query.variant == "view":
+                if query.variant in {
+                    "view",
+                    "summary",
+                }:  # every query that reads a maintained summary, on either engine
                     with query.open() as operation:
                         if csv_bytes(query.golden, operation()) != expected[query.golden]:
                             raise ValueError("Refreshed materialized view differs from golden")

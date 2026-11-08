@@ -13,6 +13,7 @@ from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
+from benchmarks.headline import HEADLINE, REFRESH
 from benchmarks.resources import annotate
 
 
@@ -104,6 +105,40 @@ def noise(rows):
                 "headline": not saturated and all(r.get("runner_cpu_median_percent") for r in group + bases),
             }
         )
+    return result
+
+
+def b2_headline(rows):
+    """The pre-registered B2 pairs (benchmarks/headline.py): live against live, maintained against maintained, and the
+    refresh cost of each maintained summary. A pair is a headline only when both of its rows are."""
+    index = {(r["output"], r["engine"], r["variant"], r["clients"]): r for r in rows}
+
+    def usable(row):
+        return bool(row and row["status"] == "passed" and row["p50_ms"])
+
+    result = []
+    pairs = [(output, layer, *pair) for output, layers in HEADLINE.items() for layer, pair in layers.items()]
+    pairs += [("B2refresh", "refresh: " + name, *pair) for name, pair in REFRESH.items()]
+    for output, layer, postgres_variant, mongo_variant in pairs:
+        for clients in sorted({r["clients"] for r in rows if r["output"] == output}, key=int):
+            postgres = index.get((output, "postgres", postgres_variant, clients))
+            mongo = index.get((output, "mongo", mongo_variant, clients))
+            if not (usable(postgres) and usable(mongo)):
+                continue
+            result.append(
+                {
+                    "output": output,
+                    "layer": layer,
+                    "clients": clients,
+                    "postgres_variant": postgres_variant,
+                    "mongo_variant": mongo_variant,
+                    "postgres_p50_ms": postgres["p50_ms"],
+                    "mongo_p50_ms": mongo["p50_ms"],
+                    "mongo_over_postgres": float(mongo["p50_ms"]) / float(postgres["p50_ms"]),
+                    "headline": str(postgres["headline"]).lower() == "true"
+                    and str(mongo["headline"]).lower() == "true",
+                }
+            )
     return result
 
 
@@ -270,6 +305,7 @@ def report(directory):
     annotate(directory)
     rows = read_csv(directory / "summary.csv")
     table(destination / "memory.csv", memory_rows(directory))
+    table(destination / "b2-headline.csv", b2_headline(rows))
     table(destination / "memory-settings.csv", memory_settings(directory))
     outputs = defaultdict(list)
     for row in rows:
