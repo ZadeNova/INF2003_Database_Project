@@ -12,7 +12,7 @@ from pymongo.write_concern import WriteConcern
 
 from accounts.audit import set_audit_context
 from accounts.models import User
-from config import mongo
+from config import mongo, redis_store
 from orders.models import Order, OrderLine
 
 from .ratings import summary_pipeline
@@ -142,4 +142,8 @@ def moderate_review(actor, line_id, action, reason):
     except Exception:
         if mongo_written:
             logger.error("reviews.cross_store_commit_unconfirmed", extra={"fields": {"order_line_id": line_id}})
+            redis_store.bump_dashboard()  # MongoDB already changed; the cached dashboard must not outlive it
         raise
+    else:
+        # After both stores have committed, never before; inside an enclosing transaction this waits for its commit.
+        transaction.on_commit(redis_store.bump_dashboard)

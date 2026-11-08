@@ -70,11 +70,26 @@ def test_a_request_produces_exactly_one_line_with_the_documented_fields(logs):
         "db_pg_queries",
         "db_mongo_ms",
         "db_mongo_commands",
+        "redis_ms",
+        "redis_commands",
+        "cache",
     }
     assert (line["method"], line["path"], line["status"], line["level"]) == ("GET", "/products/", 200, "INFO")
     assert isinstance(line["duration_ms"], float) and line["duration_ms"] >= 0
     assert line["user_id"] is None
     assert len(line["request_id"]) == 32 and response["X-Request-ID"] == line["request_id"]
+
+
+def test_the_log_line_says_how_much_time_went_to_redis_and_whether_the_cache_answered(logs, settings):
+    Client().get(reverse("catalogue:product_list"))
+    Client().get(reverse("catalogue:product_list"))
+    cold, warm = logs.request_lines()[-2:]
+    assert (cold["cache"], warm["cache"]) == ("miss", "hit")
+    assert cold["redis_commands"] > 0 and warm["redis_ms"] > 0
+    settings.REDIS_ENABLED = False
+    Client().get(reverse("catalogue:product_list"))
+    off = logs.request_lines()[-1]
+    assert (off["cache"], off["redis_commands"], off["redis_ms"]) == ("off", 0, 0)  # said so, and made no Redis call
 
 
 def test_the_numeric_user_id_is_logged_when_the_view_loaded_the_user(logs, user):

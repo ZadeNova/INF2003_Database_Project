@@ -16,6 +16,9 @@ from django.conf import settings
         ({"DJANGO_ALLOWED_HOSTS": "*"}, "Explicit allowed hosts"),
         ({"DJANGO_DEBUG": "yes"}, "true or false"),
         ({"APP_RELEASE_ID": "bad\nrelease"}, "APP_RELEASE_ID"),
+        ({"REDIS_ENABLED": "flase"}, "REDIS_ENABLED must be true or false"),
+        ({"REDIS_ENABLED": "true", "REDIS_PASSWORD": ""}, "REDIS_PASSWORD"),
+        ({"REDIS_KEY_PREFIX": "other:v1:"}, "REDIS_KEY_PREFIX"),
     ],
 )
 def test_invalid_configuration_fails(changes, message):
@@ -46,6 +49,26 @@ def test_debug_is_enabled_only_by_an_explicit_setting():
         text=True,
     )
     assert result.stdout.strip() == "True", result.stderr
+
+
+def test_redis_may_be_disabled_without_a_password_and_the_client_is_then_never_imported():
+    code = """import sys
+from django.conf import settings as s
+from config import redis_store
+assert not s.REDIS_ENABLED and s.REDIS_PASSWORD == ''
+assert redis_store.window_hit('login', 'x', 1, 60).allowed and redis_store.window_hit('login', 'x', 1, 60).allowed
+assert redis_store.dashboard_version() is None
+assert 'redis' not in sys.modules
+"""
+    environment = {
+        **os.environ,
+        "REDIS_ENABLED": "false",
+        "REDIS_PASSWORD": "",
+        "DJANGO_SETTINGS_MODULE": "config.settings",
+    }
+    setup = "import django; django.setup()\n"
+    result = subprocess.run([sys.executable, "-c", setup + code], env=environment, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
 
 
 def test_shared_session_configuration():

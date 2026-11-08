@@ -14,3 +14,4 @@ whitenoise==6.12.0
 dnspython==2.9.0
 pymongo==4.19.0
 Pillow==13.0.0
+redis==8.1.0

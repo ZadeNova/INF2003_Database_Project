@@ -13,12 +13,14 @@ from pymongo.write_concern import WriteConcern
 
 from catalogue.models import Product
 from catalogue.search import attach_photos, visible_products
-from config import mongo
+from config import mongo, redis_keys, redis_store
 from orders.models import OrderLine
 
 logger = logging.getLogger("mercer.errors")
 EVENT_WRITE_CONCERN = WriteConcern(w=1, wtimeout=1000)
 EVENTS_READY = False
+TRENDING_PANEL_SIZE = 8
+TRENDING_CACHE_ROWS = 50  # the panel shows 8; the rest is slack for products withdrawn after the ranking was cached
 
 
 def visitor(request, *, create=False):
@@ -115,6 +117,32 @@ def _visible_ranked(database, rows, limit):
     return attach_photos(database, selected)
 
 
+def _trending_rows_valid(rows):
+    return isinstance(rows, list) and all(isinstance(row, dict) and "_id" in row for row in rows)
+
+
+def _trending(database, now, category):
+    """The trending panel. The unfiltered ranking is the one expensive aggregation, so its top rows are cached for a
+    minute; visibility and photos are always read live, so a withdrawn product disappears at once. The category-filtered
+    ranking is already fast and stays live. With Redis disabled or down the original live path runs unchanged."""
+    live = database.events.aggregate
+    if category is None and not redis_store.available():
+        redis_store.note_unavailable()  # say in the request log that the cache was skipped, and why
+    if category is not None or not redis_store.available():
+        return _visible_ranked(database, live(trending_pipeline(now, category)), TRENDING_PANEL_SIZE)
+    ranked = redis_store.cached(
+        "trending",
+        redis_keys.TRENDING_TTL_SECONDS,
+        lambda: list(islice(live(trending_pipeline(now)), TRENDING_CACHE_ROWS)),
+        valid=_trending_rows_valid,
+    ).value
+    shown = _visible_ranked(database, ranked, TRENDING_PANEL_SIZE)
+    if len(shown) < TRENDING_PANEL_SIZE and len(ranked) >= TRENDING_CACHE_ROWS:
+        # Almost every cached row has been withdrawn since: the live ranking reaches further down.
+        shown = _visible_ranked(database, live(trending_pipeline(now)), TRENDING_PANEL_SIZE)
+    return shown
+
+
 def browsing_panels(request, *, category=None):
     now = timezone.now()
     identity = visitor(request)
@@ -126,7 +154,7 @@ def browsing_panels(request, *, category=None):
                 if identity
                 else []
             )
-            trending = _visible_ranked(database, database.events.aggregate(trending_pipeline(now, category)), 8)
+            trending = _trending(database, now, category)
         return {"recent_products": recent, "trending_products": trending}
     except PyMongoError:
         logger.warning("activity.panels_unavailable")

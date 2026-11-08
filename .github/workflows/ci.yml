@@ -61,8 +61,8 @@ jobs:
           docker compose -p "$COMPOSE_PROJECT_NAME" build migrate
           docker compose -p "$COMPOSE_PROJECT_NAME" --profile tools build tools
 
-      - name: Start PostgreSQL and MongoDB and wait until healthy
-        run: docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo
+      - name: Start PostgreSQL, MongoDB and Redis and wait until healthy
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo redis
 
       - name: Migrate as the owner role
         run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate
@@ -98,7 +98,7 @@ jobs:
 
       - name: Database logs on failure (no credentials are logged)
         if: failure()
-        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo redis
 
       - name: Tear down this run's project only
         if: always()
@@ -127,7 +127,7 @@ jobs:
         run: |
           git --version
           python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$RUNNER_TEMP/pytest" \
-            --junitxml "$RUNNER_TEMP/host.xml" tests/test_check_docs.py tests/test_package_submission.py tests/test_request_timing.py
+            --junitxml "$RUNNER_TEMP/host.xml" tests/test_check_docs.py tests/test_package_submission.py tests/test_request_timing.py tests/test_redis_keys_doc.py tests/test_redis_restart.py
           python - "$RUNNER_TEMP/host.xml" <<'PY'
           import sys
           import xml.etree.ElementTree as ET
@@ -290,7 +290,7 @@ jobs:
         run: docker compose -p "$COMPOSE_PROJECT_NAME" build migrate web
       - name: Start real databases and migrate as owner
         run: |
-          docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo
+          docker compose -p "$COMPOSE_PROJECT_NAME" up --detach --wait --wait-timeout 300 db mongo redis
           docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate
       - name: Import the fixture and seed independent demo journeys
         run: |
@@ -326,7 +326,7 @@ jobs:
           retention-days: 7
       - name: Service logs on failure (no credentials are logged)
         if: failure()
-        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo web
+        run: docker compose -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail 200 db mongo redis web
       - name: Tear down this browser project's containers and volumes only
         if: always()
         run: docker compose -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans

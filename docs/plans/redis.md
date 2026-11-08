@@ -1,6 +1,6 @@
 # redis: Rate limiting and two cache-aside reads
 
-status: approved
+status: in-progress
 plan owner: Erfan · implementer: Claude · reviewer: a fresh Opus 5.5 session after the build · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `dashboard` and `activity`; backlog items #25 and #12 in
 [improvements](improvements.md) (Batch 5)
@@ -20,9 +20,9 @@ source of truth (AGENTS.md architecture table).
 | # | Use | Behaviour | Why Redis |
 |---|---|---|---|
 | 1 | **Rate limiting** (#25) | A sliding-window log in one Lua script: drop entries older than the window, count, and add the attempt only if under the limit, all atomically, using Redis's own clock. Over the limit gives a clear "too many attempts" page with `429`, `Retry-After` (from the oldest entry) and `Cache-Control: no-store`, and no re-rendered form. Blocked attempts are not recorded. Keys hold hashes, never a raw username. See "Limits" | An atomic, self-expiring counter is what Redis is for; the same writes to PostgreSQL would add WAL churn on every failed login, and an attacker could drive that load |
-| 2 | **Dashboard cache** (#12) | Only the history blocks (delivery analysis, category performance, poor reviews) are cached: they depend on the fixed reporting date and change only on a refresh or a takedown. The stock planning table reads live stock and stays uncached. The cache holds computed rows (JSON), keyed by version and reporting date, so the category and shop filters do not multiply entries. Products in the poor-review list and shop names are resolved live. The page says "Served from cache, computed N minutes ago". | The dashboard is the one genuinely heavy query (seconds of real database work) |
+| 2 | **Dashboard cache** (#12) | Only the history blocks (delivery analysis, category performance, poor reviews) are cached: they depend on the fixed reporting date and change only on a refresh or a takedown. The stock planning table reads live stock and stays uncached. The cache holds computed rows (JSON), keyed by version and reporting date, so the category and shop filters do not multiply entries. Products in the poor-review list and shop names are resolved live. The page says "served from cache, computed N minutes ago" and the response carries `X-Cache` (`HIT`, `MISS`, `WAIT`, `DOWN` or `OFF`). | The dashboard is the one genuinely heavy query (seconds of real database work) |
 | 3 | **Trending cache** (#12) | The top 50 ranked rows (id, views, rank, generated views) of the unfiltered trending aggregation are cached for 60 seconds, plain TTL, no lock. Visibility and photos are resolved live afterwards, so a taken-down product disappears at once; if fewer than 8 visible products remain from a full cached list the live aggregation runs. Category-filtered trending and "recently viewed" stay uncached (already index-fast, and the second is per visitor). A warm page still reads photos from MongoDB and visibility from PostgreSQL; only the aggregation is removed. | The unfiltered aggregation is the largest database cost on the home and search pages once the documented synthetic events are loaded |
-| 4 | **Stampede protection** (dashboard only) | When the dashboard value is missing, one request takes a lock (`SET NX PX`, random token, released only by its owner through a Lua check), recomputes and stores it; others wait up to 5 seconds for the value and compute it themselves only if it does not appear. The lock lives 35 seconds (longer than the 30-second worker timeout), so a killed request cannot block anyone. | A cold or expired key otherwise makes every concurrent request run the heavy query at once. Trending needs no lock: at most two workers can collide on a cheap query |
+| 4 | **Stampede protection** (dashboard only) | When the dashboard value is missing, one request takes a lock (`SET NX PX`, random token, released only by its owner through a Lua check), recomputes and stores it; others wait up to 10 seconds for the value; if the holder fails and releases the lock they take it in turn, and they compute it themselves only if the value still does not appear in time. The lock lives 35 seconds (longer than the 30-second worker timeout), so a killed request cannot block anyone. | A cold or expired key otherwise makes every concurrent request run the heavy query at once. Trending needs no lock: at most two workers can collide on a cheap query |
 
 **Limits** (settings, so tests use short windows). Best practice is a strict limit per account and a loose one per address,
 because many people share one address behind Docker, a school or a campus network, and a low address limit would let one
@@ -35,7 +35,7 @@ person lock everyone out, markers included.
 | Review saves per user | 10 per hour | successful saves only (not deletes, not 404s or validation errors); checked before, recorded after |
 
 IPv4 addresses are keyed as they are and IPv6 by their /64 network. The IP is `REMOTE_ADDR` only (a forwarded header is
-spoofable). Usernames are trimmed, Unicode-normalised, case-folded and cut to 150 characters before hashing, and a username
+spoofable). Usernames are trimmed, Unicode-normalised (as the login form does) and cut to 150 characters before hashing; case is kept, because Django matches names exactly and folding case would let look-alike names such as `jeßica` share, and reset, the counter of `jessica`, and a username
 that does not exist counts like any other, so the `429` reveals nothing. Authenticated users never reach the limiter
 (`LoginView` redirects them first). Known limits, to be documented: guessing one username from many addresses is not
 caught (limiting per username alone would let a stranger lock a victim out), and a Redis outage or restart resets every limit.
@@ -49,26 +49,36 @@ cache and do not trigger it. `redis.unavailable` is logged once per back-off win
 `maxmemory` 64 MB, `volatile-lru`, persistence off. Settings `REDIS_ENABLED` (strictly `true` or `false`; default on),
 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` and a key prefix; separate settings rather than a URL, because
 Django's debug page hides settings named PASSWORD but would show a URL containing it. With `REDIS_ENABLED=false` the code takes
-the database paths and never imports the client, so one commit is measured both ways. The bench profile and `tools` set it
-to `false`.
+the database paths and never imports the client, so one commit is measured both ways. The bench profile sets it
+to `false` (`tools` has no network and never loads Django settings).
 - **Start-up script, not a command line.** An entrypoint script (like `mongo-start.sh`) writes the ACL from environment
-  variables so the password never appears in `docker inspect` or `ps`. The default user is off; one application user may use
+  variables so the password never appears on a command line or in `ps` (the environment variable that carries it in is
+  visible to `docker inspect`, like the other services' passwords). The default user is off; one application user may use
   get, set, delete, expire, scan, the sorted-set commands and `EVAL`, and may not use `FLUSHALL`, `CONFIG`, `KEYS` or the
   other dangerous commands. Resets (tests, the `clear_rate_limits` command, the measurement) scan and delete by prefix.
 - **Ordering.** `web` starts without Redis (`depends_on` with `required: false`); `migrate`, which runs the tests, waits for a
   healthy Redis. `init_env.py` adds `REDIS_PASSWORD` to an existing `.env`.
 - **Client.** `redis-py` only (no `django-redis`), created lazily after the worker forks. Sessions stay in PostgreSQL.
 
+**Failure modes, named.** The client resolves the host name in a helper thread with the same 200 ms limit (a socket timeout
+does not cover the lookup, and Docker's resolver can take seconds to give up on a stopped container), and is dropped after a
+failure so the next attempt looks the name up again. An entry whose shape the code no longer expects (a block was renamed
+while Redis kept the old one) is a miss, never an error. Invalidation uses `transaction.on_commit`, so inside an enclosing
+transaction it waits for the real commit and a rollback never bumps. Known limit: the application user may run any Lua
+script, and a runaway one would block Redis until the container is recreated (the default user is off and there is no admin
+user, by design); the application runs only its own four scripts.
+
 **Values and keys.** JSON, never pickle: Decimal as a string, dates as ISO, and a test proves cached and fresh data are
 equal including types. A value that fails to decode, or has an old shape, is a miss and is deleted. Every key carries
-`mercer:v1:`, has a TTL (the version key is the one exception and is a millisecond timestamp, not a counter, so an evicted or
+`mercer:v1:`, has a TTL (the version key is the one exception and is a microsecond timestamp, not a counter, so an evicted or
 restarted store can never bring back an old version), and is declared once in a registry in code (name, TTL, who invalidates).
 The DATA_MODEL "Redis keys" table is checked against that registry by a test. No cached payload holds price or stock (rule 2),
 and no key contains user-supplied text except as a hash.
 
 **Invalidation happens after the change commits, never before** (bumping first would let a request cache old data under the
-new version for an hour): after `refresh_sales()`, after a review takedown or restore, and at the end of `seed_showcase` and the
-Olist import. A request reads the version once before computing and stores under that same version. The one-hour TTL is the
+new version for an hour): after `refresh_sales()` (the Olist import runs it) and after a review takedown or restore, also
+when the Mongo side committed and the PostgreSQL side then failed. `seed_showcase` needs none: product and shop names are
+read live. A request reads the version once before computing and stores under that same version. The one-hour TTL is the
 safety net.
 
 **Not in scope.** Checkout, stock and carts (AGENTS.md rule 2), sessions, a sorted-set trending leaderboard (no performance
@@ -77,12 +87,13 @@ scaled data (parked as backlog item #72).
 
 ## Tests (real Redis, no mocks, rule 8)
 
-Redis is on in the whole suite and in CI (a Redis service with a password; `migrate` waits for it). An autouse fixture clears
-the test keys before each test and refuses to run unless the database index and prefix are the test ones (`REDIS_DB=15` and
-`mercer-test:` for `migrate` only), so it can never touch the application's keys.
+Redis is on in the whole suite and in CI (a Redis service with a password; `migrate` waits for it). An autouse fixture in
+`tests/conftest.py` pins database 15 and the prefix `mercer-test:v1:` for every test (Compose keeps `migrate` on the
+application's keyspace, so management commands run from it invalidate the right keys) and clears only those keys; it
+asserts both before it deletes, so it can never touch the application's keys.
 - **Limiter:** limit and window by short setting, sliding behaviour (no burst across a boundary), `Retry-After`, reset on
   success, per-IP failures only, a limit on one username and IP not blocking another, IPv6 /64, username normalisation, no raw
-  username in a key, blocked attempts not recorded, the script surviving a Redis restart, the `429` page, reviews counted on
+  username in a key, blocked attempts not recorded, the script loading on first use (every first call goes through the missing-script path), the `429` page, reviews counted on
   success only.
 - **Caches:** trending served from cache but a takedown applied live; dashboard invalidated by refresh and by a review
   takedown, after commit; a cached dashboard showing a renamed product and a renamed shop; stock planning always live; a
@@ -107,8 +118,10 @@ One commit, one machine, one dataset, identical Docker limits; only `REDIS_ENABL
 - **Samples:** 150 requests per cheap page per condition per round, 15 for the dashboard. p95 is reported only with at least
   100 pooled samples and p99 only with at least 500; below that the table shows median, range and maximum, labelled. The
   dashboard therefore has no tail percentiles.
-- **Per request:** server-side duration, PostgreSQL and MongoDB time and counts, and new `redis_ms` and `cache` fields in the
-  request log, which the collector already joins by request id.
+- **Per request:** server-side duration, PostgreSQL and MongoDB time and counts, and the `redis_ms`, `redis_commands` and
+  `cache` fields now in the request log (built in Batch 5), which the collector joins by request id. The collector changes,
+  the interleaved runner, the stampede script and the table and chart script are built with the benchmark amendment
+  (Batch 6), because they are benchmark tooling and share its report code.
 - **Statistics:** median, p95 and p99 where allowed; per-round paired ratios (off against warm) and their range, as the main
   evidence, because requests within a round are not independent; a pooled bootstrap interval with a fixed seed, labelled
   optimistic. Events in the trending window are recorded at the start and end of each round.
@@ -156,6 +169,15 @@ objects and live stock, so only the history blocks are cached and products are r
 uses: with the documented synthetic events the unfiltered trending query was most of the home page's time, the
 category-filtered query was already index-fast, the product page was cheap, and the dashboard took seconds (measured, not
 typed here; the collector reproduces it).
+
+First Opus 5.5 review (8 November 2026, read-only, full suite and 13 probes): one high-severity defect, Redis could not start a
+second time because the start-up script rewrote its ACL file in a sticky `/tmp` (the suite never restarts the service; a
+throwaway-container test now does); a stopped Redis cost seconds per worker because the name lookup was outside the
+socket timeout (now a helper thread with the same limit); a look-alike username (`jeßica`) reset another account's
+counter (case folding removed: Django matches names exactly, so it only created the bypass); an old-shaped cached entry
+caused a 500 (now a miss); `Retry-After` was too short after an overshoot; and several documentation statements were
+wrong. One fix round applied, with the cache labels made consistent, waiters taking over from a failed holder, the lock
+wait raised to 10 seconds and invalidation moved to `transaction.on_commit`. A second fresh review follows.
 
 Defence lines for the video: why Redis and not PostgreSQL (counters with a TTL do not belong in the system of record, and the
 materialized view already covers history while Redis covers the repeated read); why not an in-process cache (two workers would

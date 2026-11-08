@@ -1,4 +1,4 @@
-"""Only real PostgreSQL and MongoDB. Deliberate outages use refused TCP connections."""
+"""Only real PostgreSQL, MongoDB and Redis. Deliberate outages use refused TCP connections."""
 
 import json
 import os
@@ -11,8 +11,32 @@ import pytest
 from django.core.management import call_command
 from django.db import connection
 
-from config import mongo
+from config import mongo, redis_store
 from config.olist_import import COLLECTIONS
+
+# Redis is on in the whole suite, on its own database index and key prefix. The application's keys (database 0, prefix
+# "mercer:") are out of reach: the guard below refuses to clear anything else.
+TEST_REDIS_DB = 15
+TEST_REDIS_PREFIX = "mercer-test:v1:"
+
+
+def clear_test_keys(settings):
+    if not settings.REDIS_ENABLED:
+        return
+    assert settings.REDIS_DB == TEST_REDIS_DB and settings.REDIS_KEY_PREFIX == TEST_REDIS_PREFIX, "refusing to clear"
+    redis_store.delete_matching("*")
+
+
+@pytest.fixture(autouse=True)
+def redis_isolated(settings):
+    settings.REDIS_DB = TEST_REDIS_DB
+    settings.REDIS_KEY_PREFIX = TEST_REDIS_PREFIX
+    redis_store.reset_for_tests()
+    clear_test_keys(settings)
+    yield
+    redis_store.reset_for_tests()  # a test that broke the connection must not leave a back-off behind
+    clear_test_keys(settings)
+    redis_store.reset_for_tests()
 
 
 @pytest.fixture(scope="session")

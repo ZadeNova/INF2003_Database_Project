@@ -47,7 +47,10 @@ class DashboardView(OperatorRequiredMixin, View):
                 chart_month=latest,
                 ready=True,
             )
-        return render(request, "dashboard/dashboard.html", context)
+        response = render(request, "dashboard/dashboard.html", context)
+        if context.get("cache_status"):
+            response["X-Cache"] = context["cache_status"].upper()  # HIT, MISS, WAIT, DOWN or OFF
+        return response
 
 
 class RefreshView(OperatorRequiredMixin, View):

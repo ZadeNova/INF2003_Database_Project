@@ -215,6 +215,12 @@ The operator dashboard reuses bordered panels and contained, keyboard-focusable 
 its reporting date and sources. Replenishment and risk use written amber badges. The revenue chart uses the current
 theme's ink and grid colours, has no animation, and retains exact values in the adjacent table. Wide tables scroll
 inside their region; the canvas stays inside its panel on phones. Filters and refresh are separate labelled controls.
+When the delivery, category and review panels come from the Redis cache, one written line under the lead says so and
+how long ago they were computed, and that stock is always live; nothing else on the page changes.
+
+The "too many attempts" page (429) is a standalone error card like the 503 page: a `429 · too many attempts` eyebrow,
+one sentence saying how long to wait, and one dark button back to sign in, the order or the shop. It never echoes the
+form, and it renders without touching the user or session, so it works during an outage.
 
 Trending fills the catalogue's existing panel and uses the same product grid, with written rank/view counts and a
 generated-activity label where applicable. Recently viewed uses the same grid on home and product pages. Seller

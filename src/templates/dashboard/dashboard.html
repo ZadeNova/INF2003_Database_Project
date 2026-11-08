@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Stock planning — Operator — Mercer{% endblock %}
 {% block content %}<div class="page account-page dashboard-page">
-<div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">Stock planning</h1><p class="page__lead">{% if as_of %}Sales history as of {{ as_of|date:"j F Y" }}. Inventory shows current stock.{% else %}Import Olist to start planning.{% endif %}</p></div>
+<div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">Stock planning</h1><p class="page__lead">{% if as_of %}Sales history as of {{ as_of|date:"j F Y" }}. Inventory shows current stock.{% else %}Import Olist to start planning.{% endif %}</p>{% if cache_status == "hit" or cache_status == "wait" %}<p class="page__lead">Delivery, category and review panels served from cache, computed {{ computed_at|timesince }} ago. Stock is always live.</p>{% endif %}</div>
 <form method="post" action="{% url 'dashboard:refresh' %}">{% csrf_token %}<button class="button" type="submit">Refresh sales history</button></form></div>
 {% if ready %}
 <section class="panel checkout-panel" id="stock"><h2>Replenishment priorities</h2>{% include "dashboard/_source.html" with sources="PostgreSQL daily sales, products and shops" %}

@@ -2,11 +2,12 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
 
 from accounts.mixins import CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin
 from catalogue.models import Product
-from config import mongo
+from config import mongo, ratelimit
 
 from .forms import ModerationForm, ReviewForm
 from .queries import review_page
@@ -37,6 +38,14 @@ class CustomerReviewView(CustomerRequiredMixin, View):
             raise Http404 from None
         action = request.POST.get("action")
         form = ReviewForm(request.POST)
+        saving = action != "delete"
+        wait = ratelimit.review_wait(request.user) if saving else 0
+        if wait:
+            return ratelimit.too_many_requests(
+                wait,
+                back_url=reverse("orders:order_detail", kwargs={"pk": line.order_id}),
+                back_label="Back to the order",
+            )
         if action == "delete" or form.is_valid():
             with mongo.client() as client:
                 existing = client[mongo.database_name()].reviews.find_one(
@@ -47,6 +56,8 @@ class CustomerReviewView(CustomerRequiredMixin, View):
             except ValidationError as error:
                 form.add_error(None, error)
             else:
+                if saving:
+                    ratelimit.review_saved(request.user)
                 if action == "delete":
                     messages.success(request, "Review deleted.")
                 elif existing and existing.get("taken_down"):

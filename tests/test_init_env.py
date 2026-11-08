@@ -60,6 +60,23 @@ def test_generated_secrets_have_no_leading_dash_and_keep_urlsafe_size_and_alphab
             assert set(secret) <= alphabet
 
 
+def test_redis_startup_keeps_the_password_off_every_command_line_and_limits_the_server():
+    root = Path(__file__).resolve().parents[1]
+    source = root / "src" if (root / "src").is_dir() else root
+    script = (source / "docker" / "redis-start.sh").read_text()
+    # The ACL is written from the environment as a SHA-256, never as an argument; the server is capped and not persisted.
+    assert "sha256sum" in script and "--requirepass" not in script and "-a " not in script
+    assert "user default off" in script and "-@all" in script
+    for flag in ("--maxmemory 64mb", "--maxmemory-policy volatile-lru", '--save ""', "--appendonly no", "--aclfile"):
+        assert flag in script
+    for dangerous in ("+flushall", "+flushdb", "+config", "+keys", "+debug", "+@all", "+@dangerous"):
+        assert dangerous not in script
+    compose = (root / "compose.yaml").read_text()
+    healthcheck = next(line for line in compose.splitlines() if "redis-cli" in line)
+    assert 'REDISCLI_AUTH=\\"$$REDIS_PASSWORD\\"' in healthcheck and " -a " not in healthcheck
+    assert "6379:6379" not in compose  # Redis is internal to the Compose network: no host port
+
+
 def test_mongo_startup_and_healthcheck_attach_credentials_to_options():
     root = Path(__file__).resolve().parents[1]
     source = root / "src" if (root / "src").is_dir() else root

@@ -12,6 +12,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import CreateView
 
 from catalogue.models import Product, PurchasableProduct
+from config import ratelimit
 from config.ids import BIGINT_MAX
 from orders.models import Order
 
@@ -40,6 +41,18 @@ class RoleLoginView(LoginView):
 
     def get_default_redirect_url(self):
         return landing_url(self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        # Counted before the password is checked, so parallel guesses cannot overshoot the limit (Redis; fails open).
+        attempt = ratelimit.start_login(request)
+        if attempt.blocked:
+            return ratelimit.too_many_requests(attempt.retry_after, back_url=request.path, back_label="Back to sign in")
+        response = super().post(request, *args, **kwargs)
+        if request.user.is_authenticated:
+            ratelimit.login_succeeded(attempt)
+        else:
+            ratelimit.login_failed(attempt)
+        return response
 
 
 class AnonymousOnlyMixin:

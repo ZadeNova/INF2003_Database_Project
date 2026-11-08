@@ -3,14 +3,31 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import connection
+from django.db import connection, transaction
 from django.utils import timezone
 
+from accounts.models import Seller
 from catalogue.category_names import display_name
 from catalogue.models import Product
-from config import mongo
+from config import mongo, redis_keys, redis_store
 
 from .queries import CATEGORY_PERFORMANCE, DELAY_BUCKETS, STOCK_PLANNING_FAST
+
+DASHBOARD_LOCK_WAIT_SECONDS = (
+    10  # a request waits at most this long for another to finish computing (worker timeout: 30)
+)
+HISTORY_KEYS = {"category_rows", "delay_rows", "seller_rows", "seller_excluded_count", "poor_reviews"}
+
+
+def _history_valid(blocks):
+    """False for an entry cached by an older shape of `history_blocks`: it is then recomputed, not trusted."""
+    return (
+        isinstance(blocks, dict)
+        and HISTORY_KEYS <= set(blocks)
+        and all(isinstance(row, dict) and "seller_id" in row for row in blocks["seller_rows"])
+        and all({"product_id", "count", "average"} <= set(row) for row in blocks["poor_reviews"])
+    )
+
 
 BUCKET_LABELS = {
     "early_over_7": "Early by more than 7 days",
@@ -45,6 +62,8 @@ def query_rows(query, parameters):
 def refresh_sales():
     with connection.cursor() as cursor:
         cursor.execute("SELECT public.refresh_daily_product_sales()")
+    # After the refresh has committed, never before; inside an enclosing transaction this waits for its commit.
+    transaction.on_commit(redis_store.bump_dashboard)
 
 
 def sales_populated():
@@ -152,24 +171,62 @@ def _readable_categories(rows):
     return [{**row, "category": display_name(row["category"])} for row in rows]
 
 
-def dashboard_data(as_of, category=None, seller=None):
+def history_blocks(as_of):
+    """The expensive blocks. They depend on the reporting date only (not on the filters, live stock, product names or
+    shop names), so they can be cached; the names are read live afterwards, so a rename never waits for the cache."""
     with mongo.client() as client:
         database = client[mongo.database_name()]
         buckets, sellers, excluded = delivery_analysis(as_of, database)
         poor = list(database.reviews.aggregate(poor_reviews_pipeline(end_of_day(as_of))))
-    # Review history may include retired products; operators can still inspect their names.
-    products = Product.objects.in_bulk([row["_id"] for row in poor])
-    poor = [
-        {"product": products[row["_id"]], "count": row["count"], "average": row["average"].to_decimal()}
-        for row in poor
-        if row["_id"] in products
-    ]
     return {
-        "stock_rows": _readable_categories(stock_planning(as_of, category, seller)),
         "category_rows": _readable_categories(label_month_to_date(category_performance(as_of), as_of)),
         "delay_rows": buckets,
-        "seller_rows": sellers,
+        "seller_rows": [{key: value for key, value in row.items() if key != "shop_name"} for row in sellers],
+        "seller_excluded_count": excluded,
+        "poor_reviews": [
+            {"product_id": row["_id"], "count": row["count"], "average": row["average"].to_decimal()} for row in poor
+        ],
+    }
+
+
+def cached_history(as_of):
+    """The history blocks from Redis when it can be used (keyed by version and reporting date, one entry for every
+    filter, one request recomputing a missing entry while the others wait), otherwise computed from the databases."""
+    version = (
+        redis_store.dashboard_version()
+    )  # read once, before computing: a refresh meanwhile makes this entry unreachable
+    if version is None:
+        return redis_store.bypass(lambda: history_blocks(as_of))
+    return redis_store.cached(
+        f"dashboard:{version}:{as_of.isoformat()}",
+        redis_keys.DASHBOARD_TTL_SECONDS,
+        lambda: history_blocks(as_of),
+        lock_wait=DASHBOARD_LOCK_WAIT_SECONDS,
+        valid=_history_valid,
+    )
+
+
+def dashboard_data(as_of, category=None, seller=None):
+    history = cached_history(as_of)
+    blocks = history.value
+    # Review history may include retired products; operators can still inspect their names.
+    products = Product.objects.in_bulk([row["product_id"] for row in blocks["poor_reviews"]])
+    poor = [
+        {"product": products[row["product_id"]], "count": row["count"], "average": row["average"]}
+        for row in blocks["poor_reviews"]
+        if row["product_id"] in products
+    ]
+    shops = dict(
+        Seller.objects.filter(pk__in=[row["seller_id"] for row in blocks["seller_rows"]]).values_list("pk", "shop_name")
+    )
+    return {
+        "stock_rows": _readable_categories(stock_planning(as_of, category, seller)),
+        "category_rows": blocks["category_rows"],
+        "delay_rows": blocks["delay_rows"],
+        "seller_rows": [{**row, "shop_name": shops.get(row["seller_id"], "")} for row in blocks["seller_rows"]],
         "poor_rows": poor,
         "seller_min_orders": LATE_RISK_MIN_ORDERS,
-        "seller_excluded_count": excluded,
+        "seller_excluded_count": blocks["seller_excluded_count"],
+        "cache_status": history.status,
+        "computed_at": history.computed_at,
     }

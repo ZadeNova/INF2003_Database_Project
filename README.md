@@ -118,7 +118,7 @@ Database job, including coverage and pipeline tests:
 export COMPOSE_PROJECT_NAME=mercer-ci-databases-local
 dc build migrate
 dc --profile tools build tools
-dc up --detach --wait --wait-timeout 300 db mongo
+dc up --detach --wait --wait-timeout 300 db mongo redis
 dc run --rm migrate
 dc run --rm migrate python manage.py makemigrations --check --dry-run
 dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
@@ -138,7 +138,7 @@ python -m ruff format --check .
 python scripts/audit_requirements.py
 python scripts/check_docs.py
 CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
-python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py
+python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_redis_restart.py
 python - <<'PY'
 from xml.etree import ElementTree
 suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")
@@ -157,7 +157,7 @@ filters database credentials, and redacts console output. Parent Django database
 ```sh
 export COMPOSE_PROJECT_NAME=mercer-ci-browser-local
 dc build migrate web
-dc up --detach --wait --wait-timeout 300 db mongo
+dc up --detach --wait --wait-timeout 300 db mongo redis
 dc run --rm migrate
 dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
 dc run --rm migrate python manage.py seed_demo
@@ -186,6 +186,7 @@ benchmark fixture job is described below and is not a required ruleset check.
 needs without changing existing ones. `.env` is git-ignored: never commit it or paste resolved Compose output.
 After updating to the benchmark harness, rerun `python src/tools/init_env.py` even for ordinary app startup:
 Compose validates required `BENCH_*` interpolation before filtering profiles, so older environments fail until completed.
+The same applies to `REDIS_PASSWORD`, added with the Redis service.
 
 | Variable | Purpose |
 |---|---|
@@ -200,6 +201,9 @@ Compose validates required `BENCH_*` interpolation before filtering profiles, so
 | `POSTGRES_ADMIN_PASSWORD` | Bootstrap superuser, given only to the `db` service |
 | `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
 | `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
+| `REDIS_PASSWORD` | Password of the Redis application user (generated). Redis has no host port; only `web` and `migrate` hold the password |
+| `REDIS_ENABLED` | `true` (default) or `false`: false makes every code path use the databases and never imports the Redis client. The bench profile always sets it false |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_USER`, `REDIS_KEY_PREFIX` | Optional; Compose sets host and port. The test suite pins database 15 and the prefix `mercer-test:v1:` itself, so it can never touch the application's keys |
 | `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Fixed, documented demo logins for seeding and tests (see [demo logins](#demo-logins)); CI exports only these login values to host browser tests, masks them, and filters database credentials; must be set, no fallback |
 | `BENCH_DB` | Fixed `bench`; the harness refuses any other database or host |
 | `BENCH_ADMIN_PASSWORD` | Isolated PostgreSQL bootstrap secret; only bench-db receives it |
@@ -216,6 +220,7 @@ Credentials are set up on an empty volume only: editing `.env` does not rotate a
 |---|---|
 | `db` | PostgreSQL 18; creates the owner and runtime roles on first start (`src/docker/10-roles.sh`) |
 | `mongo` | MongoDB 9.0 as the single-node replica set `rs0` with authentication (`src/docker/mongo-start.sh`); healthy once the set and the application user exist. The app connects with `replicaSet=rs0`; tools on the host need `directConnection=true` |
+| `redis` | Redis 8 (`src/docker/redis-start.sh`): rate limits and two caches, never a source of truth. An ACL user with only the commands the app needs (no `FLUSHALL`, `CONFIG` or `KEYS`), 64 MB, `volatile-lru`, no persistence, no host port. `web` starts without it (the shop fails open); `migrate` waits for it |
 | `migrate` | Owner role and dev image (`-app-dev`): migrations, import, seeding, pytest and coverage; data/configuration mounted read-only |
 | `web` | Runtime image (`-app`) and PostgreSQL runtime role; Gunicorn on 127.0.0.1 only, without the dev tools |
 | `tools` | Optional tools profile; pinned offline profiling, cleaning, generation and pipeline tests; only working directories mounted, with raw source read-only and no .env mount |
@@ -224,8 +229,24 @@ Credentials are set up on an empty volume only: editing `.env` does not rotate a
 | `bench-mongo` | Optional bench profile; same MongoDB digest, separate single-node replica set and keyfile, 0.75 GiB WiredTiger cache, readWrite on bench only, no published port |
 | `bench-runner` | Optional bench profile; app dev image and matching drivers, source mounts read-only and results writable; no Docker socket. Each of these three services has 2 CPUs, 2 GiB memory and no extra swap |
 
-Both database images are pinned by digest in [compose.yaml](compose.yaml); the reasons are in
+The database and Redis images are pinned by digest in [compose.yaml](compose.yaml); the reasons are in
 [docs/DECISIONS.md](docs/DECISIONS.md).
+
+### Redis: rate limits and caches
+
+[The plan](docs/plans/redis.md) has the reasoning; [the key table](docs/DATA_MODEL.md#redis-keys) lists every key.
+- **Rate limits.** Five sign-in attempts per username and address in 15 minutes (counted before the password is checked,
+  cleared by a successful login), 100 failed sign-ins per address in 15 minutes (a success never counts) and ten review
+  saves per customer per hour. Over a limit the page is `429` with `Retry-After`. The limits are the `RATE_LIMITS`
+  setting. Under Docker every client shares one address, so after a few mistyped demo passwords run
+  `docker compose run --rm migrate python manage.py clear_rate_limits`.
+- **Caches.** The trending ranking for 60 seconds, and the operator dashboard's delivery, category and review blocks
+  until "Refresh sales history" or a review takedown or restore (stock planning is always live). The dashboard says when
+  it was served from cache, and its response carries `X-Cache` (`HIT`, `MISS`, `WAIT`, `DOWN` or `OFF`).
+- **Failing open.** If Redis is disabled, down or slow the shop keeps working: caches become misses and limits allow the
+  action. The first failure costs one 200 ms timeout and Redis is then skipped for 30 seconds. Each request line in the
+  web log carries `redis_ms`, `redis_commands` and `cache`.
+- **Turning it off** for a comparison on the same commit: set `REDIS_ENABLED=false` in `.env` and recreate `web`.
 
 ## Benchmark (isolated databases)
 
