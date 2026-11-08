@@ -1,0 +1,42 @@
+{
+  "demo_shop_names": {
+    "demo-seller": "Paulista Watch & Gift House",
+    "demo-seller-2": "Ibitinga Linen & Home",
+    "demo-seller-3": "Santo Andre Beauty Studio"
+  },
+  "merchants": [],
+  "categories": [],
+  "products": [],
+  "olist_photos": [
+    {"product_id": 33653, "name": "Lightweight cotton blanket, king size"},
+    {"product_id": 33374, "name": "Everyday cotton sheet set, single size"},
+    {"product_id": 34008, "name": "Nourishing cream body moisturiser, 50 ml"},
+    {"product_id": 33989, "name": "Light lotion foot treatment, 200 ml"},
+    {"product_id": 34118, "name": "Lightweight nylon gym bag for fitness"},
+    {"product_id": 33460, "name": "Sporty steel water bottle for running"},
+    {"product_id": 33056, "name": "Warm classic bookshelf for the bedroom"},
+    {"product_id": 31475, "name": "Simple classic side table for the bedroom"},
+    {"product_id": 29399, "name": "Compact webcam, Windows compatibility"},
+    {"product_id": 33413, "name": "Ergonomic wireless mouse, Windows compatibility"},
+    {"product_id": 33246, "name": "Classic glass food container"},
+    {"product_id": 33097, "name": "Practical silicone ice tray"},
+    {"product_id": 34094, "name": "Signature steel dress watch, gold case"},
+    {"product_id": 32808, "name": "Modern leather wristwatch, gold case"},
+    {"product_id": 30955, "name": "Rugged black USB-C charging cable"},
+    {"product_id": 29241, "name": "Rugged black phone case"},
+    {"product_id": 32365, "name": "Classic steel garden hedge shears"},
+    {"product_id": 29550, "name": "Handy aluminium garden hose nozzle"},
+    {"product_id": 32066, "name": "Everyday plastic dashboard phone holder, universal fit"},
+    {"product_id": 31437, "name": "Urban plastic squeegee, universal fit"},
+    {"product_id": 33606, "name": "Classic puppet set, ages 9+"},
+    {"product_id": 31250, "name": "Bright wooden block set, ages 6+"},
+    {"product_id": 33983, "name": "Curious wood model kit"},
+    {"product_id": 31849, "name": "Clever metal phone stand"},
+    {"product_id": 33931, "name": "Elegant floral body mist, 100 ml"},
+    {"product_id": 33036, "name": "Elegant woody fragrance gift set, 30 ml"},
+    {"product_id": 34100, "name": "Little silicone teether, 0+ months"},
+    {"product_id": 30970, "name": "Snug silicone bib set, 12+ months"},
+    {"product_id": 33219, "name": "Compact Bluetooth speaker, mains powered"},
+    {"product_id": 31641, "name": "Everyday digital alarm clock, battery powered"}
+  ]
+}

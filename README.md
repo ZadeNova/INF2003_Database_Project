@@ -457,6 +457,7 @@ machine; they are not secrets (database and Django secrets stay random in the ig
 |---|---|---|
 | Customer | `demo-chee-long`, `demo-erfan`, `demo-syahfariz`, `demo-jun-keat`, `demo-joash` | `mercer-demo-customer` |
 | Seller (approved, real high-volume Olist sellers) | `demo-seller`, `demo-seller-2`, `demo-seller-3` | `mercer-demo-seller` |
+| Seller (new demonstration merchants, if listed in `catalogue.json`) | `demo-seller-4` and up | `mercer-demo-seller` |
 | Seller (pending, for the approval demo) | `demo-applicant` | `mercer-demo-seller` |
 | Operator | `demo-operator` | `mercer-demo-operator` |
 
@@ -485,6 +486,25 @@ docker compose down --volumes
 docker compose up -d --build
 docker compose run --rm migrate python manage.py import_olist
 ```
+
+### Demonstration catalogue: photos and a few new products
+
+`seed_demo` also runs `seed_showcase` (it can be run alone and repeatedly). It reads two committed places, so a fresh
+clone gets the same pictured catalogue and nothing depends on one person's database:
+
+- `data/demo_showcase/catalogue.json`: the three demo shop names, up to three new merchants (`demo-seller-4` to
+  `demo-seller-9`, password `mercer-demo-seller`), up to two new categories, up to twelve new products, and the 30 Olist
+  products that get photos (`olist_photos`: product id and the exact expected name; if the data is ever regenerated the
+  load stops instead of matching a photo to the wrong name).
+- `data/demo_photos/`: the photo files and `licences.csv` (columns `file,author,source_url,licence`, one complete row for
+  every photo). Photos are JPEG, PNG or WebP, at most 2 MB, from free-to-use sources only. An Olist product's photo is
+  named `<product id>.jpg` (or `.png`, `.webp`); a new product names its file in `catalogue.json`.
+
+Products go through the same code as the seller screens (price, stock, attribute and photo rules, audit rows) and keep the
+generated-content label, because stock, prices and merchants are demonstration values. The loader lists every problem in
+the files in one run, and missing photo files are reported, not fatal. All showcase products are featured: they lead the
+home page and each category page (the default "Recommended" sort); the earlier featured flags are cleared. After editing
+the files, run `docker compose run --rm migrate python manage.py seed_showcase` and look at the shop.
 
 ## Accounts and the operator console
 

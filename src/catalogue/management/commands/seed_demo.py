@@ -1,7 +1,9 @@
 import os
 from datetime import datetime, time, timedelta
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Count, Max
@@ -15,6 +17,7 @@ from orders.models import Order, OrderLine
 MEMBERS = ("chee-long", "erfan", "syahfariz", "jun-keat", "joash")
 EXTRA_SELLERS = ("demo-seller-2", "demo-seller-3")
 RELISTED_LABEL = "relisted for demo visibility"
+SHOWCASE = "/app/data/demo_showcase/catalogue.json"
 APPLICANT = "demo-applicant"
 APPLICANT_SHOP = "Demo applicant shop (generated, pending approval)"
 
@@ -189,6 +192,8 @@ class Command(BaseCommand):
                 product.save(
                     update_fields=["stock", "lead_time_days", "active", "has_generated_content", "demo_adjustment"]
                 )
+        if Path(SHOWCASE).exists():
+            call_command("seed_showcase", stdout=self.stdout)
         self.stdout.write("Demo customers: " + ", ".join("demo-" + name for name in MEMBERS))
         self.stdout.write(
             "Demo operator: demo-operator; sellers: demo-seller, "

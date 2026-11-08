@@ -105,7 +105,7 @@ def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db)
     assert [chip["label"] for chip in rated if chip["label"].startswith("Rating")] == ["Rating: 4 stars and up"]
 
 
-@pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "top"])
+@pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "recommended", "top"])
 def test_search_sorting_and_pagination_are_deterministic(imported, mongo_db, sort):
     category = visible_products().values_list("category_id", flat=True).first()
     ids = list(visible_products().filter(category_id=category).values_list("pk", flat=True))
@@ -119,7 +119,12 @@ def test_search_sorting_and_pagination_are_deterministic(imported, mongo_db, sor
             .limit(24)
         ]
     else:
-        ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}[sort]
+        ordering = {
+            "price": ("price", "id"),
+            "price_desc": ("-price", "-id"),
+            "newest": ("-id",),
+            "recommended": ("-featured", "-id"),
+        }[sort]
         expected = list(
             visible_products().filter(category_id=category).order_by(*ordering).values_list("pk", flat=True)[:24]
         )

@@ -158,7 +158,7 @@ erDiagram
 |---|---|
 | accounts.User / accounts_user | AbstractUser's auth fields, groups and permissions; role CHECK allows customer, seller or operator. Imported passwords are unusable; no hashing in the loader. Django's standard auth join tables and session table remain |
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
-| Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
+| Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content. The demonstration catalogue adds approved merchants `demo-seller-4` to `demo-seller-9` (no Olist id) |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
 | Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
@@ -490,7 +490,7 @@ source product/seller isolates a product from unrelated row ordering. Templates 
 adjective, an optional attribute word and a noun from that category's list, plus sometimes a variant taken from a drawn
 attribute ("Soft cotton sheet set, queen size"); a noun tied to attributes is chosen only when they fit, so a name never
 contradicts the product's attributes. The application shows the first six characters of olist_product_id as a separate
-SKU line. Demo stock/lead
+SKU line. The demonstration catalogue (`seed_showcase`: committed JSON and photos) adds merchants, at most two categories with their templates, and at most twelve products through the seller code path, all flagged as generated, plus photos for named Olist products. Demo stock/lead
 time adjustments have explicit labels and do not change historical transactions. Olist has no cancellation timestamp;
 imported cancellation/refund dates conservatively use purchase time, recorded in the ledger.
 

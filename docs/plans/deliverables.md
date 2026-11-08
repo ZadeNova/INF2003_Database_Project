@@ -70,6 +70,10 @@ Added 8 November 2026 on Erfan's instruction, so nothing is forgotten when the r
 - **Limitations (section 9).** One main dataset (a second was considered and dropped to protect scope); generated product
   text; machine-translated reviews with occasional odd phrasing, labelled as such; Olist category names corrected only on
   display (a display-name map), never in the stored data.
+- **Reviews against generated names.** The reviews are real Olist comments, but the products they were written for were anonymised, so a
+  review can mention an object the generated name does not (a "curtain" under a duvet cover). The limitation to state: reviews are
+  real, products are generated, and the link between them is the Olist product id. The showcase products were chosen for reviews that
+  talk about delivery and service. Reviews also contain Olist's own anonymisation, such as Game of Thrones house names for shops.
 - **Demo path.** The video walks the showcase products on the home page (proper names and photos), not arbitrary
   products. The showcase is demonstration data set by `seed_demo`; the clean data and checksums are untouched.
 - **Benchmark provenance.** The 2 November run came from another machine and is superseded; the final run is on the

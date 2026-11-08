@@ -54,7 +54,7 @@ def _listing(request, category=None):
         context.update(page_obj=Paginator([], PAGE_SIZE).get_page(1), searching=True)
         return render(request, "catalogue/product_list.html", context, status=400)
     if not searching:
-        featured = visible_products().filter(featured=True).order_by("id")
+        featured = visible_products().filter(featured=True).order_by("-id")
         products = featured if featured.exists() else visible_products().order_by("id")
         page = Paginator(products, PAGE_SIZE).get_page(data.get("page"))
         with mongo.client() as client:

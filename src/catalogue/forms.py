@@ -62,6 +62,7 @@ class SearchForm(forms.Form):
         label="Sort",
         required=False,
         choices=[
+            ("recommended", "Recommended"),
             ("newest", "Newest"),
             ("price", "Price: low to high"),
             ("price_desc", "Price: high to low"),

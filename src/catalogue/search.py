@@ -43,7 +43,8 @@ def candidates(cleaned):
         return products.annotate(
             name_rank=RawSQL('similarity("catalogue_product"."name", %s)', [query], output_field=FloatField())
         ).order_by("-name_rank", "-id")
-    return products.order_by("-id")
+    # Featured products (the pictured demonstration catalogue) lead, then the newest.
+    return products.order_by("-featured", "-id")
 
 
 def attribute_definitions(database, category_ids):
@@ -140,9 +141,15 @@ def search_page(database, products, cleaned, definitions, requested):
         found = {item.pk: item for item in matching_products(matched_ids)}
         page.object_list = [found[pk] for pk in matched_ids if pk in found]
     else:
-        ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}
+        ordering = {
+            "price": ("price", "id"),
+            "price_desc": ("-price", "-id"),
+            "newest": ("-id",),
+            # The default: featured products (the pictured demonstration catalogue) lead, then the newest.
+            "recommended": ("-featured", "-id"),
+        }
         page = Paginator(
-            matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "newest"]), PAGE_SIZE
+            matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "recommended"]), PAGE_SIZE
         ).get_page(requested)
     facets["capped"] = capped
     return page, facets

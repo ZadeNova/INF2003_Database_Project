@@ -23,7 +23,7 @@
             <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt><dd>{{ value|option_value }}</dd>{% endfor %}</dl>
             {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|decimal_value|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
             {% else %}<p>Specifications are temporarily unavailable.</p>{% endif %}
-            {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, shop name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
+            {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, shop name, description, attributes, stock and lead time are generated demonstration content.{% if spec.photo_file_id %} The photo is illustrative.{% endif %}</p>{% endif %}
             {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>{% endif %}
         </div>
     </article>
