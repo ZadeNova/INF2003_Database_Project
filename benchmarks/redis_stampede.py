@@ -32,6 +32,8 @@ def fire(stack, opener, simultaneous):
     def one(_):
         barrier.wait()
         row, _body, _headers = fetch(opener, stack.base_url, "/operator/dashboard/")
+        if row["status"] != 200:
+            raise ExperimentError(f"A simultaneous dashboard request returned status {row['status']}")
         return {**row, "page": "dashboard"}
 
     with ThreadPoolExecutor(simultaneous) as pool:
@@ -99,6 +101,7 @@ def run(args):
         "repetitions": args.repetitions,
         "limiter_calls": args.limiter_calls,
         "workers": WORKERS,
+        "pilot": args.simultaneous < 8 or args.repetitions < 5,
         "note": f"the web server has {WORKERS} workers, which bounds how many requests truly run in parallel",
         "metric": "computed = requests whose cache status is miss, off or down (they ran the history computation)",
     }

@@ -285,10 +285,12 @@ explicit automatic checkpoint interval plus a margin; the round-trip client need
 B4 restores the original index catalogue in a finally block.
 
 B2 times its queries as first written and, beside them, an idiomatic computation and a maintained summary for each
-engine ([amendment m](docs/plans/benchmark.md#decisions)). The pairs that headline each comparison are fixed in
+engine ([amendment m](docs/plans/benchmark.md#decisions)); the idiomatic and summary variants of both engines return the
+benchmark's columns and nothing else. The pairs that headline each comparison are fixed in
 [benchmarks/headline.py](benchmarks/headline.py), recorded in the provenance and printed by the report as
-`report/b2-headline.csv`; the originals are reported separately. The load builds the summaries on both engines and
-B2refresh times rebuilding each of them.
+`report/b2-headline.csv`; the originals and the application's own queries are reported separately
+(`report/B2*-originals.csv`, no ratio). The load builds the summaries on both engines and B2refresh times rebuilding each
+of them, PostgreSQL's including the application's delivery view.
 
 The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
 CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
@@ -414,7 +416,8 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    end of every session and `report/drift.csv` flags a session whose end differs from its start. The runner also
    records every container's state before and after and fails the run if a container was killed for memory, restarted or
    stopped. Combine the sessions with the rule fixed in advance, the median across sessions of each session's run-level
-   median, with every session kept and a damaged one excluded with its reason:
+   median, with every session kept and a damaged one excluded with its reason (a failed check, a container event, a nonzero
+   exit code, or a run that never recorded an exit code or report because it was killed):
 
    ```sh
    python -m benchmarks.sessions benchmarks/results/<session-1> benchmarks/results/<session-2> benchmarks/results/<session-3> --output benchmarks/results/sessions
@@ -449,13 +452,19 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    separate app stack with `seed_activity` loaded as well (events expire after 30 days):
 
    ```powershell
+   $env:APP_PORT = "18083"
+   $env:MONGO_PORT = "0"
+   docker compose -p mercer-redis-final up --build --detach --wait
+   docker compose -p mercer-redis-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
+   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_demo > $null
    docker compose -p mercer-redis-final run --rm migrate python manage.py seed_activity
    python -m benchmarks.redis_experiment --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
    python -m benchmarks.redis_stampede --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
    ```
 
-   The first command measures off, cold, warm and down in four rounds ordered by a seeded Latin square (150 requests per
-   cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
+   The first command first views the control product until the trending ranking stops moving (untimed), then measures off,
+   cold, warm and down in four rounds ordered by a seeded Williams design (every condition holds every position once and
+   follows every other condition once; 150 requests per cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
    `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and
    off and times the limiter. Smaller `--requests` and `--dashboard-requests` make a pilot, which is marked as such in its
    provenance and is not evidence. Regenerate the tables with `python -m benchmarks.redis_report <folder>`.
@@ -475,12 +484,13 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    git add -f -- benchmarks/results/<pilot-run-directory> benchmarks/results/<correctness-run-directory> benchmarks/results/<final-run-directory> benchmarks/results/<request-timing-directory>
    ```
 
-9. **Tear down only the two projects created here**, after the evidence is saved. In PowerShell, clear the temporary
+9. **Tear down only the projects created here**, after the evidence is saved. In PowerShell, clear the temporary
    port overrides for subsequent work.
 
    ```powershell
    docker compose -p mercer-bench-final --profile bench down --volumes
    docker compose -p mercer-request-final down --volumes
+   docker compose -p mercer-redis-final down --volumes
    Remove-Item Env:APP_PORT, Env:MONGO_PORT
    ```
 

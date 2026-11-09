@@ -28,6 +28,10 @@ LEFT JOIN (
 CREATE UNIQUE INDEX bench_order_delivery_scores_order ON bench_order_delivery_scores(order_id);
 CREATE FUNCTION bench_refresh_order_delivery_scores() RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
+    -- The delivery side lives in the application's own view, so keeping the scores current means refreshing that view
+    -- first (this is what the application's refresh_sales does) and then the bench view built on it. Refreshing only the
+    -- second would leave a changed delivery stale and would not pay for recomputing the delays.
+    PERFORM public.refresh_order_delivery_summary();
     REFRESH MATERIALIZED VIEW CONCURRENTLY bench_order_delivery_scores;
 END $$;
 """

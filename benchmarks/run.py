@@ -307,7 +307,7 @@ def main():
                         )
                     )
                     host["runner_actual_limits"] = {
-                        key: actual[key] for key in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")
+                        key: actual[key] for key in ("NanoCpus", "Memory", "MemorySwap", "ShmSize", "CpusetCpus")
                     }
         result = process.wait()
     finally:

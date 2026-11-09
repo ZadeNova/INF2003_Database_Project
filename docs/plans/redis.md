@@ -149,6 +149,14 @@ runs the rounds, [redis_stampede.py](../../benchmarks/redis_stampede.py) the sta
   token and cache note, with the off condition of the same round. A sample whose cache status does not match its
   condition (for example a warm entry that expired after 60 seconds) is refused and listed in `refusals.csv`, never hidden.
 - The product-detail control records view events, so events are counted at the start and end of every round.
+- Each round orders the conditions by a seeded Williams design instead of a plain Latin square: every condition still holds
+  every position once, and each also follows every other condition exactly once, so what one condition leaves behind (a warm
+  cache, a paused Redis) reaches every other condition equally. The seed fixes which condition takes which place.
+- Before round 1, an untimed burn-in views the control product until the trending ranking stops moving (the control records
+  view events, which reorder the ranking the shop and search pages show), and fails the experiment if it never settles.
+- A sample with page data and no off sample in its round to compare with is refused ("no off reference"), not accepted.
+- The limiter timing fails the experiment if any call did not reach Redis, because the store fails open and would otherwise
+  report an unreachable Redis as a very cheap call.
 - Tail percentiles are gated as in amendment l4: with 150 requests per cheap page and four rounds the pooled sample allows
   p95 and p99; the dashboard (15 per round) gets neither.
 

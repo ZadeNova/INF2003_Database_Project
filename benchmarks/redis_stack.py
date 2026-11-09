@@ -58,20 +58,30 @@ LIMITER_CODE = """
 import json, time
 from config import redis_store
 
-def timed(operation, calls):
+class Unreachable(Exception):
+    pass
+
+def timed(operation, calls, failed):
+    # The store fails open, so an unreachable Redis would look like a very cheap call: every call must really have reached it.
     values = []
     for _ in range(calls):
         started = time.perf_counter()
-        operation()
+        result = operation()
         values.append((time.perf_counter() - started) * 1e6)
+        if failed(result):
+            raise Unreachable()
     return values
 
-redis_store.call(lambda client: client.ping())
-ping = timed(lambda: redis_store.call(lambda client: client.ping()), CALLS)
-check = timed(lambda: redis_store.window_check("overhead", "probe", 1_000_000, 900), CALLS)
-hit = timed(lambda: redis_store.window_hit("overhead", "probe", 1_000_000, 900), CALLS)
-redis_store.window_clear("overhead", "probe")
-print("LIMITER", json.dumps({"ping_us": ping, "window_check_us": check, "window_hit_us": hit}))
+try:
+    redis_store.call(lambda client: client.ping())
+    ping = timed(lambda: redis_store.call(lambda client: client.ping()), CALLS, lambda r: r is not True)
+    check = timed(lambda: redis_store.window_check("overhead", "probe", 1_000_000, 900), CALLS, lambda r: r is redis_store.OPEN)
+    hit = timed(lambda: redis_store.window_hit("overhead", "probe", 1_000_000, 900), CALLS, lambda r: r is redis_store.OPEN or r.count < 1)
+except Unreachable:
+    print("LIMITER_UNREACHABLE")
+else:
+    redis_store.window_clear("overhead", "probe")
+    print("LIMITER", json.dumps({"ping_us": ping, "window_check_us": check, "window_hit_us": hit}))
 """
 
 
@@ -154,6 +164,8 @@ class Stack:
 
     def limiter_timings(self, calls):
         for line in self.shell(LIMITER_CODE.replace("CALLS", str(calls))).splitlines():
+            if line == "LIMITER_UNREACHABLE":
+                raise ExperimentError("The limiter timing could not reach Redis; its calls would have failed open")
             if line.startswith("LIMITER "):
                 return json.loads(line.split(" ", 1)[1])
         raise ExperimentError("The limiter timing printed nothing")

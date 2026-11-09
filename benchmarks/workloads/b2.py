@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from bson import Decimal128
 
-from benchmarks import db, summaries
+from benchmarks import db, idiomatic_sql, summaries
 from benchmarks.query import Query
 from benchmarks.source import ZONE
 from dashboard.queries import (
@@ -38,6 +38,7 @@ def queries(as_of, stats):
     day = datetime.combine(as_of, time.min, ZONE)
     parameters = {
         "as_of": as_of,
+        "start": start,
         "end": end,
         "category": None,
         "seller": None,
@@ -62,9 +63,16 @@ def queries(as_of, stats):
         Query("B2c", "postgres", "live", BAYESIAN_RATING, parameters, golden="B2c"),
         Query("B2d", "postgres", "live", delay, parameters, golden="B2d"),
         Query("B2refresh", "postgres", "refresh", "SELECT public.refresh_daily_product_sales()", {}),
-        # The query the application runs: one grouped sum over the last 28 days, live and on the maintained view.
-        Query("B2b", "postgres", "idiomatic", live_query(STOCK_PLANNING_FAST, definition), parameters, golden="B2b"),
-        Query("B2b", "postgres", "summary", STOCK_PLANNING_FAST, parameters, golden="B2b"),
+        # The query the application runs for B2b: one grouped sum over the last 28 days, live and on the maintained view.
+        # These resolve names and sort for display, so they are reported with the originals (amendment m).
+        Query("B2b", "postgres", "app", live_query(STOCK_PLANNING_FAST, definition), parameters, golden="B2b"),
+        Query("B2b", "postgres", "app_summary", STOCK_PLANNING_FAST, parameters, golden="B2b"),
+        # Idiomatic and summary: the golden columns only, the same question the MongoDB pipelines answer.
+        Query("B2a", "postgres", "idiomatic", idiomatic_sql.CATEGORY_IDIOMATIC, parameters, golden="B2a"),
+        Query("B2a", "postgres", "summary", idiomatic_sql.CATEGORY_SUMMARY, parameters, golden="B2a"),
+        Query("B2b", "postgres", "idiomatic", idiomatic_sql.STOCK_IDIOMATIC, parameters, golden="B2b"),
+        Query("B2b", "postgres", "summary", idiomatic_sql.STOCK_SUMMARY, parameters, golden="B2b"),
+        Query("B2d", "postgres", "idiomatic", idiomatic_sql.DELAY_IDIOMATIC, parameters, golden="B2d"),
     ]
     valid = {"placed_at": {"$lt": end}, "$or": [{"status": {"$ne": "cancelled"}}, {"cancelled_at": {"$gte": end}}]}
     month = {"$dateTrunc": {"date": "$placed_at", "unit": "month", "timezone": "Asia/Singapore"}}

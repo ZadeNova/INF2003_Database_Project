@@ -29,6 +29,7 @@ from benchmarks.redis_stats import (
     digest,
     join_responses,
     latin_square,
+    settle,
 )
 from benchmarks.request_timing import ROOT, TimingError, write_csv
 
@@ -82,6 +83,24 @@ def measure(stack, condition, round_index, pages, cheap, dashboard):
     return [{**r, "condition": condition, "round": round_index} for r in join_responses(responses, logs)]
 
 
+def settle_ranking(stack, pages, anonymous):
+    """Untimed: view the control product until the shop's ranking stops moving (see redis_stats.settle)."""
+    helper = ColdHelper(stack)
+    try:
+
+        def ranking():
+            helper.clear("trending")  # never read the cached copy
+            _row, body, _headers, _elapsed = stack.timed_get(anonymous, "shop", pages["shop"])
+            return digest("shop", body)
+
+        def view():
+            stack.timed_get(anonymous, "product_detail", pages["product_detail"])
+
+        return settle(view, ranking)
+    finally:
+        helper.close()
+
+
 def run(args):
     stack = Stack(args.project, args.base_url, args.env_file, args.source)
     commit, dirty = stack.commit()
@@ -98,6 +117,7 @@ def run(args):
         stack.recreate_web(True)
         anonymous, _ = stack.openers()
         pages = stack.pages(anonymous)
+        burn_in = settle_ranking(stack, pages, anonymous)
         for index, order in enumerate(square, start=1):
             events_start = stack.events()
             for condition in order:
@@ -127,6 +147,7 @@ def run(args):
         "requests_per_cheap_page": args.requests,
         "requests_dashboard": args.dashboard_requests,
         "untimed_requests_per_page": 2 * WORKERS,
+        "burn_in_passes": burn_in,
         "workers": WORKERS,
         "pilot": pilot,
         "pilot_note": "sample sizes below the protocol's: set sizes only, not evidence" if pilot else "",

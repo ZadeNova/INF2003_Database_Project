@@ -34,15 +34,21 @@ def load_session(directory, number):
     host_file = directory / "host.json"
     host = json.loads(host_file.read_text(encoding="utf-8")) if host_file.exists() else {}
     reasons = []
-    if host.get("exit_code") not in (0, None):
+    # run.py writes host.json at the start and adds the exit code at the end, and summary.csv is rewritten after every
+    # record, so a killed run leaves a valid-looking partial session: only an explicit exit code 0 and a finished report count.
+    if host.get("exit_code") is None:
+        reasons.append("the run did not finish (no exit code recorded)")
+    elif host["exit_code"] != 0:
         reasons.append(f"runner exit code {host['exit_code']}")
+    elif not (directory / "report").is_dir():
+        reasons.append("the run recorded no report")
     if host.get("container_events"):
         reasons.append("container event: " + "; ".join(host["container_events"]))
     failed = sorted({"/".join(row[k] for k in KEY[:3]) for row in rows if row["status"] == "failed"})
     if failed:
         reasons.append(f"failed checks in {len(failed)} measures, for example {failed[0]}")
     drift_file = directory / "report" / "drift.csv"
-    drift = [row for row in read_rows(drift_file) if row["drift"] == "yes"] if drift_file.exists() else []
+    drift = [row for row in read_rows(drift_file) if row["drift"] != "no"] if drift_file.exists() else []
     return {
         "number": number,
         "directory": directory,
@@ -133,6 +139,7 @@ def aggregate(directories, output):
             "p50_ms": r["p50_ms"],
             "status": "passed",
             "headline": r["headline"],
+            "sessions": r["sessions"],
         }
         for r in headline
     ]

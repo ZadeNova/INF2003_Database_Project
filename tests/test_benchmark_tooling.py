@@ -86,8 +86,9 @@ def test_a_baseline_that_moved_beyond_its_noise_band_is_flagged():
     assert result["mongo"]["noise_band_ms"] == pytest.approx(0.10)
 
 
-def test_a_baseline_without_an_end_measurement_is_not_compared():
-    assert baseline_drift([baseline("baseline", "python", "0.01", "0.02")]) == []
+def test_a_baseline_without_an_end_measurement_is_flagged_not_skipped():
+    rows = baseline_drift([baseline("baseline", "python", "0.01", "0.02")])
+    assert [(r["engine"], r["drift"]) for r in rows] == [("python", "no end baseline")]
 
 
 # ----------------------------------------------------------------------------------------------- container events
@@ -118,12 +119,16 @@ def test_a_container_created_for_the_run_is_not_compared():
 FIELDS = ["output", "engine", "variant", "clients", "status", "p50_ms", "p95_ms", "throughput_ops_s", "headline"]
 
 
-def write_session(directory, p50, *, status="passed", exit_code=0, events=(), commit="abc", headline="True"):
+def write_session(
+    directory, p50, *, status="passed", exit_code=0, events=(), commit="abc", headline="True", report=True
+):
     directory.mkdir(parents=True)
+    if report:
+        (directory / "report").mkdir()
     with (directory / "summary.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")
         writer.writeheader()
-        for output, engine, variant in (("B2a", "postgres", "live"), ("B2a", "mongo", "idiomatic")):
+        for output, engine, variant in (("B2a", "postgres", "idiomatic"), ("B2a", "mongo", "idiomatic")):
             writer.writerow(
                 {
                     "output": output,
@@ -137,9 +142,10 @@ def write_session(directory, p50, *, status="passed", exit_code=0, events=(), co
                     "headline": headline,
                 }
             )
-    (directory / "host.json").write_text(
-        json.dumps({"exit_code": exit_code, "container_events": list(events), "commit": commit}), encoding="utf-8"
-    )
+    host = {"container_events": list(events), "commit": commit}
+    if exit_code is not None:  # a run that was killed never added its exit code
+        host["exit_code"] = exit_code
+    (directory / "host.json").write_text(json.dumps(host), encoding="utf-8")
 
 
 def read(path):
@@ -153,13 +159,13 @@ def test_the_headline_is_the_median_of_the_session_medians_and_every_session_is_
     summary = aggregate([tmp_path / f"s{n}" for n in (1, 2, 3)], tmp_path / "out")
     assert summary == {"sessions": 3, "usable": 3, "excluded": 0, "notes": []}
     headline = {(r["engine"], r["variant"]): r for r in read(tmp_path / "out" / "headline.csv")}
-    postgres = headline[("postgres", "live")]
+    postgres = headline[("postgres", "idiomatic")]
     assert float(postgres["p50_ms"]) == 20.0  # the median of 10, 30 and 20, not their mean and not the best
     assert (float(postgres["p50_session_min_ms"]), float(postgres["p50_session_max_ms"])) == (10.0, 30.0)
     assert float(postgres["session_spread_percent"]) == pytest.approx(100.0)
     assert len(read(tmp_path / "out" / "sessions.csv")) == 6  # two measures from each of three sessions
-    pair = read(tmp_path / "out" / "b2-headline.csv")[0]
-    assert float(pair["mongo_over_postgres"]) == 3.0
+    pair = next(r for r in read(tmp_path / "out" / "b2-headline.csv") if r["output"] == "B2a" and r["layer"] == "live")
+    assert float(pair["mongo_over_postgres"]) == 3.0 and pair["headline"] == "True"
 
 
 @pytest.mark.parametrize(
@@ -168,6 +174,8 @@ def test_the_headline_is_the_median_of_the_session_medians_and_every_session_is_
         ({"status": "failed"}, "failed checks"),
         ({"exit_code": 1}, "exit code"),
         ({"events": ["db was killed for exceeding its memory limit"]}, "memory limit"),
+        ({"exit_code": None}, "did not finish"),  # killed mid-run: valid-looking summary, no exit code
+        ({"report": False}, "no report"),
     ],
 )
 def test_a_damaged_session_is_excluded_with_its_number_and_reason_not_for_being_slow(tmp_path, damage, reason):
@@ -180,7 +188,7 @@ def test_a_damaged_session_is_excluded_with_its_number_and_reason_not_for_being_
     assert [row["session"] for row in excluded] == ["2"] and reason in excluded[0]["reason"]
     assert any("only 2 usable" in note for note in summary["notes"])
     headline = {(r["engine"], r["variant"]): r for r in read(tmp_path / "out" / "headline.csv")}
-    assert float(headline[("postgres", "live")]["p50_ms"]) == 11.0  # sessions 1 and 3 only
+    assert float(headline[("postgres", "idiomatic")]["p50_ms"]) == 11.0  # sessions 1 and 3 only
 
 
 def test_a_slow_but_healthy_session_stays_in_the_headline(tmp_path):
@@ -190,7 +198,7 @@ def test_a_slow_but_healthy_session_stays_in_the_headline(tmp_path):
     summary = aggregate([tmp_path / "s1", tmp_path / "s2", tmp_path / "s3"], tmp_path / "out")
     assert summary["excluded"] == 0
     headline = {(r["engine"], r["variant"]): r for r in read(tmp_path / "out" / "headline.csv")}
-    assert float(headline[("postgres", "live")]["p50_ms"]) == 12.0
+    assert float(headline[("postgres", "idiomatic")]["p50_ms"]) == 12.0
 
 
 def test_sessions_from_different_commits_are_reported(tmp_path):
@@ -200,8 +208,15 @@ def test_sessions_from_different_commits_are_reported(tmp_path):
     assert any("different commits" in note for note in summary["notes"])
 
 
+def test_a_missing_end_baseline_also_flags_the_session(tmp_path):
+    write_session(tmp_path / "s1", 10)
+    (tmp_path / "s1" / "report" / "drift.csv").write_text(
+        "baseline,engine,clients,drift\nbaseline,python,1,no end baseline\n"
+    )
+    assert load_session(tmp_path / "s1", 1)["drift_flagged"] is True
+
+
 def test_a_session_flagged_for_baseline_drift_is_still_listed(tmp_path):
     write_session(tmp_path / "s1", 10)
-    (tmp_path / "s1" / "report").mkdir()
     (tmp_path / "s1" / "report" / "drift.csv").write_text("baseline,engine,clients,drift\nbaseline,python,1,yes\n")
     assert load_session(tmp_path / "s1", 1)["drift_flagged"] is True

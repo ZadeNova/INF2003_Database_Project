@@ -285,6 +285,7 @@ def run(args):
                 name: {layer: list(pair) for layer, pair in layers.items()}
                 for name, layers in headline.HEADLINE.items()
             },
+            b2_refresh={name: list(pair) for name, pair in headline.REFRESH.items()},
             measured_runs=5,
             clients=[1, 10, 50],
             libraries={name: importlib.metadata.version(name) for name in ("psycopg", "pymongo", "Django")},
@@ -315,6 +316,7 @@ def run(args):
                 if query.variant in {
                     "view",
                     "summary",
+                    "app_summary",
                 }:  # every query that reads a maintained summary, on either engine
                     with query.open() as operation:
                         if csv_bytes(query.golden, operation()) != expected[query.golden]:

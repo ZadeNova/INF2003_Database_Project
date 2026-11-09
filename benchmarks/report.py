@@ -13,7 +13,7 @@ from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
-from benchmarks.headline import HEADLINE, REFRESH
+from benchmarks.headline import HEADLINE, REFRESH, registered
 from benchmarks.pooling import pooled_rows
 from benchmarks.resources import annotate
 
@@ -123,7 +123,21 @@ def baseline_drift(rows):
     for start_name, end_name in (("baseline", "baseline_end"), ("baseline_roundtrip", "baseline_roundtrip_end")):
         for (output, engine, clients), start in sorted(index.items()):
             end = index.get((end_name, engine, clients))
-            if output != start_name or not (usable(start) and usable(end)):
+            if output != start_name or not usable(start):
+                continue
+            if not usable(end):  # a session whose end baseline is missing or failed cannot be shown to be free of drift
+                result.append(
+                    {
+                        "baseline": start_name,
+                        "engine": engine,
+                        "clients": clients,
+                        "start_p50_ms": start["p50_ms"],
+                        "end_p50_ms": "",
+                        "shift_ms": "",
+                        "noise_band_ms": "",
+                        "drift": "no end baseline",
+                    }
+                )
                 continue
             band = max(float(start["p95_ms"]) - float(start["p50_ms"]), float(end["p95_ms"]) - float(end["p50_ms"]))
             shift = float(end["p50_ms"]) - float(start["p50_ms"])
@@ -144,11 +158,17 @@ def baseline_drift(rows):
 
 def b2_headline(rows):
     """The pre-registered B2 pairs (benchmarks/headline.py): live against live, maintained against maintained, and the
-    refresh cost of each maintained summary. A pair is a headline only when both of its rows are."""
+    refresh cost of each maintained summary. Every registered pair is listed for every client count: a pair whose row
+    failed or is missing says so (`status`) and carries no ratio, so nothing disappears quietly. A pair is a headline only
+    when both of its rows are and, across sessions, both engines' medians come from the same number of sessions."""
     index = {(r["output"], r["engine"], r["variant"], r["clients"]): r for r in rows}
 
-    def usable(row):
-        return bool(row and row["status"] == "passed" and row["p50_ms"])
+    def state(row):
+        if row is None:
+            return "missing"
+        if row["status"] != "passed":
+            return "failed"
+        return "ok" if row["p50_ms"] else "no timing"  # a correctness run checks results and takes no timing
 
     result = []
     pairs = [(output, layer, *pair) for output, layers in HEADLINE.items() for layer, pair in layers.items()]
@@ -157,22 +177,28 @@ def b2_headline(rows):
         for clients in sorted({r["clients"] for r in rows if r["output"] == output}, key=int):
             postgres = index.get((output, "postgres", postgres_variant, clients))
             mongo = index.get((output, "mongo", mongo_variant, clients))
-            if not (usable(postgres) and usable(mongo)):
-                continue
-            result.append(
-                {
-                    "output": output,
-                    "layer": layer,
-                    "clients": clients,
-                    "postgres_variant": postgres_variant,
-                    "mongo_variant": mongo_variant,
-                    "postgres_p50_ms": postgres["p50_ms"],
-                    "mongo_p50_ms": mongo["p50_ms"],
-                    "mongo_over_postgres": float(mongo["p50_ms"]) / float(postgres["p50_ms"]),
-                    "headline": str(postgres["headline"]).lower() == "true"
-                    and str(mongo["headline"]).lower() == "true",
-                }
-            )
+            postgres_state, mongo_state = state(postgres), state(mongo)
+            usable = postgres_state == mongo_state == "ok"
+            sessions = [(row or {}).get("sessions") for row in (postgres, mongo)]
+            same_sessions = sessions[0] == sessions[1]
+            entry = {
+                "output": output,
+                "layer": layer,
+                "clients": clients,
+                "postgres_variant": postgres_variant,
+                "mongo_variant": mongo_variant,
+                "status": "ok" if usable else f"postgres {postgres_state}, mongo {mongo_state}",
+                "postgres_p50_ms": postgres["p50_ms"] if postgres_state == "ok" else "",
+                "mongo_p50_ms": mongo["p50_ms"] if mongo_state == "ok" else "",
+                "mongo_over_postgres": float(mongo["p50_ms"]) / float(postgres["p50_ms"]) if usable else "",
+                "headline": usable
+                and str(postgres["headline"]).lower() == "true"
+                and str(mongo["headline"]).lower() == "true"
+                and same_sessions,
+            }
+            if any(value is not None for value in sessions):
+                entry["postgres_sessions"], entry["mongo_sessions"] = sessions
+            result.append(entry)
     return result
 
 
@@ -347,9 +373,39 @@ def report(directory):
     for row in rows:
         outputs[row["output"]].append(row)
     ratios = []
+    pairs = registered()
     for output, group in outputs.items():
         rendered = []
+        originals = []
         for row in group:
+            if any(key[0] == output for key in pairs):
+                # B2 (amendment m): only the pre-registered variants are compared, each against PostgreSQL's variant of its
+                # own layer. The originals and the application's own queries are listed apart, with no ratio.
+                layer = pairs.get((output, row["engine"], row["variant"]))
+                if layer is None:
+                    originals.append({**row, "ratio": None, "ratio_basis": "reported apart: not a registered pair"})
+                    continue
+                basis = next(
+                    (
+                        r
+                        for r in group
+                        if (r["engine"], r["variant"], r["clients"]) == ("postgres", layer[1], row["clients"])
+                        and r["status"] == "passed"
+                        and r["p50_ms"]
+                        and str(r.get("headline", "")).lower() == "true"
+                    ),
+                    None,
+                )
+                usable = row["p50_ms"] and row["status"] == "passed" and str(row.get("headline", "")).lower() == "true"
+                enriched = {
+                    **row,
+                    "layer": layer[0],
+                    "ratio": float(basis["p50_ms"]) / float(row["p50_ms"]) if basis and usable else None,
+                    "ratio_basis": f"postgres_{layer[1]}/variant",
+                }
+                rendered.append(enriched)
+                ratios.append(enriched)
+                continue
             comparable = [
                 r
                 for r in group
@@ -388,6 +444,8 @@ def report(directory):
             rendered.append(enriched)
             ratios.append(enriched)
         table(destination / (output + ".csv"), rendered)
+        if originals:
+            table(destination / (output + "-originals.csv"), originals)
         svg(
             destination / (output + ".svg"),
             output + " ratios (see CSV for ranges and absolute ms)",

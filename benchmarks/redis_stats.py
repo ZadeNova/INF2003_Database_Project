@@ -46,14 +46,29 @@ class ExperimentError(ValueError):
 
 # ------------------------------------------------------------------------------------------------ design
 def latin_square(seed, conditions=CONDITIONS):
-    """One order of the conditions per round; every condition holds every position exactly once."""
+    """One order of the conditions per round; every condition holds every position exactly once.
+
+    With an even number of conditions this is a Williams design: each condition also follows every other condition exactly
+    once, so what one condition leaves behind (a warm cache, a paused Redis) is spread evenly over the rest instead of
+    always reaching the same successor. The seed only chooses which condition takes which place in the design and the order
+    of the rounds, so the balance survives. An odd number falls back to the cyclic square."""
     rng = random.Random(seed)
     size = len(conditions)
-    rows = [[conditions[(row + column) % size] for column in range(size)] for row in range(size)]
+    if size % 2:
+        first = list(range(size))
+    else:
+        first, low, high = [0], 1, size - 1
+        while len(first) < size:
+            first.append(low)
+            low += 1
+            if len(first) < size:
+                first.append(high)
+                high -= 1
+    labels = list(conditions)
+    rng.shuffle(labels)
+    rows = [[labels[(place + row) % size] for place in first] for row in range(size)]
     rng.shuffle(rows)
-    columns = list(range(size))
-    rng.shuffle(columns)
-    return [[row[column] for column in columns] for row in rows]
+    return rows
 
 
 # ------------------------------------------------------------------------------------------------ evidence
@@ -115,6 +130,29 @@ def join_responses(responses, logs):
     return joined
 
 
+BURN_IN_VIEWS = 20
+BURN_IN_LIMIT = 10
+
+
+def settle(view, ranking, views=BURN_IN_VIEWS, limit=BURN_IN_LIMIT):
+    """Untimed warm-up of the trending ranking before round 1.
+
+    The product-detail control records a view event on every request, and view events reorder the trending ranking the
+    shop and search pages show, so the first condition would serve different products than the later ones (the pilot
+    showed it). Viewing the control product until it holds its place makes the ranking stop moving; the experiment then
+    starts from a ranking that further views of the same product no longer change. Returns the number of passes, or raises
+    if the ranking never settles."""
+    previous = None
+    for attempt in range(1, limit + 1):
+        for _ in range(views):
+            view()
+        current = ranking()
+        if current == previous:
+            return attempt
+        previous = current
+    raise ExperimentError("The trending ranking did not settle during the burn-in")
+
+
 def gate(sample):
     """The reason a sample is refused by its cache status, or None. The sample carries its page and condition."""
     if sample["status"] != 200:
@@ -144,8 +182,11 @@ def apply_gates(samples):
     for sample in samples:
         reason = gate(sample)
         reference = references.get((sample["page"], sample["round"]))
-        if reason is None and sample.get("digest") and reference and sample["digest"] != reference:
-            reason = "data differs from the off condition's in the same round"
+        if reason is None and sample.get("digest"):
+            if reference is None:
+                reason = "no off reference in the same round to compare the data with"
+            elif sample["digest"] != reference:
+                reason = "data differs from the off condition's in the same round"
         (refused if reason else accepted).append({**sample, "refusal": reason} if reason else sample)
     return accepted, refused
 

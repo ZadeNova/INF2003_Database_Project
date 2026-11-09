@@ -12,6 +12,7 @@ import pytest
 pytest.importorskip("benchmarks.redis_stats")  # the benchmarks package is on the host, not in the test container
 
 from benchmarks.redis_report import write_reports  # noqa: E402
+from benchmarks.redis_stack import redis_restored  # noqa: E402
 from benchmarks.redis_stats import (  # noqa: E402
     CONDITIONS,
     ExperimentError,
@@ -22,6 +23,7 @@ from benchmarks.redis_stats import (  # noqa: E402
     join_responses,
     latin_square,
     parse_logs,
+    settle,
     stampede_outcome,
 )
 
@@ -35,6 +37,13 @@ def test_the_latin_square_gives_every_condition_every_position_once(seed):
     assert len(square) == 4 and all(sorted(row) == sorted(CONDITIONS) for row in square)
     for position in range(4):
         assert sorted(row[position] for row in square) == sorted(CONDITIONS)
+
+
+@pytest.mark.parametrize("seed", [1, 82, 2026])
+def test_every_condition_follows_every_other_exactly_once(seed):
+    """Carryover is balanced: the ordered pairs of neighbouring conditions are all different."""
+    pairs = [(row[i], row[i + 1]) for row in latin_square(seed) for i in range(3)]
+    assert len(pairs) == len(set(pairs)) == 12 and all(a != b for a, b in pairs)
 
 
 def test_the_latin_square_is_reproducible_from_its_seed():
@@ -87,11 +96,12 @@ def test_the_data_gate_compares_each_sample_with_the_off_condition_of_the_same_r
         sample("shop", "off", 1, digest_="A"),
         sample("shop", "warm", 1, digest_="A"),
         sample("shop", "warm", 1, digest_="B"),  # different data than the off condition served
-        sample("shop", "warm", 2, digest_="B"),  # round 2 has no off sample to compare with: not refused for data
+        sample("shop", "warm", 2, digest_="B"),  # round 2 has no off sample to compare with
     ]
     accepted, refused = apply_gates(samples)
-    assert len(accepted) == 4 and len(refused) == 1
+    assert len(accepted) == 3 and len(refused) == 2
     assert refused[0]["refusal"].startswith("data differs") and refused[0]["digest"] == "B"
+    assert refused[1]["refusal"].startswith("no off reference")  # nothing to compare with is a refusal, not a pass
 
 
 # ------------------------------------------------------------------------------------------------ analysis
@@ -278,3 +288,46 @@ def test_the_report_writes_every_table_and_the_chart(tmp_path):
     ):
         assert (tmp_path / name).exists(), name
     assert analysis["refused"] == 0 and "shop / warm" in (tmp_path / "chart.svg").read_text()
+
+
+# ------------------------------------------------------------------------------------------------ burn-in
+def test_the_burn_in_stops_once_the_ranking_holds_still():
+    views, rankings = [], iter(["A", "B", "C", "C", "C"])
+    passes = settle(lambda: views.append(1), lambda: next(rankings), views=3)
+    assert passes == 4 and len(views) == 12  # three passes of views before the ranking repeated its predecessor
+
+
+def test_a_ranking_that_never_settles_fails_the_experiment_instead_of_starting():
+    counter = iter(range(1000))
+    with pytest.raises(ExperimentError, match="did not settle"):
+        settle(lambda: None, lambda: next(counter), views=1, limit=5)
+
+
+# ------------------------------------------------------------------------------------------------ restoring the stack
+class RecordingStack:
+    def __init__(self, fail_unpause=False):
+        self.calls, self.fail_unpause = [], fail_unpause
+
+    def unpause_redis(self):
+        self.calls.append("unpause")
+        if self.fail_unpause:
+            raise RuntimeError("docker unavailable")
+
+    def recreate_web(self, redis_enabled):
+        self.calls.append(f"web redis={redis_enabled}")
+
+
+def test_however_an_experiment_ends_redis_runs_again_and_web_goes_back_to_redis_enabled():
+    stack = RecordingStack()
+    with pytest.raises(KeyboardInterrupt):
+        with redis_restored(stack):
+            raise KeyboardInterrupt
+    assert stack.calls == ["unpause", "web redis=True"]
+
+
+def test_the_web_container_is_restored_even_when_unpausing_fails():
+    stack = RecordingStack(fail_unpause=True)
+    with pytest.raises(RuntimeError):
+        with redis_restored(stack):
+            pass
+    assert stack.calls == ["unpause", "web redis=True"]
