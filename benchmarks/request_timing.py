@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlencode, urlsplit
@@ -253,9 +253,12 @@ def collect(args):
             responses.append(request_page(name, path))
     ensure_no_benchmark()
     identities = {row["request_id"] for row in responses}
+    # Docker stamps log lines with the daemon's clock, which can sit seconds off the host's, so an exact --since can
+    # drop the first requests; request IDs are unique, so a wider window loses nothing.
+    log_window = (datetime.fromisoformat(started) - timedelta(minutes=2)).isoformat()
     for attempt in range(20):
         logs = parse_request_logs(
-            command(dc + ["logs", "--no-color", "--no-log-prefix", "--since", started, "web"]), identities
+            command(dc + ["logs", "--no-color", "--no-log-prefix", "--since", log_window, "web"]), identities
         )
         if identities <= logs.keys():
             break

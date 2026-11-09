@@ -14,6 +14,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from benchmarks.headline import HEADLINE, REFRESH
+from benchmarks.pooling import pooled_rows
 from benchmarks.resources import annotate
 
 
@@ -105,6 +106,39 @@ def noise(rows):
                 "headline": not saturated and all(r.get("runner_cpu_median_percent") for r in group + bases),
             }
         )
+    return result
+
+
+def baseline_drift(rows):
+    """Compare each baseline at the start of a session with the same baseline at its end (amendment l5).
+
+    The noise band is the larger spread (p95 minus p50) of the two; a shift beyond it flags the session, because the
+    machine itself changed (heat, background work, buffers) while the benchmark ran."""
+    index = {(r["output"], r["engine"], r["clients"]): r for r in rows if r["output"].startswith("baseline")}
+
+    def usable(row):
+        return bool(row and row["status"] == "passed" and row["p50_ms"] and row["p95_ms"])
+
+    result = []
+    for start_name, end_name in (("baseline", "baseline_end"), ("baseline_roundtrip", "baseline_roundtrip_end")):
+        for (output, engine, clients), start in sorted(index.items()):
+            end = index.get((end_name, engine, clients))
+            if output != start_name or not (usable(start) and usable(end)):
+                continue
+            band = max(float(start["p95_ms"]) - float(start["p50_ms"]), float(end["p95_ms"]) - float(end["p50_ms"]))
+            shift = float(end["p50_ms"]) - float(start["p50_ms"])
+            result.append(
+                {
+                    "baseline": start_name,
+                    "engine": engine,
+                    "clients": clients,
+                    "start_p50_ms": start["p50_ms"],
+                    "end_p50_ms": end["p50_ms"],
+                    "shift_ms": shift,
+                    "noise_band_ms": band,
+                    "drift": "yes" if abs(shift) > band else "no",
+                }
+            )
     return result
 
 
@@ -306,6 +340,8 @@ def report(directory):
     rows = read_csv(directory / "summary.csv")
     table(destination / "memory.csv", memory_rows(directory))
     table(destination / "b2-headline.csv", b2_headline(rows))
+    table(destination / "drift.csv", baseline_drift(rows))
+    table(destination / "pooled.csv", pooled_rows([directory]))
     table(destination / "memory-settings.csv", memory_settings(directory))
     outputs = defaultdict(list)
     for row in rows:

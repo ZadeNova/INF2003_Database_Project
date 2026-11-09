@@ -26,16 +26,63 @@ def command(arguments, *, capture=True, check=True):
     return result.stdout.strip() if capture else result.returncode
 
 
-def compose(project):
+PINNED_OVERRIDE = "benchmarks/compose.pinned.yaml"
+
+
+def compose(project, pinned=False):
     if project == "mercer" or not re.fullmatch(r"mercer-(?:bench|ci-bench)[a-z0-9-]*", project):
         raise ValueError("Use an explicitly isolated mercer-bench... project, never mercer")
-    return ["docker", "compose", "-p", project, "--profile", "bench"]
+    files = ["-f", "compose.yaml", "-f", PINNED_OVERRIDE] if pinned else []
+    return ["docker", "compose", "-p", project, "--profile", "bench", *files]
 
 
-def collect_host(project):
+def container_states(project):
+    """What Docker says about each container of the project: out-of-memory kills, restarts and whether it is running."""
+    states = {}
+    for identity in command(compose(project) + ["ps", "-a", "-q"]).splitlines():
+        value = json.loads(
+            command(
+                [
+                    "docker",
+                    "inspect",
+                    "--format",
+                    '{"name":{{json .Name}},"state":{{json .State}},"restarts":{{json .RestartCount}}}',
+                    identity,
+                ]
+            )
+        )
+        states[value["name"].lstrip("/")] = {
+            "oom_killed": bool(value["state"].get("OOMKilled")),
+            "restarts": value["restarts"],
+            "status": value["state"].get("Status"),
+            "exit_code": value["state"].get("ExitCode"),
+        }
+    return states
+
+
+def container_events(before, after):
+    """Out-of-memory kills (exit code 137 wasted a whole earlier run), restarts and stopped containers during a run.
+
+    The load-client container is created for the run and removed by it, so only containers present before are compared."""
+    events = []
+    for name, start in sorted(before.items()):
+        end = after.get(name)
+        if end is None:
+            events.append(f"{name} disappeared")
+            continue
+        if end["oom_killed"] and not start["oom_killed"]:
+            events.append(f"{name} was killed for exceeding its memory limit")
+        if end["restarts"] > start["restarts"]:
+            events.append(f"{name} restarted {end['restarts'] - start['restarts']} time(s)")
+        if start["status"] == "running" and end["status"] != "running":
+            events.append(f"{name} is {end['status']}")
+    return events
+
+
+def collect_host(project, pinned=False, notes=None):
     info = json.loads(command(["docker", "info", "--format", "{{json .}}"]))
     version = json.loads(command(["docker", "version", "--format", "{{json .}}"]))
-    identifiers = command(compose(project) + ["ps", "-q"]).splitlines()
+    identifiers = command(compose(project, pinned) + ["ps", "-q"]).splitlines()
     containers = []
     for identity in identifiers:
         value = json.loads(
@@ -53,7 +100,9 @@ def collect_host(project):
             {
                 "name": value["name"],
                 "image": value["image"],
-                "limits": {k: value["limits"][k] for k in ("NanoCpus", "Memory", "MemorySwap", "ShmSize")},
+                "limits": {
+                    k: value["limits"][k] for k in ("NanoCpus", "Memory", "MemorySwap", "ShmSize", "CpusetCpus")
+                },
                 "image_digests": json.loads(
                     command(["docker", "image", "inspect", "--format", "{{json .RepoDigests}}", value["image"]])
                 ),
@@ -109,7 +158,10 @@ def collect_host(project):
         "os": platform.platform(),
         "hardware": hardware,
         "docker_version": version,
-        "docker_vm": {key: info[key] for key in ("NCPU", "MemTotal", "OperatingSystem", "KernelVersion")},
+        "docker_vm": {key: info[key] for key in ("NCPU", "MemTotal", "OperatingSystem", "KernelVersion")}
+        | {"SwapTotal": info.get("SwapTotal")},
+        "pinned": pinned,
+        "machine_notes": notes or {},  # recorded by hand: power plan, sleep, updates, storage type (amendment l1)
         "containers": containers,
         "runner_limits": {"cpus": 2, "memory_bytes": 2 * 1024**3, "memory_swap_bytes": 2 * 1024**3},
         "mongo_server_readback": mongo,
@@ -166,17 +218,32 @@ def main():
     parser.add_argument("--label", default="correctness")
     parser.add_argument("--final", action="store_true")
     parser.add_argument("--require-clean", action="store_true")
+    parser.add_argument(
+        "--pin", action="store_true", help="the project was started with benchmarks/compose.pinned.yaml"
+    )
+    parser.add_argument(
+        "--note", action="append", default=[], metavar="KEY=VALUE", help="a machine fact for the provenance, repeatable"
+    )
     args = parser.parse_args()
+    notes = {}
+    for item in args.note:
+        key, separator, value = item.partition("=")
+        if not separator or not key:
+            parser.error("--note takes KEY=VALUE")
+        notes[key] = value
     if min(args.operations_per_client, args.b2_operations_per_client) < 5:
         parser.error("Use at least five operations per client for default and B2 workloads")
-    dc = compose(args.project)
+    dc = compose(args.project, args.pin)
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("Label must be lowercase letters, digits and hyphens")
     commit = command(["git", "rev-parse", "HEAD"])
     dirty = bool(command(["git", "status", "--porcelain"]))
     if (args.final or args.require_clean) and dirty:
         parser.error("This run requires a clean committed tree")
-    host = collect_host(args.project)
+    host = collect_host(args.project, args.pin, notes)
+    if args.pin and not all(c["limits"].get("CpusetCpus") for c in host["containers"]):
+        parser.error("--pin needs the project started with benchmarks/compose.pinned.yaml (see the file)")
+    states_before = container_states(args.project)
     host.update(
         commit=commit + ("-dirty" if dirty else ""), final=args.final, started_at=datetime.now(ZONE).isoformat()
     )
@@ -247,7 +314,16 @@ def main():
         time.sleep(1.1)  # Retain the sample interval covering the final, potentially sub-second timed window.
         stop.set()
         sampler.join(timeout=10)
-    host.update(duration_seconds=time.perf_counter() - started, exit_code=result)
+    events = container_events(states_before, container_states(args.project))
+    if events:
+        print("CONTAINER EVENT during the run: " + "; ".join(events), flush=True)
+        result = result or 1
+    host.update(
+        duration_seconds=time.perf_counter() - started,
+        exit_code=result,
+        container_state_before=states_before,
+        container_events=events,
+    )
     samples = [json.loads(line) for line in (output / "stats.jsonl").read_text().splitlines()]
     host["sampled_containers"] = sorted({row["Name"] for row in samples})
     host["resource_sample_count"] = len(samples)

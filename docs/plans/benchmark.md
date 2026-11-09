@@ -192,6 +192,18 @@ provenance records them.
 | m6 | **Idiom and its provenance.** The idiomatic pipelines group first and merge by primary key with `$unionWith` and `$group` (no per-document `$lookup`), and use integer sums with one division. They were developed with timing feedback on the full data in two iterations: the first versions of B2b, B2c and B2d still used a per-document lookup and were replaced once a preview timing showed it. Every version was checked against the golden output before it was timed, no index was added for any variant beyond the summaries, and PostgreSQL's SQL is the application's own, so it was not tuned | The history is stated in the report, so the comparison is not read as MongoDB tuned until it won |
 | m7 | **Whether the originals stay in every session** is decided after the pilot (Erfan, 9 November): they dominate the measured time, and if they are dropped from the later sessions the report says so | The pilot measures what fits in a night |
 
+**Tooling status for amendment l (9 November 2026).** l3: [sessions.py](../../benchmarks/sessions.py) applies the rule
+(median across usable sessions of the run-level medians; every session kept; a session with a failed check, a nonzero
+exit or a container event is excluded with its reason; sessions from different commits are reported). l4:
+[pooling.py](../../benchmarks/pooling.py) pools the raw latencies and gates p95 at 100 and p99 at 500 samples; each
+report has `pooled.csv`. l5: the three baselines run again at the end of every session and `drift.csv` flags a shift
+beyond the noise band; engine-order alternation is **not done**, because it would interleave the five measured runs
+across variants and rewrite the harness's run loop, so the report states that the same machine's drift is controlled by
+the start and end baselines only. l6: [compose.pinned.yaml](../../benchmarks/compose.pinned.yaml) and `--pin` let the
+pilot compare, and every result records the actual cpuset of each container. l8: the runner records each container's
+state before and after and fails on an out-of-memory kill, a restart or a stop. l1: repeatable `--note KEY=VALUE`
+options record the machine facts that no program can read (power plan, sleep and update settings, storage type).
+
 Threats to validity, to be written in the report: one machine under Docker on Windows; warm database buffers only; closed-loop
 clients, so some queueing delay is hidden; the Olist volume fits in memory (B5's sizes show it); every attribute is generated; a
 single-node replica set; a processor with a large cache; no second machine for the load generator (the clients run in a capped

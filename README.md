@@ -138,7 +138,7 @@ python -m ruff format --check .
 python scripts/audit_requirements.py
 python scripts/check_docs.py
 CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
-python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_redis_restart.py
+python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
 python - <<'PY'
 from xml.etree import ElementTree
 suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")
@@ -408,6 +408,22 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    python -m benchmarks.run --project mercer-bench-final --mode measure --final --require-clean --operations-per-client 100 --b2-operations-per-client 20 --label final
    ```
 
+   **The fresh run (amendment l)** repeats this measure command three times on the same clean commit, with labels
+   `session-1` to `session-3`, reloading before each, and records the machine's facts with repeatable
+   `--note KEY=VALUE` options (power plan, sleep and update settings, storage type). The baselines run at the start and
+   end of every session and `report/drift.csv` flags a session whose end differs from its start. The runner also
+   records every container's state before and after and fails the run if a container was killed for memory, restarted or
+   stopped. Combine the sessions with the rule fixed in advance, the median across sessions of each session's run-level
+   median, with every session kept and a damaged one excluded with its reason:
+
+   ```sh
+   python -m benchmarks.sessions benchmarks/results/<session-1> benchmarks/results/<session-2> benchmarks/results/<session-3> --output benchmarks/results/sessions
+   ```
+
+   `report/pooled.csv` in each session and `headline.csv` here pool the raw latencies; p95 appears only with 100 pooled
+   samples and p99 only with 500. The pilot may compare the baselines with and without CPU pinning: start the project
+   with `-f compose.yaml -f benchmarks/compose.pinned.yaml` on every compose command (see that file) and pass `--pin`.
+
 6. **Per-request evidence (k2).** Finish the benchmark first and stop its engines. The timing script refuses an
    active benchmark runner and must never run alongside a benchmark. Prepare a separate full-data app stack using
    unused loopback ports; this PowerShell example reads demo credentials from the ignored `.env` in place.
@@ -428,6 +444,21 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    same visible product and its source category/attributes, with the chosen paths recorded. It retains no
    credentials, cookies or response bodies.
    A fixture rehearsal uses `--source tests/fixtures/olist/clean` on a separately loaded fixture app project.
+
+   **The Redis experiment** ([protocol](docs/plans/redis.md#measurement-protocol)) runs next, alone, against the same kind of
+   separate app stack with `seed_activity` loaded as well (events expire after 30 days):
+
+   ```powershell
+   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_activity
+   python -m benchmarks.redis_experiment --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
+   python -m benchmarks.redis_stampede --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
+   ```
+
+   The first command measures off, cold, warm and down in four rounds ordered by a seeded Latin square (150 requests per
+   cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
+   `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and
+   off and times the limiter. Smaller `--requests` and `--dashboard-requests` make a pilot, which is marked as such in its
+   provenance and is not evidence. Regenerate the tables with `python -m benchmarks.redis_report <folder>`.
 
 7. **Regenerate tables if needed.** `benchmarks.run` already runs `benchmarks.report` for each benchmark run. Use
    this command only to regenerate its tables and charts; the k2 directory has its own CSVs and does not use the

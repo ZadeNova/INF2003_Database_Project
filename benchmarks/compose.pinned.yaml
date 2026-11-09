@@ -1,0 +1,15 @@
+# Optional pinning pilot (amendment l6): each benchmark container gets its own virtual CPUs. Use it only with a Docker VM
+# of at least six CPUs, and add it to EVERY compose command of the project, including `up`:
+#
+#   docker compose -p mercer-bench-pilot --profile bench -f compose.yaml -f benchmarks/compose.pinned.yaml up --detach --wait bench-db bench-mongo
+#   python -m benchmarks.run --project mercer-bench-pilot --pin --mode measure ...
+#
+# The pinning is adopted for the sessions only if it narrows the spread of the baselines; the run records the actual
+# cpuset of every container, so a result says whether it was pinned.
+services:
+  bench-db:
+    cpuset: "0-1"
+  bench-mongo:
+    cpuset: "2-3"
+  bench-runner:
+    cpuset: "4-5"

@@ -363,17 +363,13 @@ def run(args):
                 failed_record(recorder, "B5", "both", "fresh_footprint", 0, 0, "storage", exc)
         if "BM4" in selected:
             demonstrate_bm4(recorder, database, provenance, expected, parameters)
+        baselines = [
+            Query("baseline", "python", "noop"),
+            Query("baseline_roundtrip", "postgres", "select1", "SELECT 1 AS one"),
+            Query("baseline_roundtrip", "mongo", "ping", command="ping"),
+        ]
         if "baseline" in selected:
-            run_queries(
-                [
-                    Query("baseline", "python", "noop"),
-                    Query("baseline_roundtrip", "postgres", "select1", "SELECT 1 AS one"),
-                    Query("baseline_roundtrip", "mongo", "ping", command="ping"),
-                ],
-                recorder,
-                expected,
-                args.operations_per_client,
-            )
+            run_queries(baselines, recorder, expected, args.operations_per_client)
         if "B1" in selected:
             run_queries(b1_queries, recorder, expected, args.operations_per_client)
         if "B2" in selected:
@@ -425,6 +421,10 @@ def run(args):
                 except Exception as exc:
                     failed_record(recorder, "B4_" + index, query.engine, "restore", 1, 0, "invariant", exc, evidence)
         run_mutations(recorder, database, provenance, selected)
+        if "baseline" in selected:
+            # The same three baselines again (amendment l5): the report flags a session whose end differs from its start.
+            for query in baselines:
+                run_queries([query], recorder, expected, args.operations_per_client, output=query.output + "_end")
         recorder.finish()
         # Tie the summary to the exact append-only operation evidence.
         recorder.provenance["raw_sha256"] = hashlib.sha256((args.output / "raw.jsonl").read_bytes()).hexdigest()

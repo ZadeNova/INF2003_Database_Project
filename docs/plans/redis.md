@@ -114,7 +114,7 @@ One commit, one machine, one dataset, identical Docker limits; only `REDIS_ENABL
 - **Rounds:** four rounds in a seeded Latin-square order (every condition in every position once), switching conditions by
   recreating `web`; an untimed pass of at least twice the worker count per page precedes each condition so both workers and
   both databases' caches are warm.
-- **Pages:** home, search and the dashboard, plus negative controls Redis does not touch (product detail and category-filtered
+- **Pages:** the shop (the site root only redirects to it), a search results page and the dashboard, plus negative controls Redis does not touch (product detail and category-filtered
   trending). The controls' largest deviation from a ratio of 1 is the noise floor: no smaller effect is claimed.
 - **Samples:** 150 requests per cheap page per condition per round, 15 for the dashboard. p95 is reported only with at least
   100 pooled samples and p99 only with at least 500; below that the table shows median, range and maximum, labelled. The
@@ -135,6 +135,22 @@ One commit, one machine, one dataset, identical Docker limits; only `REDIS_ENABL
 - **Outputs:** a script writes the table and chart from the result folders; nothing is typed by hand. Threats to validity
   (one machine, Docker on Windows, loopback, one sequential client, synthetic events, two workers) go in the report.
 - It runs alone (never beside a benchmark), after the full benchmark and before the report.
+
+**Tooling built (9 November 2026), and the choices made in building it.** [redis_experiment.py](../../benchmarks/redis_experiment.py)
+runs the rounds, [redis_stampede.py](../../benchmarks/redis_stampede.py) the stampede and the limiter timing,
+[redis_stats.py](../../benchmarks/redis_stats.py) holds the rules (tested without Docker) and
+[redis_report.py](../../benchmarks/redis_report.py) writes the tables and the chart.
+- A condition recreates `web`; off sets `REDIS_ENABLED=false`, down pauses the Redis container after the untimed pass, so the
+  first requests of each worker pay the real timeout and later ones the back-off. Those requests stay in the sample.
+- Cold clears the cached entry before every timed request through a small process inside the web container that uses the
+  application's own Redis client (one round trip per clear); the trending ranking is deleted and the dashboard moved to a
+  version nobody has cached.
+- The data gate compares the product links in order for the shop and search pages, and the dashboard page without its CSRF
+  token and cache note, with the off condition of the same round. A sample whose cache status does not match its
+  condition (for example a warm entry that expired after 60 seconds) is refused and listed in `refusals.csv`, never hidden.
+- The product-detail control records view events, so events are counted at the start and end of every round.
+- Tail percentiles are gated as in amendment l4: with 150 requests per cheap page and four rounds the pooled sample allows
+  p95 and p99; the dashboard (15 per round) gets neither.
 
 ## Documents to update
 
