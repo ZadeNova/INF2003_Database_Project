@@ -49,7 +49,8 @@ still apply in full. This section supersedes AGENTS.md "Workflow" and the plan-a
 3. Erfan decides. Build nothing before that.
 4. Implement on the current branch (`improvements/backlog`).
 5. Review with Opus 5.5 after a large change or when Erfan asks. It runs things, not only reads the diff.
-6. Erfan reviews the findings; one fix round.
+6. Erfan reviews the findings; one fix round. (Batch 7 of the backlog is the exception: it runs several review iterations, see
+   [improvements](docs/plans/improvements.md#batch-7-code-quality-pass-then-the-full-codebase-review).)
 
 - **No new branches** unless Erfan asks. No commits or pushes unless asked. The branch-and-pull-request rule is waived.
 - Also update the improvements.md status and Decisions row for backlog items.

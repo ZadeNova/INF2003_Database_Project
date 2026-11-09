@@ -42,9 +42,9 @@ only bug fixes go in.
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | done 8 Nov (full suite green; dashboard timings re-measured on full data) |
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
 | 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | done 8 Nov (two Opus reviews, two fix rounds, full suite green); the measurement scripts are part of Batch 6 |
-| 6 | #10 step 2 (first, [plan](dashboard_summaries.md)), #5, #13, #17 | Benchmark amendment, designated machine | in progress: #10 step 2 done 9 Nov (one Opus review, one fix round, full suite green); #5 built 9 Nov (B2 variants and headline pairs, amendment m), #13 needs only the written explanation, #17 is a run after the freeze, the amendment l tooling and the Redis tooling built 9 Nov; the Opus review found two fairness problems (PostgreSQL's delivery refresh and the display queries in the live pairs) and tooling gaps, fixed in one round under amendment m8; a second review found the delivery refresh overcharging PostgreSQL and a few small gaps, fixed on 10 Nov |
+| 6 | #10 step 2 (first, [plan](dashboard_summaries.md)), #5, #13, #17 | Benchmark amendment, designated machine | built 10 Nov: #10 step 2 (one Opus review, one fix round, full suite green); #5 with the amendment l and Redis tooling (two Opus reviews, two fix rounds, [amendment m8](benchmark.md#decisions)); #13 report-only. Still to do, by running: #17 and the pilot checks listed under Batch 6, after the freeze |
 | 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | open |
-| 7 | #27, #33, #63, #73 | Code-quality pass and test-suite review, then the full codebase review | open |
+| 7 | #27, #33, #63, #73 | Code-quality pass and test-suite review, then the full codebase review in several iterations (scope under Batch 7) | open |
 | 8 | #48 (RLS); optional #62, #42, #20 | Row-level security, settled last | open |
 | 8b | #72 | Synthetic scale runs for B1, B4, B5 and B7 (parked): code-side work, only after batches 1–8, before any report, slides or video work | parked |
 | 9 | #38, #47, #70, #46, #39, #15, #41, #6, #43, #44, #26, #40, #1, #14, #3 | Demo, evidence and deliverables, alongside and after the freeze | open |
@@ -123,9 +123,14 @@ settle fail open or closed, `maxmemory` and eviction, real Redis in CI, and drop
 
 | # | Area | Item | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 5 | Benchmark, MongoDB | B2 pipelines are not idiomatic: B2a joins `products` for a `category_id` the order lines already carry ([b2.py](../../benchmarks/workloads/b2.py), [load.py](../../benchmarks/load.py)); B2b–d run one correlated `$lookup` per product or order; PostgreSQL has a materialized variant and MongoDB has none | Add idiomatic and maintained-summary variants against the same golden outputs (B2's delay-analysis queries still exclude copied reviews, unlike the app since #52); keep the originals; rerun B2 only on the designated machine ★ | M, approval | built 9 Nov ([amendment m](benchmark.md#decisions); Opus review pending) |
+| 5 | Benchmark, MongoDB | B2 pipelines are not idiomatic: B2a joins `products` for a `category_id` the order lines already carry ([b2.py](../../benchmarks/workloads/b2.py), [load.py](../../benchmarks/load.py)); B2b–d run one correlated `$lookup` per product or order; PostgreSQL has a materialized variant and MongoDB has none | Add idiomatic and maintained-summary variants against the same golden outputs (B2's delay-analysis queries still exclude copied reviews, unlike the app since #52); keep the originals; rerun B2 only on the designated machine ★ | M, approval | done 10 Nov ([amendment m](benchmark.md#decisions); two Opus reviews, two fix rounds; the pilot checks below remain) |
 | 13 | Benchmark | B1 broad: the MongoDB planner chose `_id_` to avoid a sort and examined the whole product set ([plan](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/plans/B1_broad_mongo_documents.json)). Index effort in B1 is unequal: GIN plus expression B-trees against one wildcard index | Report the hinted run beside the headline and explain the planner; consider a compound wildcard index | S (report), M (rerun) | settled 9 Nov: report only, no new index; the hinted run already exists and stays out of the headline; the explanation is written for the report |
 | 17 | Analysis | Per-request timings differ between machines: the committed [request-timing run](../../benchmarks/results/2026-11-02T103305_b53e5d0a_request-timing/category.csv) shows a PostgreSQL-bound category page, this review did not | Rerun the collector on the recording machine after the freeze, before citing it | S | open |
+
+**Checks that can only be made by running the full programme (open, after the freeze).** MongoDB's plans for B2c and B2d on
+the full data are inspected in the benchmark pilot and disclosed, never hinted after a timing; the Redis burn-in is tried on
+the full data in the Redis pilot; CPU pinning (`--pin`) is compared in the pinning pilot; the three fresh sessions, the Redis
+experiment and #17 follow, in that order, each alone on the machine ([benchmark](benchmark.md) amendment l).
 
 ## Batch 6b: full-text search on review text
 
@@ -134,6 +139,16 @@ settle fail open or closed, `maxmemory` and eviction, real Redis in CI, and drop
 | 71 | MongoDB, benchmark | Full-text search on review text: a MongoDB text index against PostgreSQL `tsvector` with a GIN index, compared with query plans (PLAN.md Tier 2 `search`, E1, B7). A second same-feature comparison for the NoSQL half; the English review text already exists | Short plan first. Reviews live only in MongoDB, so the application gains MongoDB text search and the PostgreSQL side runs on the bench review copy as B7; no SQL review table in the application. Build only after batches 1–6 are green | M, approval | open |
 
 ## Batch 7: code-quality pass, then the full codebase review
+
+**Scope and iterations (Erfan, 10 Nov).** This is the batch that decides how robust the code is judged to be, so it runs as
+several review iterations, not one. Order: the code-quality items below, then #73, then repeated full Opus 5.5 reviews of the
+current head. Each iteration is a fresh session that runs things, with the full suite green before and after; findings are
+fixed before the next iteration; the batch ends when an iteration finds nothing above minor. Review focus, named for every
+iteration: the tests (duplicates, vacuous assertions, flaky timing); code quality; edge cases in the application (empty,
+huge and hostile input, rounding, time zones, ties, NULLs); database edge cases (constraints and triggers, isolation and
+locking, deadlocks, partial failure between PostgreSQL, MongoDB and Redis, idempotent retries); database connections (leaks,
+closing, timeouts, per-request connections, MongoDB transactions and the replica set, Redis failing open); and the new work of
+Batches 5, 6 and 8 (Redis, the summaries, row-level security). This relaxes CLAUDE.md's "one fix round" for this batch only.
 
 | # | Finding | Status |
 |---|---|---|
@@ -261,6 +276,7 @@ accessibility (labels, alt text, visible focus, no horizontal scroll at phone wi
 | Redis review 2 | 8 Nov 2026 | Erfan: approve the fix round from the second fresh Opus 5.5 review of Batch 5 (a shape number in every cached entry, lock release during a back-off, name-lookup threads, bounded username normalisation, review takedown and import invalidation, cheaper waiting, documentation) and treat it as the last one | No high-severity finding remained; a third review would meet diminishing returns |
 | 10 step 2, 5, 13, 52 | 9 Nov 2026 | Erfan: #10 step 2 is built in the application (a PostgreSQL materialized view of per-order delivery delays beside a MongoDB per-order score summary, the live path kept as fallback and oracle), time-boxed to 11 Nov; the MongoDB summary is rebuilt with `$out`. For Batch 6: the headline B2b compares the plain 28-day `GROUP BY` the app runs against the equivalent simple MongoDB pipeline, with the window-function pair kept as "as first implemented" rows; B2d is aligned with the app (copied reviews included) and its indexes and golden outputs change with it; #13 is report-only (the hinted run beside the headline, the planner explained, no new index); whether the originals stay in the full matrix is decided after the pilot, if time is tight | Single owner decision; the like-for-like pair serves part iii of the presentation; aligning B2d with the app (#52) keeps the benchmark and the dashboard asking the same question |
 | Dashboard summaries review | 9 Nov 2026 | Erfan: approve all recommended items from the Opus 5.5 review of #10 step 2 (no hand-written timings, a migration reversal test and a simultaneous-refresh test, a stale docstring and a status mismatch, the import empties a leftover score summary before it refreshes, and the known limits written into the plan) | Small, low-risk fixes; no correctness defects were found |
+| 7 (iterations) | 10 Nov 2026 | Erfan: Batch 7 runs as several full-review iterations, each followed by fixes, until one finds nothing above minor; scope covers tests, code quality, edge cases, database edge cases and database connections; the "one fix round" rule is relaxed for this batch only | The last batch before the freeze decides the robustness a marker sees; one pass found real defects in every batch so far, so one pass is not enough |
 | 73 | 9 Nov 2026 | Erfan: a review of all the tests for duplicates, tests that exist only to exist and tests that can be merged, in Batch 7 (after Batch 8, before the full codebase review) | The suite is large for the application's size and slow to run; fewer, sharper tests keep the evidence and the speed |
 | 18, 8, 21, 34 | 8 Nov 2026 | Erfan: settle these four first; the rest of Batch 4 is explained for him to approve | Quick UI fixes that need no further decision |
 
