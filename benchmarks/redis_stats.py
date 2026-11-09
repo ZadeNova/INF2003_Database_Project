@@ -130,24 +130,31 @@ def join_responses(responses, logs):
     return joined
 
 
+def trending_leader(body):
+    """The product id on the 'Rank 1' card of the shop page's trending panel, or None when the panel is empty."""
+    match = re.search(r'Rank 1 ·.*?href="/products/(\d+)/"', body, re.S)
+    return int(match[1]) if match else None
+
+
 BURN_IN_VIEWS = 20
-BURN_IN_LIMIT = 10
+BURN_IN_LIMIT = 50
 
 
-def settle(view, ranking, views=BURN_IN_VIEWS, limit=BURN_IN_LIMIT):
+def settle(view, ranking, leader=None, views=BURN_IN_VIEWS, limit=BURN_IN_LIMIT):
     """Untimed warm-up of the trending ranking before round 1.
 
     The product-detail control records a view event on every request, and view events reorder the trending ranking the
     shop and search pages show, so the first condition would serve different products than the later ones (the pilot
-    showed it). Viewing the control product until it holds its place makes the ranking stop moving; the experiment then
-    starts from a ranking that further views of the same product no longer change. Returns the number of passes, or raises
-    if the ranking never settles."""
+    showed it). Viewing the control product until it leads the ranking, and the ranking then holds still for a further
+    pass, means that the views of the timed rounds cannot move it again: the most viewed product stays first however many
+    more views it gets. Without `leader` only the second condition applies. Returns the number of passes, or raises if the
+    ranking never settles."""
     previous = None
     for attempt in range(1, limit + 1):
         for _ in range(views):
             view()
         current = ranking()
-        if current == previous:
+        if current == previous and (leader is None or leader()):
             return attempt
         previous = current
     raise ExperimentError("The trending ranking did not settle during the burn-in")

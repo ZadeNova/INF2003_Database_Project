@@ -191,6 +191,33 @@ def test_a_damaged_session_is_excluded_with_its_number_and_reason_not_for_being_
     assert float(headline[("postgres", "idiomatic")]["p50_ms"]) == 11.0  # sessions 1 and 3 only
 
 
+def test_a_b2_original_is_never_marked_as_a_headline_across_sessions(tmp_path):
+    """`headline` in a session only means "not saturated": the originals must not inherit it."""
+    for number in (1, 2, 3):
+        directory = tmp_path / f"s{number}"
+        write_session(directory, 10)
+        with (directory / "summary.csv").open("a", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")
+            writer.writerow(
+                {
+                    "output": "B2a",
+                    "engine": "postgres",
+                    "variant": "live",
+                    "clients": "1",
+                    "status": "passed",
+                    "p50_ms": 5,
+                    "p95_ms": 6,
+                    "throughput_ops_s": 1,
+                    "headline": "True",
+                }
+            )
+    aggregate([tmp_path / f"s{n}" for n in (1, 2, 3)], tmp_path / "out")
+    rows = {(r["engine"], r["variant"]): r for r in read(tmp_path / "out" / "headline.csv")}
+    assert rows[("postgres", "live")]["headline"] == "False"
+    assert rows[("postgres", "live")]["not_headline_reason"].startswith("reported apart")
+    assert rows[("postgres", "idiomatic")]["headline"] == "True"
+
+
 def test_a_slow_but_healthy_session_stays_in_the_headline(tmp_path):
     write_session(tmp_path / "s1", 10)
     write_session(tmp_path / "s2", 1000)

@@ -15,6 +15,7 @@ import json
 import statistics
 from pathlib import Path
 
+from benchmarks.headline import HEADLINE, registered
 from benchmarks.pooling import pooled
 from benchmarks.report import b2_headline, table
 
@@ -76,6 +77,7 @@ def combine(sessions):
     for key, entries in sorted(by_key.items()):
         result = dict(zip(KEY, key))
         result["sessions"] = len(entries)
+        result["session_numbers"] = ";".join(str(number) for number, _ in entries)
         for metric in METRICS:
             values = [v for _, row in entries if (v := number_or_none(row[metric])) is not None]
             result[metric] = statistics.median(values) if values else ""
@@ -83,6 +85,11 @@ def combine(sessions):
                 result["p50_session_min_ms"], result["p50_session_max_ms"] = min(values), max(values)
                 result["session_spread_percent"] = 100 * (max(values) - min(values)) / statistics.median(values)
         result["headline"] = all(str(row.get("headline", "")).lower() == "true" for _, row in entries)
+        if key[0] in HEADLINE or key[0] == "B2refresh":
+            # "headline" in a session only means "not saturated"; a B2 variant outside the registered pairs never headlines.
+            if (key[0], key[1], key[2]) not in registered():
+                result["headline"] = False
+                result["not_headline_reason"] = "reported apart: not a registered pair"
         pool = pools.get(key)
         if pool:
             result.update(
@@ -140,6 +147,7 @@ def aggregate(directories, output):
             "status": "passed",
             "headline": r["headline"],
             "sessions": r["sessions"],
+            "session_numbers": r["session_numbers"],
         }
         for r in headline
     ]

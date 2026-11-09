@@ -89,8 +89,9 @@ def build_models(source, database, provenance):
                         )
                     )
         with conn.transaction():
-            # Needs the application's delivery summary (filled by the import) and the review copy loaded above.
-            conn.execute(summaries.POSTGRES_ORDER_SCORES)
+            # Needs the orders (filled by the import) and the review copy loaded above, and the reporting date.
+            as_of = conn.execute("SELECT public.dashboard_as_of() AS as_of").fetchone()["as_of"]
+            conn.execute(summaries.postgres_order_scores(as_of))
         conn.execute("VACUUM (ANALYZE)")
         conn.execute("CHECKPOINT")
     products = {int(p["id"]): p for p in csv_rows(source, "products")}

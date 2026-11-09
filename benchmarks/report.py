@@ -173,13 +173,17 @@ def b2_headline(rows):
     result = []
     pairs = [(output, layer, *pair) for output, layers in HEADLINE.items() for layer, pair in layers.items()]
     pairs += [("B2refresh", "refresh: " + name, *pair) for name, pair in REFRESH.items()]
+    # Every registered pair is listed at every client count the B2 outputs ran with, even when one output has no row at all.
+    ran = {r["clients"] for r in rows if r["output"] in HEADLINE}
+    refresh_ran = {r["clients"] for r in rows if r["output"] == "B2refresh"} or ({"1"} if ran else set())
     for output, layer, postgres_variant, mongo_variant in pairs:
-        for clients in sorted({r["clients"] for r in rows if r["output"] == output}, key=int):
+        for clients in sorted(refresh_ran if output == "B2refresh" else ran, key=int):
             postgres = index.get((output, "postgres", postgres_variant, clients))
             mongo = index.get((output, "mongo", mongo_variant, clients))
             postgres_state, mongo_state = state(postgres), state(mongo)
             usable = postgres_state == mongo_state == "ok"
-            sessions = [(row or {}).get("sessions") for row in (postgres, mongo)]
+            # Across sessions the identities are compared, not only how many: {1, 2} against {2, 3} is not one comparison.
+            sessions = [(row or {}).get("session_numbers", (row or {}).get("sessions")) for row in (postgres, mongo)]
             same_sessions = sessions[0] == sessions[1]
             entry = {
                 "output": output,

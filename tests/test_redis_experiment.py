@@ -25,6 +25,7 @@ from benchmarks.redis_stats import (  # noqa: E402
     parse_logs,
     settle,
     stampede_outcome,
+    trending_leader,
 )
 
 CACHE_FOR = {"off": "off", "cold": "miss", "warm": "hit", "down": "down"}
@@ -295,6 +296,21 @@ def test_the_burn_in_stops_once_the_ranking_holds_still():
     views, rankings = [], iter(["A", "B", "C", "C", "C"])
     passes = settle(lambda: views.append(1), lambda: next(rankings), views=3)
     assert passes == 4 and len(views) == 12  # three passes of views before the ranking repeated its predecessor
+
+
+def test_the_burn_in_also_waits_for_the_control_product_to_lead():
+    """A ranking that holds still with the control product below the panel could still be changed by the timed views."""
+    leads = iter([False, True])  # asked from pass 2, once the ranking has repeated
+    passes = settle(lambda: None, lambda: "same", leader=lambda: next(leads), views=1)
+    assert passes == 3  # the ranking held still from pass 2, but the control product only led from pass 3
+
+
+def test_the_trending_leader_is_the_product_on_the_rank_one_card():
+    body = (
+        '<a href="/products/9/">x</a><p class="panel__note">Rank 1 · 40 views</p><a href="/products/7/">y</a>'
+        '<p class="panel__note">Rank 10 · 2 views</p><a href="/products/3/">z</a>'
+    )
+    assert trending_leader(body) == 7 and trending_leader("<p>No recent views yet.</p>") is None
 
 
 def test_a_ranking_that_never_settles_fails_the_experiment_instead_of_starting():

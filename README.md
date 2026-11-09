@@ -462,7 +462,7 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    python -m benchmarks.redis_stampede --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
    ```
 
-   The first command first views the control product until the trending ranking stops moving (untimed), then measures off,
+   The first command first views the control product until it leads the trending ranking and the ranking holds still (untimed), then measures off,
    cold, warm and down in four rounds ordered by a seeded Williams design (every condition holds every position once and
    follows every other condition once; 150 requests per cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
    `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and

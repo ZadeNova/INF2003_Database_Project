@@ -167,6 +167,24 @@ def test_a_registered_pair_with_a_failed_or_missing_row_is_listed_not_dropped():
     assert maintained["1"]["status"] == "postgres missing, mongo missing"
 
 
+def test_an_output_with_no_rows_still_lists_its_registered_pairs():
+    rows = [row("B2a", "postgres", "idiomatic", "1", "10"), row("B2a", "mongo", "idiomatic", "1", "30")]
+    pairs = {(r["output"], r["layer"]): r for r in b2_headline(rows)}
+    assert (
+        pairs[("B2d", "live")]["status"] == "postgres missing, mongo missing"
+        and pairs[("B2d", "live")]["headline"] is False
+    )
+    assert pairs[("B2a", "live")]["status"] == "ok"
+
+
+def test_pairs_from_different_sessions_are_not_one_comparison_even_with_equal_counts():
+    postgres = {**row("B2a", "postgres", "idiomatic", "1", "10"), "sessions": 2, "session_numbers": "1;2"}
+    mongo = {**row("B2a", "mongo", "idiomatic", "1", "30"), "sessions": 2, "session_numbers": "2;3"}
+    live = next(r for r in b2_headline([postgres, mongo]) if r["output"] == "B2a" and r["layer"] == "live")
+    assert live["status"] == "ok" and live["headline"] is False
+    assert (live["postgres_sessions"], live["mongo_sessions"]) == ("1;2", "2;3")
+
+
 def test_a_pair_built_from_different_numbers_of_sessions_is_not_a_headline():
     postgres = {**row("B2a", "postgres", "idiomatic", "1", "10"), "sessions": 3}
     mongo = {**row("B2a", "mongo", "idiomatic", "1", "30"), "sessions": 2}
@@ -197,6 +215,26 @@ def refresh(queries, engine):
         operation()
 
 
+def move_delivery(database, order_id, delivered_at):
+    """Change one order's delivery time in both engines. PostgreSQL's change and its trigger switch share one transaction
+    (DDL is transactional), so a failure rolls both back and cannot leave the guard trigger off."""
+    with db.pg() as conn, conn.transaction():
+        conn.execute("ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard")
+        conn.execute("UPDATE orders_order SET delivered_at = %s WHERE id = %s", (delivered_at, order_id))
+        conn.execute(
+            "SET CONSTRAINTS ALL IMMEDIATE"
+        )  # run the deferred checks now: ALTER TABLE refuses pending trigger events
+        conn.execute("ALTER TABLE orders_order ENABLE TRIGGER order_timestamp_guard")
+    database.orders.update_one({"_id": order_id}, {"$set": {"delivered_at": delivered_at}})
+
+
+def test_the_bench_delivery_summary_is_built_from_orders_and_reviews_alone():
+    """It must not read the application's richer delivery view: that would charge PostgreSQL display work MongoDB never does."""
+    sql = summaries.postgres_order_scores(date(2018, 8, 29))
+    assert "order_delivery_summary" not in sql and "geolocation" not in sql and "orders_checkout" not in sql
+    assert "FROM orders_order" in sql and "FROM reviews" in sql and "'2018-08-30T00:00:00+08:00'" in sql
+
+
 def test_each_engines_delivery_refresh_recomputes_a_changed_delivery(database, queries):
     """The refresh must pay for the delay side too: a delivery moved 30 days late has to move its bucket in both summaries."""
     as_of = date.fromisoformat(json.loads((GOLDEN / "source.json").read_text())["as_of"])
@@ -213,13 +251,7 @@ def test_each_engines_delivery_refresh_recomputes_a_changed_delivery(database, q
     assert victim, "the fixture needs a delivered order that can be moved 30 days late"
     before = {engine: delivery_summary_rows(queries, engine) for engine in ("postgres", "mongo")}
     try:
-        with db.pg() as conn:
-            conn.execute("ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard")
-            try:
-                conn.execute("UPDATE orders_order SET delivered_at = %s WHERE id = %s", (victim["later"], victim["id"]))
-            finally:
-                conn.execute("ALTER TABLE orders_order ENABLE TRIGGER order_timestamp_guard")
-        database.orders.update_one({"_id": victim["id"]}, {"$set": {"delivered_at": victim["later"]}})
+        move_delivery(database, victim["id"], victim["later"])
         for engine in ("postgres", "mongo"):
             assert delivery_summary_rows(queries, engine) == before[engine], "the summary changed before any refresh"
             assert live_rows(queries, engine) != before[engine], "the live query did not see the moved delivery"
@@ -229,14 +261,6 @@ def test_each_engines_delivery_refresh_recomputes_a_changed_delivery(database, q
             assert after == live_rows(queries, engine), f"{engine}: the refreshed summary differs from the live query"
             assert after.get("late_over_14", 0) == before[engine].get("late_over_14", 0) + 1
     finally:
-        with db.pg() as conn:
-            conn.execute("ALTER TABLE orders_order DISABLE TRIGGER order_timestamp_guard")
-            try:
-                conn.execute(
-                    "UPDATE orders_order SET delivered_at = %s WHERE id = %s", (victim["delivered_at"], victim["id"])
-                )
-            finally:
-                conn.execute("ALTER TABLE orders_order ENABLE TRIGGER order_timestamp_guard")
-        database.orders.update_one({"_id": victim["id"]}, {"$set": {"delivered_at": victim["delivered_at"]}})
+        move_delivery(database, victim["id"], victim["delivered_at"])
         for engine in ("postgres", "mongo"):
             refresh(queries, engine)

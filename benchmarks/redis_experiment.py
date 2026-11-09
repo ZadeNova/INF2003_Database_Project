@@ -14,6 +14,7 @@ to the server's own request log by ID, and benchmarks/redis_stats.py decides whi
 import argparse
 import csv
 import json
+import re
 import subprocess
 import sys
 import time
@@ -30,6 +31,7 @@ from benchmarks.redis_stats import (
     join_responses,
     latin_square,
     settle,
+    trending_leader,
 )
 from benchmarks.request_timing import ROOT, TimingError, write_csv
 
@@ -84,19 +86,22 @@ def measure(stack, condition, round_index, pages, cheap, dashboard):
 
 
 def settle_ranking(stack, pages, anonymous):
-    """Untimed: view the control product until the shop's ranking stops moving (see redis_stats.settle)."""
+    """Untimed: view the control product until it leads the trending ranking and the ranking stops moving (redis_stats.settle)."""
     helper = ColdHelper(stack)
+    control = int(re.search(r"/products/(\d+)/", pages["product_detail"])[1])
+    latest = {}
     try:
 
         def ranking():
             helper.clear("trending")  # never read the cached copy
             _row, body, _headers, _elapsed = stack.timed_get(anonymous, "shop", pages["shop"])
+            latest["leader"] = trending_leader(body)
             return digest("shop", body)
 
         def view():
             stack.timed_get(anonymous, "product_detail", pages["product_detail"])
 
-        return settle(view, ranking)
+        return settle(view, ranking, leader=lambda: latest.get("leader") == control)
     finally:
         helper.close()
 
