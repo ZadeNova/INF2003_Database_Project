@@ -144,7 +144,11 @@ experiment and #17 follow, in that order, each alone on the machine ([benchmark]
 several review iterations, not one. Order: the code-quality items below, then #73, then repeated full Opus 5.5 reviews of the
 current head. Each iteration is a fresh session that runs things, with the full suite green before and after; findings are
 fixed before the next iteration; the batch ends when an iteration finds nothing above minor. Review focus, named for every
-iteration: the tests (duplicates, vacuous assertions, flaky timing); code quality; edge cases in the application (empty,
+iteration: the tests (duplicates, vacuous assertions, flaky timing); code quality, including duplicated code in the
+application; SQL and database practice (parameterised and set-based queries, indexes that match the queries, constraints
+over application checks, no N+1 reads, transaction scope, migration safety); Django practice (ORM against raw SQL only where
+rule 1 allows, query counts per view, forms and validation, settings and `check --deploy`, permissions, template escaping,
+services against views); edge cases in the application (empty,
 huge and hostile input, rounding, time zones, ties, NULLs); database edge cases (constraints and triggers, isolation and
 locking, deadlocks, partial failure between PostgreSQL, MongoDB and Redis, idempotent retries); database connections (leaks,
 closing, timeouts, per-request connections, MongoDB transactions and the replica set, Redis failing open); and the new work of
