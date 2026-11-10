@@ -10,11 +10,6 @@ plan owner: Chee Long · implementer: Chee Long · reviewer: a fresh session, id
 keeps stock and money exactly right under concurrency, and enforces the order lifecycle. Each seller ships their own
 order, the operator delivers it, and a customer can cancel before shipping with stock and money returned.
 
-**Starting point.** The old baseline's cart and checkout services (`cart/services.py`, `orders/services.py` in git
-history before `olist-import`) already lock rows in id order, replay a repeated submit by idempotency key, and detect a
-cart that changed between review and submit with a fingerprint. Port those patterns to the new schema; do not copy the
-shoe-specific code.
-
 **In scope**
 
 | Area | Deliverable |
@@ -35,7 +30,7 @@ trigger); partial cancellation of single lines; real payment gateways; vouchers 
 **Tests:** checkout of a three-seller cart creates one checkout, three orders and correct lines, totals and payments;
 a repeated submit with the same key creates nothing new; a changed cart is refused at submit; insufficient stock rolls
 everything back; **concurrency**: 20 threads on separate connections race for the last 5 units and exactly 5 succeed with
-stock ending at 0 (port the old real-thread tests); each deferred invariant rejects a commit that breaks it; every illegal
+stock ending at 0; each deferred invariant rejects a commit that breaks it; every illegal
 status transition is rejected; cancelling a shipped order fails; cancellation restores stock and writes the refund;
 role and scoping negatives; SQL-injection negatives on every raw-SQL path.
 

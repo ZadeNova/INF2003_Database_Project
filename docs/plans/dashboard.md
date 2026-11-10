@@ -5,8 +5,7 @@ plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · esti
 November) · depends on: `olist-import`, `checkout`, `accounts` (operator console)
 
 **Assumes:** the `olist-import` schema (orders with status and dates, lines, products with stock and lead time, sellers
-with zip prefix, geolocation); MongoDB `reviews` with score, order line and seller ids. The old baseline's reporting
-queries (git history before `olist-import`) are the starting point, not code to copy.
+with zip prefix, geolocation); MongoDB `reviews` with score, order line and seller ids. 
 
 ## Contract
 

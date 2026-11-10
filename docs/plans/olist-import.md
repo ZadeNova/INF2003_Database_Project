@@ -100,12 +100,9 @@ Demo passwords (`DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR
 - **Accounts:** `seed_demo` creates usable logins (one customer per member, one operator, one seller tied to a high-volume
   Olist seller), passwords from `.env`. It also guarantees the demo seller owns one sold-out product and one product that
   the dashboard will flag (for the `wishlist` and `dashboard` exit checks), labelled as demo adjustments.
-- **Removal:** shoe code, data, 3D models (with `CREDITS.md`) and tests; `config/dataset.py` and `import_dataset`; the
-  `reporting` app (models including `CustomerSegment`, migrations, commands, templates and tests);
   `analytics/build_shoe_dataset.py`, `analytics/export_coverage.py` and their tests.
 - **Minimum working after phase 1:** home, product list and product detail render from the new schema; the three demo
-  logins work. Cart, checkout, order and dashboard routes return 404, and their old tests are removed, until `checkout`
-  and `dashboard` rebuild them.
+  logins work. Cart, checkout, order and dashboard routes return 404.
 - **Fixture:** `scripts/make_fixture.py` picks a deterministic raw subset (about 1,000 Olist orders, including at least two
   of every broken kind, shared products, multi-seller orders and duplicate reviews) into `tests/fixtures/olist/raw/`;
   tests run cleaning and import on it.
@@ -139,7 +136,7 @@ query's rows; generation is deterministic; rule 18 drops exactly the products le
 |---|---|
 | a | Fresh migrations, one new `0001` per app |
 | b | Clean in Python before import; the importer only loads committed clean files |
-| c | Drop the old import machinery and the `reporting` app; `dashboard` rebuilds reporting |
+| c | `dashboard` builds reporting |
 | d | Translate offline with Argos Translate, once, as a separate step |
 | e | ECB rate on the implementation day, stored with its date in `data/derived/olist/fx.json` |
 | f | Olist timestamps become Singapore local time after the shift |
@@ -169,7 +166,7 @@ query's rows; generation is deterministic; rule 18 drops exactly the products le
 - Profile and verification use the five non-overlapping delay buckets from the dashboard contract. They count one
   original checkout review, including reviews copied to lines, and preserve the actual raw ordering pattern.
 - No later application routes, benchmark loader, Redis, activity collection, photos, checkout service or dashboard
-  implementation is added. Applicable auth/security/privilege/logging/outage coverage is ported to the new schema.
+  implementation is added. Applicable auth/security/privilege/logging/outage coverage is added to schema.
 - Independent Claude Code review and fix-round verification are complete; their record is retained below.
   The workstream is closed out and its AI-use log is recorded.
 

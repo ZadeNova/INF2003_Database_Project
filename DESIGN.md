@@ -248,8 +248,6 @@ for document overflow as well as checking computed styles.
 
 - **Design reference:** [VoiceBox v1 by Chef (@chef)](https://designmd.ai/chef/voicebox), published under MIT. Jun Keat
   Lim introduced the VoiceBox reference on 23 September 2026 (`d147c9d`); its source was verified on 11 October 2026.
-  This Mercer rewrite folds the previous "As built" adaptations into one system under the approved catalogue
-  amendment f. The original reference is retained in Git history. Keep the [MIT notice and verification record](docs/licenses/voicebox-MIT.txt).
 - **Typefaces:** Archivo Black, Work Sans and Space Mono are SIL Open Font License and loaded from Google Fonts.
   Pixelify Sans is also SIL Open Font License and loads only the "67" brand-mark subset.
 - **Icons:** Phosphor Icons regular weight, MIT, vendored in [icons.svg](src/static/img/icons.svg), with its licence in
