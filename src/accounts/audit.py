@@ -17,15 +17,29 @@ SELLER_ACTIONS = {
     "reinstate": (Seller.Status.SUSPENDED, Seller.Status.APPROVED),
 }
 
-# Display labels only; the stored action codes remain the audit record's stable identifiers.
-AUDIT_LABELS = {
-    "seller.approve": "Approved",
-    "seller.reject": "Rejected",
-    "seller.suspend": "Suspended",
-    "seller.reinstate": "Reinstated",
+# Every audit action the pages display: stored action code -> (label, badge tone). The codes stay the audit record's stable
+# identifiers; only the label and tone are display. Tone None is neutral. DESIGN.md: red is never a status, so negative
+# decisions stay neutral, and "warning" is the existing amber badge (there is no pending class).
+AUDIT_ACTIONS = {
+    "seller.approve": ("Approved", "completed"),
+    "seller.reject": ("Rejected", None),
+    "seller.suspend": ("Suspended", None),
+    "seller.reinstate": ("Reinstated", "completed"),
+    "product.create": ("Product created", "completed"),
+    "product.update": ("Product updated", None),
+    "product.activate": ("Product activated", "completed"),
+    "product.deactivate": ("Product deactivated", None),
+    "product.takedown": ("Product taken down", None),
+    "product.restore": ("Product restored", "completed"),
+    "order.paid": ("Paid", "warning"),
+    "order.shipped": ("Shipped", "warning"),
+    "order.delivered": ("Delivered", "completed"),
+    "order.cancelled": ("Cancelled", None),
+    "review.takedown": ("Review taken down", None),
+    "review.restore": ("Review restored", "completed"),
 }
-# Badge tone per decision (DESIGN.md: red is never a status, so negative decisions stay neutral).
-AUDIT_TONES = {"seller.approve": "completed", "seller.reinstate": "completed"}
+AUDIT_LABELS = {code: label for code, (label, _) in AUDIT_ACTIONS.items()}
+AUDIT_TONES = {code: tone for code, (_, tone) in AUDIT_ACTIONS.items() if tone}
 
 
 class StaleAction(Exception):
@@ -63,27 +77,3 @@ def change_seller_status(seller_id, action, actor, reason):
         Seller.objects.filter(pk=seller.pk).update(status=new)
         seller.status = new
     return seller
-
-
-# catalogue labels (append-only shared navigation/audit integration).
-AUDIT_LABELS.update(
-    {
-        "product.create": "Product created",
-        "product.update": "Product updated",
-        "product.activate": "Product activated",
-        "product.deactivate": "Product deactivated",
-        "product.takedown": "Product taken down",
-        "product.restore": "Product restored",
-    }
-)
-AUDIT_TONES.update({"product.create": "completed", "product.activate": "completed", "product.restore": "completed"})
-
-# checkout action labels; seller decisions above retain their existing labels and tones.
-AUDIT_LABELS.update(
-    {"order.paid": "Paid", "order.shipped": "Shipped", "order.delivered": "Delivered", "order.cancelled": "Cancelled"}
-)
-# "warning" is the existing amber badge; there is no badge--pending class.
-AUDIT_TONES.update({"order.delivered": "completed", "order.paid": "warning", "order.shipped": "warning"})
-
-AUDIT_LABELS.update({"review.takedown": "Review taken down", "review.restore": "Review restored"})
-AUDIT_TONES["review.restore"] = "completed"

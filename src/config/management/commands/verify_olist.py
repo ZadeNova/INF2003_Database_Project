@@ -23,8 +23,7 @@ class Command(BaseCommand):
         ledger = json.loads((options["source"] / "cleaning_ledger.json").read_text())
         raw = json.loads(options["profile"].read_text())["delivery_delay_scores"]
         result = {"sql_invariants": sql_invariants()}
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             reconcile(database, ledger)
             # The same original order review is copied to every collapsed line.
             # Count it once per source checkout for an unbiased raw comparison.

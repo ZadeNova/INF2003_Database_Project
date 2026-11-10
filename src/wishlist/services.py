@@ -22,14 +22,18 @@ def set_saved(actor, product_id, saved):
         raise Http404 from None
     with connection.cursor() as cursor:
         if saved:
-            if not PurchasableProduct.objects.filter(pk=product_id).exists():
-                raise Http404
+            # One statement checks visibility and saves: the product is looked up once, so it cannot become invisible between a
+            # separate check and the insert. A product that is not purchasable is a 404, an already saved one is left alone.
             cursor.execute(
-                """INSERT INTO wishlist_item(customer_id, product_id, added_at)
-                SELECT %s, id, CURRENT_TIMESTAMP FROM purchasable_product WHERE id = %s
-                ON CONFLICT (customer_id, product_id) DO NOTHING""",
-                [actor.pk, product_id],
+                """WITH wanted AS (SELECT id FROM purchasable_product WHERE id = %s),
+                added AS (INSERT INTO wishlist_item(customer_id, product_id, added_at)
+                          SELECT %s, id, CURRENT_TIMESTAMP FROM wanted
+                          ON CONFLICT (customer_id, product_id) DO NOTHING)
+                SELECT count(*) FROM wanted""",
+                [product_id, actor.pk],
             )
+            if cursor.fetchone()[0] == 0:
+                raise Http404
         else:
             cursor.execute(
                 "DELETE FROM wishlist_item WHERE customer_id = %s AND product_id = %s", [actor.pk, product_id]

@@ -48,8 +48,8 @@ def record_event(request, event_type, *, product=None, query="", category=None):
     if event_type == "search":
         event["query"] = str(query).strip()[:100]
     try:
-        with mongo.client() as client:
-            events = client[mongo.database_name()].events.with_options(write_concern=EVENT_WRITE_CONCERN)
+        with mongo.database() as database:
+            events = database.events.with_options(write_concern=EVENT_WRITE_CONCERN)
             # Never let an insert silently create a regular collection before mongo_setup has run. A passed check is
             # remembered for the process (the collection is not dropped while the app runs); a failed one is retried.
             if not EVENTS_READY and events.options().get("timeseries", {}).get("timeField") != "ts":
@@ -149,8 +149,7 @@ def browsing_panels(request, *, category=None):
     now = timezone.now()
     identity = visitor(request)
     try:
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             recent = (
                 _visible_ranked(database, database.events.aggregate(recently_viewed_pipeline(identity, now)), 10)
                 if identity
@@ -188,10 +187,8 @@ def seller_insights(seller, *, now=None):
     ids = [item.pk for item in products]
     unavailable = False
     try:
-        with mongo.client() as client:
-            views = {
-                row["_id"]: row for row in client[mongo.database_name()].events.aggregate(conversion_pipeline(ids, now))
-            }
+        with mongo.database() as database:
+            views = {row["_id"]: row for row in database.events.aggregate(conversion_pipeline(ids, now))}
     except PyMongoError:
         logger.warning("activity.insights_unavailable")
         views = {}

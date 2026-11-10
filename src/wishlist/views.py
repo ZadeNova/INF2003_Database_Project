@@ -24,8 +24,8 @@ class WishlistView(CustomerRequiredMixin, View):
         # The reverse join must be scoped too: other customers' save dates must not duplicate or reorder rows.
         products = products.filter(wishlistitem__customer=request.user)
         page = Paginator(products, 24).get_page(request.GET.get("page"))
-        with mongo.client() as client:
-            page.object_list = attach_photos(client[mongo.database_name()], page.object_list)
+        with mongo.database() as database:
+            page.object_list = attach_photos(database, page.object_list)
         return render(request, "wishlist/list.html", {"page_obj": page})
 
 

@@ -22,10 +22,8 @@ class CustomerReviewView(CustomerRequiredMixin, View):
             line = customer_line(request.user, line_id)
         except ValidationError:
             raise Http404 from None
-        with mongo.client() as client:
-            review = client[mongo.database_name()].reviews.find_one(
-                {"order_line_id": line.pk, "customer_id": request.user.pk}
-            )
+        with mongo.database() as database:
+            review = database.reviews.find_one({"order_line_id": line.pk, "customer_id": request.user.pk})
         form = ReviewForm(
             initial={"score": review["score"], "title": review["title_en"], "text": review["text_en"]} if review else {}
         )
@@ -47,8 +45,8 @@ class CustomerReviewView(CustomerRequiredMixin, View):
                 back_label="Back to the order",
             )
         if action == "delete" or form.is_valid():
-            with mongo.client() as client:
-                existing = client[mongo.database_name()].reviews.find_one(
+            with mongo.database() as database:
+                existing = database.reviews.find_one(
                     {"order_line_id": line.pk, "customer_id": request.user.pk}, {"taken_down": 1}
                 )
             try:
@@ -65,10 +63,8 @@ class CustomerReviewView(CustomerRequiredMixin, View):
                 else:
                     messages.success(request, "Review saved.")
                 return redirect("orders:order_detail", pk=line.order_id)
-        with mongo.client() as client:
-            review = client[mongo.database_name()].reviews.find_one(
-                {"order_line_id": line.pk, "customer_id": request.user.pk}
-            )
+        with mongo.database() as database:
+            review = database.reviews.find_one({"order_line_id": line.pk, "customer_id": request.user.pk})
         return render(request, "reviews/form.html", {"line": line, "review": review, "form": form}, status=400)
 
 
@@ -77,9 +73,9 @@ class SellerReviewsView(SellerRequiredMixin, View):
 
     def get(self, request):
         ids = list(Product.objects.filter(seller=self.seller).values_list("pk", flat=True))
-        with mongo.client() as client:
+        with mongo.database() as database:
             page = review_page(
-                client[mongo.database_name()],
+                database,
                 {"seller_id": self.seller.pk, "product_id": {"$in": ids}},
                 request.GET.get("page"),
             )
@@ -90,8 +86,8 @@ class OperatorReviewsView(OperatorRequiredMixin, View):
     http_method_names = ["get", "head"]
 
     def get(self, request):
-        with mongo.client() as client:
-            page = review_page(client[mongo.database_name()], {}, request.GET.get("page"), include_hidden=True)
+        with mongo.database() as database:
+            page = review_page(database, {}, request.GET.get("page"), include_hidden=True)
         return render(request, "reviews/list.html", {"page_obj": page})
 
 
@@ -99,8 +95,8 @@ class OperatorReviewView(OperatorRequiredMixin, View):
     http_method_names = ["get", "head", "post"]
 
     def context(self, line_id, form=None):
-        with mongo.client() as client:
-            review = client[mongo.database_name()].reviews.find_one({"order_line_id": line_id})
+        with mongo.database() as database:
+            review = database.reviews.find_one({"order_line_id": line_id})
         if review is None:
             raise Http404
         return {

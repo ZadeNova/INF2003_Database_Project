@@ -54,6 +54,13 @@ def client(*, environ=None, direct=False):
     yield pooled
 
 
+@contextmanager
+def database(*, environ=None, direct=False):
+    """The application database (or the one a test routed to) from the pooled client: what almost every caller wants."""
+    with client(environ=environ, direct=direct) as pooled:
+        yield pooled[database_name(environ)]
+
+
 def close_clients():
     """Release pools at process shutdown, not at the end of a view or management-command context."""
     with _clients_lock:

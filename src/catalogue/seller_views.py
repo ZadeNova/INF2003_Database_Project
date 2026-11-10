@@ -45,8 +45,7 @@ class SellerProductEditView(SellerRequiredMixin, View):
             selected = selected if selected is not None and 0 < selected <= BIGINT_MAX else None
         except (TypeError, ValueError):
             selected = None
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             template = database.category_templates.find_one({"category_id": selected})
             spec = database.product_specs.find_one({"_id": item.pk}) if item else None
         bound = request.method == "POST"

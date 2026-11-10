@@ -70,8 +70,8 @@ def refresh_sales():
         with connection.cursor() as cursor:
             cursor.execute("SELECT public.refresh_daily_product_sales()")
             cursor.execute("SELECT public.refresh_order_delivery_summary()")
-        with mongo.client() as client:
-            refresh_order_scores(client[mongo.database_name()], as_of_date())
+        with mongo.database() as database:
+            refresh_order_scores(database, as_of_date())
     # After the refresh has committed, never before; inside an enclosing transaction this waits for its commit.
     transaction.on_commit(redis_store.bump_dashboard)
 
@@ -264,8 +264,7 @@ def _readable_categories(rows):
 def history_blocks(as_of):
     """The expensive blocks. They depend on the reporting date only (not on the filters, live stock, product names or
     shop names), so they can be cached; the names are read live afterwards, so a rename never waits for the cache."""
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
         buckets, sellers, excluded = delivery_analysis(as_of, database)
         poor = list(database.reviews.aggregate(poor_reviews_pipeline(end_of_day(as_of))))
     return {

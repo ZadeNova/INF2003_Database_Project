@@ -63,8 +63,7 @@ def write_review(actor, line_id, action, cleaned=None):
         raise Http404
     if action != "delete" and (not cleaned or type(cleaned.get("score")) is not int or not 1 <= cleaned["score"] <= 5):
         raise ValidationError("Choose a score from 1 to 5.")
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
 
         def change(session):
             before = database.reviews.find_one({"order_line_id": line.pk}, session=session)
@@ -107,7 +106,7 @@ def write_review(actor, line_id, action, cleaned=None):
 
         summary_changed = [False]  # set by the committed attempt: the callback runs again after a write conflict
         try:
-            result = _transact(client, change)
+            result = _transact(database.client, change)
         except DuplicateKeyError:
             raise ValidationError("This item already has a review. Edit it instead.") from None
         if summary_changed[0]:
@@ -129,8 +128,7 @@ def moderate_review(actor, line_id, action, reason):
             # Narrow definer function: fixed table/actions, context actor/reason, no direct audit DML.
             with connection.cursor() as cursor:
                 cursor.execute("SELECT public.audit_review_moderation(%s, %s)", [str(line_id), action])
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
 
                 def change(session):
                     before = database.reviews.find_one({"order_line_id": line_id}, session=session)
@@ -144,7 +142,7 @@ def moderate_review(actor, line_id, action, reason):
                     recompute_order_score(database, before["order_id"], session)
                     _summary(database, session, before["product_id"], before, after)
 
-                _transact(client, change)
+                _transact(database.client, change)
                 mongo_written = True
                 # MongoDB has committed and the cached dashboard blocks are read from it, so invalidate now, whatever
                 # becomes of the audit row's PostgreSQL transaction (an extra invalidation is harmless).

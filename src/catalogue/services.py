@@ -89,8 +89,7 @@ def save_product(seller, actor, cleaned, *, pk=None):
                 setattr(item, name, cleaned[name])
             item.save()
             # The SQL write has happened. A real refused connection or write error here rolls it back.
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
                 previous = database.product_specs.find_one({"_id": item.pk})
                 if pk is not None and previous is None:
                     raise ValidationError("Specifications are temporarily unavailable. Try again later.")
@@ -147,7 +146,7 @@ def moderate_product(actor, pk, action, reason):
         raise Http404
     reason = (reason or "").strip()
     if not reason:
-        raise ValueError("Give a reason.")
+        raise ValidationError("Give a reason.")
     with transaction.atomic():
         set_audit_context(actor.pk, reason)
         item = Product.objects.select_for_update().get(pk=pk)

@@ -57,8 +57,8 @@ def _listing(request, category=None):
         featured = visible_products().filter(featured=True).order_by("-id")
         products = featured if featured.exists() else visible_products().order_by("id")
         page = Paginator(products, PAGE_SIZE).get_page(data.get("page"))
-        with mongo.client() as client:
-            page.object_list = attach_photos(client[mongo.database_name()], page.object_list)
+        with mongo.database() as database:
+            page.object_list = attach_photos(database, page.object_list)
         context.update(page_obj=page, searching=False, featured=featured.exists())
     else:
         products = candidates(core.cleaned_data)
@@ -67,8 +67,7 @@ def _listing(request, category=None):
             category_ids.append(category.pk)
         elif core.cleaned_data.get("category") and core.cleaned_data["category"].pk not in category_ids:
             category_ids.append(core.cleaned_data["category"].pk)
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             definitions = attribute_definitions(database, category_ids)
             form = SearchForm(data, definitions=definitions)
             context["search_form"] = form
@@ -125,8 +124,7 @@ def rating_total_of(spec):
 @require_safe
 def product_detail(request, pk):
     product = get_object_or_404(visible_products(), pk=pk)
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
         spec = database.product_specs.find_one({"_id": product.pk})
         # The page opens on the specification's own latest reviews (one MongoDB read in total); the full list,
         # written reviews only, is requested with ?all=1 or any ?page=.
@@ -167,8 +165,7 @@ def seller_shop(request, pk):
     page = Paginator(visible_products().filter(seller=seller).order_by("-id"), PAGE_SIZE).get_page(
         request.GET.get("page")
     )
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
         page.object_list = attach_photos(database, page.object_list)
         rating = seller_rating(database, seller.pk)
     return render(request, "catalogue/seller_shop.html", {"seller": seller, "page_obj": page, "seller_rating": rating})
@@ -180,8 +177,7 @@ def product_photo(request, file_id):
         identity = ObjectId(file_id)
     except InvalidId:
         raise Http404 from None
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
         spec = database.product_specs.find_one({"photo_file_id": identity}, {"_id": 1})
         if spec is None or not visible_products().filter(pk=spec["_id"]).exists():
             raise Http404

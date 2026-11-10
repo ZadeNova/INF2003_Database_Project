@@ -11,6 +11,7 @@ import pytest
 from account_helpers import make_customer, make_operator, make_seller
 from bson import Decimal128
 from db_helpers import wait_until_blocked
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -23,7 +24,7 @@ from pymongo.errors import ConnectionFailure, WriteError
 from accounts.models import AuditLog
 from catalogue.models import Category, Product
 from catalogue.seller_forms import ProductForm
-from catalogue.services import save_product
+from catalogue.services import moderate_product, save_product
 from config import mongo
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -423,6 +424,14 @@ def test_seller_mutations_require_csrf_and_an_approved_seller(shop):
         client = Client()
         client.force_login(user)
         assert client.get("/products/mine/").status_code == 403
+
+
+def test_a_product_decision_without_a_reason_is_a_validation_error_like_every_other_service(shop, mongo_db):
+    item, operator = create(shop), make_operator()
+    for reason in ("", "   ", None):
+        with pytest.raises(ValidationError, match="Give a reason"):
+            moderate_product(operator, item.pk, "takedown", reason)
+    assert not product_audits().exists()
 
 
 def test_operator_takedown_restore_and_stale_actions_are_audited(shop, mongo_db):

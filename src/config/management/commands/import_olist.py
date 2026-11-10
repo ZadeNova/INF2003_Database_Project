@@ -43,8 +43,7 @@ class Command(BaseCommand):
         try:
             ledger = verify_manifest(source)
             self.stdout.write("Checksums and CSV headers verified.")
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
                 try:
                     with transaction.atomic():
                         with connection.cursor() as cursor:
@@ -70,7 +69,7 @@ class Command(BaseCommand):
                         self.stdout.write(
                             "PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows."
                         )
-                        with client.start_session() as session:
+                        with database.client.start_session() as session:
                             insert_documents(database, source, session, self.stdout.write, attempted_ids)
                             reconcile(database, ledger, session=session)
                         self.stdout.write("Cross-store references and ledger row counts reconciled.")
@@ -106,8 +105,8 @@ class Command(BaseCommand):
         redis_store.bump_dashboard()  # the imported rows are history: bump even if the refresh below fails
         try:
             # A summary left over from an earlier load must never be trusted if the refresh below fails.
-            with mongo.client() as client:
-                client[mongo.database_name()][ORDER_SCORES].delete_many({})
+            with mongo.database() as database:
+                database[ORDER_SCORES].delete_many({})
             refresh_sales()
         except (DatabaseError, PyMongoError) as error:
             raise CommandError(

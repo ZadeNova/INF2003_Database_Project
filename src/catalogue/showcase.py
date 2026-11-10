@@ -285,9 +285,7 @@ def load(catalogue_path, photos_dir, password):
     summary = Summary()
     User = get_user_model()
     showcase_ids = set()
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
-
+    with mongo.database() as database:
         with transaction.atomic():
             set_audit_context()
             for username, shop_name in data["demo_shop_names"].items():

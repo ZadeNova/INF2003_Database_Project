@@ -21,8 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         products = dict(Product.objects.values_list("pk", "category_id"))
         try:
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
                 documents = {
                     row["_id"]: row for row in database.product_specs.find({}, {"category_id": 1, "photo_file_id": 1})
                 }
