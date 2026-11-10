@@ -12,7 +12,8 @@ from pymongo.write_concern import WriteConcern
 
 from accounts.audit import set_audit_context
 from accounts.models import User
-from config import mongo
+from config import mongo, redis_store
+from dashboard.services import recompute_order_score
 from orders.models import Order, OrderLine
 
 from .ratings import summary_pipeline
@@ -62,8 +63,7 @@ def write_review(actor, line_id, action, cleaned=None):
         raise Http404
     if action != "delete" and (not cleaned or type(cleaned.get("score")) is not int or not 1 <= cleaned["score"] <= 5):
         raise ValidationError("Choose a score from 1 to 5.")
-    with mongo.client() as client:
-        database = client[mongo.database_name()]
+    with mongo.database() as database:
 
         def change(session):
             before = database.reviews.find_one({"order_line_id": line.pk}, session=session)
@@ -92,7 +92,8 @@ def write_review(actor, line_id, action, cleaned=None):
                     "text_pt": "",
                     "machine_translated": False,
                     "from_order_review": False,
-                    "olist_review_id": None,
+                    # An edit keeps the source id of an imported review (its provenance); a new review has none.
+                    "olist_review_id": (before or {}).get("olist_review_id"),
                     "created_at": (before or {}).get("created_at", now),
                     "answered_at": now,
                 }
@@ -100,13 +101,18 @@ def write_review(actor, line_id, action, cleaned=None):
                     database.reviews.replace_one({"order_line_id": line.pk}, after, session=session)
                 else:
                     database.reviews.insert_one(after, session=session)
+            summary_changed[:] = [recompute_order_score(database, line.order_id, session)]
             _summary(database, session, line.product_id, before, after)
             return after
 
+        summary_changed = [False]  # set by the committed attempt: the callback runs again after a write conflict
         try:
-            return _transact(client, change)
+            result = _transact(database.client, change)
         except DuplicateKeyError:
             raise ValidationError("This item already has a review. Edit it instead.") from None
+        if summary_changed[0]:
+            redis_store.bump_dashboard()  # a historical review changed what the cached dashboard blocks were built from
+        return result
 
 
 def moderate_review(actor, line_id, action, reason):
@@ -123,8 +129,7 @@ def moderate_review(actor, line_id, action, reason):
             # Narrow definer function: fixed table/actions, context actor/reason, no direct audit DML.
             with connection.cursor() as cursor:
                 cursor.execute("SELECT public.audit_review_moderation(%s, %s)", [str(line_id), action])
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
 
                 def change(session):
                     before = database.reviews.find_one({"order_line_id": line_id}, session=session)
@@ -135,10 +140,14 @@ def moderate_review(actor, line_id, action, reason):
                         raise ValidationError("This review has already changed. Reload and try again.")
                     after = {**before, "taken_down": target, "takedown_reason": reason.strip() if target else ""}
                     database.reviews.replace_one({"order_line_id": line_id}, after, session=session)
+                    recompute_order_score(database, before["order_id"], session)
                     _summary(database, session, before["product_id"], before, after)
 
-                _transact(client, change)
+                _transact(database.client, change)
                 mongo_written = True
+                # MongoDB has committed and the cached dashboard blocks are read from it, so invalidate now, whatever
+                # becomes of the audit row's PostgreSQL transaction (an extra invalidation is harmless).
+                redis_store.bump_dashboard()
     except Exception:
         if mongo_written:
             logger.error("reviews.cross_store_commit_unconfirmed", extra={"fields": {"order_line_id": line_id}})

@@ -16,7 +16,7 @@ minutes on a typical laptop, reproducibly, with a cleaning ledger that accounts 
 |---|---|---|
 | Translate (one-off, start early: 1 to 3 hours) | `scripts/translate_reviews.py`: Argos Translate, pinned package and pt→en model version, in its own environment (never the app image; recent versions pull in PyTorch). Translates distinct texts only (about 36k comments and 11.5k titles); resumable, so a stopped run continues | `data/derived/olist/translations.csv` (text hash, English text) |
 | Clean | `scripts/clean_olist.py` with pinned pandas, in a pinned `tools` container (Compose profile `tools`) so output is identical on every machine. Reads every CSV with `dtype=str` (23,995 customer zip codes start with 0), keeps money as `Decimal`, sorts deterministically, assigns new ids by sorted source keys, writes with `lineterminator="\n"`. Reads `translations.csv`; never translates | `data/derived/olist/clean/` (CSV for PostgreSQL, NDJSON for MongoDB) and `cleaning_ledger.json` |
-| Generate | `scripts/generate_content.py`, same container, fixed seed: reads the clean products and the hand-written templates in `data/derived/olist/templates/categories.json` (rich for the top 15 categories, generic for the rest: attribute definitions and word lists), writes names, descriptions, attributes, stock and lead times into the clean files and the `category_templates` documents | Same folder, checksummed |
+| Generate | `scripts/generate_content.py`, same container, fixed seed: reads the clean products and the hand-written templates in `data/derived/olist/templates/categories.json` (rich for the top 15 categories, generic for the rest: attribute definitions and word lists; every category also has a `names` entry of nouns, some tied to the drawn attributes), writes names, descriptions, attributes, stock and lead times into the clean files and the `category_templates` documents | Same folder, checksummed |
 | Import | `manage.py import_olist`, run as the **owner** role in the `migrate` service: runs `mongo_setup`; disables user triggers on the tables it loads (`ALTER TABLE … DISABLE TRIGGER USER`), `COPY`s the clean CSVs with their ids in foreign-key order, re-enables the triggers, `setval`s every identity sequence; then runs the money and ownership invariants as plain queries (payments equal checkout totals, refunds equal cancelled totals, one seller per order) and fails if any returns rows (decision o); bulk-inserts the NDJSON into MongoDB. Later workstreams append final steps (`dashboard` refreshes its view). No cleaning logic; refuses a non-empty database; prints progress per step | The loaded databases |
 
 `analytics/profile_olist.py` reproduces the 21 October profile, including the review score by delivery-delay bucket, and
@@ -100,12 +100,8 @@ Demo passwords (`DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR
 - **Accounts:** `seed_demo` creates usable logins (one customer per member, one operator, one seller tied to a high-volume
   Olist seller), passwords from `.env`. It also guarantees the demo seller owns one sold-out product and one product that
   the dashboard will flag (for the `wishlist` and `dashboard` exit checks), labelled as demo adjustments.
-- **Removal:** shoe code, data, 3D models (with `CREDITS.md`) and tests; `config/dataset.py` and `import_dataset`; the
-  `reporting` app (models including `CustomerSegment`, migrations, commands, templates and tests);
-  `analytics/build_shoe_dataset.py`, `analytics/export_coverage.py` and their tests.
 - **Minimum working after phase 1:** home, product list and product detail render from the new schema; the three demo
-  logins work. Cart, checkout, order and dashboard routes return 404, and their old tests are removed, until `checkout`
-  and `dashboard` rebuild them.
+  logins work. Cart, checkout, order and dashboard routes return 404.
 - **Fixture:** `scripts/make_fixture.py` picks a deterministic raw subset (about 1,000 Olist orders, including at least two
   of every broken kind, shared products, multi-seller orders and duplicate reviews) into `tests/fixtures/olist/raw/`;
   tests run cleaning and import on it.
@@ -139,7 +135,7 @@ query's rows; generation is deterministic; rule 18 drops exactly the products le
 |---|---|
 | a | Fresh migrations, one new `0001` per app |
 | b | Clean in Python before import; the importer only loads committed clean files |
-| c | Drop the old import machinery and the `reporting` app; `dashboard` rebuilds reporting |
+| c | `dashboard` builds reporting |
 | d | Translate offline with Argos Translate, once, as a separate step |
 | e | ECB rate on the implementation day, stored with its date in `data/derived/olist/fx.json` |
 | f | Olist timestamps become Singapore local time after the shift |
@@ -169,7 +165,7 @@ query's rows; generation is deterministic; rule 18 drops exactly the products le
 - Profile and verification use the five non-overlapping delay buckets from the dashboard contract. They count one
   original checkout review, including reviews copied to lines, and preserve the actual raw ordering pattern.
 - No later application routes, benchmark loader, Redis, activity collection, photos, checkout service or dashboard
-  implementation is added. Applicable auth/security/privilege/logging/outage coverage is ported to the new schema.
+  implementation is added. Applicable auth/security/privilege/logging/outage coverage is added to schema.
 - Independent Claude Code review and fix-round verification are complete; their record is retained below.
   The workstream is closed out and its AI-use log is recorded.
 

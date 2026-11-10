@@ -11,7 +11,13 @@ class Category(models.Model):
     hand_translated = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name_en
+        return self.display_name
+
+    @property
+    def display_name(self):
+        from .category_names import display_name
+
+        return display_name(self.name_en)
 
     @property
     def icon_name(self):
@@ -20,10 +26,19 @@ class Category(models.Model):
         return CATEGORY_ICONS.get(self.slug, self.icon)
 
 
+# A seller can list at most MAX_STOCK units of a product. The database ceiling is higher, so restocking cancelled
+# orders (at most MAX_CART_QUANTITY per cart line) can neither overflow the integer column nor break the ceiling.
+MAX_STOCK = 99_999
+STOCK_CEILING = 1_000_000
+# A lead time is days until the product can ship. Checkout adds it to today's date, so an absurd value would overflow
+# the calendar and fail every customer's checkout; a year is far beyond any real value (the imported data peaks at 30 days).
+MAX_LEAD_TIME_DAYS = 365
+
+
 class Product(models.Model):
     seller = models.ForeignKey("accounts.Seller", on_delete=models.PROTECT, related_name="products")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
-    olist_product_id = models.CharField(max_length=32, null=True, blank=True)
+    olist_product_id = models.CharField(max_length=32, null=True, blank=True)  # noqa: DJ001 - NULL: not an imported product
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     freight = models.DecimalField(max_digits=12, decimal_places=2)
@@ -51,7 +66,16 @@ class Product(models.Model):
             models.CheckConstraint(
                 condition=Q(freight__gte=0, freight__lte="9999999999.99"), name="product_freight_nonnegative_finite"
             ),
+            models.CheckConstraint(condition=Q(stock__lte=STOCK_CEILING), name="product_stock_capped"),
+            models.CheckConstraint(
+                condition=Q(lead_time_days__lte=MAX_LEAD_TIME_DAYS), name="product_lead_time_capped"
+            ),
         ]
+
+    @property
+    def sku(self):
+        """Short reference shown beside a name: the start of the Olist product id, for imported products only."""
+        return self.olist_product_id[:6].upper() if self.olist_product_id else None
 
     @property
     def display_price(self):

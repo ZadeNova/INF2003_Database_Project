@@ -6,10 +6,11 @@ from django.views import View
 
 from accounts.mixins import SellerRequiredMixin
 from config import mongo
+from config.ids import BIGINT_MAX
 
 from .models import Category, Product
 from .seller_forms import ProductForm
-from .services import deactivate_product, save_product
+from .services import StaleProductError, deactivate_product, save_product
 
 
 class SellerProductListView(SellerRequiredMixin, View):
@@ -17,7 +18,8 @@ class SellerProductListView(SellerRequiredMixin, View):
 
     def get(self, request):
         products = Product.objects.filter(seller=self.seller).select_related("category").order_by("-id")
-        query = request.GET.get("q", "").strip()[:200]
+        # PostgreSQL text cannot hold a NUL byte; a hand-made URL would otherwise end in a 500.
+        query = request.GET.get("q", "").replace("\x00", "").strip()[:200]
         if query:
             products = products.filter(name__icontains=query)
         page = Paginator(products, 25).get_page(request.GET.get("page"))
@@ -30,7 +32,7 @@ class SellerProductEditView(SellerRequiredMixin, View):
     def product(self, pk):
         return get_object_or_404(Product, pk=pk, seller=self.seller, taken_down=False) if pk is not None else None
 
-    def form(self, request, item):
+    def form(self, request, item, data=None):
         # The category is still validated by ModelChoiceField; this conversion only chooses template fields.
         raw = request.POST.get("category") if request.method == "POST" else request.GET.get("category")
         try:
@@ -41,16 +43,15 @@ class SellerProductEditView(SellerRequiredMixin, View):
                 if item
                 else Category.objects.order_by("name_en").values_list("pk", flat=True).first()
             )
-            selected = selected if selected is not None and 0 < selected < 2**63 else None
+            selected = selected if selected is not None and 0 < selected <= BIGINT_MAX else None
         except (TypeError, ValueError):
             selected = None
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             template = database.category_templates.find_one({"category_id": selected})
             spec = database.product_specs.find_one({"_id": item.pk}) if item else None
         bound = request.method == "POST"
         form = ProductForm(
-            request.POST if bound else None,
+            (request.POST if data is None else data) if bound else None,
             request.FILES if bound else None,
             instance=item,
             template=template,
@@ -73,6 +74,15 @@ class SellerProductEditView(SellerRequiredMixin, View):
         if form.is_valid():
             try:
                 save_product(self.seller, request.user, form.cleaned_data, pk=pk)
+            except StaleProductError as error:
+                # Keep what the seller typed, but expect the live values from now on so a second save can succeed.
+                refreshed = request.POST.copy()
+                refreshed["expected_stock"] = str(error.live["stock"])
+                refreshed["expected_price"] = str(error.live["price"])
+                form = self.form(request, item, data=refreshed)
+                form.add_error(None, error)
+                if request.FILES.get("photo"):
+                    form.add_error(None, "Choose your photo again: a browser cannot keep a selected file.")
             except ValidationError as error:
                 form.add_error(None, error)
             else:

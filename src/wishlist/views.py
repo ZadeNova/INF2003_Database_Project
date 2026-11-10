@@ -8,8 +8,7 @@ from django.views import View
 
 from accounts.mixins import CustomerRequiredMixin, safe_local_path
 from catalogue.models import Product
-from catalogue.search import attach_photos, visible_products
-from config import mongo
+from catalogue.search import photos_or_icons, visible_products
 
 from .models import RestockAlert, WishlistItem
 from .services import set_saved, visible_alerts
@@ -20,12 +19,13 @@ class WishlistView(CustomerRequiredMixin, View):
 
     def get(self, request):
         saved = WishlistItem.objects.filter(customer=request.user).values("product_id")
-        products = visible_products().filter(pk__in=saved).order_by("-wishlistitem__added_at")
+        products = visible_products().filter(pk__in=saved).order_by("-wishlistitem__added_at", "-id")
         # The reverse join must be scoped too: other customers' save dates must not duplicate or reorder rows.
         products = products.filter(wishlistitem__customer=request.user)
         page = Paginator(products, 24).get_page(request.GET.get("page"))
-        with mongo.client() as client:
-            page.object_list = attach_photos(client[mongo.database_name()], page.object_list)
+        page.object_list = photos_or_icons(
+            page.object_list
+        )  # the wishlist is PostgreSQL; only its pictures need MongoDB
         return render(request, "wishlist/list.html", {"page_obj": page})
 
 

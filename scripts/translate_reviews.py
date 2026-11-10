@@ -88,7 +88,7 @@ def main():
         args.model.parent.mkdir(parents=True, exist_ok=True)
         request = urllib.request.Request(MODEL_URL, headers={"User-Agent": "Mozilla/5.0"})
         with (
-            urllib.request.urlopen(request, timeout=60) as source,
+            urllib.request.urlopen(request, timeout=60) as source,  # noqa: S310 - fixed https MODEL_URL
             args.model.with_suffix(".download").open("wb") as target,
         ):
             import shutil
@@ -152,13 +152,13 @@ def main():
             tokens, beam_size=4, max_batch_size=32, max_decoding_length=512, return_scores=False
         )
         decoded = [pkg.tokenizer.decode(r.hypotheses[0]).strip() for r in translated]
-        for (key, original), (offset, count) in zip(batch, positions):
+        for (key, original), (offset, count) in zip(batch, positions, strict=True):
             english = "\n".join(decoded[offset : offset + count])
             if not english:
                 # Punctuation-only inputs can decode to an empty sequence. Preserve
                 # them verbatim; this is still labelled as model-processed text.
                 english = original
-            rows[key] = dict(zip(FIELDS, (key, original, english, "true")))
+            rows[key] = dict(zip(FIELDS, (key, original, english, "true"), strict=True))
         save(args.output, rows)
         print(f"Translated {min(start + len(batch), len(missing))}/{len(missing)} remaining texts", flush=True)
 

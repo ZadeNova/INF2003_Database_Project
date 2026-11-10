@@ -1,0 +1,14 @@
+{% extends "_standalone_error.html" %}
+{% block title %}Something went wrong{% endblock %}
+{% block eyebrow %}500 · something went wrong{% endblock %}
+{% block heading %}Something went wrong on our side.{% endblock %}
+{% block body %}
+<p>Please wait a moment and try again.</p>
+<div class="message message--error" role="alert">
+    <span class="message__icon" aria-hidden="true">!</span>
+    <div>
+        <strong>If you were placing an order,</strong>
+        <p>check your order history before trying again, so you do not order twice.</p>
+    </div>
+</div>
+{% endblock %}

@@ -7,14 +7,14 @@ from decimal import Decimal
 import pytest
 from checkout_helpers import customer, product
 from django.core.exceptions import PermissionDenied
-from django.db import connection
+from django.db import IntegrityError, connection
 from django.http import Http404
 
 from accounts.audit import change_seller_status
 from accounts.models import AuditLog, Seller, User
-from catalogue.models import Product
+from catalogue.models import STOCK_CEILING, Product
 from config.olist_import import INVARIANTS, sql_invariants
-from orders.models import Checkout, Order, OrderLine, Payment, Refund
+from orders.models import CartLine, Checkout, Order, OrderLine, Payment, Refund
 from orders.services import (
     CartChangedError,
     CheckoutError,
@@ -259,6 +259,19 @@ def test_ship_deliver_and_cancel_with_stock_refund_and_audit():
     assert set(sql_invariants().values()) == {0}
 
 
+def test_cancelling_restocks_up_to_the_stock_ceiling_and_the_database_enforces_it():
+    buyer, item = customer(), product(stock=STOCK_CEILING)
+    add_to_cart(buyer, item.pk, 5)
+    order = buy(buyer).orders.get()
+    item.refresh_from_db()
+    assert item.stock == STOCK_CEILING - 5
+    change_order_status(buyer, order.pk, "cancel", "Changed my mind")
+    item.refresh_from_db()
+    assert item.stock == STOCK_CEILING
+    with pytest.raises(IntegrityError):
+        Product.objects.filter(pk=item.pk).update(stock=STOCK_CEILING + 1)
+
+
 def test_shipped_order_cannot_be_cancelled():
     buyer, item = customer(), product()
     add_to_cart(buyer, item.pk)
@@ -283,6 +296,37 @@ def test_an_oversized_cancel_reason_is_refused_before_anything_changes():
     assert order.status == "paid" and not Refund.objects.exists() and AuditLog.objects.count() == audit_rows
     change_order_status(buyer, order.pk, "cancel", "y" * 1000)
     assert Refund.objects.get().reason == "y" * 1000
+
+
+def test_a_cancel_reason_with_a_nul_byte_is_refused_not_a_server_error():
+    # Forms refuse the character; a hand-made POST reaches the service, and PostgreSQL text cannot hold it.
+    buyer, item = customer(), product()
+    add_to_cart(buyer, item.pk)
+    order = buy(buyer).orders.get()
+    audit_rows = AuditLog.objects.count()
+    with pytest.raises(CheckoutError, match="cannot be saved"):
+        change_order_status(buyer, order.pk, "cancel", "oops\x00")
+    order.refresh_from_db()
+    assert order.status == "paid" and not Refund.objects.exists() and AuditLog.objects.count() == audit_rows
+
+
+def test_the_cart_refuses_more_than_the_stock_before_checkout_is_reached():
+    buyer, item = customer(), product(stock=3)
+    add_to_cart(buyer, item.pk, 3)
+    with pytest.raises(InsufficientStockError):
+        add_to_cart(buyer, item.pk)  # a fourth unit on top of the three already in the cart
+    with pytest.raises(InsufficientStockError):
+        add_to_cart(customer("second-buyer"), item.pk, 4)
+    assert buyer.cart.lines.get().quantity == 3 and not CartLine.objects.exclude(cart=buyer.cart).exists()
+
+
+def test_the_longest_lead_time_still_checks_out_and_a_longer_one_cannot_be_stored():
+    buyer, item = customer(), product(lead=365)
+    add_to_cart(buyer, item.pk)
+    order = buy(buyer).orders.get()
+    assert (order.estimated_delivery - order.placed_at).days == 365 + 15
+    with pytest.raises(IntegrityError):
+        Product.objects.filter(pk=item.pk).update(lead_time_days=366)
 
 
 def test_services_scope_cart_order_and_actor_roles():

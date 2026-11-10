@@ -3,7 +3,7 @@ from decimal import Decimal
 from django import forms
 
 from .forms import attribute_field, attribute_text, typed_value
-from .models import Category, Product
+from .models import MAX_LEAD_TIME_DAYS, MAX_STOCK, Category, Product
 
 
 class ProductForm(forms.ModelForm):
@@ -15,18 +15,32 @@ class ProductForm(forms.ModelForm):
     )
     price = forms.DecimalField(min_value=Decimal("0.01"), max_digits=12, decimal_places=2, label="Price (S$)")
     freight = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, label="Shipping fee (S$)")
-    stock = forms.IntegerField(min_value=0, max_value=2**31 - 1)
-    lead_time_days = forms.IntegerField(label="Ready to ship in (days)", min_value=0, max_value=2**31 - 1)
+    stock = forms.IntegerField(min_value=0, max_value=MAX_STOCK, help_text="Up to 99,999 units per product.")
+    lead_time_days = forms.IntegerField(
+        label="Ready to ship in (days)",
+        min_value=0,
+        max_value=MAX_LEAD_TIME_DAYS,
+        help_text=f"Up to {MAX_LEAD_TIME_DAYS} days.",
+    )
+    # What the seller saw when the form was opened. Sales change stock while a form is open, so the service
+    # compares these with the live row instead of overwriting it with an old value.
+    expected_stock = forms.CharField(required=False, widget=forms.HiddenInput)
+    expected_price = forms.CharField(required=False, widget=forms.HiddenInput)
 
     class Meta:
         model = Product
         fields = ["name", "category", "price", "stock", "freight", "lead_time_days"]
+        # The category is chosen once, in the selector above the form; the form carries it as a hidden value.
+        widgets = {"category": forms.HiddenInput}
 
     def __init__(self, *args, template=None, spec=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.template = template
         self.fields["category"].queryset = Category.objects.order_by("name_en")
         self.initial["description"] = (spec or {}).get("description", "")
+        if self.instance.pk and not self.is_bound:
+            self.initial["expected_stock"] = self.instance.stock
+            self.initial["expected_price"] = self.instance.price
         for name, definition in sorted((template or {}).get("attributes", {}).items()):
             self.fields["attr_" + name] = attribute_field(definition, required=definition.get("required", False))
             self.fields["attr_" + name].label = name.replace("_", " ").capitalize()
@@ -42,6 +56,15 @@ class ProductForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
+        for name, kind in (("stock", int), ("price", Decimal)):
+            raw = (cleaned.get("expected_" + name) or "").strip()
+            try:
+                value = kind(raw) if raw else None
+                if isinstance(value, Decimal) and not value.is_finite():  # NaN and Infinity cannot be compared safely
+                    raise ValueError
+            except (ValueError, ArithmeticError):
+                raise forms.ValidationError("This form is out of date. Reload the page and try again.") from None
+            cleaned["expected_" + name] = value
         if self.template is None:
             raise forms.ValidationError("This category is temporarily unavailable.")
         if cleaned.get("category") and cleaned["category"].pk != self.template["category_id"]:

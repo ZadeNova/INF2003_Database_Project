@@ -1,8 +1,58 @@
 {% extends "base.html" %}
 {% block title %}Order #{{ order.pk }} — Mercer{% endblock %}
-{% block content %}<div class="page account-page checkout-page"><a href="{% url 'orders:checkout_detail' order.checkout_id %}">Back to purchase</a><div class="page__header"><div><p class="eyebrow">Order #{{ order.pk }}</p><h1 class="page__title">{{ order.seller.display_name }}</h1><p class="page__meta">Placed {{ order.placed_at|date:"j M Y, H:i" }}</p></div>{% include "orders/_status.html" %}</div>
-<section class="panel checkout-panel"><h2 class="panel__title">Your items</h2>{% for line in order.lines.all %}<div class="checkout-review-line"><div>{{ line.product.name }} {% if order.status == "delivered" %}<a href="{% url 'reviews:write' line.pk %}">Write or edit review</a>{% endif %} <span class="panel__note">× {{ line.quantity }}</span><p class="panel__note">S${{ line.unit_price }} each · Shipping S${{ line.freight }}</p></div></div>{% endfor %}<dl class="detail-list checkout-totals"><dt>Items</dt><dd>S${{ order.items }}</dd><dt>Shipping</dt><dd>S${{ order.freight }}</dd><dt>Total</dt><dd>S${{ order.total }}</dd></dl></section>
-<section class="panel checkout-panel"><h2 class="panel__title">Delivery</h2><dl class="detail-list"><dt>Estimated arrival</dt><dd>{{ order.estimated_delivery|date:"j M Y" }}</dd>{% if order.paid_at %}<dt>Paid</dt><dd>{{ order.paid_at|date:"j M Y, H:i" }}</dd>{% endif %}{% if order.shipped_at %}<dt>Shipped</dt><dd>{{ order.shipped_at|date:"j M Y, H:i" }}</dd>{% endif %}{% if order.delivered_at %}<dt>Delivered</dt><dd>{{ order.delivered_at|date:"j M Y, H:i" }}</dd>{% endif %}{% if order.cancelled_at %}<dt>Cancelled</dt><dd>{{ order.cancelled_at|date:"j M Y, H:i" }}</dd>{% endif %}</dl></section>
-{% if order.status == 'paid' or order.status == 'placed' %}<section class="panel checkout-panel"><h2 class="panel__title">Cancel this order</h2><p class="panel__note">You can cancel before this shop ships. The full shop total will be refunded.</p><form method="post" action="{% url 'orders:cancel' order.pk %}" class="checkout-payment">{% csrf_token %}<div class="form-field"><label for="cancel-reason">Reason (optional)</label><textarea name="reason" id="cancel-reason" rows="2" maxlength="1000"></textarea></div><button class="button button--outline-neutral" type="submit">Cancel order</button></form></section>{% endif %}
-{% if order.refund %}<section class="panel checkout-panel"><h2 class="panel__title">Refunded S${{ order.refund.amount }}</h2><p class="panel__note">{{ order.refund.refunded_at|date:"j M Y, H:i" }}</p><p>{{ order.refund.reason }}</p></section>{% endif %}
-</div>{% endblock %}
+{% block content %}<div class="page account-page checkout-page">
+    <a href="{% url 'orders:checkout_detail' order.checkout_id %}">Back to purchase</a>
+    <div class="page__header">
+      <div>
+        <p class="eyebrow">Order #{{ order.pk }}</p>
+        <h1 class="page__title">{{ order.seller.display_name }}</h1>
+        <p class="page__meta">Placed {{ order.placed_at|date:"j M Y, H:i" }}</p>
+      </div>{% include "orders/_status.html" %}</div>
+<section class="panel checkout-panel">
+      <h2 class="panel__title">Your items</h2>
+      {% for line in order.lines.all %}<div class="checkout-review-line">
+          <div>{{ line.product.name }} {% if order.status == "delivered" %}<a href="{% url 'reviews:write' line.pk %}">Write or edit review</a>{% endif %} <span class="panel__note">× {{ line.quantity }}</span>
+            <p class="panel__note">S${{ line.unit_price }} each · Shipping S${{ line.freight }}</p>
+          </div>
+        </div>
+      {% endfor %}<dl class="detail-list checkout-totals">
+        <dt>Items</dt>
+        <dd>S${{ order.items }}</dd>
+        <dt>Shipping</dt>
+        <dd>S${{ order.freight }}</dd>
+        <dt>Total</dt>
+        <dd>S${{ order.total }}</dd>
+      </dl>
+    </section>
+<section class="panel checkout-panel">
+      <h2 class="panel__title">Delivery</h2>
+      <dl class="detail-list">
+        <dt>Estimated arrival</dt>
+        <dd>{{ order.estimated_delivery|date:"j M Y" }}</dd>
+        {% if order.paid_at %}<dt>Paid</dt>
+          <dd>{{ order.paid_at|date:"j M Y, H:i" }}</dd>
+        {% endif %}{% if order.shipped_at %}<dt>Shipped</dt>
+          <dd>{{ order.shipped_at|date:"j M Y, H:i" }}</dd>
+        {% endif %}{% if order.delivered_at %}<dt>Delivered</dt>
+          <dd>{{ order.delivered_at|date:"j M Y, H:i" }}</dd>
+        {% endif %}{% if order.cancelled_at %}<dt>Cancelled</dt>
+          <dd>{{ order.cancelled_at|date:"j M Y, H:i" }}</dd>
+        {% endif %}</dl>
+    </section>
+{% if order.status == 'paid' or order.status == 'placed' %}<section class="panel checkout-panel">
+        <h2 class="panel__title">Cancel this order</h2>
+        <p class="panel__note">You can cancel before this shop ships. The full shop total will be refunded.</p>
+        <form method="post" action="{% url 'orders:cancel' order.pk %}" class="checkout-payment">{% csrf_token %}<div class="form-field">
+            <label for="cancel-reason">Reason (optional)</label><textarea name="reason" id="cancel-reason" rows="2" maxlength="1000"></textarea></div>
+          <button class="button button--outline-neutral" type="submit">Cancel order</button>
+        </form>
+      </section>
+    {% endif %}
+{% if order.refund %}<section class="panel checkout-panel">
+        <h2 class="panel__title">Refunded S${{ order.refund.amount }}</h2>
+        <p class="panel__note">{{ order.refund.refunded_at|date:"j M Y, H:i" }}</p>
+        <p>{{ order.refund.reason }}</p>
+      </section>
+    {% endif %}
+</div>
+{% endblock %}

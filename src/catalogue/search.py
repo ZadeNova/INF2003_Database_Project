@@ -1,5 +1,6 @@
 """PostgreSQL chooses purchasable candidates; one MongoDB facet counts only those candidates."""
 
+import logging
 import math
 from decimal import Decimal
 
@@ -7,8 +8,13 @@ from bson import Decimal128
 from django.core.paginator import Paginator
 from django.db.models import BooleanField, FloatField
 from django.db.models.expressions import RawSQL
+from pymongo.errors import PyMongoError
+
+from config import mongo
 
 from .models import Product, PurchasableProduct
+
+logger = logging.getLogger("mercer.errors")
 
 PAGE_SIZE = 24
 # The plan bounds a category at about 2k buyable products (the largest has 1,292). A broad name-only search
@@ -43,7 +49,8 @@ def candidates(cleaned):
         return products.annotate(
             name_rank=RawSQL('similarity("catalogue_product"."name", %s)', [query], output_field=FloatField())
         ).order_by("-name_rank", "-id")
-    return products.order_by("-id")
+    # Featured products (the pictured demonstration catalogue) lead, then the newest.
+    return products.order_by("-featured", "-id")
 
 
 def attribute_definitions(database, category_ids):
@@ -61,7 +68,7 @@ def attribute_definitions(database, category_ids):
 
 def facet_match(ids, cleaned, definitions):
     match = {"_id": {"$in": list(ids)}}
-    for key, definition in definitions.items():
+    for key in definitions:
         value = cleaned.get("attr_" + key)
         if value is not None and value != "":
             match["attributes." + key] = {"$eq": value}
@@ -140,12 +147,31 @@ def search_page(database, products, cleaned, definitions, requested):
         found = {item.pk: item for item in matching_products(matched_ids)}
         page.object_list = [found[pk] for pk in matched_ids if pk in found]
     else:
-        ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}
+        ordering = {
+            "price": ("price", "id"),
+            "price_desc": ("-price", "-id"),
+            "newest": ("-id",),
+            # The default: featured products (the pictured demonstration catalogue) lead, then the newest.
+            "recommended": ("-featured", "-id"),
+        }
         page = Paginator(
-            matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "newest"]), PAGE_SIZE
+            matching_products(matched_ids).order_by(*ordering[cleaned.get("sort") or "recommended"]), PAGE_SIZE
         ).get_page(requested)
     facets["capped"] = capped
     return page, facets
+
+
+def photos_or_icons(products):
+    """Attach photo ids from MongoDB, or leave the icon cards when MongoDB is unreachable: a listing must not fail for a picture."""
+    products = list(products)
+    try:
+        with mongo.database() as database:
+            return attach_photos(database, products)
+    except PyMongoError:
+        logger.warning("catalogue.photos_unavailable")
+        for item in products:
+            item.photo_file_id = None
+        return products
 
 
 def attach_photos(database, products):

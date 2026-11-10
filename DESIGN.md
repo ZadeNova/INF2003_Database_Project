@@ -149,7 +149,7 @@ All public catalogue grids use four columns at 1280px and wider, three from 768p
 768px, including phones. Rows stretch to align the cards; card names and labels remain readable without truncation.
 Grid gaps are 24px on larger screens and 16px on phones. The facet column is separate from these product columns.
 
-Each card has a 4:3 media well, category link, wrapping product name, linked shop name, mono price, stock label and
+Each card has a 4:3 media well, category link, wrapping product name, a muted mono SKU line (imported products), linked shop name, mono price, stock label and
 generated-content label when applicable. Category media uses the existing Phosphor sprite mapping. Seller uploads
 are contained within the same media well, with no cropping or enlargement interaction. The photo, name and category
 links remain keyboard-accessible. Hover changes the border only.
@@ -215,6 +215,18 @@ The operator dashboard reuses bordered panels and contained, keyboard-focusable 
 its reporting date and sources. Replenishment and risk use written amber badges. The revenue chart uses the current
 theme's ink and grid colours, has no animation, and retains exact values in the adjacent table. Wide tables scroll
 inside their region; the canvas stays inside its panel on phones. Filters and refresh are separate labelled controls.
+When the delivery, category and review panels come from the Redis cache, one written line under the lead says so and
+how long ago they were computed, and that stock is always live; nothing else on the page changes.
+
+The "too many attempts" page (429) is a standalone error card like the 503 page: a `429 · too many attempts` eyebrow,
+one sentence saying how long to wait, and one dark button back to sign in, the order or the shop. It never echoes the
+form, and it renders without touching the user or session, so it works during an outage.
+
+The other errors a visitor can reach use the same standalone card (`_standalone_error.html`, which `400`, `403_csrf`,
+`413` and `500` extend): a `<code> · <short reason>` eyebrow, one heading in plain words, one or two sentences saying what to
+do, and a dark button back to the shop. The form-not-submitted page (a missing or expired CSRF token) and the 500 page also
+carry the "check your order history before trying again" warning of the 503 page. None of them shows a stack trace, a path, a
+query or a setting.
 
 Trending fills the catalogue's existing panel and uses the same product grid, with written rank/view counts and a
 generated-activity label where applicable. Recently viewed uses the same grid on home and product pages. Seller
@@ -242,8 +254,6 @@ for document overflow as well as checking computed styles.
 
 - **Design reference:** [VoiceBox v1 by Chef (@chef)](https://designmd.ai/chef/voicebox), published under MIT. Jun Keat
   Lim introduced the VoiceBox reference on 23 September 2026 (`d147c9d`); its source was verified on 11 October 2026.
-  This Mercer rewrite folds the previous "As built" adaptations into one system under the approved catalogue
-  amendment f. The original reference is retained in Git history. Keep the [MIT notice and verification record](docs/licenses/voicebox-MIT.txt).
 - **Typefaces:** Archivo Black, Work Sans and Space Mono are SIL Open Font License and loaded from Google Fonts.
   Pixelify Sans is also SIL Open Font License and loads only the "67" brand-mark subset.
 - **Icons:** Phosphor Icons regular weight, MIT, vendored in [icons.svg](src/static/img/icons.svg), with its licence in

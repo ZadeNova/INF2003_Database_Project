@@ -5,9 +5,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.cache import never_cache
 
 from accounts.mixins import CustomerRequiredMixin, OperatorRequiredMixin, SellerRequiredMixin
 
@@ -24,7 +22,6 @@ from .services import (
 )
 
 
-@method_decorator(never_cache, name="dispatch")
 class CartView(CustomerRequiredMixin, View):
     def get(self, request):
         return render(request, "orders/cart.html", cart_review(request.user))
@@ -62,7 +59,6 @@ class CartChangeView(CustomerRequiredMixin, View):
         return redirect("orders:cart")
 
 
-@method_decorator(never_cache, name="dispatch")
 class ReviewView(CustomerRequiredMixin, View):
     def get(self, request):
         context = cart_review(request.user)
@@ -96,7 +92,6 @@ class ReviewView(CustomerRequiredMixin, View):
         return render(request, "orders/review.html", context, status=400)
 
 
-@method_decorator(never_cache, name="dispatch")
 class HistoryView(CustomerRequiredMixin, View):
     def get(self, request):
         records = (
@@ -109,16 +104,17 @@ class HistoryView(CustomerRequiredMixin, View):
         )
 
 
-@method_decorator(never_cache, name="dispatch")
 class CheckoutDetailView(CustomerRequiredMixin, View):
     def get(self, request, pk):
         record = get_object_or_404(
-            Checkout.objects.filter(customer=request.user).prefetch_related("orders__seller", "payments"), pk=pk
+            Checkout.objects.filter(customer=request.user).prefetch_related(
+                "orders__seller", "orders__refund", "payments"
+            ),
+            pk=pk,
         )
         return render(request, "orders/checkout_detail.html", {"checkout": record})
 
 
-@method_decorator(never_cache, name="dispatch")
 class OrderDetailView(CustomerRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(
@@ -141,13 +137,14 @@ class CancelView(CustomerRequiredMixin, View):
         return redirect("orders:order_detail", pk=pk)
 
 
-@method_decorator(never_cache, name="dispatch")
 class SellerOrdersView(SellerRequiredMixin, View):
     def get(self, request):
         filters = OrderFilterForm(request.GET)
         orders = (
             filters.apply(Order.objects.filter(seller=self.seller))
-            .select_related("checkout", "seller")
+            .select_related(
+                "seller"
+            )  # not the checkout: it is shared by every seller in the basket and hidden from them
             .order_by("-placed_at", "-pk")
         )
         query = (
@@ -178,7 +175,6 @@ class ShipView(SellerRequiredMixin, View):
         return redirect("orders:seller_orders")
 
 
-@method_decorator(never_cache, name="dispatch")
 class OperatorOrdersView(OperatorRequiredMixin, View):
     def get(self, request):
         filters = OrderFilterForm(request.GET)

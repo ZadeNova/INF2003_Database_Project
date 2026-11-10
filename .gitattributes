@@ -4,6 +4,7 @@ data/raw/**/*.csv -text
 data/derived/**/*.csv -text
 data/derived/**/*.ndjson -text
 data/derived/**/*.json -text
+data/derived/**/*.xml -text
 tests/fixtures/**/*.csv -text
 tests/fixtures/**/*.ndjson -text
 tests/fixtures/**/*.json -text

@@ -22,8 +22,8 @@ class Command(BaseCommand):
         except DatabaseError:
             raise CommandError("Database unavailable.") from None
         try:
-            with mongo.client() as client:
-                hello = client[mongo.database_name()].command("hello")
+            with mongo.database() as database:
+                hello = database.command("hello")
         except (PyMongoError, ValueError):
             raise CommandError("MongoDB unavailable.") from None
         if hello.get("setName") != mongo.REPLICA_SET or not hello.get("isWritablePrimary"):

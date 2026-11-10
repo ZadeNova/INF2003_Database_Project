@@ -17,6 +17,38 @@ from .models import Product
 
 logger = logging.getLogger("mercer.errors")
 PRODUCT_FIELDS = ("name", "category", "price", "stock", "freight", "lead_time_days")
+# Fields other writers change while a seller has the form open: sales change stock.
+CONCURRENT_FIELDS = ("stock", "price")
+
+
+class StaleProductError(ValidationError):
+    """The seller changed a field that someone else also changed while the form was open."""
+
+    def __init__(self, message, live):
+        super().__init__(message)
+        self.live = live
+
+
+def _merge_concurrent_edits(item, cleaned):
+    """Compare-and-set per field, with the product row locked.
+
+    A field the seller left as it was keeps its live value, so sales made meanwhile survive; a field the seller
+    changed is applied only if nobody else changed it meanwhile. A form without the expected values applies as posted.
+    """
+    merged = dict(cleaned)
+    for name in CONCURRENT_FIELDS:
+        expected = cleaned.get("expected_" + name)
+        if expected is None:
+            continue
+        live = getattr(item, name)
+        if cleaned[name] == expected:
+            merged[name] = live
+        elif cleaned[name] != live and live != expected:
+            raise StaleProductError(
+                f"The {name} changed to {live} while you were editing. Check it and save again.",
+                {"stock": item.stock, "price": item.price},
+            )
+    return merged
 
 
 def _seller_lock(seller, actor):
@@ -51,12 +83,13 @@ def save_product(seller, actor, cleaned, *, pk=None):
             set_audit_context(actor.pk, "Seller saved product")
             _seller_lock(seller, actor)
             item = _editable(seller, pk) if pk is not None else Product(seller=seller, has_generated_content=False)
+            if pk is not None:
+                cleaned = _merge_concurrent_edits(item, cleaned)
             for name in PRODUCT_FIELDS:
                 setattr(item, name, cleaned[name])
             item.save()
             # The SQL write has happened. A real refused connection or write error here rolls it back.
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
                 previous = database.product_specs.find_one({"_id": item.pk})
                 if pk is not None and previous is None:
                     raise ValidationError("Specifications are temporarily unavailable. Try again later.")
@@ -113,7 +146,7 @@ def moderate_product(actor, pk, action, reason):
         raise Http404
     reason = (reason or "").strip()
     if not reason:
-        raise ValueError("Give a reason.")
+        raise ValidationError("Give a reason.")
     with transaction.atomic():
         set_audit_context(actor.pk, reason)
         item = Product.objects.select_for_update().get(pk=pk)

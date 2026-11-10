@@ -1,4 +1,4 @@
-"""Database constraints on real PostgreSQL, including ported idempotency coverage."""
+"""Database constraints on real PostgreSQL."""
 
 import uuid
 from datetime import datetime, timezone
@@ -169,6 +169,17 @@ def test_purchasable_view_has_the_canonical_visibility_rules(graph):
             seller=other, category=product.category, name=status, price="1", freight="0", stock=1, lead_time_days=1
         )
         assert not PurchasableProduct.objects.filter(pk=hidden.pk).exists()
+
+
+def test_the_history_of_one_row_is_found_through_its_index():
+    with connection.cursor() as cursor:
+        cursor.execute("SET LOCAL enable_seqscan = off")  # the table is tiny; ask which index could serve the query
+        cursor.execute(
+            "EXPLAIN SELECT id FROM audit_log WHERE table_name = 'accounts_seller' AND row_id = '1' "
+            "ORDER BY created_at DESC, id DESC"
+        )
+        plan = " ".join(row[0] for row in cursor.fetchall())
+    assert "audit_log_row_history" in plan
 
 
 def test_historical_values_survive_price_changes_and_deletion_is_protected(graph):

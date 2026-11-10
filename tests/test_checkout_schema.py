@@ -12,8 +12,9 @@ from psycopg import errors, sql
 
 from accounts.audit import set_audit_context
 from accounts.models import AuditLog
+from catalogue.models import Product
 from config.privileges import grant_runtime
-from orders.models import Cart, CartLine, Checkout, Order, Payment, Refund
+from orders.models import Cart, CartLine, Checkout, Order, OrderLine, Payment, Refund
 from orders.services import add_to_cart, cart_review, change_order_status, checkout
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -145,7 +146,10 @@ def test_order_audit_trigger_works_as_runtime_and_cannot_be_tampered_with():
     assert len(rows) == 4
     for name, owner, definer, config, execute in rows:
         assert owner == os.environ["POSTGRES_USER"] and config == ["search_path=public, pg_temp"] and not execute
-        assert definer == (name == "audit_order_status")
+        # The audit function writes a table runtime cannot; the two money checks read every payment, order and refund of a
+        # checkout, which a seller session's row policies would otherwise hide (docs/plans/seller-rls.md). The status
+        # check only looks at OLD and NEW and keeps the caller's rights.
+        assert definer == (name != "check_order_status_transition")
 
 
 @pytest.mark.parametrize("bad", ["checkout-insert", "order-insert", "order-delete", "payment-insert", "payment-move"])
@@ -174,10 +178,52 @@ def test_deferred_checks_cover_inserts_deletes_and_both_moved_parents(bad):
         elif bad == "payment-insert":
             Payment.objects.create(checkout=checkout, sequence=2, method="voucher", instalments=1, amount=1)
         else:
+            # The key guard would refuse the move first; switch it off (rolled back with the transaction) so that the
+            # deferred money check, which still covers both parents of a moved row, is the thing under test.
+            with connection.cursor() as cursor:
+                cursor.execute("ALTER TABLE orders_payment DISABLE TRIGGER orders_payment_key_guard")
             Payment.objects.filter(checkout=checkout).update(checkout=other)
         assert connection.in_atomic_block
     assert Checkout.objects.get(pk=checkout.pk).payments.get().amount == 12
     assert not other.payments.exists()
+
+
+KEY_CHANGES = {
+    "order-checkout": ("orders_order", "UPDATE orders_order SET checkout_id = %(other_checkout)s WHERE id = %(order)s"),
+    "checkout-customer": ("orders_checkout", "UPDATE orders_checkout SET customer_id = %(other_buyer)s WHERE id = %(checkout)s"),
+    "checkout-placed-at": ("orders_checkout", "UPDATE orders_checkout SET placed_at = placed_at + interval '1 day' WHERE id = %(checkout)s"),
+    "checkout-source-id": ("orders_checkout", "UPDATE orders_checkout SET olist_order_id = 'moved' WHERE id = %(checkout)s"),
+    "line-product": ("orders_orderline", "UPDATE orders_orderline SET product_id = %(second_product)s WHERE id = %(line)s"),
+    "payment-checkout": ("orders_payment", "UPDATE orders_payment SET checkout_id = %(other_checkout)s WHERE checkout_id = %(checkout)s"),
+    "refund-checkout": ("orders_refund", "UPDATE orders_refund SET checkout_id = %(other_checkout)s WHERE order_id = %(order)s"),
+}  # fmt: skip
+
+
+@pytest.mark.parametrize("change", sorted(KEY_CHANGES))
+def test_a_row_cannot_be_moved_to_another_parent_even_by_the_web_role(change):
+    table, statement = KEY_CHANGES[change]
+    buyer, item = customer(), product()
+    checkout, order = paid_order(buyer, item, status="cancelled")  # a cancelled order has its refund
+    line = OrderLine.objects.create(order=order, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
+    other_buyer = customer("other-buyer")
+    other_checkout, _ = paid_order(other_buyer, product("other"))
+    second_product = Product.objects.create(
+        seller=item.seller, category=item.category, name="second", stock=1, price=1, freight=0, lead_time_days=1
+    )
+    ids = {
+        "order": order.pk,
+        "checkout": checkout.pk,
+        "line": line.pk,
+        "other_checkout": other_checkout.pk,
+        "other_buyer": other_buyer.pk,
+        "second_product": second_product.pk,
+    }
+    with runtime_connection() as runtime:
+        with pytest.raises(errors.CheckViolation, match=f"{table} keys cannot be changed"), runtime.transaction():
+            runtime.execute(statement, ids)
+        # The same rows can still be changed in the ways the application changes them.
+        runtime.execute("UPDATE orders_orderline SET quantity = quantity WHERE id = %s", [line.pk])
+        runtime.execute("UPDATE orders_checkout SET total = total WHERE id = %s", [checkout.pk])
 
 
 MONEY_TABLES = ("orders_checkout", "orders_order", "orders_orderline", "orders_payment", "orders_refund")
@@ -218,42 +264,41 @@ def test_runtime_cannot_rewrite_shipped_order_by_delete_and_insert():
     change_order_status(item.seller.user, order.pk, "ship")
     order.refresh_from_db()
     audit_before = AuditLog.objects.filter(table_name="orders_order").count()
-    with runtime_connection() as runtime:
-        with pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
-            runtime.execute("SELECT set_config('mercer.actor_id', %s, true)", [str(buyer.pk)])
-            line = runtime.execute(
-                """SELECT seller_id,product_id,quantity,unit_price,freight,shipping_limit_at
+    with runtime_connection() as runtime, pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
+        runtime.execute("SELECT set_config('mercer.actor_id', %s, true)", [str(buyer.pk)])
+        line = runtime.execute(
+            """SELECT seller_id,product_id,quantity,unit_price,freight,shipping_limit_at
                                       FROM orders_orderline WHERE order_id=%s""",
-                [order.pk],
-            ).fetchone()
-            runtime.execute("DELETE FROM orders_orderline WHERE order_id=%s", [order.pk])
-            runtime.execute("DELETE FROM orders_order WHERE id=%s", [order.pk])
-            new_id = runtime.execute(
-                """INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,
+            [order.pk],
+        ).fetchone()
+        runtime.execute("DELETE FROM orders_orderline WHERE order_id=%s", [order.pk])
+        runtime.execute("DELETE FROM orders_order WHERE id=%s", [order.pk])
+        new_id = runtime.execute(
+            """INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,
                                          paid_at,shipped_at,cancelled_at,estimated_delivery)
                                          VALUES (%s,%s,'cancelled',%s,%s,%s,%s,%s,%s,now(),%s) RETURNING id""",
-                [
-                    record.pk,
-                    order.seller_id,
-                    order.items,
-                    order.freight,
-                    order.total,
-                    order.placed_at,
-                    order.paid_at,
-                    order.shipped_at,
-                    order.estimated_delivery,
-                ],
-            ).fetchone()[0]
-            runtime.execute(
-                """INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
+            [
+                record.pk,
+                order.seller_id,
+                order.items,
+                order.freight,
+                order.total,
+                order.placed_at,
+                order.paid_at,
+                order.shipped_at,
+                order.estimated_delivery,
+            ],
+        ).fetchone()[0]
+        runtime.execute(
+            """INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
                                VALUES (%s,%s,%s,%s,%s,%s,%s)""",
-                [new_id, *line],
-            )
-            runtime.execute(
-                """INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
+            [new_id, *line],
+        )
+        runtime.execute(
+            """INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
                                VALUES (%s,%s,%s,'forged',now(),false)""",
-                [new_id, record.pk, order.total],
-            )
+            [new_id, record.pk, order.total],
+        )
     order.refresh_from_db()
     assert order.status == "shipped" and order.lines.count() == 1
     assert Order.objects.count() == 1 and not Refund.objects.exists()
@@ -262,14 +307,13 @@ def test_runtime_cannot_rewrite_shipped_order_by_delete_and_insert():
 
 def test_runtime_cannot_delete_a_whole_paid_checkout():
     _, _, record, order = _purchase()
-    with runtime_connection() as runtime:
-        with pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
-            for statement in (
-                "DELETE FROM orders_payment WHERE checkout_id=%s",
-                "DELETE FROM orders_orderline WHERE order_id IN (SELECT id FROM orders_order WHERE checkout_id=%s)",
-                "DELETE FROM orders_order WHERE checkout_id=%s",
-                "DELETE FROM orders_checkout WHERE id=%s",
-            ):
-                runtime.execute(statement, [record.pk])
+    with runtime_connection() as runtime, pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
+        for statement in (
+            "DELETE FROM orders_payment WHERE checkout_id=%s",
+            "DELETE FROM orders_orderline WHERE order_id IN (SELECT id FROM orders_order WHERE checkout_id=%s)",
+            "DELETE FROM orders_order WHERE checkout_id=%s",
+            "DELETE FROM orders_checkout WHERE id=%s",
+        ):
+            runtime.execute(statement, [record.pk])
     assert Checkout.objects.get(pk=record.pk).payments.get().amount == record.total
     assert Order.objects.get(pk=order.pk).lines.count() == 1

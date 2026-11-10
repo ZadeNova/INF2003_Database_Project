@@ -43,8 +43,7 @@ class Command(BaseCommand):
         try:
             ledger = verify_manifest(source)
             self.stdout.write("Checksums and CSV headers verified.")
-            with mongo.client() as client:
-                database = client[mongo.database_name()]
+            with mongo.database() as database:
                 try:
                     with transaction.atomic():
                         with connection.cursor() as cursor:
@@ -70,7 +69,7 @@ class Command(BaseCommand):
                         self.stdout.write(
                             "PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows."
                         )
-                        with client.start_session() as session:
+                        with database.client.start_session() as session:
                             insert_documents(database, source, session, self.stdout.write, attempted_ids)
                             reconcile(database, ledger, session=session)
                         self.stdout.write("Cross-store references and ledger row counts reconciled.")
@@ -100,15 +99,20 @@ class Command(BaseCommand):
                 f"Import failed ({type(error).__name__}); rows rolled back and trigger state restored. Check input, database health and owner privileges."
             ) from error
         # The import is committed. A refresh failure must never claim that these source rows rolled back.
-        from dashboard.services import refresh_sales
+        from config import redis_store
+        from dashboard.services import ORDER_SCORES, refresh_sales
 
+        redis_store.bump_dashboard()  # the imported rows are history: bump even if the refresh below fails
         try:
+            # A summary left over from an earlier load must never be trusted if the refresh below fails.
+            with mongo.database() as database:
+                database[ORDER_SCORES].delete_many({})
             refresh_sales()
-        except DatabaseError as error:
+        except (DatabaseError, PyMongoError) as error:
             raise CommandError(
-                "Import committed, but sales history refresh failed. Use the operator refresh button after checking PostgreSQL."
+                "Import committed, but sales history refresh failed. Use the operator refresh button after checking PostgreSQL and MongoDB."
             ) from error
-        self.stdout.write("Daily product sales refreshed.")
+        self.stdout.write("Daily product sales, delivery summary and review score summary refreshed.")
         duration = time.perf_counter() - started
         self.stdout.write(f"Olist import complete in {duration:.3f} seconds.")
         self.stdout.write(

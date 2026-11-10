@@ -9,12 +9,14 @@ from io import StringIO
 import pytest
 from account_helpers import make_operator
 from checkout_helpers import customer, paid_order, product
+from db_helpers import timestamp_guard_off
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
 
+import activity.services as activity_services
 from activity.services import EVENT_WRITE_CONCERN, seller_insights, trending_pipeline
 from catalogue.models import Product
 from config.mongo_schema import EVENT_TTL_SECONDS, setup_events
@@ -130,7 +132,7 @@ def test_trending_rank_ties_category_and_time_window_match_direct_counts(mongo_d
     Product.objects.filter(pk=items[3].pk).update(category=category)
     items[3].refresh_from_db()
     now = timezone.now()
-    for item, count in zip(items, [5, 3, 3, 7]):
+    for item, count in zip(items, [5, 3, 3, 7], strict=True):
         mongo_db.events.insert_many([event(item, now - timedelta(hours=1), generated=True) for _ in range(count)])
     mongo_db.events.insert_many(
         [
@@ -158,6 +160,7 @@ def test_trending_rank_ties_category_and_time_window_match_direct_counts(mongo_d
 def test_event_collection_failure_is_logged_and_does_not_break_product_or_search(mongo_db, caplog):
     item = product()
     mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
     # Real incompatible storage state, not a mocked insert exception. The writer refuses to create
     # ordinary events accidentally; catalogue reads still use their healthy collections.
     mongo_db.create_collection(
@@ -178,9 +181,24 @@ def test_event_collection_failure_is_logged_and_does_not_break_product_or_search
 def test_missing_events_collection_is_not_silently_created_as_regular_storage(mongo_db):
     item = product()
     mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
     try:
         assert Client().get(f"/products/{item.pk}/").status_code == 200
         assert "events" not in mongo_db.list_collection_names()
+    finally:
+        setup_events(mongo_db)
+
+
+def test_collection_check_is_remembered_after_it_passes_and_retried_after_it_fails(mongo_db):
+    item = product()
+    activity_services.EVENTS_READY = False
+    assert Client().get(f"/products/{item.pk}/").status_code == 200
+    assert activity_services.EVENTS_READY is True
+    mongo_db.drop_collection("events")
+    activity_services.EVENTS_READY = False
+    try:
+        assert Client().get(f"/products/{item.pk}/").status_code == 200
+        assert activity_services.EVENTS_READY is False
     finally:
         setup_events(mongo_db)
 
@@ -191,7 +209,8 @@ def test_insights_views_units_ratio_and_seller_scoping(mongo_db):
     for target in [item, other]:
         mongo_db.events.insert_many([event(target, now - timedelta(hours=2), generated=True) for _ in range(4)])
         _, order = paid_order(buyer, target)
-        Order.objects.filter(pk=order.pk).update(placed_at=now - timedelta(days=1))
+        with timestamp_guard_off():
+            Order.objects.filter(pk=order.pk).update(placed_at=now - timedelta(days=1))
         OrderLine.objects.create(
             order=order, seller=target.seller, product=target, quantity=1, unit_price=10, freight=2
         )
@@ -199,12 +218,13 @@ def test_insights_views_units_ratio_and_seller_scoping(mongo_db):
     _, cancelled = paid_order(buyer, item, status="cancelled")
     OrderLine.objects.create(order=cancelled, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
     _, future = paid_order(buyer, item)
-    Order.objects.filter(pk=future.pk).update(placed_at=now + timedelta(days=1))
+    with timestamp_guard_off():
+        Order.objects.filter(pk=future.pk).update(placed_at=now + timedelta(days=1))
     OrderLine.objects.create(order=future, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
     result = seller_insights(item.seller, now=now)
     assert len(result["insights"]) == 1
     row = result["insights"][0]
-    assert row["views"] == 4 and row["units"] == 1 and row["conversion_percent"] == Decimal(25)
+    assert row["views"] == 4 and row["units"] == 1 and row["units_per_view"] == Decimal("0.25")
     assert row["generated_views"] == 4
     client = Client()
     client.force_login(item.seller.user)
@@ -222,9 +242,9 @@ def test_seed_activity_weighted_by_real_sales_labelled_and_relative_to_now(mongo
     buyer, most, least = customer(), product("popular"), product("quiet")
     for n in range(10):
         target = most if n < 9 else least
-        checkout, order = paid_order(buyer, target)
-        checkout.olist_order_id = f"{n:032d}"
-        checkout.save(update_fields=["olist_order_id"])
+        _, order = paid_order(
+            buyer, target, source_id=f"{n:032d}"
+        )  # an imported checkout carries its source id from the start
         OrderLine.objects.create(
             order=order, seller=target.seller, product=target, quantity=1, unit_price=10, freight=2
         )
@@ -248,3 +268,25 @@ def test_seed_activity_weighted_by_real_sales_labelled_and_relative_to_now(mongo
 def test_seed_rejects_unbounded_or_invalid_counts(count):
     with pytest.raises(CommandError):
         call_command("seed_activity", count=count, stdout=StringIO())
+
+
+def test_a_visitor_reloading_a_product_counts_once_in_trending_and_insights(mongo_db):
+    """Review round F2: views are distinct visitors per product, so one session reloading a page cannot top Trending."""
+    buyer, reloaded, popular, seeded = customer(), product("reloaded"), product("popular"), product("seeded")
+    now = timezone.now()
+    when = now - timedelta(hours=1)
+    mongo_db.events.insert_many(
+        [event(reloaded, when, session="one-busy-session") for _ in range(60)]
+        + [event(reloaded, when, user=buyer) for _ in range(5)]
+        + [event(popular, when, session=f"visitor-{n}") for n in range(3)]
+        # seed_activity writes every generated view with one shared session: each still counts as its own visit
+        + [event(seeded, when, generated=True) for _ in range(4)]
+    )
+    actual = list(mongo_db.events.aggregate(trending_pipeline(now)))
+    assert [(r["_id"], r["views"], r["generated_views"], r["rank"]) for r in actual] == [
+        (seeded.pk, 4, 4, 1),
+        (popular.pk, 3, 0, 2),
+        (reloaded.pk, 2, 0, 3),  # one anonymous session and one signed-in customer
+    ]
+    insights = {row["product"].pk: row for row in seller_insights(reloaded.seller, now=now)["insights"]}
+    assert insights[reloaded.pk]["views"] == 2

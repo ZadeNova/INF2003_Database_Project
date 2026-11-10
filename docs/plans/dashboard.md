@@ -5,8 +5,7 @@ plan owner: Erfan · implementer: Chee Long · reviewer: a fresh session · esti
 November) · depends on: `olist-import`, `checkout`, `accounts` (operator console)
 
 **Assumes:** the `olist-import` schema (orders with status and dates, lines, products with stock and lead time, sellers
-with zip prefix, geolocation); MongoDB `reviews` with score, order line and seller ids. The old baseline's reporting
-queries (git history before `olist-import`) are the starting point, not code to copy.
+with zip prefix, geolocation); MongoDB `reviews` with score, order line and seller ids. 
 
 ## Contract
 
@@ -108,3 +107,14 @@ skips remain visible; host docs/packaging checks passed (host-docs-packaging-tes
 corresponding plans. mongo_setup installed the new seller-review index in the local application database. The AI use
 log identifies the Claude Code session that supplied this brief as not fresh. All four Phase 3A workstreams stay in
 review with plans in-progress, pending re-review. The lower branches are unchanged; no push, PR or merge was performed.
+
+8 November 2026, amendment from the improvements backlog ([#52, #57](improvements.md)): the app's stock planning is one
+grouped 28-day sum (`STOCK_PLANNING_FAST`) with the same results; the window-function query stays as `STOCK_PLANNING` for
+benchmark B2. The delivery-delay panels now include copied order reviews, because copies in an order share its score;
+MongoDB returns an integer sum and count per order. The contract above is otherwise unchanged.
+
+10 November 2026, review round F (finding F8): the index named in exit check 3 belongs to the window-function query, which
+benchmark B2 still runs. The app's grouped query (`STOCK_PLANNING_FAST`) reads `daily_product_sales` with a sequential scan,
+because a filter on the day alone cannot use an index that leads with the product; on the full data the scan touches about
+6,000 rows in a few milliseconds and the stock SQL as a whole is tens of milliseconds, so no index was added. Quote the plan
+of the query that is meant, from an `EXPLAIN (ANALYZE, BUFFERS)` run, not this note.

@@ -1698,6 +1698,16 @@ h1 {
     height: auto;
     min-height: 32rem;
     aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+}
+
+/* The icon fallback is cropped into a card corner; in the large frame it sits centred instead. */
+.product-detail .product-detail__media .tile__glyph {
+    position: static;
+    width: min(60%, 24rem);
+    height: auto;
+    aspect-ratio: 1;
 }
 
 .product-detail__info {
@@ -3056,6 +3066,8 @@ h2 {
 .account-page .page__header > div { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 .account-page .panel, .account-page .detail-list dd, .account-page .optable__row > * { min-width:0; overflow-wrap:anywhere; }
 .account-page .optable__row--audit { grid-template-columns:0.9fr 0.9fr 1.7fr 1fr 2fr; }
+/* A status badge breaks only between words: inheriting `anywhere` split CANCELLED into CANCELL/ED at 375px. */
+.account-page .optable__row .badge { overflow-wrap:normal; word-break:keep-all; }
 .account-page .action-grid { grid-template-columns:repeat(auto-fit, minmax(min(28rem, 100%), 1fr)); }
 .account-page .detail-list { grid-template-columns:max-content minmax(0, 1fr); }
 .account-page .manage-filters__field { min-width:0; }
@@ -3101,11 +3113,17 @@ h2 {
 .catalogue-photo { display:block; width:100%; height:100%; object-fit:contain; }
 .product-card .tile { height:auto; aspect-ratio:4 / 3; }
 .product-card__body > * { min-width:0; }
+.sku { margin:0; color:var(--color-text-secondary); font-family:var(--font-mono); font-size:1.2rem; letter-spacing:0.04em; }
 .product-card__stock, .product-card__generated { margin:0; color:var(--color-text-secondary); font-size:1.2rem; line-height:1.5; }
 .product-card .shop-name { min-width:0; overflow-wrap:anywhere; }
 .product-card .name-tag { margin-left:0; white-space:normal; }
 .product-detail__figure { min-width:0; margin:0; border-right:var(--border-structural) solid var(--card-border); }
 .product-detail__info { min-width:0; }
+/* Side by side, the media tile fills the figure's full height so no empty strip sits under a square image. */
+@media (min-width:768px) {
+    .product-detail__figure { display:grid; }
+    .product-detail .product-detail__media { aspect-ratio:auto; height:100%; }
+}
 .catalogue-counts { margin-top:var(--space-4); }
 ul.catalogue-counts, .catalogue-counts ul { padding:0; list-style:none; }
 .catalogue-counts li { display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-2); margin-top:var(--space-2); }

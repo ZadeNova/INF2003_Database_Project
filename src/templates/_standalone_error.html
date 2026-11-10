@@ -1,0 +1,39 @@
+{% load static %}<!doctype html>
+{# Standalone on purpose, like 503.html: these pages are shown when something is wrong, so they must not depend on the user, the session, the database or any context processor. #}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>{% block title %}Something went wrong{% endblock %} · Mercer</title>
+    <script>
+        (function () {
+            document.documentElement.classList.add("js");
+            try {
+                var stored = localStorage.getItem("mercer-theme");
+                if (stored === "dark" || stored === "light") {
+                    document.documentElement.setAttribute("data-theme", stored);
+                }
+            } catch (error) {
+                /* Private mode or blocked storage: fall back to the system preference. */
+            }
+        }());
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+    <main id="main-content">
+        <section class="error-page" aria-labelledby="error-title">
+            <div class="error-page__card">
+                <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> {% block eyebrow %}{% endblock %}</p>
+                <h1 id="error-title">{% block heading %}{% endblock %}</h1>
+                {% block body %}{% endblock %}
+                <a class="button button--dark" href="/">{% block action %}Go to the shop{% endblock %}</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

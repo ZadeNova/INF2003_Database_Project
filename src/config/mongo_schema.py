@@ -1,6 +1,9 @@
 """MongoDB outer schemas and indexes. Flexible attributes are governed by templates."""
 
+import contextlib
+
 from pymongo import ASCENDING, DESCENDING, IndexModel
+from pymongo.errors import CollectionInvalid
 
 ID = {"bsonType": ["int", "long"], "minimum": 1}
 REVIEW_FIELDS = {
@@ -41,6 +44,15 @@ SPEC_FIELDS = {
     "latest_reviews": {"bsonType": "array", "maxItems": 5},
     "has_generated_content": {"bsonType": "bool"},
 }
+# One document per order that has visible scores up to the reporting date: the integer sum and count of those scores.
+# It is derived from `reviews` (an on-demand materialized view rebuilt with `$out`,
+# docs/plans/dashboard_summaries.md) and is never edited by hand.
+ORDER_SCORE_FIELDS = {
+    "_id": ID,  # the order id
+    "total": {"bsonType": ["int", "long"], "minimum": 1},
+    "count": {"bsonType": ["int", "long"], "minimum": 1},
+    "as_of": {"bsonType": "string", "pattern": r"^\d{4}-\d{2}-\d{2}$"},  # the reporting date, ISO
+}
 
 
 def schema(fields):
@@ -63,6 +75,7 @@ VALIDATORS = {
             "version": {"bsonType": ["int", "long"], "minimum": 1},
         }
     ),
+    "order_review_scores": schema(ORDER_SCORE_FIELDS),
 }
 INDEXES = {
     "reviews": [
@@ -70,6 +83,13 @@ INDEXES = {
         IndexModel([("olist_review_id", ASCENDING)], name="review_olist_source"),
         IndexModel([("product_id", ASCENDING), ("answered_at", DESCENDING)], name="review_product_date"),
         IndexModel([("seller_id", ASCENDING), ("answered_at", DESCENDING)], name="review_seller_date"),
+        # Recomputing one order's score summary after a review write reads that order's reviews.
+        IndexModel([("order_id", ASCENDING)], name="review_order"),
+        # The operator list sorts every review newest first; without this it sorts them all in memory on each page.
+        IndexModel(
+            [("answered_at", DESCENDING), ("olist_review_id", DESCENDING), ("order_line_id", DESCENDING)],
+            name="review_newest",
+        ),
     ],
     "product_specs": [
         IndexModel([("category_id", ASCENDING)], name="spec_category"),
@@ -111,11 +131,22 @@ def setup_events(database):
     database.events.create_indexes(EVENT_INDEXES)
 
 
+def create_validated(database, name):
+    database.create_collection(name, validator=VALIDATORS[name], validationLevel="strict", validationAction="error")
+
+
+def ensure_collection(database, name):
+    """Create a validated collection if it is missing, so that an `$out` never creates it without its validator."""
+    if name not in database.list_collection_names():
+        with contextlib.suppress(CollectionInvalid):  # created by another request meanwhile
+            create_validated(database, name)
+
+
 def setup(database):
     existing = set(database.list_collection_names())
     for name, validator in VALIDATORS.items():
         if name not in existing:
-            database.create_collection(name, validator=validator, validationLevel="strict", validationAction="error")
+            create_validated(database, name)
         else:
             options = database[name].options()
             if (

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load catalogue_tags %}
-{% block title %}{{ category.name_en }} — Categories — Mercer{% endblock %}
+{% block title %}{{ category.display_name }} — Categories — Mercer{% endblock %}
 {% block content %}
-<div class="page account-page catalogue-page"><a href="{% url 'catalogue:operator_categories' %}">Back to categories</a><div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">{{ category.name_en }}</h1></div></div>
+<div class="page account-page catalogue-page"><a href="{% url 'catalogue:operator_categories' %}">Back to categories</a><div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">{{ category.display_name }}</h1></div></div>
     <section class="panel"><h2>Current options</h2><dl class="detail-list">{% for name, definition in template.attributes.items %}<dt>{{ name|option_label }}</dt><dd>{% for value in definition.values %}{{ value }}{% if not forloop.last %}, {% endif %}{% empty %}Any {{ definition.type }}{% endfor %}</dd>{% endfor %}</dl></section>
     <form class="panel catalogue-editor" method="post">{% csrf_token %}<h2>Add a product option</h2><p>Sellers can use the new option when they next edit a product.</p>{% include "accounts/_form_fields.html" %}<button class="button button--dark">Add option</button></form>
 </div>

@@ -129,5 +129,549 @@
         "portable": {"type": "boolean", "values": [true, false]}
       }
     }
+  },
+  "names": {
+    "default_words": ["Everyday", "Essential", "Classic", "Practical", "Handy", "Simple", "Compact", "Reliable"],
+    "categories": {
+      "cama_mesa_banho": {
+        "words": ["Soft", "Woven", "Cosy", "Breathable", "Everyday", "Lightweight", "Warm", "Classic"],
+        "name_attribute": "material",
+        "suffix": {"attribute": "size", "text": "{} size"},
+        "nouns": [
+          "sheet set", "duvet cover", "pillowcase set", "blanket", "bedspread",
+          {"noun": "quilt", "where": {"material": ["cotton", "microfibre"]}},
+          {"noun": "mattress protector", "where": {"material": ["cotton", "microfibre"]}}
+        ]
+      },
+      "beleza_saude": {
+        "words": ["Daily", "Gentle", "Fresh", "Soothing", "Hydrating", "Light", "Nourishing", "Calming"],
+        "name_attribute": "format",
+        "suffix": {"attribute": "volume_ml", "text": "{} ml"},
+        "nouns": [
+          "face moisturiser", "body moisturiser", "hand moisturiser", "cleanser",
+          {"noun": "after-sun soother", "where": {"format": ["gel", "lotion"]}},
+          {"noun": "night treatment", "where": {"format": ["cream", "gel"]}},
+          {"noun": "foot treatment", "where": {"format": ["cream", "lotion"]}}
+        ]
+      },
+      "esporte_lazer": {
+        "words": ["Active", "Sporty", "Endurance", "Rugged", "Lightweight", "Compact", "Durable", "Everyday"],
+        "name_attribute": "material",
+        "suffix": {"attribute": "activity", "text": "for {}", "separator": " "},
+        "nouns": [
+          {"noun": "water bottle", "where": {"material": ["steel"]}},
+          {"noun": "dumbbell set", "where": {"material": ["steel"], "activity": ["fitness"]}},
+          {"noun": "backpack", "where": {"material": ["nylon", "polyester"], "activity": ["camping", "running"]}},
+          {"noun": "gym bag", "where": {"material": ["nylon", "polyester"], "activity": ["fitness"]}},
+          {"noun": "tent", "where": {"material": ["nylon", "polyester"], "activity": ["camping"], "outdoor": [true]}},
+          {"noun": "cookware set", "where": {"material": ["steel"], "activity": ["camping"], "outdoor": [true]}},
+          {"noun": "jump rope", "where": {"material": ["nylon"], "activity": ["fitness"]}},
+          {"noun": "waist belt", "where": {"material": ["nylon", "polyester"], "activity": ["running"]}},
+          {"noun": "sports towel", "where": {"material": ["polyester"], "activity": ["fitness", "running"]}}
+        ]
+      },
+      "moveis_decoracao": {
+        "words": ["Modern", "Urban", "Calm", "Warm", "Cosy", "Elegant", "Everyday", "Simple"],
+        "name_attribute": "style",
+        "suffix": {"attribute": "room", "text": "for the {}", "separator": " "},
+        "nouns": [
+          {"noun": "bookshelf", "where": {"material": ["wood", "metal"]}},
+          {"noun": "floor lamp", "where": {"material": ["metal"]}},
+          {"noun": "wall mirror", "where": {"material": ["wood", "metal"]}},
+          {"noun": "armchair", "where": {"material": ["fabric", "wood"]}},
+          {"noun": "throw cushion", "where": {"material": ["fabric"]}},
+          {"noun": "side table", "where": {"material": ["wood", "metal"]}},
+          {"noun": "desk organiser", "where": {"material": ["wood", "metal"], "room": ["study"]}},
+          {"noun": "storage basket", "where": {"material": ["fabric"]}},
+          {"noun": "curtain panel", "where": {"material": ["fabric"]}}
+        ]
+      },
+      "informatica_acessorios": {
+        "words": ["Compact", "Slim", "Office", "Portable", "Quiet", "Ergonomic", "Sturdy", "Everyday"],
+        "suffix": {"attribute": "compatibility", "text": "{} compatibility", "nouns": ["optical mouse", "wireless mouse", "Bluetooth keyboard", "wired keyboard", "USB hub", "webcam", "Bluetooth headset"]},
+        "nouns": [
+          "laptop stand", "laptop sleeve", "mouse pad", "cable organiser",
+          {"noun": "USB hub", "where": {"connection": ["USB"], "wireless": [false]}},
+          {"noun": "USB flash drive", "where": {"connection": ["USB"], "wireless": [false]}},
+          {"noun": "optical mouse", "where": {"connection": ["USB", "wired"], "wireless": [false]}},
+          {"noun": "wireless mouse", "where": {"connection": ["USB", "Bluetooth"], "wireless": [true]}},
+          {"noun": "Bluetooth keyboard", "where": {"connection": ["Bluetooth"], "wireless": [true]}},
+          {"noun": "wired keyboard", "where": {"connection": ["USB", "wired"], "wireless": [false]}},
+          {"noun": "Bluetooth headset", "where": {"connection": ["Bluetooth"], "wireless": [true]}},
+          {"noun": "webcam", "where": {"connection": ["USB"], "wireless": [false]}}
+        ]
+      },
+      "utilidades_domesticas": {
+        "words": ["Kitchen", "Everyday", "Household", "Practical", "Sturdy", "Compact", "Handy", "Classic"],
+        "name_attribute": "material",
+        "nouns": [
+          {"noun": "water jug", "where": {"material": ["glass", "steel"]}},
+          {"noun": "food container", "where": {"material": ["glass", "silicone"]}},
+          {"noun": "mug", "where": {"material": ["steel", "glass"]}},
+          {"noun": "storage jar", "where": {"material": ["glass"]}},
+          {"noun": "saucepan", "where": {"material": ["steel"]}},
+          {"noun": "baking tray", "where": {"material": ["steel", "silicone"]}},
+          {"noun": "utensil set", "where": {"material": ["steel", "silicone"]}},
+          {"noun": "thermal flask", "where": {"material": ["steel"]}},
+          {"noun": "ice tray", "where": {"material": ["silicone"]}}
+        ]
+      },
+      "relogios_presentes": {
+        "words": ["Classic", "Timeless", "Signature", "Elegant", "Everyday", "Modern", "Slim", "Bold"],
+        "name_attribute": "strap",
+        "suffix": {"attribute": "case_colour", "text": "{} case"},
+        "nouns": [
+          "wristwatch",
+          {"noun": "dress watch", "where": {"display": ["analogue"], "strap": ["leather", "steel"]}},
+          {"noun": "sports watch", "where": {"display": ["digital"], "strap": ["silicone"]}}
+        ]
+      },
+      "telefonia": {
+        "words": ["Mobile", "Pocket", "Reliable", "Slim", "Everyday", "Compact", "Rugged", "Travel"],
+        "name_attribute": "colour",
+        "nouns": [
+          {"noun": "phone case", "where": {"accessory": ["case"]}},
+          {"noun": "USB-C wall charger", "where": {"accessory": ["charger"], "connector": ["USB-C"]}},
+          {"noun": "micro-USB wall charger", "where": {"accessory": ["charger"], "connector": ["micro-USB"]}},
+          {"noun": "universal wall charger", "where": {"accessory": ["charger"], "connector": ["universal"]}},
+          {"noun": "USB-C charging cable", "where": {"accessory": ["cable"], "connector": ["USB-C"]}},
+          {"noun": "micro-USB charging cable", "where": {"accessory": ["cable"], "connector": ["micro-USB"]}},
+          {"noun": "universal charging cable", "where": {"accessory": ["cable"], "connector": ["universal"]}}
+        ]
+      },
+      "ferramentas_jardim": {
+        "words": ["Outdoor", "Green", "Sturdy", "Everyday", "Handy", "Compact", "Classic", "Durable"],
+        "name_attribute": "material",
+        "nouns": [
+          {"noun": "garden hand tool set", "where": {"tool_type": ["hand tool"]}},
+          {"noun": "garden trowel", "where": {"tool_type": ["hand tool"], "material": ["steel", "aluminium"]}},
+          {"noun": "garden weeding tool", "where": {"tool_type": ["hand tool"], "material": ["steel"]}},
+          {"noun": "garden fork", "where": {"tool_type": ["hand tool"], "material": ["steel"]}},
+          {"noun": "garden watering can", "where": {"tool_type": ["watering"]}},
+          {"noun": "garden hose nozzle", "where": {"tool_type": ["watering"], "material": ["plastic", "aluminium"]}},
+          {"noun": "garden spray bottle", "where": {"tool_type": ["watering"], "material": ["plastic"]}},
+          {"noun": "garden pruning tools", "where": {"tool_type": ["pruning"]}},
+          {"noun": "garden pruning saw", "where": {"tool_type": ["pruning"], "material": ["steel"]}},
+          {"noun": "garden hedge shears", "where": {"tool_type": ["pruning"], "material": ["steel", "aluminium"]}}
+        ]
+      },
+      "automotivo": {
+        "words": ["Heavy-duty", "Urban", "Everyday", "Sturdy", "Durable", "Practical", "Reliable", "Handy"],
+        "name_attribute": "material",
+        "suffix": {"attribute": "fit", "text": "{} fit"},
+        "nouns": [
+          {"noun": "car floor mat set", "where": {"use": ["interior"], "material": ["rubber"]}},
+          {"noun": "dashboard phone holder", "where": {"use": ["interior"], "material": ["plastic", "metal"]}},
+          {"noun": "squeegee", "where": {"use": ["maintenance"], "material": ["rubber", "plastic"]}},
+          {"noun": "car wash brush", "where": {"use": ["maintenance"], "material": ["plastic"]}},
+          {"noun": "wheel wrench", "where": {"use": ["maintenance"], "material": ["metal"]}},
+          {"noun": "bungee strap set", "where": {"use": ["storage"], "material": ["rubber"]}},
+          {"noun": "boot organiser", "where": {"use": ["storage"], "material": ["plastic"]}},
+          {"noun": "tool box", "where": {"use": ["storage"], "material": ["metal", "plastic"]}}
+        ]
+      },
+      "brinquedos": {
+        "words": ["Creative", "Colourful", "Bright", "Playful", "Curious", "Classic", "Fun", "Happy"],
+        "suffix": {"attribute": "age_years", "text": "ages {}+"},
+        "nouns": [
+          {"noun": "wooden block set", "where": {"play_type": ["building"], "material": ["wood"]}},
+          {"noun": "plastic brick set", "where": {"play_type": ["building"], "material": ["plastic"]}},
+          {"noun": "soft building blocks", "where": {"play_type": ["building"], "material": ["fabric"]}},
+          {"noun": "wooden puzzle", "where": {"play_type": ["puzzle"], "material": ["wood"]}},
+          {"noun": "shape sorter", "where": {"play_type": ["puzzle"], "material": ["plastic"]}},
+          {"noun": "soft puzzle mat", "where": {"play_type": ["puzzle"], "material": ["fabric"]}},
+          {"noun": "wooden play kitchen", "where": {"play_type": ["pretend"], "material": ["wood"]}},
+          {"noun": "doctor role-play kit", "where": {"play_type": ["pretend"], "material": ["plastic"]}},
+          {"noun": "puppet set", "where": {"play_type": ["pretend"], "material": ["fabric"]}}
+        ]
+      },
+      "cool_stuff": {
+        "words": ["Curious", "Creative", "Novel", "Quirky", "Handy", "Playful", "Neat", "Clever"],
+        "name_attribute": "material",
+        "nouns": [
+          {"noun": "luggage tag", "where": {"theme": ["travel"], "material": ["metal", "plastic"]}},
+          {"noun": "world map", "where": {"theme": ["travel"], "material": ["wood"]}},
+          {"noun": "desk organiser", "where": {"theme": ["desk"]}},
+          {"noun": "pen holder", "where": {"theme": ["desk"]}},
+          {"noun": "phone stand", "where": {"theme": ["desk"]}},
+          {"noun": "model kit", "where": {"theme": ["hobby"], "material": ["plastic", "wood"]}},
+          {"noun": "collector display stand", "where": {"theme": ["hobby"], "material": ["wood", "metal"]}},
+          {"noun": "hobby tool set", "where": {"theme": ["hobby"], "material": ["metal", "plastic"]}}
+        ]
+      },
+      "perfumaria": {
+        "words": ["Fresh", "Botanical", "Signature", "Elegant", "Light", "Everyday", "Warm", "Soft"],
+        "name_attribute": "scent",
+        "suffix": {"attribute": "volume_ml", "text": "{} ml"},
+        "nouns": [
+          "fragrance gift set",
+          {"noun": "eau de toilette spray", "where": {"concentration": ["eau de toilette"]}},
+          {"noun": "eau de parfum spray", "where": {"concentration": ["eau de parfum"]}},
+          {"noun": "body mist", "where": {"concentration": ["eau de toilette"]}}
+        ]
+      },
+      "bebes": {
+        "words": ["Little", "Soft", "Gentle", "Cuddly", "Tiny", "Cosy", "Happy", "Snug"],
+        "name_attribute": "material",
+        "suffix": {"attribute": "age_months", "text": "{}+ months"},
+        "nouns": [
+          {"noun": "swaddle blanket", "where": {"material": ["cotton"]}},
+          {"noun": "bib set", "where": {"material": ["cotton", "silicone"]}},
+          {"noun": "teether", "where": {"material": ["silicone"]}},
+          {"noun": "feeding spoon set", "where": {"material": ["silicone"]}},
+          {"noun": "baby romper", "where": {"material": ["cotton", "polyester"]}},
+          {"noun": "stroller blanket", "where": {"material": ["polyester", "cotton"]}},
+          {"noun": "pacifier clip", "where": {"material": ["silicone"]}}
+        ]
+      },
+      "eletronicos": {
+        "words": ["Compact", "Smart", "Handy", "Slim", "Everyday", "Modern", "Bright", "Reliable"],
+        "suffix": {"attribute": "power", "text": "{} powered", "nouns": ["Bluetooth speaker", "Wi-Fi plug", "LED desk lamp", "digital alarm clock", "desk fan", "pocket radio"]},
+        "nouns": [
+          {"noun": "Bluetooth speaker", "where": {"connection": ["Bluetooth"]}},
+          {"noun": "Wi-Fi plug", "where": {"connection": ["Wi-Fi"], "power": ["mains"]}},
+          {"noun": "wired earphones", "where": {"connection": ["wired"], "power": ["USB", "battery"]}},
+          {"noun": "LED desk lamp", "where": {"power": ["USB", "mains"]}},
+          {"noun": "digital alarm clock", "where": {"power": ["battery", "mains"]}},
+          {"noun": "desk fan", "where": {"power": ["USB", "mains"]}},
+          {"noun": "pocket radio", "where": {"power": ["battery"], "portable": [true]}}
+        ]
+      },
+      "papelaria": {
+        "name_attribute": "colour",
+        "nouns": [
+          "notebook", "ring binder", "pen set", "desk planner", "pencil case", "folder set", "gel pen pack"
+        ]
+      },
+      "fashion_bolsas_e_acessorios": {
+        "name_attribute": "colour",
+        "nouns": [
+          "handbag", "tote bag", "crossbody bag", "wallet", "belt", "scarf", "clutch bag"
+        ]
+      },
+      "pet_shop": {
+        "name_attribute": "colour",
+        "nouns": [
+          "pet bed", "dog leash", "cat scratching post", "pet food bowl", "dog collar", "pet carrier", "chew toy"
+        ]
+      },
+      "Sem categoria": {
+        "name_attribute": "colour",
+        "nouns": [
+          "storage box", "gift set", "organiser", "travel pouch", "multi-purpose tray", "accessory kit"
+        ]
+      },
+      "construcao_ferramentas_construcao": {
+        "name_attribute": "colour",
+        "nouns": [
+          "tape measure", "hammer", "screwdriver set", "spirit level", "work gloves", "utility knife", "adjustable wrench"
+        ]
+      },
+      "eletrodomesticos": {
+        "name_attribute": "colour",
+        "nouns": [
+          "electric kettle", "toaster", "blender", "air fryer", "steam iron", "vacuum cleaner"
+        ]
+      },
+      "malas_acessorios": {
+        "name_attribute": "colour",
+        "nouns": [
+          "travel backpack", "cabin suitcase", "luggage strap", "packing cube set", "toiletry bag", "luggage tag"
+        ]
+      },
+      "consoles_games": {
+        "name_attribute": "colour",
+        "nouns": [
+          "game controller", "console charging dock", "game case", "console stand", "memory card"
+        ]
+      },
+      "moveis_escritorio": {
+        "name_attribute": "colour",
+        "nouns": [
+          "office chair", "writing desk", "filing cabinet", "monitor stand", "desk lamp"
+        ]
+      },
+      "instrumentos_musicais": {
+        "name_attribute": "colour",
+        "nouns": [
+          "ukulele", "guitar strap", "clip-on tuner", "drumsticks", "keyboard stand", "guitar pick set"
+        ]
+      },
+      "eletroportateis": {
+        "name_attribute": "colour",
+        "nouns": [
+          "hand blender", "hand mixer", "sandwich maker", "coffee grinder", "hair dryer", "steam iron"
+        ]
+      },
+      "casa_construcao": {
+        "name_attribute": "colour",
+        "nouns": [
+          "door handle set", "cabinet hinge pack", "shelf bracket pair", "paint roller set"
+        ]
+      },
+      "livros_interesse_geral": {
+        "nouns": [
+          "paperback novel", "illustrated guide", "short story collection", "biography"
+        ]
+      },
+      "fashion_calcados": {
+        "name_attribute": "colour",
+        "nouns": [
+          "running shoes", "leather sandals", "canvas sneakers", "ankle boots", "slip-on loafers"
+        ]
+      },
+      "moveis_sala": {
+        "name_attribute": "colour",
+        "nouns": [
+          "sofa cushion set", "coffee table", "TV stand", "sideboard", "bookcase"
+        ]
+      },
+      "livros_tecnicos": {
+        "nouns": [
+          "programming handbook", "engineering reference", "study guide", "technical manual"
+        ]
+      },
+      "climatizacao": {
+        "name_attribute": "colour",
+        "nouns": [
+          "desk fan", "portable air cooler", "oil-filled heater", "window fan", "ceiling fan"
+        ]
+      },
+      "telefonia_fixa": {
+        "name_attribute": "colour",
+        "nouns": [
+          "corded telephone", "cordless phone", "phone line cable", "desk telephone"
+        ]
+      },
+      "casa_conforto": {
+        "name_attribute": "colour",
+        "nouns": [
+          "throw blanket", "memory foam pillow", "bath robe", "floor cushion"
+        ]
+      },
+      "market_place": {
+        "nouns": [
+          "variety pack", "gift bundle", "starter kit", "sample set"
+        ]
+      },
+      "alimentos_bebidas": {
+        "nouns": [
+          "gourmet snack box", "tea assortment", "coffee beans pack", "olive oil bottle"
+        ]
+      },
+      "eletrodomesticos_2": {
+        "name_attribute": "colour",
+        "nouns": [
+          "air fryer", "rice cooker", "stand mixer", "food processor", "microwave oven"
+        ]
+      },
+      "construcao_ferramentas_jardim": {
+        "name_attribute": "colour",
+        "nouns": [
+          "garden hose reel", "lawn rake", "pruning shears", "garden gloves"
+        ]
+      },
+      "fashion_roupa_masculina": {
+        "name_attribute": "colour",
+        "nouns": [
+          "cotton t-shirt", "denim jeans", "polo shirt", "hooded sweatshirt", "casual shirt"
+        ]
+      },
+      "construcao_ferramentas_seguranca": {
+        "name_attribute": "colour",
+        "nouns": [
+          "safety helmet", "work gloves", "safety goggles", "ear protectors", "high-visibility vest"
+        ]
+      },
+      "moveis_cozinha_area_de_servico_jantar_e_jardim": {
+        "name_attribute": "colour",
+        "nouns": [
+          "dining chair", "folding table", "kitchen trolley", "garden bench", "laundry rack"
+        ]
+      },
+      "sinalizacao_e_seguranca": {
+        "nouns": [
+          "safety sign set", "traffic cone", "door alarm", "reflective tape roll"
+        ]
+      },
+      "alimentos": {
+        "nouns": [
+          "pasta pack", "olive oil bottle", "honey jar", "rice pack", "snack box"
+        ]
+      },
+      "bebidas": {
+        "nouns": [
+          "herbal tea box", "fruit juice pack", "sparkling water crate", "iced tea bottles"
+        ]
+      },
+      "agro_industria_e_comercio": {
+        "name_attribute": "colour",
+        "nouns": [
+          "seed starter kit", "garden sprayer", "feed scoop", "irrigation hose"
+        ]
+      },
+      "construcao_ferramentas_iluminacao": {
+        "name_attribute": "colour",
+        "nouns": [
+          "LED work light", "ceiling light fitting", "outdoor floodlight", "bulb pack"
+        ]
+      },
+      "industria_comercio_e_negocios": {
+        "name_attribute": "colour",
+        "nouns": [
+          "label roll pack", "shelving rack", "packing tape set", "storage bin set"
+        ]
+      },
+      "audio": {
+        "name_attribute": "colour",
+        "nouns": [
+          "Bluetooth speaker", "wired headphones", "studio microphone", "soundbar", "amplifier"
+        ]
+      },
+      "artigos_de_natal": {
+        "nouns": [
+          "tree ornament set", "string lights", "wreath", "gift wrap set", "advent calendar"
+        ]
+      },
+      "artes": {
+        "nouns": [
+          "canvas print", "sketchbook", "acrylic paint set", "art print set"
+        ]
+      },
+      "fashion_underwear_e_moda_praia": {
+        "name_attribute": "colour",
+        "nouns": [
+          "swim shorts", "beach cover-up", "swimsuit", "cotton briefs pack"
+        ]
+      },
+      "dvds_blu_ray": {
+        "nouns": [
+          "film box set", "documentary disc", "concert disc", "animated film disc"
+        ]
+      },
+      "moveis_quarto": {
+        "name_attribute": "colour",
+        "nouns": [
+          "bedside table", "wardrobe", "chest of drawers", "bed frame", "dressing table"
+        ]
+      },
+      "construcao_ferramentas_ferramentas": {
+        "name_attribute": "colour",
+        "nouns": [
+          "adjustable spanner", "screwdriver set", "pliers set", "hammer", "hand saw"
+        ]
+      },
+      "livros_importados": {
+        "nouns": [
+          "imported paperback", "hardcover novel", "illustrated edition"
+        ]
+      },
+      "portateis_casa_forno_e_cafe": {
+        "name_attribute": "colour",
+        "nouns": [
+          "coffee maker", "toaster oven", "electric kettle", "espresso machine"
+        ]
+      },
+      "pcs": {
+        "name_attribute": "colour",
+        "nouns": [
+          "desktop computer", "mini PC", "all-in-one computer"
+        ]
+      },
+      "cine_foto": {
+        "name_attribute": "colour",
+        "nouns": [
+          "camera tripod", "camera bag", "lens cleaning kit", "photo album"
+        ]
+      },
+      "musica": {
+        "nouns": [
+          "vinyl record", "music CD", "sheet music book", "songbook"
+        ]
+      },
+      "fashion_roupa_feminina": {
+        "name_attribute": "colour",
+        "nouns": [
+          "summer dress", "knit cardigan", "blouse", "skirt", "jeans"
+        ]
+      },
+      "artigos_de_festas": {
+        "nouns": [
+          "party balloon set", "banner kit", "table decoration set", "party plates pack"
+        ]
+      },
+      "artes_e_artesanato": {
+        "nouns": [
+          "knitting kit", "bead set", "embroidery kit", "hand-painted ceramic"
+        ]
+      },
+      "fashion_esporte": {
+        "name_attribute": "colour",
+        "nouns": [
+          "sports leggings", "training t-shirt", "running shorts", "sports bra"
+        ]
+      },
+      "flores": {
+        "nouns": [
+          "flower bouquet", "plant pot", "dried flower bundle", "potted orchid"
+        ]
+      },
+      "fraldas_higiene": {
+        "nouns": [
+          "diaper pack", "baby wipes", "diaper bag", "changing mat"
+        ]
+      },
+      "tablets_impressao_imagem": {
+        "name_attribute": "colour",
+        "nouns": [
+          "tablet case", "ink cartridge pack", "photo paper pack", "stylus pen"
+        ]
+      },
+      "la_cuisine": {
+        "name_attribute": "colour",
+        "nouns": [
+          "chef knife", "cutting board", "mixing bowl set", "cast iron pan"
+        ]
+      },
+      "moveis_colchao_e_estofado": {
+        "nouns": [
+          "mattress topper", "upholstered headboard", "sofa cover", "foam mattress"
+        ]
+      },
+      "portateis_cozinha_e_preparadores_de_alimentos": {
+        "name_attribute": "colour",
+        "nouns": [
+          "stand mixer", "food chopper", "hand blender", "electric juicer"
+        ]
+      },
+      "fashion_roupa_infanto_juvenil": {
+        "name_attribute": "colour",
+        "nouns": [
+          "kids t-shirt", "children's jacket", "school shorts", "kids hoodie"
+        ]
+      },
+      "casa_conforto_2": {
+        "name_attribute": "colour",
+        "nouns": [
+          "cushion cover set", "throw blanket", "bath mat"
+        ]
+      },
+      "pc_gamer": {
+        "name_attribute": "colour",
+        "nouns": [
+          "gaming keyboard", "gaming mouse", "gaming headset"
+        ]
+      },
+      "seguros_e_servicos": {
+        "nouns": [
+          "service voucher", "installation service"
+        ]
+      },
+      "cds_dvds_musicais": {
+        "nouns": [
+          "musical CD", "concert DVD"
+        ]
+      }
+    }
   }
 }

@@ -38,8 +38,8 @@ class Command(BaseCommand):
         weights = [row["units"] for row in sales]
         rng = random.Random(options["seed"])
         now = timezone.now()
-        with mongo.client() as client:
-            events = client[mongo.database_name()].events.with_options(write_concern=EVENT_WRITE_CONCERN)
+        with mongo.database() as database:
+            events = database.events.with_options(write_concern=EVENT_WRITE_CONCERN)
             for offset in range(0, count, 5000):
                 batch = []
                 for row in rng.choices(sales, weights=weights, k=min(5000, count - offset)):

@@ -3,6 +3,6 @@
 {% block title %}Categories — Operator — Mercer{% endblock %}
 {% block content %}
 <div class="page account-page catalogue-page"><div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">Categories</h1><p class="page__lead">Choose the product options sellers can fill in.</p></div></div>
-    <div class="product-grid">{% for category in categories %}<article class="panel"><h2><a href="{% url 'catalogue:operator_category' category.pk %}">{{ category.name_en }}</a></h2><p>{% for name in category.template.attributes %}{{ name|option_label }}{% if not forloop.last %}, {% endif %}{% empty %}No options yet.{% endfor %}</p></article>{% endfor %}</div>
+    <div class="product-grid">{% for category in categories %}<article class="panel"><h2><a href="{% url 'catalogue:operator_category' category.pk %}">{{ category.display_name }}</a></h2><p>{% for name in category.template.attributes %}{{ name|option_label }}{% if not forloop.last %}, {% endif %}{% empty %}No options yet.{% endfor %}</p></article>{% endfor %}</div>
 </div>
 {% endblock %}

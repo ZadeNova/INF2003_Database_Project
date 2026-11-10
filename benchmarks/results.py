@@ -145,7 +145,7 @@ def summarize(directory, rows):
         for key, group in sorted(groups.items()):
             accepted = [row for row in group if row["accepted"]]
             failed = sum(row["status"] == "failed" for row in group)
-            result = dict(zip(fields[:4], key))
+            result = dict(zip(fields[:4], key, strict=True))
             result.update(
                 status="failed" if failed else "passed",
                 accepted_runs=len(accepted),

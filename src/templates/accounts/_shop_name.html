@@ -1,2 +1,2 @@
 {# A shop's display name, optionally linked, with the generated-content label (AGENTS.md rule 9). #}
-<span class="shop-name">{% if href %}<a class="optable__name" href="{{ href }}">{{ seller.display_name }}</a>{% else %}{{ seller.display_name }}{% endif %}{% if seller.has_generated_content %} <span class="name-tag" title="This shop name was generated for the demonstration">Generated name</span>{% endif %}</span>
+<span class="shop-name">{% if href %}<a class="optable__name" href="{{ href }}">{{ seller.display_name }}</a>{% else %}{{ seller.display_name }}{% endif %}{% if seller.has_generated_content and not covered %} <span class="name-tag" title="This shop name was generated for the demonstration">Generated name</span>{% endif %}</span>

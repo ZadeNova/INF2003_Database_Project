@@ -32,11 +32,11 @@ def product(name="example", stock=20, price="10.00", freight="2.00", lead=5):
     )
 
 
-def paid_order(buyer, item, status="paid"):
+def paid_order(buyer, item, status="paid", source_id=None):
     now = timezone.now()
     with transaction.atomic():
         set_audit_context()
-        checkout = Checkout.objects.create(customer=buyer, total=12, placed_at=now)
+        checkout = Checkout.objects.create(customer=buyer, total=12, placed_at=now, olist_order_id=source_id)
         order = Order.objects.create(
             checkout=checkout,
             seller=item.seller,

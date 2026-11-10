@@ -87,17 +87,6 @@ def test_hostile_page_and_id_parameters_are_not_queries(imported):
     assert Product.objects.count() == before
 
 
-def test_future_routes_are_404_even_for_authenticated_roles(imported):
-    for role in ("customer", "seller", "operator"):
-        user = get_user_model().objects.filter(role=role).first()
-        if user is None:
-            user = get_user_model().objects.create_user(username="operator", role="operator")
-        client = Client()
-        client.force_login(user)
-        for route in ("/analytics/", "/dashboard/", "/products/manage/"):
-            assert client.get(route).status_code == 404
-
-
 def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(imported):
     from catalogue.management.commands.seed_demo import MEMBERS
 
@@ -113,7 +102,7 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
     call_command("seed_demo", stdout=StringIO())
     assert dict(adjusted.values_list("pk", "demo_adjustment")) == labels
     assert get_user_model().objects.count() == before
-    for name in ["demo-" + x for x in MEMBERS] + ["demo-seller", "demo-operator"]:
+    for name in ["demo-" + x for x in MEMBERS] + ["demo-seller", "demo-seller-2", "demo-seller-3", "demo-operator"]:
         user = get_user_model().objects.get(username=name)
         password = os.environ["DEMO_" + user.role.upper() + "_PASSWORD"]
         if not user.check_password(password):
@@ -121,6 +110,10 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
         client = Client()
         response = client.post("/login/", {"username": name, "password": password})
         assert response.status_code == 302 and client.session["_auth_user_id"] == str(user.pk)
+    shops = [Seller.objects.get(user__username=name) for name in ("demo-seller", "demo-seller-2", "demo-seller-3")]
+    assert len({shop.pk for shop in shops}) == 3 and all(shop.status == "approved" for shop in shops)
+    for shop in shops[1:]:  # the story buys from three different shops, so the extra two need purchasable stock
+        assert shop.olist_seller_id and shop.products.filter(active=True, taken_down=False, stock__gt=0).count() >= 2
     seller = Seller.objects.get(user__username="demo-seller")
     assert seller.olist_seller_id and seller.orders.exists()
     assert seller.products.filter(stock=0, demo_adjustment__contains="wishlist").count() == 1
@@ -139,7 +132,7 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
 
 
 @pytest.mark.parametrize("variable", ["DEMO_CUSTOMER_PASSWORD", "DEMO_SELLER_PASSWORD", "DEMO_OPERATOR_PASSWORD"])
-def test_demo_passwords_have_no_fallback(imported, monkeypatch, variable):
+def test_demo_passwords_have_no_fallback(monkeypatch, variable):  # the check runs before the first query
     monkeypatch.delenv(variable, raising=False)
     with pytest.raises(CommandError, match="no fallback passwords"):
         call_command("seed_demo", stdout=StringIO())
@@ -201,6 +194,7 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
     call_command("seed_demo", stdout=StringIO())
     applicant = Seller.objects.select_related("user").get(user__username="demo-applicant")
     assert applicant.status == "pending" and applicant.has_generated_content and "generated" in applicant.shop_name
+    assert "pending" not in applicant.shop_name  # the name must still read right after the approval demo
     assert applicant.olist_seller_id is None and applicant.user.role == "seller"
     if not applicant.user.check_password(os.environ["DEMO_SELLER_PASSWORD"]):
         pytest.fail("Applicant password did not match DEMO_SELLER_PASSWORD (secret omitted)", pytrace=False)
@@ -220,6 +214,10 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
     assert Seller.objects.get(pk=demo_seller.pk).status == "suspended"
     assert dict(demo_seller.products.exclude(demo_adjustment="").values_list("pk", "demo_adjustment")) == labels
     assert get_user_model().objects.count() == users
+    # A stack seeded with the earlier name ("…, pending approval") is renamed on the next run; nothing else is.
+    Seller.objects.filter(pk=applicant.pk).update(shop_name="Demo applicant shop (generated, pending approval)")
+    call_command("seed_demo", stdout=StringIO())
+    assert Seller.objects.get(pk=applicant.pk).shop_name == "Demo applicant shop (generated)"
 
 
 def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(imported):
@@ -236,4 +234,11 @@ def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(
         call_command("seed_demo", stdout=StringIO())
     rows = AuditLog.objects.filter(table_name="catalogue_product").exclude(pk__in=before)
     assert rows.exists()
-    assert set(rows.values_list("actor_id", "reason")) == {(None, None)}
+    # Demo adjustments are system rows. The showcase products go through the seller code path (see showcase.py), so
+    # their rows name the seller's own user and the seller reason. Nothing may carry the caller's operator or reason.
+    seller_users = set(get_user_model().objects.filter(role="seller").values_list("pk", flat=True))
+    stamps = set(rows.values_list("actor_id", "reason"))
+    assert (None, None) in stamps
+    assert all(actor is None or actor in seller_users for actor, _ in stamps)
+    assert all(reason in (None, "Seller saved product") for _, reason in stamps)
+    assert not rows.filter(actor_id=operator.pk).exists()

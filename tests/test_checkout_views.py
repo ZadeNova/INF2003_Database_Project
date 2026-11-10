@@ -284,3 +284,14 @@ def test_invalid_order_filters_are_errors_and_never_broaden_the_list(query):
     response = signed_in(item.seller.user).get(reverse("orders:seller_orders"), query)
     assert response.status_code == 200 and response.context["filters"].errors
     assert not list(response.context["page_obj"]) and Order.objects.count() == 1
+
+
+def test_the_purchase_page_shows_a_cancelled_orders_refund_and_no_arrival_estimate():
+    buyer = customer()
+    order = order_for(buyer, product("lamp"))
+    client = signed_in(buyer)
+    assert client.post(reverse("orders:cancel", args=[order.pk]), {"reason": "Changed my mind"}).status_code == 302
+    body = client.get(reverse("orders:checkout_detail", args=[order.checkout_id])).content.decode()
+    refund = Refund.objects.get(order=order)
+    assert f"Refunded S${refund.amount}" in body
+    assert "Estimated arrival" not in body

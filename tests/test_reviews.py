@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from decimal import Decimal, localcontext
 from io import StringIO
+from unittest.mock import patch
 
 import psycopg
 import pytest
@@ -22,6 +23,7 @@ from catalogue.search import search_page, visible_products
 from catalogue.services import save_product
 from config import mongo
 from orders.models import OrderLine
+from reviews.queries import WRITTEN
 from reviews.ratings import bayesian_score, empty_summary
 from reviews.services import NEWEST, VISIBLE, moderate_review, write_review
 
@@ -94,6 +96,24 @@ def test_undelivered_reviews_are_refused(graph, mongo_db, status):
     client.force_login(buyer)
     assert client.post(f"/reviews/line/{line.pk}/", {"action": "create", "score": 5}).status_code == 404
     assert mongo_db.reviews.count_documents({}) == 0
+
+
+def saved_messages(response):
+    return [str(message) for message in response.context["messages"]]
+
+
+def test_editing_a_taken_down_review_says_it_stays_hidden(graph, mongo_db):
+    buyer, item = graph
+    line = line_for(buyer, item)
+    write_review(buyer, line.pk, "create", {"score": 5, "title": "Good", "text": "Fine"})
+    client = Client()
+    client.force_login(buyer)
+    form = {"action": "edit", "score": 4, "title": "Better", "text": "Still fine"}
+    assert saved_messages(client.post(f"/reviews/line/{line.pk}/", form, follow=True)) == ["Review saved."]
+    moderate_review(make_operator(), line.pk, "takedown", "Evidence checked")
+    response = client.post(f"/reviews/line/{line.pk}/", form, follow=True)
+    assert saved_messages(response) == ["Review saved, but it stays hidden until an operator restores it."]
+    assert mongo_db.reviews.find_one({"order_line_id": line.pk})["taken_down"] is True
 
 
 def test_other_customer_and_duplicate_and_invalid_scores_are_refused(graph, mongo_db):
@@ -259,6 +279,32 @@ def test_seller_rating_match_uses_seller_date_index_and_only_own_documents(impor
     assert mongo_db.reviews.index_information()["review_seller_date"]["key"] == [("seller_id", 1), ("answered_at", -1)]
 
 
+def test_operator_newest_first_list_is_served_by_an_index_without_an_in_memory_sort(mongo_db):
+    for _ in range(2):
+        call_command("mongo_setup", database=mongo_db.name, stdout=StringIO())
+    assert mongo_db.reviews.index_information()["review_newest"]["key"] == [
+        ("answered_at", -1),
+        ("olist_review_id", -1),
+        ("order_line_id", -1),
+    ]
+    explained = mongo_db.command(
+        "explain", {"find": "reviews", "filter": {}, "sort": dict(NEWEST), "limit": 10}, verbosity="queryPlanner"
+    )
+
+    def stages(node):
+        if isinstance(node, dict):
+            if "stage" in node:
+                yield node["stage"]
+            for child in node.values():
+                yield from stages(child)
+        elif isinstance(node, list):
+            for child in node:
+                yield from stages(child)
+
+    found = set(stages(explained["queryPlanner"]["winningPlan"]))
+    assert "IXSCAN" in found and "SORT" not in found
+
+
 @pytest.mark.parametrize("without_historical", [False, True])
 def test_imported_display_translation_history_pagination_and_takedown(imported, mongo_db, without_historical):
     historical = mongo_db.reviews.find_one({"text_pt": {"$ne": ""}})
@@ -269,7 +315,7 @@ def test_imported_display_translation_history_pagination_and_takedown(imported, 
     undelivered = set(Order.objects.exclude(status="delivered").values_list("pk", flat=True))
     if without_historical:
         mongo_db.reviews.delete_many({"order_id": {"$in": list(undelivered)}})
-    row = mongo_db.reviews.find_one({"order_id": {"$in": list(undelivered)}})
+    row = mongo_db.reviews.find_one({"order_id": {"$in": list(undelivered)}, **WRITTEN})
     if row is None:
         pending = line_for(line.order.checkout.customer, line.product, status="paid")
         row = {
@@ -292,7 +338,8 @@ def test_imported_display_translation_history_pagination_and_takedown(imported, 
     from catalogue.models import Product
 
     Product.objects.filter(pk=row["product_id"]).update(active=True)
-    ordered = list(mongo_db.reviews.find({"product_id": row["product_id"], **VISIBLE}).sort(NEWEST))
+    # The full list on the product page shows written reviews only.
+    ordered = list(mongo_db.reviews.find({"product_id": row["product_id"], **VISIBLE, **WRITTEN}).sort(NEWEST))
     number = next(index for index, review in enumerate(ordered) if review["_id"] == row["_id"]) // 10 + 1
     page = Client().get(f"/products/{row['product_id']}/", {"page": number})
     assert page.status_code == 200
@@ -356,3 +403,63 @@ def test_imported_summary_returns_byte_exact_after_insert_and_delete(imported, m
         write_review(buyer, line.pk, "create", {"score": 5})
         write_review(buyer, line.pk, "delete")
         assert mongo_db.product_specs.find_one({"_id": item.pk}) == spec
+
+
+def test_product_page_reads_the_specification_subset_and_collapses_bare_ratings(graph, mongo_db):
+    buyer, item = graph
+    # Oldest to newest: written at positions 0, 2 and 4; bare star ratings at 1, 3, 5 and 6.
+    for index in range(7):
+        line = line_for(buyer, item)
+        text = f"Comment number {index}" if index % 2 == 0 and index < 6 else ""
+        write_review(buyer, line.pk, "create", {"score": 5, "title": "", "text": text})
+    url = f"/products/{item.pk}/"
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("the first view must not query the reviews collection")
+
+    with patch("catalogue.views.review_page", side_effect=forbidden):
+        first = Client().get(url).content.decode()
+    # Of the five newest (positions 6 to 2) two are written; the three bare ones are collapsed into one line.
+    assert "Comment number 4" in first and "Comment number 2" in first and "Comment number 0" not in first
+    assert first.count('class="catalogue-review"') == 2
+    assert "Plus 3 recent star ratings without a comment." in first and "See all written reviews" in first
+
+    everything = Client().get(url + "?all=1")
+    body = everything.content.decode()
+    assert [row["text_en"] for row in everything.context["reviews"]] == [
+        "Comment number 4",
+        "Comment number 2",
+        "Comment number 0",
+    ]
+    assert "4 ratings without a comment" in body and "Back to the latest reviews" in body
+    assert b"all=1&amp;lang=pt" in everything.content
+    # Older links that carry only ?page= still reach the full list.
+    assert "Comment number 0" in Client().get(url + "?page=1").content.decode()
+
+
+def test_subset_matches_the_reviews_collection_and_hides_taken_down_reviews(graph, mongo_db):
+    buyer, item = graph
+    lines = [line_for(buyer, item) for _ in range(2)]
+    for number, line in enumerate(lines):
+        write_review(buyer, line.pk, "create", {"score": 4, "title": "", "text": f"Kept {number}"})
+    spec = mongo_db.product_specs.find_one({"_id": item.pk})
+    stored = [row["order_line_id"] for row in spec["latest_reviews"]]
+    shown = [row["line_id"] for row in Client().get(f"/products/{item.pk}/").context["reviews"]]
+    assert shown == stored == [lines[1].pk, lines[0].pk]
+    moderate_review(make_operator(), lines[1].pk, "takedown", "Spam")
+    shown = [row["line_id"] for row in Client().get(f"/products/{item.pk}/").context["reviews"]]
+    assert shown == [lines[0].pk]
+
+
+def test_the_audit_page_names_the_review_and_its_shop(graph, mongo_db):
+    buyer, item = graph
+    line = line_for(buyer, item)
+    operator = make_operator()
+    write_review(buyer, line.pk, "create", {"score": 2})
+    moderate_review(operator, line.pk, "takedown", "Abusive language")
+    client = Client()
+    client.force_login(operator)
+    body = client.get("/operator/audit/").content.decode()
+    assert "Shop unavailable" not in body
+    assert f"Review of {item.name}" in body and item.seller.display_name in body
+    assert f'href="/operator/reviews/{line.pk}/"' in body

@@ -12,7 +12,7 @@ from pathlib import Path
 from bson import Decimal128, json_util
 from psycopg.types.json import Jsonb
 
-from benchmarks import db
+from benchmarks import db, summaries
 from benchmarks.source import csv_rows, instant, manifest, ndjson, sha256
 
 DDL = """
@@ -34,7 +34,7 @@ CREATE INDEX bench_jsonb_age_years ON bench_attribute_jsonb (((attributes->>'age
 CREATE INDEX bench_jsonb_volume_ml ON bench_attribute_jsonb (((attributes->>'volume_ml')::bigint));
 CREATE INDEX bench_jsonb_capacity_ml ON bench_attribute_jsonb (((attributes->>'capacity_ml')::bigint));
 CREATE INDEX bench_review_product_date ON reviews(product_id,answered_at);
-CREATE INDEX bench_review_visible ON reviews(answered_at,order_id) WHERE NOT taken_down AND NOT from_order_review;
+CREATE INDEX bench_review_visible ON reviews(answered_at,order_id) WHERE NOT taken_down;
 """
 STATE_ROOT = Path("/app/benchmarks/results/.state")
 
@@ -88,6 +88,10 @@ def build_models(source, database, provenance):
                             review.get("taken_down", False),
                         )
                     )
+        with conn.transaction():
+            # Needs the orders (filled by the import) and the review copy loaded above, and the reporting date.
+            as_of = conn.execute("SELECT public.dashboard_as_of() AS as_of").fetchone()["as_of"]
+            conn.execute(summaries.postgres_order_scores(as_of))
         conn.execute("VACUUM (ANALYZE)")
         conn.execute("CHECKPOINT")
     products = {int(p["id"]): p for p in csv_rows(source, "products")}
@@ -182,11 +186,14 @@ def build_models(source, database, provenance):
     database.reviews.create_index([("order_id", 1), ("answered_at", 1)], name="bench_review_order_date")
     database.reviews.create_index(
         [("answered_at", 1), ("order_id", 1)],
-        partialFilterExpression={"taken_down": False, "from_order_review": False},
+        partialFilterExpression={"taken_down": False},
         name="bench_review_visible",
     )
     # Missing taken_down is visible in app documents; the partial-index example uses a bench-normalised flag.
     database.reviews.update_many({"taken_down": {"$exists": False}}, {"$set": {"taken_down": False}})
+    with db.pg() as conn:
+        as_of = conn.execute("SELECT public.dashboard_as_of() AS as_of").fetchone()["as_of"]
+    summaries.build_mongo(database, as_of)  # the MongoDB counterparts of the maintained summaries
     database.meta.insert_one({"_id": "source", **provenance})
     database.meta.insert_one(
         {

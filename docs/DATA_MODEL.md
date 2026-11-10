@@ -158,9 +158,9 @@ erDiagram
 |---|---|
 | accounts.User / accounts_user | AbstractUser's auth fields, groups and permissions; role CHECK allows customer, seller or operator. Imported passwords are unusable; no hashing in the loader. Django's standard auth join tables and session table remain |
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
-| Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content |
+| Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content. The demonstration catalogue adds approved merchants `demo-seller-4` to `demo-seller-9` (no Olist id) |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
-| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time. Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
+| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; lead time at most 365 days (`product_lead_time_capped`; checkout adds it to today's date, so an absurd value would overflow the calendar and fail every customer's checkout; the imported data peaks at 30); stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
 | CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
 | Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
@@ -168,7 +168,7 @@ erDiagram
 | OrderLine / orders_orderline | Positive quantity and unit price; nonnegative freight. Composite FKs (order_id, seller_id) and (product_id, seller_id) enforce ownership with ON DELETE RESTRICT. shipping_limit_at is the earliest original item's shifted deadline when repeated lines collapse |
 | Payment / orders_payment | Unique (checkout_id, sequence); positive sequence and instalments. Method CHECK: credit_card, boleto, voucher, debit_card; nonnegative finite amount. A row means money received; there is no payment-status column and no card-number field |
 | Refund / orders_refund | At most one per order; composite FK (order_id, checkout_id) prevents cross-checkout refunds. Nonnegative finite amount; reason, refunded_at and imported. Imported cancellations with payments receive their full order total |
-| AuditLog / audit_log | Written only by owner-owned triggers and the narrow review moderation function. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, and action |
+| AuditLog / audit_log | Written only by owner-owned triggers and the narrow review moderation function. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, action, and (table_name, row_id, created_at DESC) for "the history of this one row" (a seller's status page, an operator's seller detail) |
 | Geolocation / accounts_geolocation | One row per zip prefix, median coordinates and separate modal city/state (lexical tie-break). Coordinates use exact numeric columns |
 
 Django creates B-tree indexes for ordinary FKs, primary keys and unique constraints. The initial migrations are
@@ -193,7 +193,7 @@ trigger on the same table. Raw SQL, seller edits and cancellation restocks all f
 ### View, triggers and privileges
 
 `purchasable_product` is the single visibility definition: an active product, not taken down, belonging to an approved
-seller. It includes sold-out products. It uses security_invoker and exposes product rows. The minimum pages query its
+seller. It includes sold-out products. It uses security_invoker and exposes product rows; its columns are written out (catalogue 0005, not `SELECT p.*`), so a new product column is added to the view on purpose, and a test compares the two lists. The minimum pages query its
 IDs through an unmanaged ORM model. Later workstreams reuse this definition.
 
 The customer_profile_role and seller_profile_role triggers require the linked user's role to match the profile;
@@ -283,6 +283,24 @@ The orders `0003_protect_money_deletes` migration additionally revokes runtime D
 retain the DELETE privilege needed by the application. This prevents erasing a paid checkout or bypassing the
 UPDATE-only lifecycle/audit triggers by deleting and reinserting a shipped order (checkout-i11).
 
+**Order timestamp guard (`orders` 0004).** order_timestamp_guard (BEFORE UPDATE, only when a lifecycle column or the status
+changes) runs the invoker-rights function `public.protect_order_timestamps()`. `placed_at` and `estimated_delivery`
+never change. Without a status change none of `paid_at`, `shipped_at`, `delivered_at` and `cancelled_at` may change.
+With one, only the destination timestamp may move, and `order_status_transition` (which fires first, by name) stamps
+it with `now()` whatever the statement said. Violations raise SQLSTATE 23514. The delay analysis is computed from
+these columns, so the web role can no longer make a late delivery look on time; the owner role (migrations, the import,
+tests) can still disable the trigger, and the importer does so while loading, like the other user triggers.
+
+**Order key guard (`orders` 0006).** Rows stay under the parent they were created for. One BEFORE UPDATE trigger per table
+(`<table>_key_guard`, all running `public.protect_order_keys()`, firing only when a guarded column changes) refuses
+changes to `orders_order.checkout_id`, `orders_checkout` (`customer_id`, `placed_at`, `olist_order_id`),
+`orders_orderline` (`order_id`, `product_id`), `orders_payment.checkout_id` and `orders_refund` (`checkout_id`,
+`order_id`) with SQLSTATE 23514. Without it a session that may update its own orders (a seller under row-level security)
+could move an order to another customer's checkout while the totals still matched, and the deferred money checks would
+pass. An order's `seller_id` is not in the list: its lines tie it by a composite foreign key and row-level security
+checks it. Nothing in the application updates these columns; the importer only inserts (and disables user triggers while
+it does).
+
 **Product search and audit (`catalogue` 0002).** The trusted pg_trgm extension and the `product_name_trgm` GIN index
 on product.name serve typo-tolerant name search. product_update_audit (AFTER UPDATE, only when price, stock, active or
 taken_down actually changes) runs the owner-owned SECURITY DEFINER function `public.audit_product_update()` with
@@ -291,11 +309,66 @@ before/after snapshots. Checkout's stock decrements and cancellation restocks th
 with the buyer as actor. Runtime keeps SELECT only on audit_log and cannot execute or replace the function or disable
 its trigger.
 
+**Product creation audit (`catalogue` 0004).** product_insert_audit (AFTER INSERT) runs `public.audit_product_insert()`
+on the same boundary: owner-owned, SECURITY DEFINER, `search_path = public, pg_temp`, PUBLIC EXECUTE revoked. It writes
+action `product.create` with no before snapshot and an after snapshot of id, seller, name, price, stock, active and
+taken_down, so a product's first price and stock are recorded; actor and reason come from the same transaction-local
+settings. The importer disables user triggers while it loads, so bulk loads add no audit rows.
+
 Review moderation uses owner-owned `public.audit_review_moderation(text, text)`, a `SECURITY DEFINER` function with
 `search_path = public, pg_temp`. Runtime has only EXECUTE on this function and SELECT on audit_log; PUBLIC has no
 EXECUTE. It fixes table_name to reviews and action to review.takedown/review.restore, validates a numeric review ID,
 requires an operator from transaction-local mercer.actor_id and a nonblank mercer.audit_reason, and records the
 hidden-state transition. PostgreSQL trusts the app's MongoDB change; the app keeps SQL open through the MongoDB commit.
+
+### Seller row-level security (`orders` 0005)
+
+A second layer under the seller pages, not the only one: the application's `seller_id` filters stay
+([plan](plans/seller-rls.md)). While a seller-centre view runs, [accounts/rowsecurity.py](../src/accounts/rowsecurity.py)
+sets the session setting `mercer.seller_id` (`set_config(..., false)`, session-level because the seller pages read outside a
+transaction) and clears it when the response is rendered, even after an error; if the clearing fails the connection is
+closed. `public.mercer_seller()` returns that setting as a bigint, NULL when unset or empty. **Fail open:** with the setting
+unset (customers, operators, public pages, the import, tests as the owner) every policy allows all rows, so behaviour is as
+before. `ENABLE`, not `FORCE`: the owner and SECURITY DEFINER functions bypass the policies by design.
+
+| Table | A session with the setting may |
+|---|---|
+| `orders_order` | read and update its own orders (`WITH CHECK` stops handing a row to another seller); not insert or delete |
+| `orders_orderline` | read its own lines only |
+| `orders_refund` | read the refunds of orders it can see (`EXISTS` on the filtered order table) |
+| `orders_checkout`, `orders_payment` | nothing: a checkout is shared by every seller in one basket |
+| `catalogue_product` | read every product (the shop is public); insert, update and delete only its own |
+| `audit_log` | read only the rows about its own seller (its seller row, or a record carrying its seller id); no writes (the SECURITY DEFINER audit triggers still write) |
+
+Policies are one per command, named `seller_<command>`, and a test compares an explicit table-to-policy map with
+`pg_policies`, failing for any table with a `seller_id` column that is missing.
+
+Rules these policies taught, kept for anyone adding a table:
+- **A function with the caller's rights that reads a restricted table quietly stops checking.** `check_checkout_money()` and
+  `check_checkout_refunds()` loop over the rows they can see and `CONTINUE` past a checkout they cannot, so under a seller
+  session the money check would pass silently. Both are now SECURITY DEFINER (`ALTER FUNCTION`), and a test shows a seller's
+  rewrite of its own order total is rejected at commit.
+- **Locking reads see less than plain reads.** `FOR UPDATE` and `FOR SHARE` need the UPDATE policy, so a row a seller can
+  `SELECT` (any product) cannot be locked unless it is its own. `change_order_status` takes the shared checkout lock through
+  `public.lock_checkout_of_order(order_id)`, a SECURITY DEFINER function (`search_path = public, pg_temp`, PUBLIC EXECUTE
+  revoked, EXECUTE granted to the runtime role) that locks the checkout only if the caller may see the order, else returns
+  NULL (the caller answers 404).
+- **A table's SELECT policy must allow at least what its write policies allow**, because `INSERT ... RETURNING` and
+  `UPDATE ... WHERE` also need the row to pass SELECT.
+- **Foreign-key checks bypass policies**, so an FK error against a hidden row reveals that it exists. No table a seller can
+  insert into references a restricted table, so nothing is exposed today.
+- **Django's `save()` falls back to an `INSERT` when its UPDATE matches no row.** On a seller's own row (changed or not) it
+  works; on a row the policy hides the UPDATE matches nothing, the `INSERT` is refused and the call raises an error.
+- **An UPDATE's new row must also pass the SELECT policy**, so a seller cannot hand an order to another seller even without
+  the `WITH CHECK`, which is kept as a second guard (it is the only guard on products, whose SELECT policy allows all).
+- An index on `seller_id` is used only because the views keep their own filter (a policy expression alone cannot use it).
+- The seller orders page no longer joins the checkout, and the shipping query's checkout join is a `LEFT JOIN`.
+
+Not covered, said plainly: **customer sessions are not confined**; the policies limit rows, not columns; `accounts_user`
+(every user's email and password hash), `accounts_seller`, the cart, wishlist, restock-alert and customer-profile tables,
+`django_session` and the dashboard materialized views are unrestricted; the runtime role can call the refresh and audit
+functions; MongoDB has no equivalent, so
+seller-scoped reviews stay application-enforced.
 
 ### Dashboard materialization and reporting date
 
@@ -315,11 +388,36 @@ first population normally and later REFRESH MATERIALIZED VIEW CONCURRENTLY. The 
 the verified import; a refresh failure reports that the import committed. The operator can also refresh by POST.
 Runtime keeps SELECT on the view and cannot refresh it directly.
 
-The stock query fills zero-sale calendar days before a 28-row AVG window. Exact integer/numeric cross multiplication
+`order_delivery_summary` ([plan](plans/dashboard_summaries.md)) is a second materialized view with one row per delivered
+order up to the reporting date: order_id, seller_id, delay_days (local calendar days from the estimate to the delivery),
+distance_km (the same haversine, null when a zip prefix has no geolocation), bucket and as_of (the reporting date). It holds
+the rows the live `DELAY_BUCKETS` query returns, minus the shop name, which is always read live, and a test compares the
+two. Like the sales view it is created WITH NO DATA, has the unique B-tree index `order_delivery_summary_order` on
+(order_id) so it can refresh concurrently, and is refreshed by `public.refresh_order_delivery_summary()` (owner-owned
+SECURITY DEFINER, search_path public, pg_temp, the same advisory lock, PUBLIC EXECUTE revoked, runtime EXECUTE and SELECT
+granted). The application refreshes both views in one transaction ("Refresh sales history", and the Olist import), and in the same
+transaction rebuilds the MongoDB `order_review_scores` summary.
+
+The delivery-delay panel reads these two summaries and joins them in Python (`summary_inputs` in
+[dashboard/services.py](../src/dashboard/services.py)). It computes from the source instead (`live_inputs`: the
+`DELAY_BUCKETS` query and an aggregation over the reviews) when either summary is missing or empty, or was built for
+another reporting date, and a test proves both paths give identical blocks. Every review write that can change a
+historical score (takedown, restore, a customer's edit or delete) recomputes that one order's document inside the
+review's own MongoDB transaction and, when the summary changed, invalidates the cached dashboard blocks. History that
+enters the tables without the import (it only arrives through the import) shows after the next "Refresh sales history",
+as the sales view does. A bulk refresh that overlaps a takedown can briefly write the pre-takedown value over the
+recomputed document; the next refresh corrects it.
+
+The dashboard's stock query is one grouped sum over the last 28 days (`STOCK_PLANNING_FAST`); the earlier version, which fills
+zero-sale calendar days before a 28-row AVG window per product, stays as `STOCK_PLANNING` for benchmark B2. Both give the same
+rows. Exact integer/numeric cross multiplication
 compares cover with lead time, avoiding rounding at the replenishment boundary. Category revenue uses monthly RANK
 and calendar-aware LAG. Delivery buckets use local calendar-day differences and SQL haversine distance between zip
 centre points; missing geolocation stays null. SQL order rows join one MongoDB mean score per order in Python,
-excluding hidden reviews, copied from_order_review rows and reviews/deliveries after the reporting date. Poor-product
+excluding hidden reviews and reviews/deliveries after the reporting date. Copied from_order_review rows are included: copies
+in one order share its score, so the mean per order is unchanged and multi-line orders are no longer dropped; MongoDB returns
+the integer sum and count per order and the mean is divided in Python. Benchmark B2d counts copies the same way
+(aligned with the application on 9 November; its golden output equals the dashboard's buckets on the full data). Poor-product
 ratings are another MongoDB aggregation with the same date and moderation boundary.
 
 The named STOCK_PLANNING, CATEGORY_PERFORMANCE, BAYESIAN_RATING and DELAY_BUCKETS SQL definitions live in
@@ -353,9 +451,10 @@ its test_ database. Tests use real test_mercer and clear only their documents.
 
 | Collection | Identity, contents and indexes |
 |---|---|
-| reviews | _id and order_line_id identify a line review. Unique index on order_line_id; non-unique Olist review ID index, since source IDs repeat; compound (product_id, answered_at descending) and review_seller_date (seller_id, answered_at descending) for shop ratings and seller review pages. References order, checkout, product, seller and customer IDs in PostgreSQL. Score 1–5; Portuguese/English title/text, machine_translated, from_order_review, source ID, created_at and answered_at |
+| reviews | _id and order_line_id identify a line review. Unique index on order_line_id; non-unique Olist review ID index, since source IDs repeat; compound (product_id, answered_at descending) and review_seller_date (seller_id, answered_at descending) for shop ratings and seller review pages; review_newest (answered_at, Olist review ID and order_line_id, all descending) serves the operator's newest-first list without an in-memory sort; review_order (order_id) serves the per-order recompute of order_review_scores after a review write. References order, checkout, product, seller and customer IDs in PostgreSQL. Score 1–5; Portuguese/English title/text, machine_translated, from_order_review, source ID, created_at and answered_at |
 | product_specs | _id is the PostgreSQL product ID. Required category_id, description, flexible attributes, nullable photo_file_id, rating_summary, latest_reviews and has_generated_content. Index on category_id. No transactional price, stock or product name is stored here |
 | platform_stats | Singleton bayesian document with m (mean score) and C (median review count across retained seller-products, including zero-review products). Exact Decimal128 values are fixed at cleaning time |
+| order_review_scores | _id is the order ID. Integer total and count of the order's visible review scores up to the reporting date (count at least 1) and as_of, that date as an ISO string; strict validator, only the _id index. An on-demand materialized view over reviews ([plan](plans/dashboard_summaries.md)): `refresh_sales` rebuilds it with an aggregation ending in `$out`, which replaces the collection atomically and keeps its validator, so an order with no visible review is simply absent. Derived, never edited by hand, and rebuildable at any time |
 | category_templates | _id is category ID; unique category_id, attribute definitions, rich flag, generation label and version. Rich templates for the source profile's top categories; generic template elsewhere. Template documents can evolve without a collection-validator change |
 
 Specification validators constrain the outer shape, required summary fields and a latest-review array of at most five.
@@ -366,7 +465,7 @@ Descriptions, attributes, rating summaries and the latest five reviews are **emb
 because the detail page needs one MongoDB read. The complete, potentially unbounded review history is **referenced** in
 reviews by product ID. Latest-review copies are a subset within MongoDB, not a copy of PostgreSQL data. An original
 order review is copied to every collapsed order line; from_order_review labels multi-line adaptation. Reviews of
-undelivered orders remain historical evidence. The reviews workstream maintains the running count, sum, histogram, average, Bayesian score and latest five in one snapshot MongoDB transaction, retrying write conflicts. Optional taken_down/takedown_reason fields hide moderated reviews from every public summary. Review edits preserve identity and creation time; answered_at orders the latest changes.
+undelivered orders remain historical evidence. The reviews workstream maintains the running count, sum, histogram, average, Bayesian score and latest five in one snapshot MongoDB transaction, retrying write conflicts. The product page reads that subset (written reviews only; bare star ratings collapse into a count line) and queries the `reviews` collection only for the full list. Optional taken_down/takedown_reason fields hide moderated reviews from every public summary. Review edits preserve identity and creation time; answered_at orders the latest changes.
 
 Cross-store reconciliation verifies each review's line/order/checkout/product/seller/customer tuple, every spec's
 product/category and each category template. Raw-versus-imported delivery analysis counts one review per checkout,
@@ -401,7 +500,9 @@ hash. The seed_activity synthetic label remains generated-demo-activity. Searche
 at 100 characters, outside metadata. Events have
 an explicit is_generated boolean. They contain no copied product name, price, stock or personal profile fields.
 Time-series collections use MongoDB's time-field rules rather than an outer JSON Schema validator. The app builds
-only the two accepted event shapes; setup refuses incompatible time-series options.
+only the two accepted event shapes; setup refuses incompatible time-series options. Trending and seller insights count
+a product's views as distinct visitors in their window (one per user_id or session_key); each generated event counts as
+its own visit, because they all share the synthetic session.
 
 Secondary indexes are event_product_time (meta.product_id, ts descending), event_user_time (meta.user_id, ts descending),
 event_session_time (meta.session_key, ts descending), event_type_time (meta.type, ts descending), and event_category_time
@@ -413,6 +514,31 @@ Recently viewed groups each visitor's view events by product and sorts by maximu
 IDs through the PostgreSQL purchasable view in small batches. Insights joins scoped per-product MongoDB view counts
 with PostgreSQL non-cancelled units over the same rolling 30 days in Python. The seeder's synthetic session and
 is_generated flag do not enter a real visitor's history; generated view contributions are labelled on the panels.
+
+## Redis keys
+
+Redis (a key-value store, internal to Compose) holds cache entries and rate-limit counters only; it is never a source of
+truth, and nothing in it is needed to rebuild anything. Every key starts with the `REDIS_KEY_PREFIX` setting
+(`mercer:v1:`), values are JSON (never pickle), and a value that cannot be decoded is a cache miss. The application user
+may touch only keys named `mercer*` and only the commands it needs. Checkout, stock, carts and sessions do not use
+Redis. If Redis is disabled, down or slow, every cache lookup is a miss and every limit allows the action. The table is
+generated from `src/config/redis_keys.py`; a test fails if it differs.
+
+<!-- generated by scripts/redis_keys_doc.py -->
+| Key (after the prefix) | Value | Lifetime | Cleared by | Purpose |
+|---|---|---|---|---|
+| `limit:login:<hmac>` | sorted set of attempt times | the window set in `RATE_LIMITS`, renewed on each attempt | a successful login by that username from that address; `clear_rate_limits` | Sign-in attempts by one username from one address (limit: `RATE_LIMITS["login"]`) |
+| `limit:login_ip:<hmac>` | sorted set of failure times | the window set in `RATE_LIMITS`, renewed on each failure | `clear_rate_limits` | Failed sign-ins from one address (limit: `RATE_LIMITS["login_ip"]`; a success never counts) |
+| `limit:review:<hmac>` | sorted set of save times | the window set in `RATE_LIMITS`, renewed on each save | `clear_rate_limits` | Review saves by one customer (limit: `RATE_LIMITS["review"]`) |
+| `trending` | JSON: the top ranked rows of the unfiltered trending aggregation | 60 seconds | the expiry only; visibility and photos are read live | The largest database cost on the home and search pages |
+| `dashboard:version` | string: a microsecond timestamp | none (the one key without an expiry) | replaced by a newer timestamp after "Refresh sales history" (the Olist import runs it) and after a review takedown or restore | Makes every older dashboard entry unreachable; a timestamp, so a lost key can never revive an old version |
+| `dashboard:<version>:<reporting date>` | JSON: the delivery, category, seller and poor-review blocks | 1 hour | a new version key; the expiry is the safety net | The history blocks of the operator dashboard (stock planning is always live) |
+| `lock:dashboard:<version>:<reporting date>` | string: the owner's random token | 35 seconds | released by its owner, or the expiry | One request recomputes a missing dashboard entry while the others wait |
+<!-- end generated -->
+
+Usernames and addresses never appear in a key: the `<hmac>` is a keyed hash of the normalised username and address.
+The dashboard cache holds the delivery, category, seller and poor-review blocks only; the stock planning table, product
+names and shop names are read live on every request.
 
 ## Isolated benchmark models
 
@@ -430,7 +556,9 @@ manifest in PostgreSQL bench_meta and MongoDB meta must agree with each other an
 | PostgreSQL bench_meta | Singleton id=1, manifest jsonb containing the source path, checksums.txt hash and each clean file hash |
 | PostgreSQL bench_attribute_eav | Composite PK (product_id, key), product FK, value_text/value_int/value_bool; num_nonnulls CHECK requires exactly one typed value. Partial composite B-trees on (key, typed value, product_id) |
 | PostgreSQL bench_attribute_jsonb | Product PK/FK, attributes object JSONB with an object-type CHECK. GIN jsonb_path_ops plus expression B-trees for age_months, age_years, volume_ml and capacity_ml integer ranges |
-| PostgreSQL reviews | Bench analytical copy only: id PK, product/order FKs, score CHECK 1–5, answered_at, from_order_review, taken_down. Product/date B-tree and visible/non-copied partial date/order index |
+| PostgreSQL reviews | Bench analytical copy only: id PK, product/order FKs, score CHECK 1–5, answered_at, from_order_review, taken_down. Product/date B-tree and a partial date/order index on visible reviews |
+| PostgreSQL bench_order_delivery_scores | Materialized view, one row per delivered order: order_id, delay bucket, integer sum and count of its visible review scores (null when it has none). Built from the order table and the bench review copy alone (not the application's richer order_delivery_summary view, which would add display work the MongoDB summary never does), at the reporting date written into its definition; unique index on order_id and a function that refreshes it concurrently. Bench-only: the cross-store form the application uses cannot be one query in a single engine |
+| MongoDB daily_product_sales, order_delivery_scores | Maintained summaries of B2, built when the project is loaded and rebuilt with `$out` by B2refresh: units and revenue per product and Singapore day with the line's category (unique index on product and day), and delay bucket with the integer score sum and count per delivered order |
 | MongoDB meta | Source singleton with the same loaded manifest as bench_meta; state singleton with restores_since_load, restoration_in_progress and physical_state_changed_at. The counter increments before a restore attempt; only a fresh load sets it to zero |
 | MongoDB products | _id, seller_id, category_id, Decimal128 price/freight, stock, lead_time_days, purchasable, embedded attributes, has_generated_content and is_generated=false. Validator checks decimal money, nonnegative integer stock and object attributes. App-style attributes.$** wildcard index and partial (purchasable, _id) index |
 | MongoDB orders | One document per seller order: _id, checkout/customer/seller ids, status/dates, Decimal128 paid_amount and embedded product/quantity/Decimal128 price/freight lines. Lines also carry category_id as an explicit bench-only extended reference. Validator requires nonempty lines and nonnegative decimal paid_amount. Compound status/date and lines.product_id/date indexes |
@@ -444,7 +572,8 @@ benchmark evidence only and never introduce application synchronisation.
 
 B2 imports the app's four named SQL definitions. Live sales CTEs shadow the materialized view; view reads and its
 refresh remain separate outputs. Equivalent pipelines use rank, shift and calendar range windows, with explicit
-Asia/Singapore boundaries and lookups for references. The independent Python oracle, decimal canonicalisation and
+Asia/Singapore boundaries; the idiomatic variants group first and merge by primary key (`$unionWith` and `$group`)
+instead of looking each reference up, and the summary variants read the maintained summaries (amendment m). The independent Python oracle, decimal canonicalisation and
 output subsets live in benchmarks/reference and benchmarks/golden/schema.json. B4's saved before/after plans and
 B5's physical table/collection sizes provide index/storage evidence; storage comparisons state the differing fields
 and WiredTiger compression. B3 records actual USER trigger state for each PostgreSQL variant and always retains
@@ -467,7 +596,11 @@ publication later that day; dates are recorded honestly rather than relabelling 
 
 Names, descriptions, attributes, stock and lead times are generated with fixed seed 82 and labelled. A SHA-256 seed per
 source product/seller isolates a product from unrelated row ordering. Templates are maintained in
-`data/derived/olist/templates/categories.json`; generated category documents use the same definitions. Demo stock/lead
+`data/derived/olist/templates/categories.json`; generated category documents use the same definitions. A product name is an
+adjective, an optional attribute word and a noun from that category's list, plus sometimes a variant taken from a drawn
+attribute ("Soft cotton sheet set, queen size"); a noun tied to attributes is chosen only when they fit, so a name never
+contradicts the product's attributes. The application shows the first six characters of olist_product_id as a separate
+SKU line. The demonstration catalogue (`seed_showcase`: committed JSON and photos) adds merchants, at most two categories with their templates, and at most twelve products through the seller code path, all flagged as generated, plus photos for named Olist products. Demo stock/lead
 time adjustments have explicit labels and do not change historical transactions. Olist has no cancellation timestamp;
 imported cancellation/refund dates conservatively use purchase time, recorded in the ledger.
 

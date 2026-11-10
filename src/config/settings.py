@@ -52,7 +52,11 @@ INSTALLED_APPS = [
     "dashboard",
     "activity",
 ]
+# Django caps urlencoded bodies but streams a multipart body of any size to disk before any view or form can refuse it.
+# A photo is at most 2 MB, so no request needs more than this.
+REQUEST_BODY_LIMIT_BYTES = 3 * 1024 * 1024
 MIDDLEWARE = [
+    "config.middleware.RequestSizeLimitMiddleware",
     "config.middleware.DatabaseUnavailableMiddleware",
     # After DatabaseUnavailableMiddleware so its process_exception sees an exception first (they run in
     # reverse order) and can record the class before the 503 is produced.
@@ -98,7 +102,12 @@ DATABASES = {
         "PORT": database.pop("port", "5432"),
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
-        "OPTIONS": {**database, "connect_timeout": 3},
+        "OPTIONS": {
+            **database,
+            "connect_timeout": 3,
+            # Set only on the web service (compose.yaml): lock, statement and idle-in-transaction timeouts.
+            **({"options": ENVIRON["POSTGRES_SESSION_OPTIONS"]} if ENVIRON.get("POSTGRES_SESSION_OPTIONS") else {}),
+        },
     }
 }
 AUTH_PASSWORD_VALIDATORS = [
@@ -124,6 +133,27 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
+# Redis: a cache and a rate limiter, never a source of truth (docs/plans/redis.md). Separate settings rather than a URL,
+# because Django's debug page hides settings named like PASSWORD but would show a URL that contains one. With
+# REDIS_ENABLED=false the client is never imported and every code path uses the databases.
+REDIS_ENABLED = boolean("REDIS_ENABLED", True)
+REDIS_HOST = ENVIRON.get("REDIS_HOST", "redis")
+REDIS_PORT = int(ENVIRON.get("REDIS_PORT", "6379"))
+REDIS_DB = int(ENVIRON.get("REDIS_DB", "0"))
+REDIS_USER = ENVIRON.get("REDIS_USER", "mercer")
+REDIS_KEY_PREFIX = ENVIRON.get("REDIS_KEY_PREFIX", "mercer:v1:")
+if not re.fullmatch(r"mercer[A-Za-z0-9_-]*:v[0-9]+:", REDIS_KEY_PREFIX):
+    raise ImproperlyConfigured("REDIS_KEY_PREFIX must look like mercer:v1: (the Redis ACL allows keys named mercer*)")
+REDIS_PASSWORD = required("REDIS_PASSWORD") if REDIS_ENABLED else ""
+REDIS_TIMEOUT_SECONDS = 0.2  # connect and read; a slow Redis must not slow the shop
+REDIS_BACKOFF_SECONDS = 30  # after a connection failure Redis is skipped for this long
+# name: (attempts, window in seconds). Logins are counted per username and address before the password is checked;
+# the address-wide limit counts failures only and is loose, because many people share one address (Docker, a school).
+RATE_LIMITS = {
+    "login": (5, 15 * 60),
+    "login_ip": (100, 15 * 60),
+    "review": (10, 60 * 60),
+}
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/products/"
 LOGOUT_REDIRECT_URL = "/products/"

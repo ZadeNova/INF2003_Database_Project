@@ -19,6 +19,7 @@ from django.utils import timezone
 from accounts.audit import set_audit_context
 from accounts.models import User
 from catalogue.models import Product, PurchasableProduct
+from config.ids import BIGINT_MAX
 
 from .models import MAX_CART_QUANTITY, Cart, CartLine, Checkout, Payment
 
@@ -60,7 +61,7 @@ def object_id(value):
         result = int(value)
     except (ValueError, TypeError, OverflowError):
         raise Http404 from None
-    if result < 1 or result > 9223372036854775807:
+    if result < 1 or result > BIGINT_MAX:
         raise Http404
     return result
 
@@ -347,6 +348,8 @@ def change_order_status(actor, order_id, action, reason=""):
     }[action]
     if len(reason) > MAX_REASON_LENGTH:
         raise CheckoutError(f"Keep the reason under {MAX_REASON_LENGTH} characters.")
+    if "\x00" in reason:  # PostgreSQL text cannot hold a NUL byte; forms refuse it, a hand-made request would not
+        raise CheckoutError("The reason contains a character that cannot be saved.")
     with transaction.atomic():
         set_audit_context(actor.pk, reason)
         if not User.objects.filter(pk=actor.pk, role=role, is_active=True).exists():
@@ -355,7 +358,7 @@ def change_order_status(actor, order_id, action, reason=""):
             # Lock the parent before its order, matching deferred checks and serializing sibling refunds.
             # The scoped lookup never reveals another customer's or seller's order.
             cursor.execute(
-                """SELECT o.checkout_id FROM orders_order o JOIN orders_checkout c ON c.id=o.checkout_id
+                """SELECT o.checkout_id FROM orders_order o LEFT JOIN orders_checkout c ON c.id=o.checkout_id
                               JOIN accounts_seller s ON s.id=o.seller_id WHERE o.id=%s AND
                               ((%s='customer' AND c.customer_id=%s) OR (%s='seller' AND s.user_id=%s AND s.status='approved')
                                OR %s='operator')""",
@@ -364,8 +367,11 @@ def change_order_status(actor, order_id, action, reason=""):
             parent = cursor.fetchone()
             if parent is None:
                 raise Http404
-            cursor.execute("SELECT id FROM orders_checkout WHERE id=%s FOR UPDATE", [parent[0]])
-            cursor.fetchone()
+            # A seller session cannot read the checkout (it is shared by every seller in the basket), so the lock is taken by a
+            # function that checks the caller may see the order (row-level security, docs/plans/seller-rls.md).
+            cursor.execute("SELECT public.lock_checkout_of_order(%s)", [order_id])
+            if cursor.fetchone()[0] is None:
+                raise Http404
             cursor.execute("SELECT id,status,total,checkout_id FROM orders_order WHERE id=%s FOR UPDATE", [order_id])
             order = cursor.fetchone()
             expected = {"ship": {"paid"}, "deliver": {"shipped"}, "cancel": {"placed", "paid"}}[action]

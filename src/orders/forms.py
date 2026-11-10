@@ -1,5 +1,7 @@
 from django import forms
 
+from config.ids import BIGINT_MAX
+
 from .models import Order, Payment
 
 
@@ -20,7 +22,7 @@ class PaymentForm(forms.Form):
 
 class OrderFilterForm(forms.Form):
     status = forms.ChoiceField(required=False, choices=[("", "Any status"), *Order.Status.choices])
-    order_id = forms.IntegerField(label="Order number", required=False, min_value=1, max_value=9223372036854775807)
+    order_id = forms.IntegerField(label="Order number", required=False, min_value=1, max_value=BIGINT_MAX)
 
     def apply(self, orders):
         if not self.is_valid():

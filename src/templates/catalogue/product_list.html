@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load catalogue_tags %}
-{% block title %}{% if category %}{{ category.name_en }}{% elif searching %}Search{% else %}Shop{% endif %} — Mercer{% endblock %}
+{% block title %}{% if category %}{{ category.display_name }}{% elif searching %}Search{% else %}Shop{% endif %} — Mercer{% endblock %}
 {% block content %}
 <div class="page catalogue-page">
     <div class="page__header">
-        <div><p class="eyebrow">Mercer shops</p><h1 class="page__title">{% if category %}{{ category.name_en }}{% elif searching %}Find your next favourite{% else %}A little of everything{% endif %}</h1>
+        <div><p class="eyebrow">Mercer shops</p><h1 class="page__title">{% if category %}{{ category.display_name }}{% elif searching %}Find your next favourite{% else %}A little of everything{% endif %}</h1>
         <p class="page__lead">Browse independent shops. Imported product names, specifications and stock are labelled when generated.</p></div>
     </div>
     <div class="catalogue-layout">
@@ -30,7 +30,7 @@
             {% include "activity/_trending.html" %}
             {% include "activity/_recent.html" %}
             {% if not searching %}
-            <section class="panel"><h2>Browse categories</h2><nav class="range-nav__links" aria-label="Categories">{% for item in categories %}<a class="chip" href="{% url 'catalogue:category_detail' item.slug %}">{{ item.name_en }}</a>{% endfor %}</nav></section>
+            <section class="panel"><h2>Browse categories</h2><nav class="range-nav__links" aria-label="Categories">{% for item in categories %}<a class="chip" href="{% url 'catalogue:category_detail' item.slug %}">{{ item.display_name }}</a>{% endfor %}</nav></section>
             {% endif %}
         </section>
     </div>

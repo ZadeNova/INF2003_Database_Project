@@ -71,6 +71,20 @@ def test_sold_out_products_stay_in_search_counts(imported, mongo_db):
     assert item.pk in {p.pk for p in response.context["page_obj"]}
 
 
+def test_filters_alone_turn_the_home_page_into_a_search(imported, mongo_db):
+    client = Client()
+    assert client.get("/products/").context["searching"] is False
+    for params in ({"min_price": "1"}, {"max_price": "100000"}, {"rating": "1"}, {"sort": "price"}):
+        assert client.get("/products/", params).context["searching"] is True, params
+    assert client.get("/products/", {"min_price": "99999999"}).context["result_count"] == 0
+
+
+def test_blank_or_spaces_only_values_are_not_a_search(imported, mongo_db):
+    client = Client()
+    for params in ({"q": "   "}, {"q": ""}, {"min_price": "", "sort": ""}):
+        assert client.get("/products/", params).context["searching"] is False, params
+
+
 def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db):
     item, spec = sample(mongo_db)
     attribute, value = next(iter(spec["attributes"].items()))
@@ -91,7 +105,7 @@ def test_filter_chip_removes_only_its_filter_and_resets_page(imported, mongo_db)
     assert [chip["label"] for chip in rated if chip["label"].startswith("Rating")] == ["Rating: 4 stars and up"]
 
 
-@pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "top"])
+@pytest.mark.parametrize("sort", ["price", "price_desc", "newest", "recommended", "top"])
 def test_search_sorting_and_pagination_are_deterministic(imported, mongo_db, sort):
     category = visible_products().values_list("category_id", flat=True).first()
     ids = list(visible_products().filter(category_id=category).values_list("pk", flat=True))
@@ -105,7 +119,12 @@ def test_search_sorting_and_pagination_are_deterministic(imported, mongo_db, sor
             .limit(24)
         ]
     else:
-        ordering = {"price": ("price", "id"), "price_desc": ("-price", "-id"), "newest": ("-id",)}[sort]
+        ordering = {
+            "price": ("price", "id"),
+            "price_desc": ("-price", "-id"),
+            "newest": ("-id",),
+            "recommended": ("-featured", "-id"),
+        }[sort]
         expected = list(
             visible_products().filter(category_id=category).order_by(*ordering).values_list("pk", flat=True)[:24]
         )
@@ -127,7 +146,7 @@ def test_a_broad_name_search_keeps_only_the_closest_candidates(imported, mongo_d
 
     items = list(visible_products().order_by("id")[:3])
     names = ("Portable Hose Nozzle", "Portable Hose Nozzle Spare", "Portable Hose Nozzle Kit Deluxe Edition Large")
-    for item, name in zip(items, names):
+    for item, name in zip(items, names, strict=True):
         Product.objects.filter(pk=item.pk).update(name=name)
     uncapped = Client().get("/products/", {"q": "Portable Hose Nozzle"})
     assert not uncapped.context["capped"] and {i.pk for i in items} <= {p.pk for p in uncapped.context["page_obj"]}
@@ -174,7 +193,8 @@ def test_all_imported_categories_have_a_real_sprite_icon(imported):
         for element in ET.parse("/app/static/img/icons.svg").iter()
         if element.tag.endswith("symbol")
     }
-    slugs = {row["slug"] for row in csv.DictReader(Path("/app/tests/fixtures/olist/clean/categories.csv").open())}
+    with Path("/app/tests/fixtures/olist/clean/categories.csv").open() as categories:
+        slugs = {row["slug"] for row in csv.DictReader(categories)}
     assert slugs == set(CATEGORY_ICONS)
     assert all(CATEGORY_ICONS[slug] in symbols for slug in slugs)
     assert {category.icon_name for category in Category.objects.exclude(slug="uncategorised")} != {"package"}
@@ -201,8 +221,7 @@ def test_cross_store_any_ids_are_bound_values_not_sql(imported):
     item = visible_products().first()
     before = Product.objects.count()
     # An invalid text[] cannot be compared to the bigint key; it must fail as data, never become SQL.
-    with pytest.raises(DatabaseError):
-        with transaction.atomic():
-            list(matching_products([f"{item.pk}); DELETE FROM catalogue_product; --"]))
+    with pytest.raises(DatabaseError), transaction.atomic():
+        list(matching_products([f"{item.pk}); DELETE FROM catalogue_product; --"]))
     assert Product.objects.count() == before
     assert visible_products().filter(pk=item.pk).exists()

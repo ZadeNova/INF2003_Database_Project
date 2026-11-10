@@ -4,9 +4,27 @@ target-version = "py313"
 extend-exclude = ["**/migrations/**", ".cache", "data", "src/static/vendor"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
-# The formatter owns line length; string literals and URLs can exceed its target.
-ignore = ["E501"]
+# E/F/I: pycodestyle, pyflakes, imports. B: bugbear. S: bandit security checks. DJ: Django. SIM: simplifications.
+# Left out on purpose: C901 and PLR (a complexity limit would need a threshold chosen to fit the code; the long functions are
+# disclosed in the report instead), and the rest of bandit/pylint style rules.
+select = ["E", "F", "I", "B", "S", "DJ", "SIM"]
+ignore = [
+    "E501",  # The formatter owns line length; string literals and URLs can exceed its target.
+    "S603",  # Every subprocess call here takes a fixed argument list and never a shell.
+    "S607",  # docker, git and python are looked up on PATH deliberately (the user's own tools).
+    "DJ008",  # No admin site; models are shown by their fields, so a __str__ would be dead code.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert, use fixed demo passwords, and build SQL from constants.
+"**/tests/**" = ["S101", "S105", "S106", "S107", "S314", "S608"]
+"tests/**" = ["S101", "S105", "S106", "S107", "S314", "S608"]
+# The benchmark queries are built from constants; its random numbers are seeded and not security related.
+"benchmarks/**" = ["S608", "S311"]
+"scripts/generate_content.py" = ["S311"]
+# The migration SQL is assembled from module constants only, never from input.
+"src/orders/migration_sql.py" = ["S608"]
+"src/activity/management/commands/seed_activity.py" = ["S311"]
 
 [tool.coverage.run]
 source = ["${COVERAGE_SOURCE-src}"]

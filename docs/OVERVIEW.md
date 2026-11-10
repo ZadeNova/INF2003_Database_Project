@@ -37,8 +37,8 @@ orders**, one per seller. The checkout holds the payment; each seller ships thei
 
 This is the path the video follows, and it touches almost every feature:
 
-1. A customer searches with a typo ("hose nozle") and still finds the product, then narrows the results with filters
-   whose counts update live. The home page shows trending products.
+1. A customer searches with a typo ("garden tols") and still finds matching products, then narrows the results with filters; each
+   search shows how many products match every filter value. The home page shows trending products.
 2. They add products from three different sellers and pay once: one checkout, three orders, stock reduced exactly.
 3. Each seller logs in and ships their own order; the operator marks them delivered.
 4. The customer reviews an item: the product's rating, review count and latest reviews update at once.
@@ -100,7 +100,7 @@ added.
 | T3 | **Checkout and orders** | One cart, one payment, one order per seller; ship, deliver, cancel with refund | Row locking (`FOR UPDATE`) so two buyers never get the last item; a deferred constraint (payments must equal the total); a status-transition trigger; composite foreign keys enforcing one seller per order | `checkout` |
 | T4 | **Reviews** | Review each item once after delivery; ratings update instantly; "Top rated" sorting | Unique index (one review per item); a multi-document transaction updating review and rating together; the subset pattern; a Bayesian rating | `reviews` |
 | T5 | **Wishlist** | Save sold-out items; get a restock alert | A many-to-many table; a trigger; a partial unique index | `wishlist` |
-| T6 | **Dashboard** | Products that will run out before they can be restocked; best categories | Materialized view; window functions (moving-average forecast, `RANK`, `LAG`); a `SECURITY DEFINER` function | `dashboard` |
+| T6 | **Dashboard** | Products that will run out before they can be restocked; best categories | Materialized view; window functions (`RANK`, `LAG`; the moving-average forecast now lives in benchmark B2, the app uses a grouped sum); a `SECURITY DEFINER` function | `dashboard` |
 | T6b | **Late deliveries against reviews** | Sellers at risk of bad reviews | A cross-database analysis: delivery delay from PostgreSQL, scores from MongoDB | `dashboard` |
 | T6c | **Activity** | Recently viewed, trending now, sellers' views-to-sales | A MongoDB time-series collection with automatic 30-day expiry; window ranking | `activity` |
 | T7 | **Benchmark** | Charts comparing the two databases | Same data, same tasks, correctness checked before timing; query plans from both engines | `benchmark` |
@@ -123,7 +123,7 @@ before a timing counts, and results are reported at 1, 10 and 50 concurrent user
 
 | Feature | What it adds | Why it is worth it |
 |---|---|---|
-| **Redis** | Caching for the dashboard and reviews; rate limiting on login and review posting | A third kind of database (key-value), measured with the cache on and off |
+| **Redis** | Caching for the operator dashboard and the trending panel; rate limiting on login and review posting | A third kind of database (key-value), measured with the cache on and off |
 | **Observability** | Traces and a Grafana dashboard of every query, PostgreSQL against MongoDB | Shows where time goes per request; industry-standard tooling (OpenTelemetry) |
 | **Row-level security** | The database itself stops a seller from seeing another seller's data | Isolation enforced by PostgreSQL, not only by the app |
 | **Replication and failover** | Three MongoDB nodes and a PostgreSQL replica; stop the primary on camera and watch the app keep working; a timed backup and restore | Replication is core database theory; makes the durability comparison meaningful |

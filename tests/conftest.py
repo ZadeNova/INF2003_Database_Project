@@ -1,4 +1,4 @@
-"""Only real PostgreSQL and MongoDB. Deliberate outages use refused TCP connections."""
+"""Only real PostgreSQL, MongoDB and Redis. Deliberate outages use refused TCP connections."""
 
 import json
 import os
@@ -11,8 +11,40 @@ import pytest
 from django.core.management import call_command
 from django.db import connection
 
-from config import mongo
+from config import mongo, redis_store
 from config.olist_import import COLLECTIONS
+
+# Redis is on in the whole suite, on its own database index and key prefix. The application's keys (database 0, prefix
+# "mercer:") are out of reach: the guard below refuses to clear anything else.
+TEST_REDIS_DB = 15
+TEST_REDIS_PREFIX = "mercer-test:v1:"
+
+
+def clear_test_keys(settings):
+    if not settings.REDIS_ENABLED:
+        return
+    assert settings.REDIS_DB == TEST_REDIS_DB and settings.REDIS_KEY_PREFIX == TEST_REDIS_PREFIX, "refusing to clear"
+    redis_store.delete_matching("*")
+
+
+@pytest.fixture(autouse=True)
+def redis_isolated(settings):
+    settings.REDIS_DB = TEST_REDIS_DB
+    settings.REDIS_KEY_PREFIX = TEST_REDIS_PREFIX
+    redis_store.reset_for_tests()
+    clear_test_keys(settings)
+    yield
+    redis_store.reset_for_tests()  # a test that broke the connection must not leave a back-off behind
+    clear_test_keys(settings)
+    redis_store.reset_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def fast_password_hashing(settings):
+    """Hash passwords with MD5 in tests only. The production hasher (Django's PBKDF2 default) takes about a quarter of a second
+    per password and some fixtures create nine users, which was a third of the suite's run time. Logins still verify against what
+    was stored; the application settings are untouched."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 
 @pytest.fixture(scope="session")
@@ -27,10 +59,10 @@ def mongo_test_database():
 def mongo_db(mongo_test_database):
     # Never touch the application collections during pytest.
     with mongo.using_database(mongo_test_database.name):
-        for name in (*COLLECTIONS, "events", "photos.files", "photos.chunks"):
+        for name in (*COLLECTIONS, "order_review_scores", "events", "photos.files", "photos.chunks"):
             mongo_test_database[name].delete_many({})
         yield mongo_test_database
-        for name in (*COLLECTIONS, "events", "photos.files", "photos.chunks"):
+        for name in (*COLLECTIONS, "order_review_scores", "events", "photos.files", "photos.chunks"):
             mongo_test_database[name].delete_many({})
 
 
@@ -60,3 +92,30 @@ def postgres_unavailable(transactional_db):
             connection.settings_dict = original
 
     return unavailable
+
+
+@pytest.fixture
+def runtime_role(transactional_db):
+    """Run the code under test as the web service's runtime role, not the owner.
+
+    The owner bypasses row-level security and every ordinary test runs as the owner, so the policies would otherwise never
+    apply to the real views and services. Enter the returned context after the test data is built (the runtime role may not
+    flush the database); on exit the owner connection is restored, which pytest-django needs for its own cleanup.
+    """
+
+    @contextmanager
+    def as_runtime():
+        connection.close()
+        original = deepcopy(connection.settings_dict)
+        connection.settings_dict = {
+            **original,
+            "USER": os.environ["POSTGRES_RUNTIME_USER"],
+            "PASSWORD": os.environ["POSTGRES_RUNTIME_PASSWORD"],
+        }
+        try:
+            yield
+        finally:
+            connection.close()
+            connection.settings_dict = original
+
+    return as_runtime

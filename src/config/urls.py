@@ -1,7 +1,11 @@
-from django.urls import include, path
+from django.urls import include, path, register_converter
 from django.views.generic import RedirectView
 
+from .ids import BigIntConverter
 from .views import design_notes, design_notes_unavailable, foundation_preview, health, statistics_preview
+
+# Registered before the app URLconfs below load, because they use <bigint:...>.
+register_converter(BigIntConverter, "bigint")
 
 urlpatterns = [
     # The storefront is the landing page; one canonical catalogue URL, so this redirects rather than re-serving it.

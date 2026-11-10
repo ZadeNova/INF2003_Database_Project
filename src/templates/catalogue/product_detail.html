@@ -6,31 +6,65 @@
     <a href="{% url 'catalogue:product_list' %}">Back to shop</a>
     <article class="surface-card product-detail">
         <figure class="product-detail__figure">
-            <div class="product-detail__media tile" role="img" aria-label="{{ product.name }}">{% if spec.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' spec.photo_file_id %}" alt="{{ product.name }}">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
+            <div class="product-detail__media tile" role="img" aria-label="{{ product.name }}">
+          {% if spec.photo_file_id %}<img class="catalogue-photo" src="{% url 'catalogue:product_photo' spec.photo_file_id %}" alt="{{ product.name }}">{% else %}{% include "_icon.html" with name=product.category.icon_name extra="tile__glyph" only %}{% endif %}</div>
         </figure>
         <div class="product-detail__info">
-            <a class="eyebrow" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.name_en }}</a>
+            <a class="eyebrow" href="{% url 'catalogue:category_detail' product.category.slug %}">{{ product.category.display_name }}</a>
             <h1 class="product-detail__name">{{ product.name }}</h1>
-            {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url only %}
+            {% if product.sku %}<p class="sku">SKU {{ product.sku }}</p>
+        {% endif %}
+            {% url 'catalogue:seller_shop' product.seller_id as shop_url %}{% include "accounts/_shop_name.html" with seller=product.seller href=shop_url covered=product.has_generated_content only %}
             <p class="product-detail__price">{{ product.display_price }}</p>
             <p>Shipping: S${{ product.freight }}</p>
-            <p>{% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %} · Ready in {{ product.lead_time_days }} days</p>
+            <p>
+          {% if product.stock %}{{ product.stock }} in stock{% else %}Sold out{% endif %} · Ready in {{ product.lead_time_days }} days</p>
             {% include "orders/_add_to_cart.html" %}
             {% include "wishlist/_button.html" %}
             {% if spec %}
             <p>{{ spec.description }}</p>
-            <dl class="detail-list">{% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt><dd>{{ value|option_value }}</dd>{% endfor %}</dl>
-            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|decimal_value|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>{% else %}<p>No ratings yet.</p>{% endif %}
-            {% else %}<p>Specifications are temporarily unavailable.</p>{% endif %}
-            {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, description, attributes, stock and lead time are generated demonstration content.</p>{% endif %}
-            {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>{% endif %}
+            <dl class="detail-list">
+            {% for key, value in spec.attributes.items %}<dt>{{ key|option_label }}</dt>
+              <dd>{{ value|option_value }}</dd>
+            {% endfor %}</dl>
+            {% if spec.rating_summary.count %}<p>{{ spec.rating_summary.average|decimal_value|floatformat:1 }} / 5 from {{ spec.rating_summary.count }} review{{ spec.rating_summary.count|pluralize }}</p>
+          {% else %}<p>No ratings yet.</p>
+          {% endif %}
+            {% else %}<p>Specifications are temporarily unavailable.</p>
+        {% endif %}
+            {% if product.has_generated_content or spec.has_generated_content %}<p class="form-note">Name, shop name, description, attributes, stock and lead time are generated demonstration content.{% if spec.photo_file_id %} The photo is illustrative.{% endif %}</p>
+        {% endif %}
+            {% if product.demo_adjustment %}<p class="form-note">{{ product.demo_adjustment }}</p>
+        {% endif %}
         </div>
     </article>
-    <section class="panel checkout-panel" id="reviews"><h2>Customer reviews</h2>
-        <dl class="review-histogram" aria-label="Rating distribution">{% for bucket in histogram %}<dt>{{ bucket.score }} star{{ bucket.score|pluralize }}</dt><dd><meter min="0" max="{{ spec.rating_summary.count|default:1 }}" value="{{ bucket.count }}">{{ bucket.count }}</meter> <span>{{ bucket.count }}</span></dd>{% endfor %}</dl>
-        <nav class="range-nav" aria-label="Review language"><a href="?lang=en#reviews"{% if review_language == 'en' %} aria-current="true"{% endif %}>English</a><a href="?lang=pt#reviews"{% if review_language == 'pt' %} aria-current="true"{% endif %}>Portuguese originals</a></nav>
-        {% for review in reviews_page %}{% include "reviews/_review.html" %}{% empty %}<p>No reviews yet.</p>{% endfor %}
-        {% if reviews_page.has_other_pages %}<nav class="pager" aria-label="Review pages">{% if reviews_page.has_previous %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.previous_page_number }}#reviews">Previous</a>{% endif %}<span>Page {{ reviews_page.number }} of {{ reviews_page.paginator.num_pages }}</span>{% if reviews_page.has_next %}<a href="?lang={{ review_language }}&amp;page={{ reviews_page.next_page_number }}#reviews">Next</a>{% endif %}</nav>{% endif %}
+    <section class="panel checkout-panel" id="reviews">
+      <h2>Customer reviews</h2>
+        <dl class="review-histogram" aria-label="Rating distribution">
+        {% for bucket in histogram %}<dt>{{ bucket.score }} star{{ bucket.score|pluralize }}</dt>
+          <dd>
+            <meter min="0" max="{{ spec.rating_summary.count|default:1 }}" value="{{ bucket.count }}">{{ bucket.count }}</meter> <span>{{ bucket.count }}</span>
+          </dd>
+        {% endfor %}</dl>
+        <nav class="range-nav" aria-label="Review language">
+        <a href="?{% if all_reviews %}all=1&amp;{% endif %}lang=en#reviews"{% if review_language == 'en' %} aria-current="true"{% endif %}>English</a><a href="?{% if all_reviews %}all=1&amp;{% endif %}lang=pt#reviews"{% if review_language == 'pt' %} aria-current="true"{% endif %}>Portuguese originals</a>
+      </nav>
+        {% for review in reviews %}{% include "reviews/_review.html" %}{% empty %}<p>
+          {% if rating_total %}No written reviews yet.{% else %}No reviews yet.{% endif %}</p>
+      {% endfor %}
+        {% if bare_ratings %}<p class="form-note">
+          {% if all_reviews %}{{ bare_ratings }} rating{{ bare_ratings|pluralize }} without a comment, counted in the star breakdown above.{% else %}Plus {{ bare_ratings }} recent star rating{{ bare_ratings|pluralize }} without a comment.{% endif %}</p>
+      {% endif %}
+        {% if not all_reviews and rating_total > 5 %}<p>
+          <a href="?all=1&amp;lang={{ review_language }}#reviews">See all written reviews</a>
+        </p>
+      {% elif all_reviews %}<p>
+          <a href="?lang={{ review_language }}#reviews">Back to the latest reviews</a>
+        </p>
+      {% endif %}
+        {% if reviews_page.has_other_pages %}<nav class="pager" aria-label="Review pages">
+          {% if reviews_page.has_previous %}<a href="?all=1&amp;lang={{ review_language }}&amp;page={{ reviews_page.previous_page_number }}#reviews">Previous</a>{% endif %}<span>Page {{ reviews_page.number }} of {{ reviews_page.paginator.num_pages }}</span>{% if reviews_page.has_next %}<a href="?all=1&amp;lang={{ review_language }}&amp;page={{ reviews_page.next_page_number }}#reviews">Next</a>{% endif %}</nav>
+      {% endif %}
     </section>
     {% include "activity/_recent.html" %}
 </div>

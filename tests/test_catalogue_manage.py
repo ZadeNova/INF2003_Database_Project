@@ -1,15 +1,21 @@
 """Seller CRUD, real cross-store failures, raster uploads, moderation and live category options."""
 
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from decimal import Decimal
 from io import BytesIO, StringIO
 
 import pytest
 from account_helpers import make_customer, make_operator, make_seller
 from bson import Decimal128
+from db_helpers import wait_until_blocked
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connections, transaction
 from django.test import Client
 from gridfs import GridFS
 from PIL import Image, PngImagePlugin
@@ -18,13 +24,15 @@ from pymongo.errors import ConnectionFailure, WriteError
 from accounts.models import AuditLog
 from catalogue.models import Category, Product
 from catalogue.seller_forms import ProductForm
-from catalogue.services import save_product
+from catalogue.services import moderate_product, save_product
+from config import mongo
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def product_audits():
-    return AuditLog.objects.filter(table_name="catalogue_product")
+    """Edits only; creation rows are asserted where a product is created."""
+    return AuditLog.objects.filter(table_name="catalogue_product").exclude(action="product.create")
 
 
 @pytest.fixture
@@ -72,6 +80,18 @@ def create(shop):
     return Product.objects.get(seller=seller)
 
 
+def test_the_add_product_page_asks_for_the_category_once(shop):
+    seller, category, template, client = shop
+    page = client.get("/products/mine/new/", {"category": category.pk}).content.decode()
+    assert page.count('name="category"') == 2  # the selector above the form, and the hidden value in the form
+    assert '<select id="choose-category" name="category">' in page
+    assert f'<input type="hidden" name="category" value="{category.pk}"' in page  # the form only carries it
+    assert "Category: <strong>Housewares</strong>" in page
+    # A category that is not the loaded one is still refused (the hidden value cannot be changed to another category).
+    other = Category.objects.create(slug="toys", name_en="Toys", name_pt="Toys")
+    assert client.post("/products/mine/new/", data(other)).status_code == 400
+
+
 def photo(format_name="PNG", name="kettle.png"):
     output = BytesIO()
     image = Image.new("RGB", (24, 16), (40, 90, 120))
@@ -93,6 +113,9 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
     assert spec["has_generated_content"] is False
     assert spec["attributes"] == {"material": "steel", "capacity": 2, "wireless": False}
     assert isinstance(spec["rating_summary"]["average"], Decimal128)
+    created = AuditLog.objects.get(table_name="catalogue_product", action="product.create")
+    assert (created.row_id, created.actor_id, created.reason) == (str(item.pk), seller.user_id, "Seller saved product")
+    assert created.before is None and created.after["stock"] == 8 and str(created.after["price"]) == "12.34"
     response = client.post(f"/products/mine/{item.pk}/edit/", data(category, price="15.67", stock="5"))
     assert response.status_code == 302
     item.refresh_from_db()
@@ -101,6 +124,158 @@ def test_seller_creates_and_edits_own_product_in_both_stores(shop, mongo_db):
     assert row.actor_id == seller.user_id and row.reason == "Seller saved product"
     assert row.before["stock"] == 8 and row.after["stock"] == 5
     assert Client().get(f"/products/{item.pk}/").status_code == 200
+
+
+def test_edit_form_carries_what_the_seller_saw_and_hides_it_from_view(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    page = client.get(f"/products/mine/{item.pk}/edit/").content.decode()
+    assert 'name="expected_stock" value="8"' in page and 'name="expected_price" value="12.34"' in page
+    assert "Expected stock" not in page and "Expected price" not in page
+
+
+def test_a_stale_form_keeps_sales_made_while_it_was_open(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)  # three units sold since the form was opened at 8
+    form = data(category, description="Fixed the description", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 5  # not put back to 8
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "Fixed the description"
+    assert not product_audits().filter(after__stock=8).exists()
+
+
+def test_a_field_the_seller_changed_applies_when_nobody_else_changed_it(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    form = data(category, stock="6", price="15.67", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert (item.stock, str(item.price)) == (6, "15.67")
+
+
+def test_a_real_conflict_is_refused_and_the_form_expects_the_live_values_next(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="20", description="Not saved yet", expected_stock="8", expected_price="12.34")
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    body = response.content.decode()
+    assert response.status_code == 400 and "stock changed to 5 while you were editing" in body
+    assert 'name="expected_stock" value="5"' in body and 'value="20"' in body  # typed value kept, live value expected
+    item.refresh_from_db()
+    assert item.stock == 5
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "A seller-written description."
+    retry = data(category, stock="20", expected_stock="5", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", retry).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 20
+
+
+def test_typing_exactly_the_value_someone_else_just_set_is_not_a_conflict(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="5", expected_stock="8", expected_price="12.34")
+    assert client.post(f"/products/mine/{item.pk}/edit/", form).status_code == 302
+    item.refresh_from_db()
+    assert item.stock == 5
+
+
+def test_a_refused_save_says_the_chosen_photo_must_be_chosen_again(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(stock=5)
+    form = data(category, stock="20", expected_stock="8", expected_price="12.34", photo=photo())
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "Choose your photo again" in response.content.decode()
+
+
+def test_a_save_waits_for_a_sale_in_flight_and_then_keeps_its_stock(shop, mongo_db):
+    """Two real connections: a sale holds the product row while the seller's save arrives, then commits."""
+    seller, category, _, _ = shop
+    item = create(shop)
+    locked, release = threading.Event(), threading.Event()
+
+    def sell():
+        connections.close_all()
+        try:
+            with transaction.atomic():
+                Product.objects.select_for_update().get(pk=item.pk)
+                Product.objects.filter(pk=item.pk).update(stock=5)
+                locked.set()
+                release.wait(timeout=30)
+        finally:
+            connections.close_all()
+
+    def save():
+        # MongoDB test routing is per thread: without it this thread would write to the real application database.
+        with mongo.using_database(mongo_db.name):
+            assert mongo.database_name() == mongo_db.name
+            return _save()
+
+    def _save():
+        connections.close_all()
+        try:
+            cleaned = {
+                "name": item.name,
+                "category": category,
+                "price": Decimal("12.34"),
+                "stock": 8,  # unchanged from what the form showed
+                "freight": Decimal("1.23"),
+                "lead_time_days": 2,
+                "description": "Saved while a sale was in flight",
+                "attributes": {"material": "steel", "capacity": 2, "wireless": False},
+                "photo": None,
+                "expected_stock": 8,
+                "expected_price": Decimal("12.34"),
+            }
+            return save_product(seller, seller.user, cleaned, pk=item.pk)
+        finally:
+            connections.close_all()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sale = pool.submit(sell)
+        assert locked.wait(timeout=30)
+        saving = pool.submit(save)
+        wait_until_blocked()  # the save is now waiting on the sale's row lock
+        release.set()
+        sale.result(timeout=30)
+        saving.result(timeout=30)
+    item.refresh_from_db()
+    assert item.stock == 5  # the sale survived the save
+    assert mongo_db.product_specs.find_one({"_id": item.pk})["description"] == "Saved while a sale was in flight"
+
+
+def test_a_price_conflict_is_refused_too(shop, mongo_db):
+    _, category, _, client = shop
+    item = create(shop)
+    Product.objects.filter(pk=item.pk).update(price="11.00")
+    form = data(category, price="13.00", expected_stock="8", expected_price="12.34")
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "price changed to 11.00 while you were editing" in response.content.decode()
+    item.refresh_from_db()
+    assert str(item.price) == "11.00"
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("expected_stock", "abc"),
+        ("expected_price", "x"),
+        ("expected_price", "sNaN"),
+        ("expected_price", "-sNaN"),
+        ("expected_price", "NaN"),
+        ("expected_price", "Infinity"),
+    ],
+)
+def test_a_tampered_expected_value_is_a_refused_form_not_a_server_error(shop, mongo_db, field, value):
+    _, category, _, client = shop
+    item = create(shop)
+    form = {**data(category, expected_stock="8", expected_price="12.34"), field: value}
+    response = client.post(f"/products/mine/{item.pk}/edit/", form)
+    assert response.status_code == 400 and "out of date" in response.content.decode()
 
 
 def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db):
@@ -127,7 +302,9 @@ def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db)
     "field,value",
     [
         ("lead_time_days", ""),
+        ("lead_time_days", "366"),
         ("stock", "-1"),
+        ("stock", "100000"),
         ("price", "0.00"),
         ("freight", "-0.01"),
         ("attr_material", '{"$ne":null}'),
@@ -260,6 +437,14 @@ def test_seller_mutations_require_csrf_and_an_approved_seller(shop):
         client = Client()
         client.force_login(user)
         assert client.get("/products/mine/").status_code == 403
+
+
+def test_a_product_decision_without_a_reason_is_a_validation_error_like_every_other_service(shop, mongo_db):
+    item, operator = create(shop), make_operator()
+    for reason in ("", "   ", None):
+        with pytest.raises(ValidationError, match="Give a reason"):
+            moderate_product(operator, item.pk, "takedown", reason)
+    assert not product_audits().exists()
 
 
 def test_operator_takedown_restore_and_stale_actions_are_audited(shop, mongo_db):
@@ -408,3 +593,29 @@ def test_operator_pages_require_the_role_and_csrf(shop, mongo_db):
         csrf.post(f"/products/operator/categories/{category.pk}/", {"name": "finish", "kind": "string"}).status_code
         == 403
     )
+
+
+@pytest.mark.parametrize("path", ["/products/mine/", "/products/operator/"])
+def test_a_nul_byte_in_the_product_list_search_is_ignored_not_a_server_error(shop, path):
+    seller, category, template, seller_client = shop
+    create(shop)
+    if path == "/products/operator/":
+        seller_client = Client()
+        seller_client.force_login(make_operator())
+    response = seller_client.get(path, {"q": "kettle\x00"})
+    assert response.status_code == 200 and b"Handmade kettle" in response.content
+
+
+def test_the_audit_page_shows_a_price_and_stock_line_only_when_they_changed(shop, mongo_db):
+    item = create(shop)
+    operator = make_operator()
+    client = Client()
+    client.force_login(operator)
+    assert (
+        client.post(f"/products/operator/{item.pk}/", {"action": "takedown", "reason": "No change"}).status_code == 302
+    )
+    client.post(f"/products/operator/{item.pk}/", {"action": "restore", "reason": "Fine"})
+    assert shop[3].post(f"/products/mine/{item.pk}/edit/", data(shop[1], price="15.00")).status_code == 302
+    body = client.get("/operator/audit/").content.decode()
+    # Four product rows (create, takedown, restore, edit); only the creation and the edit changed price or stock.
+    assert body.count("Price: S$") == 2 and "S$12.34 → S$15.00" in body

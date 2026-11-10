@@ -31,7 +31,7 @@ def settle_storage(database):
 def mongo_footprint(database):
     settle_storage(database)
     result = []
-    for name in ("products", "orders", "reviews"):
+    for name in ("products", "orders", "reviews", "daily_product_sales", "order_delivery_scores"):
         stats = next(database[name].aggregate([{"$collStats": {"storageStats": {"scale": 1}}}]))["storageStats"]
         result.append(
             {
@@ -83,6 +83,7 @@ def footprint(database):
         "bench_attribute_eav",
         "bench_attribute_jsonb",
         "daily_product_sales",
+        "bench_order_delivery_scores",
     )
     result = []
     with db.pg() as conn:

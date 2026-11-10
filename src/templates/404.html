@@ -7,10 +7,10 @@
     <div class="error-page__card">
         <p class="eyebrow"><span class="eyebrow__line" aria-hidden="true"></span> 404 · page not found</p>
         <h1 id="error-title">This path is not ready yet.</h1>
-        <p>The page you requested is not part of the live application. The storefront itself is up: browse the catalogue, or head back to the overview.</p>
+        <p>The page you requested is not part of the live application. The storefront itself is up: browse the catalogue, or head back to the home page.</p>
         <div class="hero__actions">
             <a class="button button--dark" href="{% url 'catalogue:product_list' %}">Browse products</a>
-            <a class="button button--outline-neutral" href="{% url 'foundation-preview' %}">Go to the overview</a>
+            <a class="button button--outline-neutral" href="{% url 'home' %}">Go to the home page</a>
         </div>
     </div>
 </section>

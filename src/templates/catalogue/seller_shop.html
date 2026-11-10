@@ -4,7 +4,8 @@
 <div class="page catalogue-page">
     <a href="{% url 'catalogue:product_list' %}">Back to shop</a>
     <div class="page__header"><div><p class="eyebrow">Independent shop</p><h1 class="page__title">{{ seller.display_name }}</h1><p>{{ seller.location }}</p>{% if seller.has_generated_content %}<span class="name-tag">Generated name</span>{% endif %}</div></div>
-    <p>Bayesian shop rating: {{ seller_rating.bayesian|floatformat:2 }} / 5 · {{ seller_rating.count }} review{{ seller_rating.count|pluralize }}</p>
+    {% if seller_rating and not seller_rating.count %}<p>No reviews yet.</p>
+    {% elif seller_rating %}<p>Bayesian shop rating: {{ seller_rating.bayesian|floatformat:2 }} / 5 · {{ seller_rating.count }} review{{ seller_rating.count|pluralize }}</p>{% endif %}
     {% if page_obj.object_list %}<div class="product-grid">{% for product in page_obj %}{% include "catalogue/_product_card.html" %}{% endfor %}</div>{% else %}<div class="empty"><h2>No products available</h2><p>Check back soon.</p></div>{% endif %}
     {% include "catalogue/_pager.html" %}
 </div>

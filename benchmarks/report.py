@@ -13,6 +13,8 @@ from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
+from benchmarks.headline import HEADLINE, REFRESH, registered
+from benchmarks.pooling import pooled_rows
 from benchmarks.resources import annotate
 
 
@@ -104,6 +106,103 @@ def noise(rows):
                 "headline": not saturated and all(r.get("runner_cpu_median_percent") for r in group + bases),
             }
         )
+    return result
+
+
+def baseline_drift(rows):
+    """Compare each baseline at the start of a session with the same baseline at its end (amendment l5).
+
+    The noise band is the larger spread (p95 minus p50) of the two; a shift beyond it flags the session, because the
+    machine itself changed (heat, background work, buffers) while the benchmark ran."""
+    index = {(r["output"], r["engine"], r["clients"]): r for r in rows if r["output"].startswith("baseline")}
+
+    def usable(row):
+        return bool(row and row["status"] == "passed" and row["p50_ms"] and row["p95_ms"])
+
+    result = []
+    for start_name, end_name in (("baseline", "baseline_end"), ("baseline_roundtrip", "baseline_roundtrip_end")):
+        for (output, engine, clients), start in sorted(index.items()):
+            end = index.get((end_name, engine, clients))
+            if output != start_name or not usable(start):
+                continue
+            if not usable(end):  # a session whose end baseline is missing or failed cannot be shown to be free of drift
+                result.append(
+                    {
+                        "baseline": start_name,
+                        "engine": engine,
+                        "clients": clients,
+                        "start_p50_ms": start["p50_ms"],
+                        "end_p50_ms": "",
+                        "shift_ms": "",
+                        "noise_band_ms": "",
+                        "drift": "no end baseline",
+                    }
+                )
+                continue
+            band = max(float(start["p95_ms"]) - float(start["p50_ms"]), float(end["p95_ms"]) - float(end["p50_ms"]))
+            shift = float(end["p50_ms"]) - float(start["p50_ms"])
+            result.append(
+                {
+                    "baseline": start_name,
+                    "engine": engine,
+                    "clients": clients,
+                    "start_p50_ms": start["p50_ms"],
+                    "end_p50_ms": end["p50_ms"],
+                    "shift_ms": shift,
+                    "noise_band_ms": band,
+                    "drift": "yes" if abs(shift) > band else "no",
+                }
+            )
+    return result
+
+
+def b2_headline(rows):
+    """The pre-registered B2 pairs (benchmarks/headline.py): live against live, maintained against maintained, and the
+    refresh cost of each maintained summary. Every registered pair is listed for every client count: a pair whose row
+    failed or is missing says so (`status`) and carries no ratio, so nothing disappears quietly. A pair is a headline only
+    when both of its rows are and, across sessions, both engines' medians come from the same number of sessions."""
+    index = {(r["output"], r["engine"], r["variant"], r["clients"]): r for r in rows}
+
+    def state(row):
+        if row is None:
+            return "missing"
+        if row["status"] != "passed":
+            return "failed"
+        return "ok" if row["p50_ms"] else "no timing"  # a correctness run checks results and takes no timing
+
+    result = []
+    pairs = [(output, layer, *pair) for output, layers in HEADLINE.items() for layer, pair in layers.items()]
+    pairs += [("B2refresh", "refresh: " + name, *pair) for name, pair in REFRESH.items()]
+    # Every registered pair is listed at every client count the B2 outputs ran with, even when one output has no row at all.
+    ran = {r["clients"] for r in rows if r["output"] in HEADLINE}
+    refresh_ran = {r["clients"] for r in rows if r["output"] == "B2refresh"} or ({"1"} if ran else set())
+    for output, layer, postgres_variant, mongo_variant in pairs:
+        for clients in sorted(refresh_ran if output == "B2refresh" else ran, key=int):
+            postgres = index.get((output, "postgres", postgres_variant, clients))
+            mongo = index.get((output, "mongo", mongo_variant, clients))
+            postgres_state, mongo_state = state(postgres), state(mongo)
+            usable = postgres_state == mongo_state == "ok"
+            # Across sessions the identities are compared, not only how many: {1, 2} against {2, 3} is not one comparison.
+            sessions = [(row or {}).get("session_numbers", (row or {}).get("sessions")) for row in (postgres, mongo)]
+            same_sessions = sessions[0] == sessions[1]
+            entry = {
+                "output": output,
+                "layer": layer,
+                "clients": clients,
+                "postgres_variant": postgres_variant,
+                "mongo_variant": mongo_variant,
+                "status": "ok" if usable else f"postgres {postgres_state}, mongo {mongo_state}",
+                "postgres_p50_ms": postgres["p50_ms"] if postgres_state == "ok" else "",
+                "mongo_p50_ms": mongo["p50_ms"] if mongo_state == "ok" else "",
+                "mongo_over_postgres": float(mongo["p50_ms"]) / float(postgres["p50_ms"]) if usable else "",
+                "headline": usable
+                and str(postgres["headline"]).lower() == "true"
+                and str(mongo["headline"]).lower() == "true"
+                and same_sessions,
+            }
+            if any(value is not None for value in sessions):
+                entry["postgres_sessions"], entry["mongo_sessions"] = sessions
+            result.append(entry)
     return result
 
 
@@ -270,14 +369,47 @@ def report(directory):
     annotate(directory)
     rows = read_csv(directory / "summary.csv")
     table(destination / "memory.csv", memory_rows(directory))
+    table(destination / "b2-headline.csv", b2_headline(rows))
+    table(destination / "drift.csv", baseline_drift(rows))
+    table(destination / "pooled.csv", pooled_rows([directory]))
     table(destination / "memory-settings.csv", memory_settings(directory))
     outputs = defaultdict(list)
     for row in rows:
         outputs[row["output"]].append(row)
     ratios = []
+    pairs = registered()
     for output, group in outputs.items():
         rendered = []
+        originals = []
         for row in group:
+            if any(key[0] == output for key in pairs):
+                # B2 (amendment m): only the pre-registered variants are compared, each against PostgreSQL's variant of its
+                # own layer. The originals and the application's own queries are listed apart, with no ratio.
+                layer = pairs.get((output, row["engine"], row["variant"]))
+                if layer is None:
+                    originals.append({**row, "ratio": None, "ratio_basis": "reported apart: not a registered pair"})
+                    continue
+                basis = next(
+                    (
+                        r
+                        for r in group
+                        if (r["engine"], r["variant"], r["clients"]) == ("postgres", layer[1], row["clients"])
+                        and r["status"] == "passed"
+                        and r["p50_ms"]
+                        and str(r.get("headline", "")).lower() == "true"
+                    ),
+                    None,
+                )
+                usable = row["p50_ms"] and row["status"] == "passed" and str(row.get("headline", "")).lower() == "true"
+                enriched = {
+                    **row,
+                    "layer": layer[0],
+                    "ratio": float(basis["p50_ms"]) / float(row["p50_ms"]) if basis and usable else None,
+                    "ratio_basis": f"postgres_{layer[1]}/variant",
+                }
+                rendered.append(enriched)
+                ratios.append(enriched)
+                continue
             comparable = [
                 r
                 for r in group
@@ -316,6 +448,8 @@ def report(directory):
             rendered.append(enriched)
             ratios.append(enriched)
         table(destination / (output + ".csv"), rendered)
+        if originals:
+            table(destination / (output + "-originals.csv"), originals)
         svg(
             destination / (output + ".svg"),
             output + " ratios (see CSV for ranges and absolute ms)",
@@ -387,7 +521,7 @@ def report(directory):
         ],
     )
     raw = directory / "raw.jsonl"
-    opener = raw.open if raw.exists() else lambda **kwargs: gzip.open(str(raw) + ".gz", "rt", **kwargs)
+    opener = raw.open if raw.exists() else lambda **kwargs: gzip.open(str(raw) + ".gz", "rt", **kwargs)  # noqa: SIM115 - used in a with below
     checks, demonstrations, races = [], [], []
     with opener(encoding="utf-8") as stream:
         for line in stream:

@@ -1,7 +1,7 @@
 """Request-local driver counters. Query text, values and command bodies never enter this module."""
 
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from time import perf_counter_ns
 
 from pymongo.monitoring import CommandListener
@@ -13,6 +13,9 @@ class DatabaseTiming:
     pg_queries: int = 0
     mongo_us: int = 0
     mongo_commands: int = 0
+    redis_ns: int = 0
+    redis_commands: int = 0
+    cache: list = field(default_factory=list)  # one word per cache lookup: hit, miss, wait, down or off
 
     def fields(self):
         return {
@@ -20,6 +23,9 @@ class DatabaseTiming:
             "db_pg_queries": self.pg_queries,
             "db_mongo_ms": round(self.mongo_us / 1000, 3),
             "db_mongo_commands": self.mongo_commands,
+            "redis_ms": round(self.redis_ns / 1_000_000, 3),
+            "redis_commands": self.redis_commands,
+            "cache": ",".join(self.cache),
         }
 
 

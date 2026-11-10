@@ -15,7 +15,8 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def product_audits():
-    return AuditLog.objects.filter(table_name="catalogue_product")
+    """Updates only; creation rows are asserted separately."""
+    return AuditLog.objects.filter(table_name="catalogue_product").exclude(action="product.create")
 
 
 def product():
@@ -24,6 +25,31 @@ def product():
     return Product.objects.create(
         seller=seller, category=category, name="Test", price="10.00", freight="1.00", stock=10, lead_time_days=3
     )
+
+
+def test_creating_a_product_records_its_first_price_and_stock_with_actor_and_reason():
+    seller = make_seller()
+    category = Category.objects.create(slug="test", name_en="Test", name_pt="Test")
+    with transaction.atomic():
+        set_audit_context(seller.user_id, "Seller saved product")
+        item = Product.objects.create(
+            seller=seller, category=category, name="Kettle", price="10.00", freight="1.00", stock=7, lead_time_days=3
+        )
+    row = AuditLog.objects.get(table_name="catalogue_product", action="product.create")
+    assert (row.row_id, row.actor_id, row.reason, row.before) == (
+        str(item.pk),
+        seller.user_id,
+        "Seller saved product",
+        None,
+    )
+    assert (row.after["price"], row.after["stock"], row.after["name"]) == (10, 7, "Kettle")
+    assert row.after["seller_id"] == seller.pk and row.after["active"] is True
+    # Outside any audit context the creation is a system change: no actor, no reason.
+    other = Product.objects.create(
+        seller=seller, category=category, name="Other", price="5.00", freight="1.00", stock=1, lead_time_days=1
+    )
+    row = AuditLog.objects.get(table_name="catalogue_product", action="product.create", row_id=str(other.pk))
+    assert row.actor_id is None and row.reason is None
 
 
 def test_product_updates_record_actor_reason_and_only_watched_fields():
@@ -44,11 +70,10 @@ def test_product_updates_record_actor_reason_and_only_watched_fields():
 
 def test_product_audit_rolls_back_with_the_product():
     item = product()
-    with pytest.raises(ValueError):
-        with transaction.atomic():
-            set_audit_context(item.seller.user_id, "Cancelled save")
-            Product.objects.filter(pk=item.pk).update(stock=1)
-            raise ValueError("rollback")
+    with pytest.raises(ValueError), transaction.atomic():
+        set_audit_context(item.seller.user_id, "Cancelled save")
+        Product.objects.filter(pk=item.pk).update(stock=1)
+        raise ValueError("rollback")
     item.refresh_from_db()
     assert item.stock == 10 and not product_audits().exists()
 
@@ -63,10 +88,14 @@ def test_runtime_product_trigger_works_and_cannot_be_tampered_with():
             )
             runtime.execute("UPDATE catalogue_product SET stock = %s WHERE id = %s", [3, item.pk])
         assert runtime.execute(
-            "SELECT actor_id, reason FROM audit_log WHERE table_name = %s", ["catalogue_product"]
+            "SELECT actor_id, reason FROM audit_log WHERE table_name = %s AND action <> 'product.create'",
+            ["catalogue_product"],
         ).fetchall() == [(item.seller.user_id, "Runtime product edit")]
         for statement in (
             "ALTER TABLE catalogue_product DISABLE TRIGGER product_update_audit",
+            "ALTER TABLE catalogue_product DISABLE TRIGGER product_insert_audit",
+            "ALTER FUNCTION public.audit_product_insert() SET search_path = pg_temp, public",
+            "CREATE OR REPLACE FUNCTION public.audit_product_insert() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END $$",
             "ALTER FUNCTION public.audit_product_update() SET search_path = pg_temp, public",
             "CREATE OR REPLACE FUNCTION public.audit_product_update() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END $$",
             "INSERT INTO audit_log (table_name,row_id,action,created_at) VALUES ('catalogue_product','1','forged',now())",
@@ -77,6 +106,12 @@ def test_runtime_product_trigger_works_and_cannot_be_tampered_with():
         cursor.execute(
             "SELECT pg_get_userbyid(proowner), prosecdef, proconfig, has_function_privilege(%s, oid, 'EXECUTE') "
             "FROM pg_proc WHERE oid='public.audit_product_update()'::regprocedure",
+            [os.environ["POSTGRES_RUNTIME_USER"]],
+        )
+        assert cursor.fetchone() == (os.environ["POSTGRES_USER"], True, ["search_path=public, pg_temp"], False)
+        cursor.execute(
+            "SELECT pg_get_userbyid(proowner), prosecdef, proconfig, has_function_privilege(%s, oid, 'EXECUTE') "
+            "FROM pg_proc WHERE oid='public.audit_product_insert()'::regprocedure",
             [os.environ["POSTGRES_RUNTIME_USER"]],
         )
         assert cursor.fetchone() == (os.environ["POSTGRES_USER"], True, ["search_path=public, pg_temp"], False)

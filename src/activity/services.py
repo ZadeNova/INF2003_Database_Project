@@ -13,11 +13,15 @@ from pymongo.write_concern import WriteConcern
 
 from catalogue.models import Product
 from catalogue.search import attach_photos, visible_products
-from config import mongo
+from config import mongo, redis_keys, redis_store
 from orders.models import OrderLine
 
 logger = logging.getLogger("mercer.errors")
 EVENT_WRITE_CONCERN = WriteConcern(w=1, wtimeout=1000)
+EVENTS_READY = False
+TRENDING_SHAPE = 1  # raise whenever the cached ranking rows change structure
+TRENDING_PANEL_SIZE = 8
+TRENDING_CACHE_ROWS = 50  # the panel shows 8; the rest is slack for products withdrawn after the ranking was cached
 
 
 def visitor(request, *, create=False):
@@ -31,6 +35,7 @@ def visitor(request, *, create=False):
 
 
 def record_event(request, event_type, *, product=None, query="", category=None):
+    global EVENTS_READY
     if request.method != "GET" or event_type not in {"view", "search"}:
         return
     identity = visitor(request, create=True)
@@ -43,12 +48,14 @@ def record_event(request, event_type, *, product=None, query="", category=None):
     if event_type == "search":
         event["query"] = str(query).strip()[:100]
     try:
-        with mongo.client() as client:
-            events = client[mongo.database_name()].events.with_options(write_concern=EVENT_WRITE_CONCERN)
-            # Never let an insert silently create a regular collection before mongo_setup has run.
-            if events.options().get("timeseries", {}).get("timeField") != "ts":
+        with mongo.database() as database:
+            events = database.events.with_options(write_concern=EVENT_WRITE_CONCERN)
+            # Never let an insert silently create a regular collection before mongo_setup has run. A passed check is
+            # remembered for the process (the collection is not dropped while the app runs); a failed one is retried.
+            if not EVENTS_READY and events.options().get("timeseries", {}).get("timeField") != "ts":
                 logger.warning("activity.event_write_failed")
                 return
+            EVENTS_READY = True
             events.insert_one(event)
     except PyMongoError:
         # No query, user/session identifier or database exception message enters the log.
@@ -70,19 +77,41 @@ def recently_viewed_pipeline(identity, now):
     ]
 
 
+def views_per_visitor():
+    """Count a product's views as distinct visitors in the window, so reloading a page cannot inflate them.
+
+    The first group keeps one row per (product, visitor): the user id when signed in, otherwise the keyed session hash.
+    Generated events (`seed_activity`) all share one synthetic session, so each counts as its own visit, by its event
+    id. A visitor with a fresh session each time still counts again; that limit is disclosed.
+    """
+    generated = {"$eq": ["$is_generated", True]}
+    return [
+        {
+            "$group": {
+                "_id": {
+                    "product": "$meta.product_id",
+                    "visitor": {"$cond": [generated, "$_id", {"$ifNull": ["$meta.user_id", "$meta.session_key"]}]},
+                },
+                "generated": {"$max": generated},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.product",
+                "views": {"$sum": 1},
+                "generated_views": {"$sum": {"$cond": ["$generated", 1, 0]}},
+            }
+        },
+    ]
+
+
 def trending_pipeline(now, category=None):
     match = {"meta.type": "view", "ts": {"$gte": now - timedelta(hours=24), "$lte": now}}
     if category is not None:
         match["meta.category"] = category
     return [
         {"$match": match},
-        {
-            "$group": {
-                "_id": "$meta.product_id",
-                "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
-            }
-        },
+        *views_per_visitor(),
         {"$setWindowFields": {"sortBy": {"views": -1}, "output": {"rank": {"$rank": {}}}}},
         # Sorting by the computed rank keeps the ID tie-breaker after the rank stage. Sorting by
         # views + ID can be coalesced into the window's ordering by the MongoDB optimizer.
@@ -111,18 +140,44 @@ def _visible_ranked(database, rows, limit):
     return attach_photos(database, selected)
 
 
+def _trending_rows_valid(rows):
+    return isinstance(rows, list) and all(isinstance(row, dict) and "_id" in row for row in rows)
+
+
+def _trending(database, now, category):
+    """The trending panel. The unfiltered ranking is the one expensive aggregation, so its top rows are cached for a
+    minute; visibility and photos are always read live, so a withdrawn product disappears at once. The category-filtered
+    ranking is already fast and stays live. With Redis disabled or down the original live path runs unchanged."""
+    live = database.events.aggregate
+    if category is None and not redis_store.available():
+        redis_store.note_unavailable()  # say in the request log that the cache was skipped, and why
+    if category is not None or not redis_store.available():
+        return _visible_ranked(database, live(trending_pipeline(now, category)), TRENDING_PANEL_SIZE)
+    ranked = redis_store.cached(
+        "trending",
+        redis_keys.TRENDING_TTL_SECONDS,
+        lambda: list(islice(live(trending_pipeline(now)), TRENDING_CACHE_ROWS)),
+        valid=_trending_rows_valid,
+        shape=TRENDING_SHAPE,
+    ).value
+    shown = _visible_ranked(database, ranked, TRENDING_PANEL_SIZE)
+    if len(shown) < TRENDING_PANEL_SIZE and len(ranked) >= TRENDING_CACHE_ROWS:
+        # Almost every cached row has been withdrawn since: the live ranking reaches further down.
+        shown = _visible_ranked(database, live(trending_pipeline(now)), TRENDING_PANEL_SIZE)
+    return shown
+
+
 def browsing_panels(request, *, category=None):
     now = timezone.now()
     identity = visitor(request)
     try:
-        with mongo.client() as client:
-            database = client[mongo.database_name()]
+        with mongo.database() as database:
             recent = (
                 _visible_ranked(database, database.events.aggregate(recently_viewed_pipeline(identity, now)), 10)
                 if identity
                 else []
             )
-            trending = _visible_ranked(database, database.events.aggregate(trending_pipeline(now, category)), 8)
+            trending = _trending(database, now, category)
         return {"recent_products": recent, "trending_products": trending}
     except PyMongoError:
         logger.warning("activity.panels_unavailable")
@@ -138,13 +193,7 @@ def conversion_pipeline(product_ids, now):
                 "ts": {"$gte": now - timedelta(days=30), "$lte": now},
             }
         },
-        {
-            "$group": {
-                "_id": "$meta.product_id",
-                "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
-            }
-        },
+        *views_per_visitor(),
     ]
 
 
@@ -154,10 +203,8 @@ def seller_insights(seller, *, now=None):
     ids = [item.pk for item in products]
     unavailable = False
     try:
-        with mongo.client() as client:
-            views = {
-                row["_id"]: row for row in client[mongo.database_name()].events.aggregate(conversion_pipeline(ids, now))
-            }
+        with mongo.database() as database:
+            views = {row["_id"]: row for row in database.events.aggregate(conversion_pipeline(ids, now))}
     except PyMongoError:
         logger.warning("activity.insights_unavailable")
         views = {}
@@ -185,10 +232,12 @@ def seller_insights(seller, *, now=None):
                 "product": item,
                 "views": None if unavailable else count,
                 "units": sold,
-                "conversion_percent": Decimal(sold) * 100 / count if count and not unavailable else None,
+                "units_per_view": Decimal(sold) / count if count and not unavailable else None,
                 "generated_views": views.get(item.pk, {}).get("generated_views", 0),
             }
         )
+    # Most-viewed first, then most units per view; newest product breaks ties (all ties when event data is unavailable).
+    rows.sort(key=lambda row: (row["views"] or 0, row["units_per_view"] or Decimal(0), row["product"].pk), reverse=True)
     return {
         "insights": rows,
         "events_unavailable": unavailable,

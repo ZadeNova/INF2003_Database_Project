@@ -26,7 +26,8 @@ class OperatorProductListView(OperatorRequiredMixin, View):
 
     def get(self, request):
         products = Product.objects.select_related("seller", "category").order_by("-id")
-        query = request.GET.get("q", "").strip()[:200]
+        # PostgreSQL text cannot hold a NUL byte; a hand-made URL would otherwise end in a 500.
+        query = request.GET.get("q", "").replace("\x00", "").strip()[:200]
         status = request.GET.get("status", "all")
         if query:
             products = products.filter(name__icontains=query)
@@ -61,8 +62,8 @@ class OperatorCategoryListView(OperatorRequiredMixin, View):
     http_method_names = ["get", "head"]
 
     def get(self, request):
-        with mongo.client() as client:
-            templates = {row["category_id"]: row for row in client[mongo.database_name()].category_templates.find({})}
+        with mongo.database() as database:
+            templates = {row["category_id"]: row for row in database.category_templates.find({})}
         categories = list(Category.objects.order_by("name_en"))
         for category in categories:
             category.template = templates.get(category.pk)
@@ -73,8 +74,8 @@ class OperatorCategoryView(OperatorRequiredMixin, View):
     http_method_names = ["get", "head", "post"]
 
     def context(self, category, form):
-        with mongo.client() as client:
-            template = client[mongo.database_name()].category_templates.find_one({"category_id": category.pk})
+        with mongo.database() as database:
+            template = database.category_templates.find_one({"category_id": category.pk})
         return {"category": category, "template": template, "form": form}
 
     def get(self, request, pk):
@@ -86,8 +87,8 @@ class OperatorCategoryView(OperatorRequiredMixin, View):
         form = TemplateAttributeForm(request.POST)
         if form.is_valid():
             name, definition = form.cleaned_data["name"], form.cleaned_data["definition"]
-            with mongo.client() as client:
-                result = client[mongo.database_name()].category_templates.update_one(
+            with mongo.database() as database:
+                result = database.category_templates.update_one(
                     {"category_id": category.pk, "attributes." + name: {"$exists": False}},
                     {"$set": {"attributes." + name: definition}, "$inc": {"version": 1}},
                 )

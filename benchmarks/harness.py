@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
-from benchmarks import db
+from benchmarks import db, headline
 from benchmarks.canonical import SCHEMA_PATH, csv_bytes
 from benchmarks.concurrency import PreparedRun
 from benchmarks.query import Query
@@ -281,10 +281,21 @@ def run(args):
             validation_operations_per_client=1,
             operations_by_clients={str(n): n * args.operations_per_client for n in (1, 10, 50)},
             fixed_b3_buyers=50,
+            b2_headline={
+                name: {layer: list(pair) for layer, pair in layers.items()}
+                for name, layers in headline.HEADLINE.items()
+            },
+            b2_refresh={name: list(pair) for name, pair in headline.REFRESH.items()},
             measured_runs=5,
             clients=[1, 10, 50],
             libraries={name: importlib.metadata.version(name) for name in ("psycopg", "pymongo", "Django")},
-            telemetry="disabled",
+            # What is actually switched off, not a blanket claim: neither server sends data anywhere, and MongoDB's
+            # local diagnostic capture (FTDC, one small sample a second) is left at the server default for both runs.
+            telemetry={
+                "mongosh": "off (MONGOSH_DISABLE_TELEMETRY=1 in bench-mongo)",
+                "postgresql": "none (the server sends no telemetry)",
+                "mongodb_ftdc": "server default (local diagnostic files only, not sent anywhere)",
+            },
             application_caches="none",
             buffer_state="warm",
             timing="all connections primed and first results canonicalised before shared barrier; later fetched rows checked by equality",
@@ -308,7 +319,11 @@ def run(args):
 
         def refresh_check():
             for query in b2_queries:
-                if query.variant == "view":
+                if query.variant in {
+                    "view",
+                    "summary",
+                    "app_summary",
+                }:  # every query that reads a maintained summary, on either engine
                     with query.open() as operation:
                         if csv_bytes(query.golden, operation()) != expected[query.golden]:
                             raise ValueError("Refreshed materialized view differs from golden")
@@ -356,17 +371,13 @@ def run(args):
                 failed_record(recorder, "B5", "both", "fresh_footprint", 0, 0, "storage", exc)
         if "BM4" in selected:
             demonstrate_bm4(recorder, database, provenance, expected, parameters)
+        baselines = [
+            Query("baseline", "python", "noop"),
+            Query("baseline_roundtrip", "postgres", "select1", "SELECT 1 AS one"),
+            Query("baseline_roundtrip", "mongo", "ping", command="ping"),
+        ]
         if "baseline" in selected:
-            run_queries(
-                [
-                    Query("baseline", "python", "noop"),
-                    Query("baseline_roundtrip", "postgres", "select1", "SELECT 1 AS one"),
-                    Query("baseline_roundtrip", "mongo", "ping", command="ping"),
-                ],
-                recorder,
-                expected,
-                args.operations_per_client,
-            )
+            run_queries(baselines, recorder, expected, args.operations_per_client)
         if "B1" in selected:
             run_queries(b1_queries, recorder, expected, args.operations_per_client)
         if "B2" in selected:
@@ -380,7 +391,7 @@ def run(args):
                     refresh_check=refresh_check,
                 )
         if "B4" in selected:
-            for kind, index, query in b4_cases:
+            for _kind, index, query in b4_cases:
                 evidence = {}
                 try:
                     with b4.dropped(query, index, database, evidence) as restore:
@@ -418,6 +429,10 @@ def run(args):
                 except Exception as exc:
                     failed_record(recorder, "B4_" + index, query.engine, "restore", 1, 0, "invariant", exc, evidence)
         run_mutations(recorder, database, provenance, selected)
+        if "baseline" in selected:
+            # The same three baselines again (amendment l5): the report flags a session whose end differs from its start.
+            for query in baselines:
+                run_queries([query], recorder, expected, args.operations_per_client, output=query.output + "_end")
         recorder.finish()
         # Tie the summary to the exact append-only operation evidence.
         recorder.provenance["raw_sha256"] = hashlib.sha256((args.output / "raw.jsonl").read_bytes()).hexdigest()

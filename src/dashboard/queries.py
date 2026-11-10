@@ -28,6 +28,26 @@ WHERE (%(category)s::bigint IS NULL OR p.category_id = %(category)s::bigint)
 ORDER BY replenish DESC, days_cover ASC NULLS LAST, p.id
 """
 
+# What the dashboard runs: the same result as STOCK_PLANNING from one grouped sum over the last 28 days, instead of a
+# 28-row window per product (an order of magnitude slower on the full data). STOCK_PLANNING stays for benchmark B2.
+STOCK_PLANNING_FAST = """
+SELECT p.id AS product_id, p.name, p.stock, p.lead_time_days, p.seller_id, c.name_en AS category,
+       s.shop_name, COALESCE(demand.units_28, 0)::numeric / 28 AS daily_demand,
+       p.stock::numeric * 28 / NULLIF(demand.units_28, 0) AS days_cover,
+       (COALESCE(demand.units_28, 0) > 0
+        AND p.stock::numeric * 28 < p.lead_time_days::numeric * COALESCE(demand.units_28, 0)) AS replenish
+FROM purchasable_product p
+JOIN catalogue_category c ON c.id = p.category_id
+JOIN accounts_seller s ON s.id = p.seller_id
+LEFT JOIN (
+    SELECT product_id, sum(units) AS units_28 FROM daily_product_sales
+    WHERE day BETWEEN %(as_of)s::date - 27 AND %(as_of)s::date GROUP BY product_id
+) demand ON demand.product_id = p.id
+WHERE (%(category)s::bigint IS NULL OR p.category_id = %(category)s::bigint)
+  AND (%(seller)s::bigint IS NULL OR p.seller_id = %(seller)s::bigint)
+ORDER BY replenish DESC, days_cover ASC NULLS LAST, p.id
+"""
+
 CATEGORY_PERFORMANCE = """
 WITH monthly AS (
     SELECT p.category_id, c.name_en AS category, date_trunc('month', d.day)::date AS month,
@@ -84,4 +104,10 @@ SELECT *, CASE WHEN delay_days < -7 THEN 'early_over_7'
                WHEN delay_days <= 7 THEN 'late_1_to_7'
                WHEN delay_days <= 14 THEN 'late_8_to_14' ELSE 'late_over_14' END AS bucket
 FROM deliveries ORDER BY order_id
+"""
+
+# The delivery rows from the maintained summary (migration dashboard 0002): the live DELAY_BUCKETS rows without the shop
+# name, in order id order so that sums over them come out the same as over the live query.
+DELIVERY_SUMMARY = """
+SELECT order_id, seller_id, delay_days, distance_km, bucket, as_of FROM public.order_delivery_summary ORDER BY order_id
 """

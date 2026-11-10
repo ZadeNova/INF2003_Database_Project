@@ -14,7 +14,12 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def product_rows(item):
-    return AuditLog.objects.filter(table_name="catalogue_product", row_id=str(item.pk)).order_by("id")
+    """Stock changes only; the product.create row is asserted in test_product_audit."""
+    return (
+        AuditLog.objects.filter(table_name="catalogue_product", row_id=str(item.pk))
+        .exclude(action="product.create")
+        .order_by("id")
+    )
 
 
 def test_purchase_and_cancellation_stock_changes_are_audited_with_the_buyer():

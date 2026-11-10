@@ -13,9 +13,8 @@ pytestmark = pytest.mark.django_db
 def test_runtime_role_name_cannot_inject_ddl(monkeypatch):
     user = get_user_model().objects.create_user(username="preserved")
     monkeypatch.setenv("POSTGRES_RUNTIME_USER", 'missing"; DROP TABLE accounts_user; --')
-    with pytest.raises(ProgrammingError), transaction.atomic():
-        with connection.schema_editor() as editor:
-            grant_runtime(None, editor)
+    with pytest.raises(ProgrammingError), transaction.atomic(), connection.schema_editor() as editor:
+        grant_runtime(None, editor)
     assert get_user_model().objects.filter(pk=user.pk).exists()
 
 
