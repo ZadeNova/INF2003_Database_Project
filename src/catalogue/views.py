@@ -1,3 +1,5 @@
+import logging
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from django.core.paginator import Paginator
@@ -7,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_safe
 from gridfs import GridFS
 from gridfs.errors import NoFile
+from pymongo.errors import PyMongoError
 
 from accounts.models import Seller
 from activity.services import browsing_panels, record_event
@@ -15,7 +18,17 @@ from reviews.queries import WRITTEN, latest_written_reviews, review_page, seller
 
 from .forms import SearchForm
 from .models import Category
-from .search import PAGE_SIZE, attach_photos, attribute_definitions, candidates, search_page, visible_products
+from .search import (
+    PAGE_SIZE,
+    attach_photos,
+    attribute_definitions,
+    candidates,
+    photos_or_icons,
+    search_page,
+    visible_products,
+)
+
+logger = logging.getLogger("mercer.errors")
 
 # Any of these, once non-blank, turns the shop home page into a search; blank or spaces-only values do not.
 SEARCH_PARAMS = ("q", "category", "min_price", "max_price", "rating", "sort")
@@ -57,8 +70,7 @@ def _listing(request, category=None):
         featured = visible_products().filter(featured=True).order_by("-id")
         products = featured if featured.exists() else visible_products().order_by("id")
         page = Paginator(products, PAGE_SIZE).get_page(data.get("page"))
-        with mongo.database() as database:
-            page.object_list = attach_photos(database, page.object_list)
+        page.object_list = photos_or_icons(page.object_list)  # a listing must not fail because MongoDB is down
         context.update(page_obj=page, searching=False, featured=featured.exists())
     else:
         products = candidates(core.cleaned_data)
@@ -165,9 +177,13 @@ def seller_shop(request, pk):
     page = Paginator(visible_products().filter(seller=seller).order_by("-id"), PAGE_SIZE).get_page(
         request.GET.get("page")
     )
-    with mongo.database() as database:
-        page.object_list = attach_photos(database, page.object_list)
-        rating = seller_rating(database, seller.pk)
+    page.object_list = photos_or_icons(page.object_list)
+    try:
+        with mongo.database() as database:
+            rating = seller_rating(database, seller.pk)
+    except PyMongoError:
+        logger.warning("catalogue.seller_rating_unavailable")
+        rating = None  # the shop page still shows its products
     return render(request, "catalogue/seller_shop.html", {"seller": seller, "page_obj": page, "seller_rating": rating})
 
 

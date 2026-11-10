@@ -253,6 +253,19 @@ The database and Redis images are pinned by digest in [compose.yaml](compose.yam
   web log carries `redis_ms`, `redis_commands` and `cache`.
 - **Turning it off** for a comparison on the same commit: set `REDIS_ENABLED=false` in `.env` and recreate `web`.
 
+### When a database is slow or down
+
+Gunicorn kills a worker after 30 seconds and there are two of them, so one stuck request must not hold a worker that long.
+- **PostgreSQL.** The `web` service (the runtime role) sets `POSTGRES_SESSION_OPTIONS` in [compose.yaml](compose.yaml):
+  a row lock is waited for at most 10 seconds, a statement runs at most 25 seconds and an idle open transaction is ended
+  after 60 seconds. A timeout is an `OperationalError`, which the middleware answers with a 503 and `Retry-After`;
+  migrations, the importer and the tests run as the owner without these limits.
+- **MongoDB.** A connection attempt waits at most 3 seconds, `web` bounds every operation to 10 seconds
+  (`MONGO_SOCKET_TIMEOUT_MS`), and after a lost connection the same client is skipped for 5 seconds (`config/mongo.py`),
+  as Redis is, so pages that never use MongoDB (the cart, checkout) are not queued behind a hung one. The shop listing
+  and a shop page show icon cards (and no shop rating) while MongoDB is down.
+- **Photos.** An upload is re-encoded at most 2048 pixels on its longest side and must fit in 2 MB after encoding.
+
 ## Benchmark (isolated databases)
 
 The approved [benchmark contract](docs/plans/benchmark.md) owns the method and final-run machine. Use explicit

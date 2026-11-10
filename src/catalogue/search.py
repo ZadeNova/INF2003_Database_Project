@@ -1,5 +1,6 @@
 """PostgreSQL chooses purchasable candidates; one MongoDB facet counts only those candidates."""
 
+import logging
 import math
 from decimal import Decimal
 
@@ -7,8 +8,13 @@ from bson import Decimal128
 from django.core.paginator import Paginator
 from django.db.models import BooleanField, FloatField
 from django.db.models.expressions import RawSQL
+from pymongo.errors import PyMongoError
+
+from config import mongo
 
 from .models import Product, PurchasableProduct
+
+logger = logging.getLogger("mercer.errors")
 
 PAGE_SIZE = 24
 # The plan bounds a category at about 2k buyable products (the largest has 1,292). A broad name-only search
@@ -153,6 +159,19 @@ def search_page(database, products, cleaned, definitions, requested):
         ).get_page(requested)
     facets["capped"] = capped
     return page, facets
+
+
+def photos_or_icons(products):
+    """Attach photo ids from MongoDB, or leave the icon cards when MongoDB is unreachable: a listing must not fail for a picture."""
+    products = list(products)
+    try:
+        with mongo.database() as database:
+            return attach_photos(database, products)
+    except PyMongoError:
+        logger.warning("catalogue.photos_unavailable")
+        for item in products:
+            item.photo_file_id = None
+        return products
 
 
 def attach_photos(database, products):

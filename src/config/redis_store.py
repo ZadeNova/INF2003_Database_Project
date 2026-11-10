@@ -396,8 +396,17 @@ def dashboard_version():
 
 
 def bump_dashboard():
-    """Make every cached dashboard entry unreachable. Call it after the change it reflects has committed."""
-    call(lambda client: _script(client, "version", VERSION_SCRIPT)(keys=[key("dashboard:version")], args=["bump"]))
+    """Make every cached dashboard entry unreachable. Call it after the change it reflects has committed.
+
+    It ignores a running back-off, like the lock release does: skipping it would leave the old summaries served for
+    up to the cache lifetime after a takedown or an edit. If Redis still cannot be reached the failure is logged.
+    """
+    result = call(
+        lambda client: _script(client, "version", VERSION_SCRIPT)(keys=[key("dashboard:version")], args=["bump"]),
+        force=True,
+    )
+    if result is FAILED and settings.REDIS_ENABLED:
+        logger.error("redis.dashboard_bump_failed")
 
 
 # Sliding-window limiter -------------------------------------------------------------------------------------------

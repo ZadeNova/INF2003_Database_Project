@@ -88,6 +88,10 @@ services:
       <<: *app-environment
       POSTGRES_USER: ${POSTGRES_RUNTIME_USER:?Run python src/tools/init_env.py first}
       POSTGRES_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Run python src/tools/init_env.py first}
+      # Web requests only (gunicorn kills a worker after 30 s): a request waiting on a row lock gets a clean 503 instead,
+      # and a hung MongoDB operation stops before the worker is killed. Migrations and the importer run as the owner without them.
+      POSTGRES_SESSION_OPTIONS: "-c lock_timeout=10s -c statement_timeout=25s -c idle_in_transaction_session_timeout=60s"
+      MONGO_SOCKET_TIMEOUT_MS: "10000"
     depends_on:
       db:
         condition: service_healthy

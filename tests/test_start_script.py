@@ -45,6 +45,18 @@ def test_a_dry_run_prints_every_command_and_runs_nothing():
     assert result.stdout.count("seed_demo") == 2  # once for an empty database, once for a loaded one
 
 
+def test_only_the_web_service_gets_the_request_timeouts():
+    compose = SCRIPT.parent.parent / "compose.yaml"
+    if not compose.is_file():
+        pytest.skip("host-only: compose.yaml is not inside the container")
+    text = compose.read_text(encoding="utf-8")
+    web = text.split("\n  web:\n", 1)[1].split("\n  migrate:\n", 1)[0]
+    others = text.replace(web, "")
+    for setting in ("lock_timeout=10s", "statement_timeout=25s", "idle_in_transaction_session_timeout=60s"):
+        assert setting in web and setting not in others
+    assert 'MONGO_SOCKET_TIMEOUT_MS: "10000"' in web and "MONGO_SOCKET_TIMEOUT_MS" not in others
+
+
 def test_the_files_the_script_runs_exist():
     root = SCRIPT.parent.parent
     if not (root / "src").is_dir():

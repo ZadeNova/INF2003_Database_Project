@@ -152,6 +152,17 @@ def test_the_version_only_moves_forward_and_survives_repeated_ensures():
     assert raw().pttl(redis_store.key("dashboard:version")) == -1  # the one key without an expiry
 
 
+def test_a_dashboard_bump_still_happens_while_a_back_off_is_running():
+    # A review takedown that lands during a back-off must still make the cached summaries unreachable.
+    before = redis_store.dashboard_version()
+    redis_store._state["down_until"] = time.monotonic() + 60
+    try:
+        redis_store.bump_dashboard()
+    finally:
+        redis_store._state["down_until"] = 0.0
+    assert int(redis_store.dashboard_version()) > int(before)
+
+
 def test_a_lost_version_key_never_brings_an_old_version_back():
     redis_store.bump_dashboard()
     old = redis_store.dashboard_version()

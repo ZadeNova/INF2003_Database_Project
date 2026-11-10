@@ -98,7 +98,12 @@ DATABASES = {
         "PORT": database.pop("port", "5432"),
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
-        "OPTIONS": {**database, "connect_timeout": 3},
+        "OPTIONS": {
+            **database,
+            "connect_timeout": 3,
+            # Set only on the web service (compose.yaml): lock, statement and idle-in-transaction timeouts.
+            **({"options": ENVIRON["POSTGRES_SESSION_OPTIONS"]} if ENVIRON.get("POSTGRES_SESSION_OPTIONS") else {}),
+        },
     }
 }
 AUTH_PASSWORD_VALIDATORS = [

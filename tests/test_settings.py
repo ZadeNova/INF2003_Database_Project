@@ -41,6 +41,40 @@ assert s.DATABASES['default']['OPTIONS']['sslmode'] == 'disable'
     assert result.returncode == 0, result.stderr
 
 
+def test_postgresql_session_options_are_applied_only_when_asked_for():
+    code = """from django.conf import settings as s
+print(s.DATABASES['default']['OPTIONS'].get('options'))
+"""
+    options = "-c lock_timeout=10s -c statement_timeout=25s -c idle_in_transaction_session_timeout=60s"
+    base = {key: value for key, value in os.environ.items() if key != "POSTGRES_SESSION_OPTIONS"}
+    plain = subprocess.run([sys.executable, "-c", code], env=base, capture_output=True, text=True)
+    asked = subprocess.run(
+        [sys.executable, "-c", code], env={**base, "POSTGRES_SESSION_OPTIONS": options}, capture_output=True, text=True
+    )
+    assert plain.stdout.strip() == "None" and asked.stdout.strip() == options, plain.stderr + asked.stderr
+
+
+@pytest.mark.django_db
+def test_the_web_services_timeouts_are_real_postgresql_settings_for_the_runtime_role():
+    import psycopg
+    from account_helpers import runtime_connection
+    from django.db import connection
+
+    options = "-c lock_timeout=10s -c statement_timeout=25s -c idle_in_transaction_session_timeout=60s"
+    with runtime_connection() as plain:
+        assert plain.execute("SHOW lock_timeout").fetchone() == ("0",)  # no limit without the options
+    with psycopg.connect(
+        dbname=connection.settings_dict["NAME"],
+        host=os.environ["POSTGRES_HOST"],
+        port=os.environ["POSTGRES_PORT"],
+        user=os.environ["POSTGRES_RUNTIME_USER"],
+        password=os.environ["POSTGRES_RUNTIME_PASSWORD"],
+        options=options,
+    ) as limited:
+        names = ("lock_timeout", "statement_timeout", "idle_in_transaction_session_timeout")
+        assert [limited.execute(f"SHOW {name}").fetchone()[0] for name in names] == ["10s", "25s", "1min"]
+
+
 def test_debug_is_enabled_only_by_an_explicit_setting():
     result = subprocess.run(
         [sys.executable, "-c", "from config import settings; print(settings.DEBUG)"],

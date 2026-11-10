@@ -2,11 +2,13 @@
 
 import atexit
 import os
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from threading import Lock
 
 from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 from config.db_timing import command_listener
 
@@ -14,6 +16,11 @@ REPLICA_SET = "rs0"
 _database = ContextVar("mongo_database", default=None)
 _clients = {}
 _clients_lock = Lock()
+# After a connection failure the same client is not tried again for a few seconds: a MongoDB that is down or hung would
+# otherwise hold every web worker for the full server-selection timeout on each request, and pages that never touch it
+# (the cart, checkout) would queue behind them. Keyed like the pools, so a deliberate outage test cannot affect a healthy one.
+BACKOFF_SECONDS = 5.0
+_down_until = {}
 
 
 def connection_options(*, environ=None, direct=False):
@@ -30,7 +37,12 @@ def connection_options(*, environ=None, direct=False):
         "password": values["MONGO_APP_PASSWORD"],
         "authSource": "admin",
         "serverSelectionTimeoutMS": 3000,
+        "connectTimeoutMS": 3000,
     }
+    # Web workers set this so that no single operation can outlast gunicorn's own timeout; the importer and the other
+    # offline tools do not (their operations are long on purpose).
+    if env.get("MONGO_SOCKET_TIMEOUT_MS"):
+        options["socketTimeoutMS"] = int(env["MONGO_SOCKET_TIMEOUT_MS"])
     if direct:
         options["directConnection"] = True
     else:
@@ -47,11 +59,17 @@ def client(*, environ=None, direct=False):
     """
     options = connection_options(environ=environ, direct=direct)
     key = (os.getpid(), tuple(sorted(options.items())))
+    if time.monotonic() < _down_until.get(key, 0.0):
+        raise ServerSelectionTimeoutError("MongoDB is being skipped for a few seconds after a connection failure")
     with _clients_lock:
         if key not in _clients:
             _clients[key] = MongoClient(**options, event_listeners=[command_listener])
         pooled = _clients[key]
-    yield pooled
+    try:
+        yield pooled
+    except ConnectionFailure:  # includes a server-selection timeout and a network timeout
+        _down_until[key] = time.monotonic() + BACKOFF_SECONDS
+        raise
 
 
 @contextmanager
@@ -67,6 +85,7 @@ def close_clients():
         for pooled in _clients.values():
             pooled.close()
         _clients.clear()
+        _down_until.clear()
 
 
 atexit.register(close_clients)
