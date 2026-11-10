@@ -80,6 +80,18 @@ def create(shop):
     return Product.objects.get(seller=seller)
 
 
+def test_the_add_product_page_asks_for_the_category_once(shop):
+    seller, category, template, client = shop
+    page = client.get("/products/mine/new/", {"category": category.pk}).content.decode()
+    assert page.count('name="category"') == 2  # the selector above the form, and the hidden value in the form
+    assert '<select id="choose-category" name="category">' in page
+    assert f'<input type="hidden" name="category" value="{category.pk}"' in page  # the form only carries it
+    assert "Category: <strong>Housewares</strong>" in page
+    # A category that is not the loaded one is still refused (the hidden value cannot be changed to another category).
+    other = Category.objects.create(slug="toys", name_en="Toys", name_pt="Toys")
+    assert client.post("/products/mine/new/", data(other)).status_code == 400
+
+
 def photo(format_name="PNG", name="kettle.png"):
     output = BytesIO()
     image = Image.new("RGB", (24, 16), (40, 90, 120))

@@ -20,7 +20,9 @@
       </form>
     </div>
     <form class="panel catalogue-editor" method="post" enctype="multipart/form-data">
-        {% csrf_token %}{% include "accounts/_form_fields.html" %}
+        {% csrf_token %}
+        <p class="form-note">Category: <strong>{% for category in categories %}{% if form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}{{ category.display_name }}{% endif %}{% endfor %}</strong>. To change it, pick another category above and press Load options.</p>
+        {% include "accounts/_form_fields.html" %}
         <button class="button button--dark" type="submit">Save product</button>
     </form>
     {% if product and product.active %}<form class="panel catalogue-editor" method="post" action="{% url 'catalogue:product_deactivate' product.pk %}">{% csrf_token %}<h2>Stop selling this product</h2>

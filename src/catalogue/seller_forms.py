@@ -25,6 +25,8 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ["name", "category", "price", "stock", "freight", "lead_time_days"]
+        # The category is chosen once, in the selector above the form; the form carries it as a hidden value.
+        widgets = {"category": forms.HiddenInput}
 
     def __init__(self, *args, template=None, spec=None, **kwargs):
         super().__init__(*args, **kwargs)
