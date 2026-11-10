@@ -240,4 +240,11 @@ def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(
         call_command("seed_demo", stdout=StringIO())
     rows = AuditLog.objects.filter(table_name="catalogue_product").exclude(pk__in=before)
     assert rows.exists()
-    assert set(rows.values_list("actor_id", "reason")) == {(None, None)}
+    # Demo adjustments are system rows. The showcase products go through the seller code path (see showcase.py), so
+    # their rows name the seller's own user and the seller reason. Nothing may carry the caller's operator or reason.
+    seller_users = set(get_user_model().objects.filter(role="seller").values_list("pk", flat=True))
+    stamps = set(rows.values_list("actor_id", "reason"))
+    assert (None, None) in stamps
+    assert all(actor is None or actor in seller_users for actor, _ in stamps)
+    assert all(reason in (None, "Seller saved product") for _, reason in stamps)
+    assert not rows.filter(actor_id=operator.pk).exists()
