@@ -70,6 +70,7 @@ Added 8 November 2026 on Erfan's instruction, so nothing is forgotten when the r
 - **Limitations (section 9).** One main dataset (a second was considered and dropped to protect scope); generated product
   text; machine-translated reviews with occasional odd phrasing, labelled as such; Olist category names corrected only on
   display (a display-name map), never in the stored data.
+- **Security wording (section on roles and security).** Say "tenant isolation for sellers, a second layer under the seller pages" ([seller-rls](seller-rls.md)), never "the database enforces all isolation". PostgreSQL confines a seller's session to its own orders, lines, refunds and products and hides checkouts and payments; the application filters remain. State the limits: customer sessions are not confined, the owner role bypasses by design, policies limit rows not columns, and MongoDB has no equivalent, so seller-scoped reviews stay application-enforced (a point for the SQL against NoSQL comparison). The best story is the money-trigger finding: a function that runs with the caller's rights and reads a restricted table quietly stops checking.
 - **Reviews against generated names.** The reviews are real Olist comments, but the products they were written for were anonymised, so a
   review can mention an object the generated name does not (a "curtain" under a duvet cover). The limitation to state: reviews are
   real, products are generated, and the link between them is the Olist product id. The showcase products were chosen for reviews that

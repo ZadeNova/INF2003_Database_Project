@@ -749,6 +749,16 @@ docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_ch
 The seller and operator order lists can filter by status and order number. Invalid filter values show a form error;
 seller filters always stay within that seller's orders.
 
+### Seller row-level security
+
+While a seller-centre page runs, PostgreSQL also confines the session to that seller's own orders, order lines, refunds
+and products (and hides checkouts and payments), so a missing filter in the code cannot leak another seller's rows. It is
+a second layer, not the only one. The migration owner role (`migrate`, the import, the tests) and the SECURITY DEFINER
+functions **bypass** the policies by design, so a demonstration must connect as the runtime role (as the `web` service
+does) and set `mercer.seller_id` first; `tests/test_seller_rls.py` does exactly that. Customer and operator sessions are
+not confined. The policies, the rules they taught and the limits are in [DATA_MODEL](docs/DATA_MODEL.md#seller-row-level-security-orders-0005); the tests are
+`tests/test_seller_rls*.py`.
+
 ## Regenerate the data (optional)
 
 The raw files are never edited. The preparation image pins Python by digest and pandas/NumPy/pytest versions, and has

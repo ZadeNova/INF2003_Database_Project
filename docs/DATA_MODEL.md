@@ -311,6 +311,51 @@ EXECUTE. It fixes table_name to reviews and action to review.takedown/review.res
 requires an operator from transaction-local mercer.actor_id and a nonblank mercer.audit_reason, and records the
 hidden-state transition. PostgreSQL trusts the app's MongoDB change; the app keeps SQL open through the MongoDB commit.
 
+### Seller row-level security (`orders` 0005)
+
+A second layer under the seller pages, not the only one: the application's `seller_id` filters stay
+([plan](plans/seller-rls.md)). While a seller-centre view runs, [accounts/rowsecurity.py](../src/accounts/rowsecurity.py)
+sets the session setting `mercer.seller_id` (`set_config(..., false)`, session-level because the seller pages read outside a
+transaction) and clears it when the response is rendered, even after an error; if the clearing fails the connection is
+closed. `public.mercer_seller()` returns that setting as a bigint, NULL when unset or empty. **Fail open:** with the setting
+unset (customers, operators, public pages, the import, tests as the owner) every policy allows all rows, so behaviour is as
+before. `ENABLE`, not `FORCE`: the owner and SECURITY DEFINER functions bypass the policies by design.
+
+| Table | A session with the setting may |
+|---|---|
+| `orders_order` | read and update its own orders (`WITH CHECK` stops handing a row to another seller); not insert or delete |
+| `orders_orderline` | read its own lines only |
+| `orders_refund` | read the refunds of orders it can see (`EXISTS` on the filtered order table) |
+| `orders_checkout`, `orders_payment` | nothing: a checkout is shared by every seller in one basket |
+| `catalogue_product` | read every product (the shop is public); insert, update and delete only its own |
+| `audit_log` | read only the rows about its own seller (its seller row, or a record carrying its seller id); no writes (the SECURITY DEFINER audit triggers still write) |
+
+Policies are one per command, named `seller_<command>`, and a test compares an explicit table-to-policy map with
+`pg_policies`, failing for any table with a `seller_id` column that is missing.
+
+Rules these policies taught, kept for anyone adding a table:
+- **A function with the caller's rights that reads a restricted table quietly stops checking.** `check_checkout_money()` and
+  `check_checkout_refunds()` loop over the rows they can see and `CONTINUE` past a checkout they cannot, so under a seller
+  session the money check would pass silently. Both are now SECURITY DEFINER (`ALTER FUNCTION`), and a test shows a seller's
+  rewrite of its own order total is rejected at commit.
+- **Locking reads see less than plain reads.** `FOR UPDATE` and `FOR SHARE` need the UPDATE policy, so a row a seller can
+  `SELECT` (any product) cannot be locked unless it is its own. `change_order_status` takes the shared checkout lock through
+  `public.lock_checkout_of_order(order_id)`, a SECURITY DEFINER function (`search_path = public, pg_temp`, PUBLIC EXECUTE
+  revoked, EXECUTE granted to the runtime role) that locks the checkout only if the caller may see the order, else returns
+  NULL (the caller answers 404).
+- **A table's SELECT policy must allow at least what its write policies allow**, because `INSERT ... RETURNING` and
+  `UPDATE ... WHERE` also need the row to pass SELECT.
+- **Foreign-key checks bypass policies**, so an FK error against a hidden row reveals that it exists. No table a seller can
+  insert into references a restricted table, so nothing is exposed today.
+- **Django's `save()` on an unchanged row falls back to an `INSERT`**, which the order policies refuse; seller code uses
+  `.update()` or raw SQL for those writes.
+- An index on `seller_id` is used only because the views keep their own filter (a policy expression alone cannot use it).
+- The seller orders page no longer joins the checkout, and the shipping query's checkout join is a `LEFT JOIN`.
+
+Not covered, said plainly: **customer sessions are not confined**; the policies limit rows, not columns; cart, wishlist,
+customer-profile, `django_session` and the dashboard materialized views are unrestricted; MongoDB has no equivalent, so
+seller-scoped reviews stay application-enforced.
+
 ### Dashboard materialization and reporting date
 
 `public.dashboard_as_of()` is a stable, invoker-rights SQL function returning the latest imported order's local

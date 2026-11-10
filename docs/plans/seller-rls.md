@@ -1,6 +1,6 @@
 # seller-rls: Row-level security for sellers
 
-status: approved
+status: in-progress
 plan owner: Erfan · implementer: Claude Code · reviewer: Opus 5.5 (plan reviewed 10 Nov; the build gets its own review) ·
 phase 5 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `checkout`, `accounts` (done) · backlog item #48
 ([improvements](improvements.md#batch-8-row-level-security-settled-last))
@@ -139,7 +139,7 @@ customer-profile table.
 
 ## Steps (small, with a short review after each)
 
-0. **Survey and plan review**: done (above).
+0. **Survey and plan review**: done (above). Steps 1 to 4 are built (11 November); step 5 is still to do.
 1. **Migration** (in the `orders` app, after the latest `catalogue` and `accounts` migrations): `mercer_seller()`, the policies,
    `ALTER FUNCTION … SECURITY DEFINER` for the two money functions and `lock_checkout_of_order`; reversible, grants unchanged.
    Tests as the raw runtime role: the demo statements (read, update, insert, delete across two sellers, an unfiltered query, an
