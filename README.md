@@ -27,6 +27,11 @@ Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.
 
 ## Set up and run (fresh clone)
 
+**One command:** `python scripts/start.py` does everything below and loads the data (steps 1 and 3, then
+[Load Olist and demo accounts](#load-olist-and-demo-accounts)), skips the import when the database already holds data,
+and finishes with the smoke check. Docker must be running. Run it again at any time; `--dry-run` prints the commands.
+The manual steps follow.
+
 From the repository root:
 
 ```sh
@@ -138,7 +143,7 @@ python -m ruff format --check .
 python scripts/audit_requirements.py
 python scripts/check_docs.py
 CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
-python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
+python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_start_script.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
 python - <<'PY'
 from xml.etree import ElementTree
 suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")

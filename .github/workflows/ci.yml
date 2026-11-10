@@ -127,7 +127,7 @@ jobs:
         run: |
           git --version
           python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$RUNNER_TEMP/pytest" \
-            --junitxml "$RUNNER_TEMP/host.xml" tests/test_check_docs.py tests/test_package_submission.py tests/test_request_timing.py tests/test_redis_keys_doc.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
+            --junitxml "$RUNNER_TEMP/host.xml" tests/test_check_docs.py tests/test_package_submission.py tests/test_request_timing.py tests/test_redis_keys_doc.py tests/test_start_script.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
           python - "$RUNNER_TEMP/host.xml" <<'PY'
           import sys
           import xml.etree.ElementTree as ET

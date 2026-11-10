@@ -136,7 +136,7 @@ experiment and #17 follow, in that order, each alone on the machine ([benchmark]
 
 | # | Area | Item | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 71 | MongoDB, benchmark | Full-text search on review text: a MongoDB text index against PostgreSQL `tsvector` with a GIN index, compared with query plans (PLAN.md Tier 2 `search`, E1, B7). A second same-feature comparison for the NoSQL half; the English review text already exists | Short plan first. Reviews live only in MongoDB, so the application gains MongoDB text search and the PostgreSQL side runs on the bench review copy as B7; no SQL review table in the application. Build only after batches 1–6 are green | M, approval | open |
+| 71 | MongoDB, benchmark | Full-text search on review text: a MongoDB text index against PostgreSQL `tsvector` with a GIN index, compared with query plans (PLAN.md Tier 2 `search`, E1, B7). A second same-feature comparison for the NoSQL half; the English review text already exists | Short plan first. Reviews live only in MongoDB, so the application gains MongoDB text search and the PostgreSQL side runs on the bench review copy as B7; no SQL review table in the application. Build only after batches 1–6 are green | M, approval | plan drafted 10 Nov ([search](search.md)), awaiting decisions; kill switch 12 Nov |
 
 ## Batch 7: code-quality pass, then the full codebase review
 
@@ -163,7 +163,7 @@ Batches 5, 6 and 8 (Redis, the summaries, row-level security). This relaxes CLAU
 |---|---|---|---|---|
 | 48 | **Row-level security for sellers** (`seller-rls` in PLAN.md section 14): PostgreSQL policies so the database restricts a seller to their own products and orders. Today rule 6 is enforced only by application filters and tests; no policy exists. Needs a plan with trade-offs before building (roles, the per-request setting, owner and runtime roles, tests, benchmark isolation). Cut and disclose if not green on the full suite by the go/no-go date ★ | A database-enforced security feature the presentation criterion names; makes the "database says no" demo stronger | M–L, approval | accepted; [plan](seller-rls.md) approved 10 Nov after an independent review (D1 to D7); built 10 Nov (steps 1 to 5, including the Opus 5.5 review and its fix round); go/no-go 13 Nov |
 | 62 | [confirmed] A seller cannot relist a deactivated product, and many imported products are inactive. A feature, not a bug fix. Relist action using the same lock order. Optional | Seller demo only | S | open |
-| 42 | **One-command start**: a script that runs `init_env`, `up`, `import_olist` and `seed_demo` in order ★ | A failed marker run costs "working". Optional | S, approval | open |
+| 42 | **One-command start**: a script that runs `init_env`, `up`, `import_olist` and `seed_demo` in order ★ | A failed marker run costs "working". Optional | S, approval | done 10 Nov: `scripts/start.py` (init_env, build and migrate, import only an empty database, seed_demo, smoke check; tested on an isolated project twice, the second run skipping the import) |
 | 20 | Adding a product asks for the category twice. Only if the video films the add-product form | Visible only if filmed | S–M | open |
 
 ## Batch 8b: synthetic scale runs for the benchmark (parked)
