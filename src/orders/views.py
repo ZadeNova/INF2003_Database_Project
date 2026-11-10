@@ -147,7 +147,9 @@ class SellerOrdersView(SellerRequiredMixin, View):
         filters = OrderFilterForm(request.GET)
         orders = (
             filters.apply(Order.objects.filter(seller=self.seller))
-            .select_related("checkout", "seller")
+            .select_related(
+                "seller"
+            )  # not the checkout: it is shared by every seller in the basket and hidden from them
             .order_by("-placed_at", "-pk")
         )
         query = (

@@ -145,7 +145,10 @@ def test_order_audit_trigger_works_as_runtime_and_cannot_be_tampered_with():
     assert len(rows) == 4
     for name, owner, definer, config, execute in rows:
         assert owner == os.environ["POSTGRES_USER"] and config == ["search_path=public, pg_temp"] and not execute
-        assert definer == (name == "audit_order_status")
+        # The audit function writes a table runtime cannot; the two money checks read every payment, order and refund of a
+        # checkout, which a seller session's row policies would otherwise hide (docs/plans/seller-rls.md). The status
+        # check only looks at OLD and NEW and keeps the caller's rights.
+        assert definer == (name != "check_order_status_transition")
 
 
 @pytest.mark.parametrize("bad", ["checkout-insert", "order-insert", "order-delete", "payment-insert", "payment-move"])

@@ -148,3 +148,80 @@ DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.check_checkou
 MONEY_INVARIANTS_REVERSE += (
     "DROP FUNCTION public.check_checkout_money(); DROP FUNCTION public.check_checkout_refunds();"
 )
+
+
+# Row-level security for sellers (docs/plans/seller-rls.md). A session that sets `mercer.seller_id` sees and changes only
+# that seller's rows; with the setting unset every policy lets everything through, so customers, operators and the owner
+# role behave as before. The owner bypasses the policies (row security is enabled, never forced).
+_SELLER = "(SELECT public.mercer_seller())"
+_UNSET = f"{_SELLER} IS NULL"
+_OWN = f"({_UNSET} OR seller_id = {_SELLER})"
+_AUDIT_OWN = (
+    f"({_UNSET} OR (table_name = 'accounts_seller' AND row_id = {_SELLER}::text) "
+    f"OR COALESCE(after, before) ->> 'seller_id' = {_SELLER}::text)"
+)
+_DENY = {"INSERT": (None, _UNSET), "UPDATE": (_UNSET, _UNSET), "DELETE": (_UNSET, None)}
+
+# table -> command -> (USING, WITH CHECK). A SELECT policy always allows at least what the write policies allow,
+# because INSERT ... RETURNING and UPDATE ... WHERE also need the row to pass SELECT.
+SELLER_POLICIES = {
+    "orders_order": {
+        "SELECT": (_OWN, None),
+        "INSERT": (None, _UNSET),
+        "UPDATE": (_OWN, _OWN),
+        "DELETE": (_UNSET, None),
+    },
+    "orders_orderline": {"SELECT": (_OWN, None), **_DENY},
+    "orders_refund": {
+        "SELECT": (
+            f"({_UNSET} OR EXISTS (SELECT 1 FROM public.orders_order o WHERE o.id = orders_refund.order_id))",
+            None,
+        ),
+        **_DENY,
+    },
+    "orders_checkout": {"ALL": (_UNSET, _UNSET)},
+    "orders_payment": {"ALL": (_UNSET, _UNSET)},
+    "catalogue_product": {
+        "SELECT": ("true", None),
+        "INSERT": (None, _OWN),
+        "UPDATE": (_OWN, _OWN),
+        "DELETE": (_OWN, None),
+    },
+    "audit_log": {"SELECT": (_AUDIT_OWN, None)},  # written only by SECURITY DEFINER triggers, which bypass the policies
+}
+
+SELLER_ROW_SECURITY = """
+CREATE FUNCTION public.mercer_seller() RETURNS bigint
+LANGUAGE sql STABLE SET search_path = pg_catalog, pg_temp AS $$
+    SELECT NULLIF(pg_catalog.current_setting('mercer.seller_id', true), '')::bigint
+$$;
+
+-- The deferred money checks read every payment, order and refund of a checkout. With the caller's rights a seller session
+-- would not see the checkout, the loop would skip it (IF NOT FOUND THEN CONTINUE) and the check would pass silently.
+ALTER FUNCTION public.check_checkout_money() SECURITY DEFINER;
+ALTER FUNCTION public.check_checkout_refunds() SECURITY DEFINER;
+
+-- Locks the checkout of an order before the order itself (the lock order of the deferred checks), for a seller session
+-- that cannot read the checkout. It locks only a checkout whose order the caller may see, and returns NULL otherwise.
+CREATE FUNCTION public.lock_checkout_of_order(p_order_id bigint) RETURNS bigint
+LANGUAGE sql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    SELECT c.id FROM public.orders_order o JOIN public.orders_checkout c ON c.id = o.checkout_id
+    WHERE o.id = p_order_id AND (public.mercer_seller() IS NULL OR o.seller_id = public.mercer_seller())
+    FOR UPDATE OF c
+$$;
+REVOKE EXECUTE ON FUNCTION public.lock_checkout_of_order(bigint) FROM PUBLIC;
+"""
+SELLER_ROW_SECURITY_REVERSE = ""
+for _table, _commands in SELLER_POLICIES.items():
+    SELLER_ROW_SECURITY += f"ALTER TABLE public.{_table} ENABLE ROW LEVEL SECURITY;\n"
+    for _command, (_using, _check) in _commands.items():
+        _clauses = (f" USING ({_using})" if _using else "") + (f" WITH CHECK ({_check})" if _check else "")
+        SELLER_ROW_SECURITY += f"CREATE POLICY seller_{_command.lower()} ON public.{_table} FOR {_command}{_clauses};\n"
+        SELLER_ROW_SECURITY_REVERSE += f"DROP POLICY seller_{_command.lower()} ON public.{_table};\n"
+    SELLER_ROW_SECURITY_REVERSE += f"ALTER TABLE public.{_table} DISABLE ROW LEVEL SECURITY;\n"
+SELLER_ROW_SECURITY_REVERSE += """
+DROP FUNCTION public.lock_checkout_of_order(bigint);
+ALTER FUNCTION public.check_checkout_refunds() SECURITY INVOKER;
+ALTER FUNCTION public.check_checkout_money() SECURITY INVOKER;
+DROP FUNCTION public.mercer_seller();
+"""

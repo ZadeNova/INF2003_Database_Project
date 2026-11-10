@@ -84,3 +84,30 @@ def postgres_unavailable(transactional_db):
             connection.settings_dict = original
 
     return unavailable
+
+
+@pytest.fixture
+def runtime_role(transactional_db):
+    """Run the code under test as the web service's runtime role, not the owner.
+
+    The owner bypasses row-level security and every ordinary test runs as the owner, so the policies would otherwise never
+    apply to the real views and services. Enter the returned context after the test data is built (the runtime role may not
+    flush the database); on exit the owner connection is restored, which pytest-django needs for its own cleanup.
+    """
+
+    @contextmanager
+    def as_runtime():
+        connection.close()
+        original = deepcopy(connection.settings_dict)
+        connection.settings_dict = {
+            **original,
+            "USER": os.environ["POSTGRES_RUNTIME_USER"],
+            "PASSWORD": os.environ["POSTGRES_RUNTIME_PASSWORD"],
+        }
+        try:
+            yield
+        finally:
+            connection.close()
+            connection.settings_dict = original
+
+    return as_runtime

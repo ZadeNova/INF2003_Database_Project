@@ -5,6 +5,7 @@ from django.shortcuts import redirect, resolve_url
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from . import rowsecurity
 from .models import Seller, User
 
 
@@ -50,11 +51,26 @@ class AnySellerMixin(RoleRequiredMixin):
     """Any seller, whatever their status: only for the seller's own status page."""
 
     role = User.Role.SELLER
+    confined = False
+
+    def dispatch(self, request, *args, **kwargs):
+        """While a seller-centre view runs, PostgreSQL confines the session to this seller's rows (see rowsecurity.py).
+        Template responses render after dispatch returns, so they are rendered here, before the setting is released."""
+        try:
+            response = super().dispatch(request, *args, **kwargs)
+            if hasattr(response, "render") and not response.is_rendered:
+                response.render()
+            return response
+        finally:
+            if self.confined:
+                rowsecurity.release()
 
     def check_access(self, request):
         self.seller = Seller.objects.filter(user=request.user).first()
         if self.seller is None:
             raise PermissionDenied
+        rowsecurity.confine_to_seller(self.seller.pk)
+        self.confined = True
         return None
 
 

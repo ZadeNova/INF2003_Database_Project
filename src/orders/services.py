@@ -356,7 +356,7 @@ def change_order_status(actor, order_id, action, reason=""):
             # Lock the parent before its order, matching deferred checks and serializing sibling refunds.
             # The scoped lookup never reveals another customer's or seller's order.
             cursor.execute(
-                """SELECT o.checkout_id FROM orders_order o JOIN orders_checkout c ON c.id=o.checkout_id
+                """SELECT o.checkout_id FROM orders_order o LEFT JOIN orders_checkout c ON c.id=o.checkout_id
                               JOIN accounts_seller s ON s.id=o.seller_id WHERE o.id=%s AND
                               ((%s='customer' AND c.customer_id=%s) OR (%s='seller' AND s.user_id=%s AND s.status='approved')
                                OR %s='operator')""",
@@ -365,8 +365,11 @@ def change_order_status(actor, order_id, action, reason=""):
             parent = cursor.fetchone()
             if parent is None:
                 raise Http404
-            cursor.execute("SELECT id FROM orders_checkout WHERE id=%s FOR UPDATE", [parent[0]])
-            cursor.fetchone()
+            # A seller session cannot read the checkout (it is shared by every seller in the basket), so the lock is taken by a
+            # function that checks the caller may see the order (row-level security, docs/plans/seller-rls.md).
+            cursor.execute("SELECT public.lock_checkout_of_order(%s)", [order_id])
+            if cursor.fetchone()[0] is None:
+                raise Http404
             cursor.execute("SELECT id,status,total,checkout_id FROM orders_order WHERE id=%s FOR UPDATE", [order_id])
             order = cursor.fetchone()
             expected = {"ship": {"paid"}, "deliver": {"shipped"}, "cancel": {"placed", "paid"}}[action]
