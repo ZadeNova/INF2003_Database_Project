@@ -92,7 +92,8 @@ def write_review(actor, line_id, action, cleaned=None):
                     "text_pt": "",
                     "machine_translated": False,
                     "from_order_review": False,
-                    "olist_review_id": None,
+                    # An edit keeps the source id of an imported review (its provenance); a new review has none.
+                    "olist_review_id": (before or {}).get("olist_review_id"),
                     "created_at": (before or {}).get("created_at", now),
                     "answered_at": now,
                 }

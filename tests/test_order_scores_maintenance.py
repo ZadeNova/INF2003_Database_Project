@@ -68,6 +68,9 @@ def test_a_customer_editing_or_deleting_a_historical_review_updates_the_summary_
     assert review["order_id"] not in stored(mongo_db)
     assert stored(mongo_db) == live(mongo_db)
     assert redis_store.dashboard_version() != version  # the cached dashboard blocks were built from the old score
+    if action == "edit":  # review round F4: the edit keeps the imported review's source id
+        edited = mongo_db.reviews.find_one({"order_line_id": review["order_line_id"]})
+        assert edited["olist_review_id"] == review["olist_review_id"] is not None
 
 
 def test_a_new_review_after_the_reporting_date_changes_neither_the_summary_nor_the_cache(imported, mongo_db):

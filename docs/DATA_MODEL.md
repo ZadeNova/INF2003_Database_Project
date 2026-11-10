@@ -500,7 +500,9 @@ hash. The seed_activity synthetic label remains generated-demo-activity. Searche
 at 100 characters, outside metadata. Events have
 an explicit is_generated boolean. They contain no copied product name, price, stock or personal profile fields.
 Time-series collections use MongoDB's time-field rules rather than an outer JSON Schema validator. The app builds
-only the two accepted event shapes; setup refuses incompatible time-series options.
+only the two accepted event shapes; setup refuses incompatible time-series options. Trending and seller insights count
+a product's views as distinct visitors in their window (one per user_id or session_key); each generated event counts as
+its own visit, because they all share the synthetic session.
 
 Secondary indexes are event_product_time (meta.product_id, ts descending), event_user_time (meta.user_id, ts descending),
 event_session_time (meta.session_key, ts descending), event_type_time (meta.type, ts descending), and event_category_time

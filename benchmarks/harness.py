@@ -289,7 +289,13 @@ def run(args):
             measured_runs=5,
             clients=[1, 10, 50],
             libraries={name: importlib.metadata.version(name) for name in ("psycopg", "pymongo", "Django")},
-            telemetry="disabled",
+            # What is actually switched off, not a blanket claim: neither server sends data anywhere, and MongoDB's
+            # local diagnostic capture (FTDC, one small sample a second) is left at the server default for both runs.
+            telemetry={
+                "mongosh": "off (MONGOSH_DISABLE_TELEMETRY=1 in bench-mongo)",
+                "postgresql": "none (the server sends no telemetry)",
+                "mongodb_ftdc": "server default (local diagnostic files only, not sent anywhere)",
+            },
             application_caches="none",
             buffer_state="warm",
             timing="all connections primed and first results canonicalised before shared barrier; later fetched rows checked by equality",

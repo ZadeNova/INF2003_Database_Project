@@ -113,3 +113,9 @@ review with plans in-progress, pending re-review. The lower branches are unchang
 grouped 28-day sum (`STOCK_PLANNING_FAST`) with the same results; the window-function query stays as `STOCK_PLANNING` for
 benchmark B2. The delivery-delay panels now include copied order reviews, because copies in an order share its score;
 MongoDB returns an integer sum and count per order. The contract above is otherwise unchanged.
+
+10 November 2026, review round F (finding F8): the index named in exit check 3 belongs to the window-function query, which
+benchmark B2 still runs. The app's grouped query (`STOCK_PLANNING_FAST`) reads `daily_product_sales` with a sequential scan,
+because a filter on the day alone cannot use an index that leads with the product; on the full data the scan touches about
+6,000 rows in a few milliseconds and the stock SQL as a whole is tens of milliseconds, so no index was added. Quote the plan
+of the query that is meant, from an `EXPLAIN (ANALYZE, BUFFERS)` run, not this note.

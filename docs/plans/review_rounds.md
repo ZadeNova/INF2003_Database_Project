@@ -320,3 +320,21 @@ integration section); the submission packaging commands in the README produce an
 should not be shipped.
 
 Do NOT repeat the layer reviews; use them only to choose where to look. Report a layer defect only if a journey exposed it.
+
+## Review notes
+
+10 November 2026, round F (reads and analytics), run by Syahfariz in one Claude Opus 5.5 session on commit `1748f2e` with the
+full data. Every dashboard number matched an independent derivation on the live, summary and cached paths, and the benchmark
+gate and report held up. Eight findings, none blocker or major. At Syahfariz's request the same session fixed them on
+`improvements/review-f-fixes`, with a regression test for each code change, for Erfan to verify before merge (this departs
+from the contract above, where the fixes are made by Erfan's session):
+
+- F1 the refresh button no longer queues behind a running refresh ([DECISIONS](../DECISIONS.md), `refresh-no-queue`).
+- F2 views count once per visitor in Trending and seller insights (`views-per-visitor`; the remaining limit is
+  [improvements](improvements.md) #78).
+- F3 a shop with no reviews says "No reviews yet" instead of showing the platform prior as its rating.
+- F4 a customer edit keeps the imported review's source id; the effect of an edit on the dashboard history is disclosed (#79).
+- F5 seller insights show units per view as a ratio, not a percentage.
+- F6 the wishlist order ends in the product id.
+- F7 the benchmark provenance states what telemetry is off instead of a blanket "disabled".
+- F8 a note in [dashboard](dashboard.md) on which stock query the recorded index plan belongs to.

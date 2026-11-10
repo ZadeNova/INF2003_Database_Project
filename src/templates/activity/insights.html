@@ -9,7 +9,7 @@
       </div>
     </div>
 <section class="panel checkout-panel">
-      <p class="panel__note">Views come from MongoDB; units from non-cancelled PostgreSQL orders placed in the same rolling 30-day window. Units per view compares totals; it does not attribute a purchase to an individual visit.</p>
+      <p class="panel__note">Views come from MongoDB; units from non-cancelled PostgreSQL orders placed in the same rolling 30-day window. A visitor counts once per product however often they reload it. Units per view compares totals (it can exceed 1); it does not attribute a purchase to an individual visit.</p>
 {% if events_unavailable %}<p role="status">View counts are temporarily unavailable. Sales are still shown.</p>
       {% endif %}
 <div class="table-scroll" tabindex="0" role="region" aria-label="Product browsing and sales">
@@ -30,7 +30,7 @@
                 <td>{{ row.views|default_if_none:"Unavailable" }}</td>
                 <td>{{ row.units }}</td>
                 <td>
-                  {% if row.conversion_percent is not None %}{{ row.conversion_percent|floatformat:2 }}%{% else %}—{% endif %}</td>
+                  {% if row.units_per_view is not None %}{{ row.units_per_view|floatformat:2 }}{% else %}—{% endif %}</td>
               </tr>
             {% empty %}<tr>
                 <td colspan="4">Your products will appear here.</td>

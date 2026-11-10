@@ -1,5 +1,6 @@
 """The MongoDB per-order review score summary: its schema and the bulk `$out` refresh."""
 
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from io import StringIO
@@ -9,7 +10,7 @@ import pytest
 from db_helpers import timestamp_guard_off
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import F
 from pymongo.errors import PyMongoError, WriteError
 
@@ -157,6 +158,45 @@ def test_simultaneous_refreshes_all_finish_and_leave_both_summaries_consistent(i
     }
     assert mongo_db[ORDER_SCORES].options()["validator"] == VALIDATORS[ORDER_SCORES]
     assert services.summary_inputs(as_of, mongo_db) is not None
+
+
+def test_the_refresh_button_does_not_queue_behind_a_running_refresh(imported, mongo_db):
+    """Review round F1: a second click while a refresh runs returns at once instead of holding a web worker."""
+    from account_helpers import make_operator
+    from django.contrib.messages import get_messages
+    from django.test import Client
+
+    held, release = threading.Event(), threading.Event()
+
+    def running_refresh():
+        try:
+            with transaction.atomic(), connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_xact_lock(%s)", [services.REFRESH_LOCK])
+                held.set()
+                release.wait(30)
+        finally:
+            connection.close()
+
+    client = Client()
+    client.force_login(make_operator())
+    version = redis_store.dashboard_version()
+    thread = threading.Thread(target=running_refresh)
+    thread.start()
+    try:
+        assert held.wait(10)
+        with pytest.raises(services.RefreshRunning):
+            refresh_sales(wait=False)
+        response = client.post("/operator/dashboard/refresh/", follow=True)  # following shows (and uses up) the message
+        assert response.redirect_chain == [("/operator/dashboard/", 302)]
+        assert [str(m) for m in get_messages(response.wsgi_request)] == [
+            "A refresh is already running. Reload the dashboard in a few seconds to see it."
+        ]
+        assert redis_store.dashboard_version() == version  # nothing was refreshed, so nothing was invalidated
+    finally:
+        release.set()
+        thread.join()
+    response = client.post("/operator/dashboard/refresh/", follow=True)
+    assert [str(m) for m in get_messages(response.wsgi_request)] == ["Sales history refreshed."]
 
 
 def test_the_import_empties_a_leftover_summary_so_a_failed_refresh_cannot_leave_it_trusted(mongo_db, monkeypatch):

@@ -20,7 +20,7 @@ class WishlistView(CustomerRequiredMixin, View):
 
     def get(self, request):
         saved = WishlistItem.objects.filter(customer=request.user).values("product_id")
-        products = visible_products().filter(pk__in=saved).order_by("-wishlistitem__added_at")
+        products = visible_products().filter(pk__in=saved).order_by("-wishlistitem__added_at", "-id")
         # The reverse join must be scoped too: other customers' save dates must not duplicate or reorder rows.
         products = products.filter(wishlistitem__customer=request.user)
         page = Paginator(products, 24).get_page(request.GET.get("page"))

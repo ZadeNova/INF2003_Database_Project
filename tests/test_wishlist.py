@@ -176,3 +176,19 @@ def test_htmx_buttons_post_only_csrf_roles_and_safe_redirect():
     assert seller.post(f"/wishlist/{item.pk}/add/").status_code == 403
     response = client.post(f"/wishlist/{item.pk}/remove/", {"next": "//evil.example/"})
     assert response.status_code == 302 and response.url == "/wishlist/"
+
+
+def test_saved_products_with_the_same_save_time_page_in_a_stable_order():
+    """Review round F6: the wishlist ORDER BY ends in the product id, so equal save times cannot reorder pages."""
+    buyer = customer()
+    items = [product(f"tied{n}") for n in range(30)]
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO wishlist_item(customer_id, product_id, added_at) "
+            "SELECT %s, unnest(%s::bigint[]), '2026-11-10T00:00:00Z'",
+            [buyer.pk, [item.pk for item in items]],
+        )
+    client = Client()
+    client.force_login(buyer)
+    shown = [p.pk for page in (1, 2) for p in client.get("/wishlist/", {"page": page}).context["page_obj"]]
+    assert shown == sorted((item.pk for item in items), reverse=True)

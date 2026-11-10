@@ -62,12 +62,26 @@ def query_rows(query, parameters):
         return [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
 
 
-def refresh_sales():
+REFRESH_LOCK = 820304  # the advisory lock both refresh functions take (dashboard migrations 0001 and 0002)
+
+
+class RefreshRunning(Exception):
+    """Another refresh holds the lock; `refresh_sales(wait=False)` returns at once instead of queueing behind it."""
+
+
+def refresh_sales(*, wait=True):
     # The two views and the MongoDB score summary are refreshed under one PostgreSQL transaction. Its advisory lock
     # (taken by the first refresh function and held to the commit) also serialises two refreshes. If the MongoDB step
     # fails the views roll back, and `$out` has left the old summary in place; the next refresh rebuilds everything.
+    # The operator's button passes wait=False: a second click while a refresh runs would otherwise hold one of the
+    # web workers for the whole first refresh and then repeat it (the import and the tests wait).
     with transaction.atomic():
         with connection.cursor() as cursor:
+            if not wait:
+                # Advisory locks stack within a session, so the refresh functions take the same lock again freely.
+                cursor.execute("SELECT pg_catalog.pg_try_advisory_xact_lock(%s)", [REFRESH_LOCK])
+                if not cursor.fetchone()[0]:
+                    raise RefreshRunning
             cursor.execute("SELECT public.refresh_daily_product_sales()")
             cursor.execute("SELECT public.refresh_order_delivery_summary()")
         with mongo.database() as database:

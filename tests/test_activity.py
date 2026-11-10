@@ -224,7 +224,7 @@ def test_insights_views_units_ratio_and_seller_scoping(mongo_db):
     result = seller_insights(item.seller, now=now)
     assert len(result["insights"]) == 1
     row = result["insights"][0]
-    assert row["views"] == 4 and row["units"] == 1 and row["conversion_percent"] == Decimal(25)
+    assert row["views"] == 4 and row["units"] == 1 and row["units_per_view"] == Decimal("0.25")
     assert row["generated_views"] == 4
     client = Client()
     client.force_login(item.seller.user)
@@ -268,3 +268,25 @@ def test_seed_activity_weighted_by_real_sales_labelled_and_relative_to_now(mongo
 def test_seed_rejects_unbounded_or_invalid_counts(count):
     with pytest.raises(CommandError):
         call_command("seed_activity", count=count, stdout=StringIO())
+
+
+def test_a_visitor_reloading_a_product_counts_once_in_trending_and_insights(mongo_db):
+    """Review round F2: views are distinct visitors per product, so one session reloading a page cannot top Trending."""
+    buyer, reloaded, popular, seeded = customer(), product("reloaded"), product("popular"), product("seeded")
+    now = timezone.now()
+    when = now - timedelta(hours=1)
+    mongo_db.events.insert_many(
+        [event(reloaded, when, session="one-busy-session") for _ in range(60)]
+        + [event(reloaded, when, user=buyer) for _ in range(5)]
+        + [event(popular, when, session=f"visitor-{n}") for n in range(3)]
+        # seed_activity writes every generated view with one shared session: each still counts as its own visit
+        + [event(seeded, when, generated=True) for _ in range(4)]
+    )
+    actual = list(mongo_db.events.aggregate(trending_pipeline(now)))
+    assert [(r["_id"], r["views"], r["generated_views"], r["rank"]) for r in actual] == [
+        (seeded.pk, 4, 4, 1),
+        (popular.pk, 3, 0, 2),
+        (reloaded.pk, 2, 0, 3),  # one anonymous session and one signed-in customer
+    ]
+    insights = {row["product"].pk: row for row in seller_insights(reloaded.seller, now=now)["insights"]}
+    assert insights[reloaded.pk]["views"] == 2
