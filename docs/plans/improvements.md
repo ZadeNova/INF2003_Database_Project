@@ -167,6 +167,8 @@ Batches 5, 6 and 8 (Redis, the summaries, row-level security). This relaxes CLAU
 
 **Review round 3, reviewer E (10 Nov, security and Django practice; one independent Opus 5.5 session, read-only, commit e76fdb8; Erfan decided the fixes).** No blocker and no major. It built the full authorisation matrix (every URL against five kinds of user), tried another user's ids on every object, planted script payloads in every free-text field and rendered 37 pages, sent seventeen hostile uploads, tried MongoDB operators and wildcard input, and ran `pip-audit`: all of it held. Fixed: private pages are now never cached (one place), usernames are unique ignoring case in the database, the form error and help ids match `aria-describedby`, the CSRF, 400, 413 and 500 errors have branded pages, and oversized request bodies are refused. Documented (#77): the HTTPS warnings and the missing Content-Security-Policy. Skipped: the photo cache window after a takedown, alerts marked seen on GET, an invalid sign-up answered with 200, and the operator's category write living in a view. Next: reviewer F (reads and analytics), then the whole-system pass.
 
+**Rounds F and G (reads and analytics; the whole system) are run by teammates** (Erfan, 10 Nov: the review sessions use a lot of model usage). The prompts, the set-up and the flow (reviewer reports to Erfan, Erfan gives the report to Claude Code, Claude Code verifies and recommends, Erfan decides, Claude Code fixes) are in [review_rounds](review_rounds.md). F runs on the commit Erfan names; G runs after F's fixes.
+
 ## Batch 8: row-level security, settled last
 
 | # | Item | Why it matters | Effort | Status |

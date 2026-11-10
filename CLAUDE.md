@@ -34,6 +34,7 @@ section below.
 
 | Branch | Plan | Files you may edit |
 |---|---|---|
+| Review rounds F and G (read-only; a detached checkout of the commit Erfan names) | [review_rounds](docs/plans/review_rounds.md), the section for your round | none: a review edits nothing, commits nothing and pushes nothing |
 | `improvements/photos` | [product_photos](docs/plans/product_photos.md), section "Teammate instructions" | `data/demo_photos/**` and the `merchants`, `categories` and `products` lists of `data/demo_showcase/catalogue.json` |
 
 ## Owner only (Erfan, on `improvements/backlog`)
