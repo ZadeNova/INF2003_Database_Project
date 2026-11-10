@@ -39,6 +39,14 @@ def redis_isolated(settings):
     redis_store.reset_for_tests()
 
 
+@pytest.fixture(autouse=True)
+def fast_password_hashing(settings):
+    """Hash passwords with MD5 in tests only. The production hasher (Django's PBKDF2 default) takes about a quarter of a second
+    per password and some fixtures create nine users, which was a third of the suite's run time. Logins still verify against what
+    was stored; the application settings are untouched."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
 @pytest.fixture(scope="session")
 def mongo_test_database():
     name = "test_" + os.environ["MONGO_DB"]
