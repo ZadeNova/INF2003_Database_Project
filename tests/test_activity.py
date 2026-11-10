@@ -132,7 +132,7 @@ def test_trending_rank_ties_category_and_time_window_match_direct_counts(mongo_d
     Product.objects.filter(pk=items[3].pk).update(category=category)
     items[3].refresh_from_db()
     now = timezone.now()
-    for item, count in zip(items, [5, 3, 3, 7]):
+    for item, count in zip(items, [5, 3, 3, 7], strict=True):
         mongo_db.events.insert_many([event(item, now - timedelta(hours=1), generated=True) for _ in range(count)])
     mongo_db.events.insert_many(
         [

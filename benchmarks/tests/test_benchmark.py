@@ -159,9 +159,8 @@ def test_b4_restores_indexes_after_failure(database, provenance):
     query = b1.queries(parameters[0])[1]
     before = b4.index_catalogue(database)
     evidence = {}
-    with pytest.raises(RuntimeError):
-        with b4.dropped(query, "bench_jsonb_gin", database, evidence):
-            raise RuntimeError("forced index test failure")
+    with pytest.raises(RuntimeError), b4.dropped(query, "bench_jsonb_gin", database, evidence):
+        raise RuntimeError("forced index test failure")
     assert evidence["index_set_restored"] and b4.index_catalogue(database) == before
 
 

@@ -158,15 +158,13 @@ def test_a_seller_cannot_rewrite_its_own_order_lines(world):
 def test_a_seller_session_cannot_break_the_checkout_money_invariant(world):
     """The deferred money check reads the whole checkout. As the caller, a seller session would not see the checkout,
     the check would skip it and the write would commit; as SECURITY DEFINER it is rejected at commit."""
-    with session(world["first"].seller_id) as conn:
-        with pytest.raises(errors.CheckViolation):
-            with conn.transaction():
-                # items and total move together, so the row's own check (total = items + freight) holds and only the
-                # checkout-wide rule (orders add up to the checkout total) is broken
-                conn.execute(
-                    "UPDATE orders_order SET items = items + 987, total = total + 987 WHERE id = %s",
-                    [world["first_order"].pk],
-                )
+    with session(world["first"].seller_id) as conn, pytest.raises(errors.CheckViolation), conn.transaction():
+        # items and total move together, so the row's own check (total = items + freight) holds and only the
+        # checkout-wide rule (orders add up to the checkout total) is broken
+        conn.execute(
+            "UPDATE orders_order SET items = items + 987, total = total + 987 WHERE id = %s",
+            [world["first_order"].pk],
+        )
     with session() as conn:
         assert (
             conn.execute("SELECT total FROM orders_order WHERE id = %s", [world["first_order"].pk]).fetchone()[0] == 12
@@ -174,20 +172,17 @@ def test_a_seller_session_cannot_break_the_checkout_money_invariant(world):
 
 
 def test_the_checkout_lock_is_taken_only_for_an_order_the_session_may_see(world):
-    with session(world["first"].seller_id) as conn:
-        with conn.transaction():
-            own = conn.execute("SELECT lock_checkout_of_order(%s)", [world["first_order"].pk]).fetchone()[0]
-            other = conn.execute("SELECT lock_checkout_of_order(%s)", [world["second_order"].pk]).fetchone()[0]
+    with session(world["first"].seller_id) as conn, conn.transaction():
+        own = conn.execute("SELECT lock_checkout_of_order(%s)", [world["first_order"].pk]).fetchone()[0]
+        other = conn.execute("SELECT lock_checkout_of_order(%s)", [world["second_order"].pk]).fetchone()[0]
     assert own == world["first_checkout"].pk and other is None
-    with session(world["first"].seller_id) as conn:
-        with conn.transaction():
-            assert conn.execute("SELECT lock_checkout_of_order(%s)", [10**9]).fetchone()[0] is None
-    with session() as conn:
-        with conn.transaction():
-            assert (
-                conn.execute("SELECT lock_checkout_of_order(%s)", [world["second_order"].pk]).fetchone()[0]
-                == world["second_checkout"].pk
-            )
+    with session(world["first"].seller_id) as conn, conn.transaction():
+        assert conn.execute("SELECT lock_checkout_of_order(%s)", [10**9]).fetchone()[0] is None
+    with session() as conn, conn.transaction():
+        assert (
+            conn.execute("SELECT lock_checkout_of_order(%s)", [world["second_order"].pk]).fetchone()[0]
+            == world["second_checkout"].pk
+        )
 
 
 # ----------------------------------------------------------------------------------------------- the audit log

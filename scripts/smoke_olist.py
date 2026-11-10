@@ -25,7 +25,7 @@ def run(base):
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()))
 
     def fetch(path, data=None):
-        request = urllib.request.Request(base + path, data=data, headers={"Host": "127.0.0.1"})
+        request = urllib.request.Request(base + path, data=data, headers={"Host": "127.0.0.1"})  # noqa: S310 - local
         return opener.open(request, timeout=15)
 
     for path in ("/", "/products/", "/health/"):

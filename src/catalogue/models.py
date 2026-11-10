@@ -35,7 +35,7 @@ STOCK_CEILING = 1_000_000
 class Product(models.Model):
     seller = models.ForeignKey("accounts.Seller", on_delete=models.PROTECT, related_name="products")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
-    olist_product_id = models.CharField(max_length=32, null=True, blank=True)
+    olist_product_id = models.CharField(max_length=32, null=True, blank=True)  # noqa: DJ001 - NULL: not an imported product
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     freight = models.DecimalField(max_digits=12, decimal_places=2)

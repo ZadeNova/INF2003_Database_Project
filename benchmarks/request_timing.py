@@ -130,7 +130,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 def fetch(opener, base_url, path, *, data=None):
     identity = "k2-" + uuid.uuid4().hex
-    request = Request(base_url + path, data=data, headers={"X-Request-ID": identity})
+    request = Request(base_url + path, data=data, headers={"X-Request-ID": identity})  # noqa: S310 - the local stack
     try:
         response = opener.open(request, timeout=120)
     except HTTPError as error:
@@ -256,7 +256,7 @@ def collect(args):
     # Docker stamps log lines with the daemon's clock, which can sit seconds off the host's, so an exact --since can
     # drop the first requests; request IDs are unique, so a wider window loses nothing.
     log_window = (datetime.fromisoformat(started) - timedelta(minutes=2)).isoformat()
-    for attempt in range(20):
+    for _attempt in range(20):
         logs = parse_request_logs(
             command(dc + ["logs", "--no-color", "--no-log-prefix", "--since", log_window, "web"]), identities
         )

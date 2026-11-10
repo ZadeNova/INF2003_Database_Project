@@ -56,9 +56,11 @@ def test_runtime_role_reads_and_writes_rows_of_tables_created_later(probe_table)
     ],
 )
 def test_runtime_role_is_refused_ddl_drop_and_truncate(probe_table, statement):
-    with connect("POSTGRES_RUNTIME_USER", "POSTGRES_RUNTIME_PASSWORD") as runtime:
-        with pytest.raises(errors.InsufficientPrivilege):
-            runtime.execute(sql.SQL(statement).format(table=sql.Identifier(probe_table)))
+    with (
+        connect("POSTGRES_RUNTIME_USER", "POSTGRES_RUNTIME_PASSWORD") as runtime,
+        pytest.raises(errors.InsufficientPrivilege),
+    ):
+        runtime.execute(sql.SQL(statement).format(table=sql.Identifier(probe_table)))
 
 
 def test_role_attributes():

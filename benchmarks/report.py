@@ -521,7 +521,7 @@ def report(directory):
         ],
     )
     raw = directory / "raw.jsonl"
-    opener = raw.open if raw.exists() else lambda **kwargs: gzip.open(str(raw) + ".gz", "rt", **kwargs)
+    opener = raw.open if raw.exists() else lambda **kwargs: gzip.open(str(raw) + ".gz", "rt", **kwargs)  # noqa: SIM115 - used in a with below
     checks, demonstrations, races = [], [], []
     with opener(encoding="utf-8") as stream:
         for line in stream:

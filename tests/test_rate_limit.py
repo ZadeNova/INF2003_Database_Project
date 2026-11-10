@@ -140,7 +140,7 @@ def test_failures_count_against_the_address_but_successes_never_do(settings):
     limits(settings, login_ip=(3, 60), login=(100, 60))
     for name in ("u1", "u2", "u3", "u4"):
         account(name)
-    for round_number in range(3):
+    for _ in range(3):
         for name in ("u1", "u2", "u3", "u4"):
             assert sign_in(Client(), name, PASSWORD).status_code == 302
     assert redis_store.window_check("login_ip", "127.0.0.1", 3, 60).count == 0

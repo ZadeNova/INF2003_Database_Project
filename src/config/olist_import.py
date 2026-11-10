@@ -84,7 +84,7 @@ def sql_invariants(*, importing=False):
             rows = cursor.fetchmany(10)
             if rows:
                 fields = [c.name for c in cursor.description]
-                fail(name, [dict(zip(fields, row)) for row in rows])
+                fail(name, [dict(zip(fields, row, strict=True)) for row in rows])
             counts[name] = 0
     return counts
 
@@ -172,10 +172,9 @@ def copy_table(source, label, model):
     query = sql.SQL("COPY {} ({}) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '\\N')").format(
         sql.Identifier(model._meta.db_table), sql.SQL(", ").join(map(sql.Identifier, fields))
     )
-    with connection.cursor() as cursor, path.open("rb") as stream:
-        with cursor.copy(query) as copy:
-            for block in iter(lambda: stream.read(1024 * 1024), b""):
-                copy.write(block)
+    with connection.cursor() as cursor, path.open("rb") as stream, cursor.copy(query) as copy:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            copy.write(block)
 
 
 def repair_sequences():
@@ -229,7 +228,7 @@ def reconcile(database, ledger, session=None):
         cursor.execute("""SELECT l.id, l.order_id, o.checkout_id, l.product_id, l.seller_id, c.customer_id
             FROM orders_orderline l JOIN orders_order o ON o.id=l.order_id JOIN orders_checkout c ON c.id=o.checkout_id""")
         links = {
-            r[0]: dict(zip(("order_id", "checkout_id", "product_id", "seller_id", "customer_id"), r[1:]))
+            r[0]: dict(zip(("order_id", "checkout_id", "product_id", "seller_id", "customer_id"), r[1:], strict=True))
             for r in cursor.fetchall()
         }
     products = dict(Product.objects.values_list("id", "category_id"))

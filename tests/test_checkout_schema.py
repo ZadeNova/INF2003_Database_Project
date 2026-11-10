@@ -221,42 +221,41 @@ def test_runtime_cannot_rewrite_shipped_order_by_delete_and_insert():
     change_order_status(item.seller.user, order.pk, "ship")
     order.refresh_from_db()
     audit_before = AuditLog.objects.filter(table_name="orders_order").count()
-    with runtime_connection() as runtime:
-        with pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
-            runtime.execute("SELECT set_config('mercer.actor_id', %s, true)", [str(buyer.pk)])
-            line = runtime.execute(
-                """SELECT seller_id,product_id,quantity,unit_price,freight,shipping_limit_at
+    with runtime_connection() as runtime, pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
+        runtime.execute("SELECT set_config('mercer.actor_id', %s, true)", [str(buyer.pk)])
+        line = runtime.execute(
+            """SELECT seller_id,product_id,quantity,unit_price,freight,shipping_limit_at
                                       FROM orders_orderline WHERE order_id=%s""",
-                [order.pk],
-            ).fetchone()
-            runtime.execute("DELETE FROM orders_orderline WHERE order_id=%s", [order.pk])
-            runtime.execute("DELETE FROM orders_order WHERE id=%s", [order.pk])
-            new_id = runtime.execute(
-                """INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,
+            [order.pk],
+        ).fetchone()
+        runtime.execute("DELETE FROM orders_orderline WHERE order_id=%s", [order.pk])
+        runtime.execute("DELETE FROM orders_order WHERE id=%s", [order.pk])
+        new_id = runtime.execute(
+            """INSERT INTO orders_order (checkout_id,seller_id,status,items,freight,total,placed_at,
                                          paid_at,shipped_at,cancelled_at,estimated_delivery)
                                          VALUES (%s,%s,'cancelled',%s,%s,%s,%s,%s,%s,now(),%s) RETURNING id""",
-                [
-                    record.pk,
-                    order.seller_id,
-                    order.items,
-                    order.freight,
-                    order.total,
-                    order.placed_at,
-                    order.paid_at,
-                    order.shipped_at,
-                    order.estimated_delivery,
-                ],
-            ).fetchone()[0]
-            runtime.execute(
-                """INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
+            [
+                record.pk,
+                order.seller_id,
+                order.items,
+                order.freight,
+                order.total,
+                order.placed_at,
+                order.paid_at,
+                order.shipped_at,
+                order.estimated_delivery,
+            ],
+        ).fetchone()[0]
+        runtime.execute(
+            """INSERT INTO orders_orderline (order_id,seller_id,product_id,quantity,unit_price,freight,shipping_limit_at)
                                VALUES (%s,%s,%s,%s,%s,%s,%s)""",
-                [new_id, *line],
-            )
-            runtime.execute(
-                """INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
+            [new_id, *line],
+        )
+        runtime.execute(
+            """INSERT INTO orders_refund (order_id,checkout_id,amount,reason,refunded_at,imported)
                                VALUES (%s,%s,%s,'forged',now(),false)""",
-                [new_id, record.pk, order.total],
-            )
+            [new_id, record.pk, order.total],
+        )
     order.refresh_from_db()
     assert order.status == "shipped" and order.lines.count() == 1
     assert Order.objects.count() == 1 and not Refund.objects.exists()
@@ -265,14 +264,13 @@ def test_runtime_cannot_rewrite_shipped_order_by_delete_and_insert():
 
 def test_runtime_cannot_delete_a_whole_paid_checkout():
     _, _, record, order = _purchase()
-    with runtime_connection() as runtime:
-        with pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
-            for statement in (
-                "DELETE FROM orders_payment WHERE checkout_id=%s",
-                "DELETE FROM orders_orderline WHERE order_id IN (SELECT id FROM orders_order WHERE checkout_id=%s)",
-                "DELETE FROM orders_order WHERE checkout_id=%s",
-                "DELETE FROM orders_checkout WHERE id=%s",
-            ):
-                runtime.execute(statement, [record.pk])
+    with runtime_connection() as runtime, pytest.raises(errors.InsufficientPrivilege), runtime.transaction():
+        for statement in (
+            "DELETE FROM orders_payment WHERE checkout_id=%s",
+            "DELETE FROM orders_orderline WHERE order_id IN (SELECT id FROM orders_order WHERE checkout_id=%s)",
+            "DELETE FROM orders_order WHERE checkout_id=%s",
+            "DELETE FROM orders_checkout WHERE id=%s",
+        ):
+            runtime.execute(statement, [record.pk])
     assert Checkout.objects.get(pk=record.pk).payments.get().amount == record.total
     assert Order.objects.get(pk=order.pk).lines.count() == 1

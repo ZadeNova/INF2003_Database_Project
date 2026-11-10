@@ -206,11 +206,11 @@ def check_readme_commands(tree, text):
     for block in re.finditer(r"^(?:```|~~~)[^\n]*\n(.*?)^(?:```|~~~)", text, re.DOTALL | re.MULTILINE):
         for line in block.group(1).splitlines():
             words = line.split("#")[0].split()
-            if len(words) >= 2 and words[0] in {"python", "python3", "py"} and not words[1].startswith("-"):
-                if not tree.exists(resolve("", words[1]) or words[1]):
-                    errors.append(
-                        f"README.md:{line_of(text, block.start(1))}: command runs {words[1]}, which does not exist"
-                    )
+            runs_script = len(words) >= 2 and words[0] in {"python", "python3", "py"} and not words[1].startswith("-")
+            if runs_script and not tree.exists(resolve("", words[1]) or words[1]):
+                errors.append(
+                    f"README.md:{line_of(text, block.start(1))}: command runs {words[1]}, which does not exist"
+                )
             if words[:2] == ["docker", "compose"] and ("run" in words or "exec" in words):
                 rest = words[words.index("run") + 1 :] if "run" in words else words[words.index("exec") + 1 :]
                 skip = False

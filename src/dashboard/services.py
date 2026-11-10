@@ -26,7 +26,7 @@ def _history_valid(blocks):
     """False for an entry cached by an older shape of `history_blocks`: it is then recomputed, not trusted."""
     return (
         isinstance(blocks, dict)
-        and HISTORY_KEYS <= set(blocks)
+        and set(blocks) >= HISTORY_KEYS
         and all(isinstance(row, dict) and "seller_id" in row for row in blocks["seller_rows"])
         and all({"product_id", "count", "average"} <= set(row) for row in blocks["poor_reviews"])
     )
@@ -59,7 +59,7 @@ def query_rows(query, parameters):
     with connection.cursor() as cursor:
         cursor.execute(query, parameters)
         names = [column.name for column in cursor.description]
-        return [dict(zip(names, row)) for row in cursor.fetchall()]
+        return [dict(zip(names, row, strict=True)) for row in cursor.fetchall()]
 
 
 def refresh_sales():

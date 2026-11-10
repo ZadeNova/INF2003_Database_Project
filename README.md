@@ -87,7 +87,7 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 |---|---|
 | `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
 | `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
-| `quality` | Ruff E/F/I lint and the 120-column format check, then audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
+| `quality` | Ruff lint (E, F, I, B, S, DJ, SIM) and the 120-column format check, then audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
 | `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
 | `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 

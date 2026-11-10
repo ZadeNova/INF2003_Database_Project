@@ -22,7 +22,7 @@ def event(item, when, *, generated=False):
 
 def add_views(mongo_db, items, counts, hours_ago=1):
     when = timezone.now() - timedelta(hours=hours_ago)
-    for item, count in zip(items, counts):
+    for item, count in zip(items, counts, strict=True):
         mongo_db.events.insert_many([event(item, when) for _ in range(count)])
 
 

@@ -146,7 +146,7 @@ def test_a_broad_name_search_keeps_only_the_closest_candidates(imported, mongo_d
 
     items = list(visible_products().order_by("id")[:3])
     names = ("Portable Hose Nozzle", "Portable Hose Nozzle Spare", "Portable Hose Nozzle Kit Deluxe Edition Large")
-    for item, name in zip(items, names):
+    for item, name in zip(items, names, strict=True):
         Product.objects.filter(pk=item.pk).update(name=name)
     uncapped = Client().get("/products/", {"q": "Portable Hose Nozzle"})
     assert not uncapped.context["capped"] and {i.pk for i in items} <= {p.pk for p in uncapped.context["page_obj"]}
@@ -193,7 +193,8 @@ def test_all_imported_categories_have_a_real_sprite_icon(imported):
         for element in ET.parse("/app/static/img/icons.svg").iter()
         if element.tag.endswith("symbol")
     }
-    slugs = {row["slug"] for row in csv.DictReader(Path("/app/tests/fixtures/olist/clean/categories.csv").open())}
+    with Path("/app/tests/fixtures/olist/clean/categories.csv").open() as categories:
+        slugs = {row["slug"] for row in csv.DictReader(categories)}
     assert slugs == set(CATEGORY_ICONS)
     assert all(CATEGORY_ICONS[slug] in symbols for slug in slugs)
     assert {category.icon_name for category in Category.objects.exclude(slug="uncategorised")} != {"package"}
@@ -220,8 +221,7 @@ def test_cross_store_any_ids_are_bound_values_not_sql(imported):
     item = visible_products().first()
     before = Product.objects.count()
     # An invalid text[] cannot be compared to the bigint key; it must fail as data, never become SQL.
-    with pytest.raises(DatabaseError):
-        with transaction.atomic():
-            list(matching_products([f"{item.pk}); DELETE FROM catalogue_product; --"]))
+    with pytest.raises(DatabaseError), transaction.atomic():
+        list(matching_products([f"{item.pk}); DELETE FROM catalogue_product; --"]))
     assert Product.objects.count() == before
     assert visible_products().filter(pk=item.pk).exists()

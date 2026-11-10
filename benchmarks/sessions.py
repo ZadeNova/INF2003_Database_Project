@@ -75,7 +75,7 @@ def combine(sessions):
     headline = []
     pools = pooled([s["directory"] for s in usable])
     for key, entries in sorted(by_key.items()):
-        result = dict(zip(KEY, key))
+        result = dict(zip(KEY, key, strict=True))
         result["sessions"] = len(entries)
         result["session_numbers"] = ";".join(str(number) for number, _ in entries)
         for metric in METRICS:
@@ -85,11 +85,10 @@ def combine(sessions):
                 result["p50_session_min_ms"], result["p50_session_max_ms"] = min(values), max(values)
                 result["session_spread_percent"] = 100 * (max(values) - min(values)) / statistics.median(values)
         result["headline"] = all(str(row.get("headline", "")).lower() == "true" for _, row in entries)
-        if key[0] in HEADLINE or key[0] == "B2refresh":
-            # "headline" in a session only means "not saturated"; a B2 variant outside the registered pairs never headlines.
-            if (key[0], key[1], key[2]) not in registered():
-                result["headline"] = False
-                result["not_headline_reason"] = "reported apart: not a registered pair"
+        # "headline" in a session only means "not saturated"; a B2 variant outside the registered pairs never headlines.
+        if (key[0] in HEADLINE or key[0] == "B2refresh") and (key[0], key[1], key[2]) not in registered():
+            result["headline"] = False
+            result["not_headline_reason"] = "reported apart: not a registered pair"
         pool = pools.get(key)
         if pool:
             result.update(

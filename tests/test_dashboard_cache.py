@@ -7,6 +7,7 @@ from decimal import Decimal
 import pytest
 from account_helpers import make_operator
 from django.db import connection, transaction
+from django.http import Http404
 from django.test import Client
 from django.utils import timezone
 
@@ -91,7 +92,7 @@ def test_a_review_takedown_and_a_restore_each_invalidate(imported, mongo_db):
 def test_a_failed_takedown_does_not_invalidate(imported, mongo_db):
     as_of = as_of_date()
     assert (status(as_of), status(as_of)) == ("miss", "hit")
-    with pytest.raises(Exception):
+    with pytest.raises(Http404):
         moderate_review(make_operator(), 987654321, "takedown", "Test reason")  # no such review
     assert status(as_of) == "hit"
 

@@ -31,17 +31,83 @@ from translate_reviews import read_translations, text_hash
 
 # Field order is also the COPY contract. Nulls are empty unquoted CSV fields.
 FIELDS = {
-    "users": "id password last_login is_superuser username first_name last_name email is_staff is_active date_joined role".split(),
-    "customers": "id user_id olist_customer_unique_id zip_prefix city state".split(),
-    "sellers": "id user_id status shop_name olist_seller_id zip_prefix city state has_generated_content".split(),
-    "categories": "id slug name_en name_pt icon hand_translated".split(),
-    "products": "id seller_id category_id olist_product_id name price freight stock lead_time_days weight_g length_cm height_cm width_cm active featured taken_down taken_down_reason has_generated_content demo_adjustment".split(),
-    "checkouts": "id customer_id placed_at total idempotency_key olist_order_id".split(),
-    "orders": "id checkout_id seller_id status items freight total placed_at paid_at shipped_at delivered_at cancelled_at estimated_delivery".split(),
-    "order_lines": "id order_id seller_id product_id quantity unit_price freight shipping_limit_at".split(),
-    "payments": "id checkout_id sequence method instalments amount".split(),
-    "refunds": "id order_id checkout_id amount reason refunded_at imported".split(),
-    "geolocation": "zip_prefix latitude longitude city state".split(),
+    "users": [
+        "id",
+        "password",
+        "last_login",
+        "is_superuser",
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "is_staff",
+        "is_active",
+        "date_joined",
+        "role",
+    ],
+    "customers": ["id", "user_id", "olist_customer_unique_id", "zip_prefix", "city", "state"],
+    "sellers": [
+        "id",
+        "user_id",
+        "status",
+        "shop_name",
+        "olist_seller_id",
+        "zip_prefix",
+        "city",
+        "state",
+        "has_generated_content",
+    ],
+    "categories": ["id", "slug", "name_en", "name_pt", "icon", "hand_translated"],
+    "products": [
+        "id",
+        "seller_id",
+        "category_id",
+        "olist_product_id",
+        "name",
+        "price",
+        "freight",
+        "stock",
+        "lead_time_days",
+        "weight_g",
+        "length_cm",
+        "height_cm",
+        "width_cm",
+        "active",
+        "featured",
+        "taken_down",
+        "taken_down_reason",
+        "has_generated_content",
+        "demo_adjustment",
+    ],
+    "checkouts": ["id", "customer_id", "placed_at", "total", "idempotency_key", "olist_order_id"],
+    "orders": [
+        "id",
+        "checkout_id",
+        "seller_id",
+        "status",
+        "items",
+        "freight",
+        "total",
+        "placed_at",
+        "paid_at",
+        "shipped_at",
+        "delivered_at",
+        "cancelled_at",
+        "estimated_delivery",
+    ],
+    "order_lines": [
+        "id",
+        "order_id",
+        "seller_id",
+        "product_id",
+        "quantity",
+        "unit_price",
+        "freight",
+        "shipping_limit_at",
+    ],
+    "payments": ["id", "checkout_id", "sequence", "method", "instalments", "amount"],
+    "refunds": ["id", "order_id", "checkout_id", "amount", "reason", "refunded_at", "imported"],
+    "geolocation": ["zip_prefix", "latitude", "longitude", "city", "state"],
 }
 
 
@@ -196,7 +262,7 @@ def clean(raw_path, output, translations_path, fx_path):
             result["users"].append(
                 dict(
                     id=i,
-                    password="!olist-import",
+                    password="!olist-import",  # noqa: S106 - Django's "unusable password" marker, not a secret
                     last_login="",
                     is_superuser=False,
                     username=f"olist-{role}-{key}",
@@ -392,7 +458,7 @@ def clean(raw_path, output, translations_path, fx_path):
         amounts[largest] += total - sum(amounts, ZERO)
         if any(v < 0 for v in amounts):
             raise ValueError(f"Payment allocation became negative for {oid}")
-        for p, amount in zip(original, amounts):
+        for p, amount in zip(original, amounts, strict=True):
             result["payments"].append(
                 dict(
                     id=len(result["payments"]) + 1,
@@ -408,7 +474,7 @@ def clean(raw_path, output, translations_path, fx_path):
         geo[row["geolocation_zip_code_prefix"]].append(row)
     for prefix, rows in sorted(geo.items()):
 
-        def mode(field):
+        def mode(field, rows=rows):
             return sorted(Counter(r[field] for r in rows).items(), key=lambda x: (-x[1], x[0]))[0][0]
 
         latitude = median([decimal(r["geolocation_lat"], nonnegative=False) for r in rows])

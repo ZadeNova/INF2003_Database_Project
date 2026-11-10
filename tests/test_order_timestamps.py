@@ -21,21 +21,22 @@ def new_order():
 @pytest.mark.parametrize("column", COLUMNS)
 def test_runtime_cannot_rewrite_a_lifecycle_timestamp_without_a_status_change(column):
     order = new_order()
-    with runtime_connection() as runtime:
-        with pytest.raises(errors.CheckViolation, match="cannot be changed directly"):
-            with runtime.transaction():
-                runtime.execute(f"UPDATE orders_order SET {column} = %s WHERE id = %s", [PAST, order.pk])
+    with (
+        runtime_connection() as runtime,
+        pytest.raises(errors.CheckViolation, match="cannot be changed directly"),
+        runtime.transaction(),
+    ):
+        runtime.execute(f"UPDATE orders_order SET {column} = %s WHERE id = %s", [PAST, order.pk])
 
 
 @pytest.mark.parametrize("column", ["placed_at", "estimated_delivery", "delivered_at", "cancelled_at", "paid_at"])
 def test_a_status_change_cannot_carry_a_rewrite_of_any_other_timestamp(column):
     order = new_order()
     with runtime_connection() as runtime:
-        with pytest.raises(errors.CheckViolation, match="cannot be changed directly"):
-            with runtime.transaction():
-                runtime.execute(
-                    f"UPDATE orders_order SET status = 'shipped', {column} = %s WHERE id = %s", [PAST, order.pk]
-                )
+        with pytest.raises(errors.CheckViolation, match="cannot be changed directly"), runtime.transaction():
+            runtime.execute(
+                f"UPDATE orders_order SET status = 'shipped', {column} = %s WHERE id = %s", [PAST, order.pk]
+            )
         assert runtime.execute("SELECT status FROM orders_order WHERE id = %s", [order.pk]).fetchone() == ("paid",)
 
 
@@ -73,6 +74,5 @@ def test_runtime_cannot_disable_replace_or_drop_the_guard_and_it_is_owner_owned(
 
 def test_untouched_timestamps_do_not_block_other_updates():
     order = new_order()
-    with runtime_connection() as runtime:
-        with runtime.transaction():
-            runtime.execute("UPDATE orders_order SET placed_at = placed_at WHERE id = %s", [order.pk])
+    with runtime_connection() as runtime, runtime.transaction():
+        runtime.execute("UPDATE orders_order SET placed_at = placed_at WHERE id = %s", [order.pk])

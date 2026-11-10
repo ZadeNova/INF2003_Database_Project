@@ -109,7 +109,7 @@ def test_the_fast_stock_query_gives_the_same_answer_as_the_window_query_it_repla
         fast = stock_planning(as_of, filters.get("category"), filters.get("seller"))
         window = query_rows(STOCK_PLANNING, parameters)
         assert [r["product_id"] for r in fast] == [r["product_id"] for r in window]  # same rows, same order
-        for new, old in zip(fast, window):
+        for new, old in zip(fast, window, strict=True):
             assert (new["stock"], new["lead_time_days"], new["replenish"]) == (
                 old["stock"],
                 old["lead_time_days"],
@@ -280,7 +280,7 @@ def test_seller_risk_minimum_cutoff_ordering_and_excluded_panel_note(imported, m
     end = end_of_day(as_of)
     buyer = customer("risk-buyer")
     items = [product(name) for name in ["risk-small", "risk-boundary", "risk-tie", "risk-covered"]]
-    for item, (count, late) in zip(items, [(9, 9), (10, 3), (10, 3), (10, 2)]):
+    for item, (count, late) in zip(items, [(9, 9), (10, 3), (10, 3), (10, 2)], strict=True):
         for index in range(count):
             _, order = paid_order(buyer, item, status="delivered")
             delivered = end - timedelta(days=2)
@@ -493,6 +493,6 @@ def test_full_data_delay_pattern_matches_profile_within_tolerance(mongo_db):
     averages = [r["average_score"] for r in actual]
 
     def pattern(values):
-        return [a > b for a, b in zip(values, values[1:])]
+        return [a > b for a, b in zip(values, values[1:], strict=False)]
 
     assert pattern(averages) == pattern([Decimal(expected[key]["average"]) for key in BUCKET_LABELS])

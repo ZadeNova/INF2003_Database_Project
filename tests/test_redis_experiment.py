@@ -335,15 +335,13 @@ class RecordingStack:
 
 def test_however_an_experiment_ends_redis_runs_again_and_web_goes_back_to_redis_enabled():
     stack = RecordingStack()
-    with pytest.raises(KeyboardInterrupt):
-        with redis_restored(stack):
-            raise KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt), redis_restored(stack):
+        raise KeyboardInterrupt
     assert stack.calls == ["unpause", "web redis=True"]
 
 
 def test_the_web_container_is_restored_even_when_unpausing_fails():
     stack = RecordingStack(fail_unpause=True)
-    with pytest.raises(RuntimeError):
-        with redis_restored(stack):
-            pass
+    with pytest.raises(RuntimeError), redis_restored(stack):
+        pass
     assert stack.calls == ["unpause", "web redis=True"]

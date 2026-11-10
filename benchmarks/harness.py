@@ -385,7 +385,7 @@ def run(args):
                     refresh_check=refresh_check,
                 )
         if "B4" in selected:
-            for kind, index, query in b4_cases:
+            for _kind, index, query in b4_cases:
                 evidence = {}
                 try:
                     with b4.dropped(query, index, database, evidence) as restore:

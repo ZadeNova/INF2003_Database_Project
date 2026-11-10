@@ -70,11 +70,10 @@ def test_product_updates_record_actor_reason_and_only_watched_fields():
 
 def test_product_audit_rolls_back_with_the_product():
     item = product()
-    with pytest.raises(ValueError):
-        with transaction.atomic():
-            set_audit_context(item.seller.user_id, "Cancelled save")
-            Product.objects.filter(pk=item.pk).update(stock=1)
-            raise ValueError("rollback")
+    with pytest.raises(ValueError), transaction.atomic():
+        set_audit_context(item.seller.user_id, "Cancelled save")
+        Product.objects.filter(pk=item.pk).update(stock=1)
+        raise ValueError("rollback")
     item.refresh_from_db()
     assert item.stock == 10 and not product_audits().exists()
 

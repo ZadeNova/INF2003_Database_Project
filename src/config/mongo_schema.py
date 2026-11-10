@@ -1,5 +1,7 @@
 """MongoDB outer schemas and indexes. Flexible attributes are governed by templates."""
 
+import contextlib
+
 from pymongo import ASCENDING, DESCENDING, IndexModel
 from pymongo.errors import CollectionInvalid
 
@@ -136,10 +138,8 @@ def create_validated(database, name):
 def ensure_collection(database, name):
     """Create a validated collection if it is missing, so that an `$out` never creates it without its validator."""
     if name not in database.list_collection_names():
-        try:
+        with contextlib.suppress(CollectionInvalid):  # created by another request meanwhile
             create_validated(database, name)
-        except CollectionInvalid:  # created by another request meanwhile
-            pass
 
 
 def setup(database):

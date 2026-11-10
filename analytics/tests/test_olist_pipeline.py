@@ -312,7 +312,7 @@ def test_every_category_has_names_whose_nouns_fit_every_drawn_attribute_combinat
             assert spec["suffix"]["attribute"] in attributes, name
         keys = sorted(attributes)
         for combination in itertools.product(*(attributes[key]["values"] for key in keys)):
-            drawn = dict(zip(keys, combination))
+            drawn = dict(zip(keys, combination, strict=True))
             assert any(
                 isinstance(noun, str) or all(drawn.get(k) in allowed for k, allowed in noun["where"].items())
                 for noun in spec["nouns"]

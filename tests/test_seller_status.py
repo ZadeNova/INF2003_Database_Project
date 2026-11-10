@@ -175,7 +175,7 @@ def test_context_clears_after_rollback_on_a_reused_connection():
     with pytest.raises(ZeroDivisionError), transaction.atomic():
         set_audit_context(operator.pk, "Rolled back")
         update_status(seller, "approved")
-        1 / 0
+        raise ZeroDivisionError("force a rollback")
     assert Seller.objects.get(pk=seller.pk).status == "pending" and not AuditLog.objects.exists()
     update_status(seller, "rejected")
     entry = AuditLog.objects.get()

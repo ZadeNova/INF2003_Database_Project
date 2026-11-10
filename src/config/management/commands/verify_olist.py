@@ -80,7 +80,10 @@ class Command(BaseCommand):
             }
 
         def pattern(values):
-            return ["decrease" if a > b else "increase" if a < b else "equal" for a, b in zip(values, values[1:])]
+            return [
+                "decrease" if a > b else "increase" if a < b else "equal"
+                for a, b in zip(values, values[1:], strict=False)
+            ]
 
         if pattern(averages) != pattern(raw_averages):
             raise CommandError("Imported delay/review averages no longer have the raw ordering pattern")

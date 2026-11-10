@@ -56,11 +56,11 @@ def race(engine, clients, triggers, database):
             for table in TABLES:
                 conn.execute(sql.SQL("ALTER TABLE {} DISABLE TRIGGER USER").format(sql.Identifier(table)))
         conn.execute("UPDATE catalogue_product SET stock=%s WHERE id=%s", [10, product["id"]])
-        assert (
-            conn.execute("SELECT stock FROM catalogue_product WHERE id=%s", [product["id"]]).fetchone()["stock"] == 10
-        )
+        if conn.execute("SELECT stock FROM catalogue_product WHERE id=%s", [product["id"]]).fetchone()["stock"] != 10:
+            raise RuntimeError("The PostgreSQL stock reset to 10 did not take effect")
     database.products.update_one({"_id": product["id"]}, {"$set": {"stock": 10}})
-    assert database.products.find_one({"_id": product["id"]})["stock"] == 10
+    if database.products.find_one({"_id": product["id"]})["stock"] != 10:
+        raise RuntimeError("The MongoDB stock reset to 10 did not take effect")
 
     prepared = PreparedRun(clients)
 
@@ -123,7 +123,7 @@ def race(engine, clients, triggers, database):
                             success = True
                 else:
 
-                    def buy(session):
+                    def buy(session, buyer=buyer):  # bound now, so the closure never sees a later loop value
                         changed = conn.products.update_one(
                             {"_id": product["id"], "stock": {"$gte": 1}}, {"$inc": {"stock": -1}}, session=session
                         )

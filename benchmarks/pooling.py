@@ -44,7 +44,7 @@ def operations(directory):
     if plain.exists():
         stream = plain.open(encoding="utf-8")
     elif packed.exists():
-        stream = gzip.open(packed, "rt", encoding="utf-8")
+        stream = gzip.open(packed, "rt", encoding="utf-8")  # noqa: SIM115 - both closed by the with below
     else:
         return
     with stream:

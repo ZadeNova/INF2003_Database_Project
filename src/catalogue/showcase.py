@@ -6,6 +6,7 @@ catalogue and nothing depends on one person's database. Writes go through the sa
 Everything here is demonstration content: products and shops carry the generated-content label (AGENTS.md rule 9).
 """
 
+import contextlib
 import csv
 import json
 import re
@@ -273,10 +274,8 @@ def _encoded_photo(photos_dir, name):
 
 def _delete_photo(database, file_id):
     if file_id:
-        try:
+        with contextlib.suppress(PyMongoError):
             GridFS(database, collection="photos").delete(file_id)
-        except PyMongoError:
-            pass
 
 
 def load(catalogue_path, photos_dir, password):

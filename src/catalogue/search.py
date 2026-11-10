@@ -62,7 +62,7 @@ def attribute_definitions(database, category_ids):
 
 def facet_match(ids, cleaned, definitions):
     match = {"_id": {"$in": list(ids)}}
-    for key, definition in definitions.items():
+    for key in definitions:
         value = cleaned.get("attr_" + key)
         if value is not None and value != "":
             match["attributes." + key] = {"$eq": value}

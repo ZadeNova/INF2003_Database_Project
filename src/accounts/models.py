@@ -45,6 +45,13 @@ class Seller(models.Model):
     state = models.CharField(max_length=2, blank=True)
     has_generated_content = models.BooleanField(default=False)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid"
+            )
+        ]
+
     @property
     def display_name(self):
         """A readable, still distinct name for imported placeholder shops ("Olist seller 0015a82c" becomes
@@ -58,13 +65,6 @@ class Seller(models.Model):
     def location(self):
         return ", ".join(part for part in (self.city.title(), self.state) if part)
 
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(status__in=["pending", "approved", "rejected", "suspended"]), name="seller_status_valid"
-            )
-        ]
-
 
 class AuditLog(models.Model):
     """Written only by owner-owned SECURITY DEFINER triggers; the runtime role may only read it."""
@@ -77,20 +77,8 @@ class AuditLog(models.Model):
     )  # NULL means a system change
     before = models.JSONField(null=True, blank=True)
     after = models.JSONField(null=True, blank=True)
-    reason = models.TextField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)  # noqa: DJ001 - NULL means no reason was given
     created_at = models.DateTimeField(db_default=Now())
-
-    @property
-    def action_label(self):
-        from .audit import AUDIT_LABELS
-
-        return AUDIT_LABELS.get(self.action, "Updated")
-
-    @property
-    def action_tone(self):
-        from .audit import AUDIT_TONES
-
-        return AUDIT_TONES.get(self.action, "neutral")
 
     class Meta:
         db_table = "audit_log"
@@ -108,6 +96,18 @@ class AuditLog(models.Model):
                 name="audit_log_actor_reason",
             ),
         ]
+
+    @property
+    def action_label(self):
+        from .audit import AUDIT_LABELS
+
+        return AUDIT_LABELS.get(self.action, "Updated")
+
+    @property
+    def action_tone(self):
+        from .audit import AUDIT_TONES
+
+        return AUDIT_TONES.get(self.action, "neutral")
 
 
 class Geolocation(models.Model):
