@@ -88,6 +88,24 @@ class RequestLoggingMiddleware:
         return wrapped.pk
 
 
+class RequestSizeLimitMiddleware:
+    """Refuse an oversized request body from its declared length, before anything reads it."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            length = int(request.META.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            length = 0
+        if length > settings.REQUEST_BODY_LIMIT_BYTES:
+            response = HttpResponse(render_to_string("413.html"), status=413)
+            response["Cache-Control"] = "no-store"
+            return response
+        return self.get_response(request)
+
+
 class DatabaseUnavailableMiddleware:
     """Answer 503 with Retry-After when the database is temporarily unavailable.
 

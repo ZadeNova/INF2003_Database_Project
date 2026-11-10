@@ -3,10 +3,10 @@
 import pytest
 from account_helpers import PASSWORD, make_customer
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, connection
+from django.db import IntegrityError, connection, transaction
 from django.test import Client
 
-from accounts.models import CustomerProfile, Seller
+from accounts.models import CustomerProfile, Seller, User
 
 pytestmark = pytest.mark.django_db
 
@@ -97,6 +97,33 @@ def test_a_failed_seller_insert_rolls_back_the_new_user():
         Client().post("/sell/apply/", APPLICATION)
     assert not get_user_model().objects.filter(username="new-shop").exists()
     assert not Seller.objects.filter(shop_name="New Shop").exists()
+
+
+def test_the_database_refuses_a_username_that_differs_only_in_case():
+    user_model = get_user_model()
+    user_model.objects.create_user(username="Alice", password=PASSWORD)
+    with pytest.raises(IntegrityError), transaction.atomic():
+        user_model.objects.create_user(username="alice", password=PASSWORD)
+
+
+@pytest.mark.parametrize("route", ["/register/", "/sell/apply/"])
+def test_a_sign_up_that_loses_the_race_for_a_name_gets_the_form_error_not_a_server_error(monkeypatch, route):
+    # Two sign-ups at once both pass the form's case-insensitive check; the second then meets the database constraint.
+    # Switching the form's own checks off (the name check and the model's constraint validation) reproduces that second
+    # step on its own.
+    from accounts.forms import CustomerCreationForm
+
+    get_user_model().objects.create_user(username="Taken-Name", password=PASSWORD)
+    monkeypatch.setattr(CustomerCreationForm, "clean_username", lambda self: self.cleaned_data["username"])
+    monkeypatch.setattr(User, "validate_constraints", lambda self, exclude=None: None)
+    data = {**APPLICATION, "username": "taken-name"}
+    response = Client().post(route, data)
+    assert response.status_code == 200 and "A user with that username already exists." in response.content.decode()
+    assert get_user_model().objects.filter(username__iexact="taken-name").count() == 1
+    assert (
+        not Seller.objects.filter(shop_name="New Shop").exists()
+        and not CustomerProfile.objects.filter(user__username="taken-name").exists()
+    )
 
 
 @pytest.mark.parametrize("route", ["/register/", "/sell/apply/"])

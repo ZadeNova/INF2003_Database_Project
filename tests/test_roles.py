@@ -110,6 +110,45 @@ def test_get_access_matrix(people, url, kind):
     assert_outcome(response, GET_MATRIX[url][kind], url)
 
 
+# The pages of each role that show private data. The browser must not keep them, or the back button after logout shows them.
+PRIVATE_PAGES = {
+    "customer": ["/account/", "/wishlist/", "/alerts/", "/cart/", "/orders/"],
+    "approved": [
+        "/seller/",
+        "/seller/status/",
+        "/seller/orders/",
+        "/seller/reviews/",
+        "/seller/insights/",
+        "/products/mine/",
+        "/products/mine/new/",
+    ],
+    "operator": [
+        "/operator/",
+        "/operator/audit/",
+        "/operator/orders/",
+        "/operator/reviews/",
+        "/operator/dashboard/",
+        "/products/operator/",
+        "/products/operator/categories/",
+    ],
+}
+
+
+@pytest.mark.parametrize("kind", sorted(PRIVATE_PAGES))
+def test_every_private_page_tells_the_browser_not_to_keep_it(people, kind):
+    users, _ = people
+    client = client_for(users, kind)
+    for url in PRIVATE_PAGES[kind]:
+        response = client.get(url)
+        assert response.status_code == 200, url
+        assert "no-store" in response["Cache-Control"], url
+
+
+def test_the_login_redirect_of_a_private_page_is_not_cached_either(people):
+    response = client_for(people[0], "anonymous").get("/account/")
+    assert response.status_code == 302 and "no-store" in response["Cache-Control"]
+
+
 @pytest.mark.parametrize("kind", KINDS)
 @pytest.mark.parametrize("action", ["approve", "reject", "suspend", "reinstate"])
 def test_only_operators_can_post_seller_actions(people, kind, action):

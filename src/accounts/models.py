@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import F, Q
-from django.db.models.functions import Now
+from django.db.models.functions import Lower, Now
 
 
 class User(AbstractUser):
@@ -17,7 +17,10 @@ class User(AbstractUser):
 
     class Meta(AbstractUser.Meta):
         constraints = [
-            models.CheckConstraint(condition=Q(role__in=["customer", "seller", "operator"]), name="user_role_valid")
+            models.CheckConstraint(condition=Q(role__in=["customer", "seller", "operator"]), name="user_role_valid"),
+            # The form refuses a name that differs only in case, but that check and the insert are two steps: two
+            # sign-ups at once could both pass it. The database closes the gap.
+            models.UniqueConstraint(Lower("username"), name="user_username_ci_unique"),
         ]
 
 

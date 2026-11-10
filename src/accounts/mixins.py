@@ -3,7 +3,9 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import redirect, resolve_url
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
 
 from . import rowsecurity
 from .models import Seller, User
@@ -25,6 +27,8 @@ class RoleRequiredMixin(HtmxLoginRequiredMixin):
 
     role = None
 
+    # Every page behind a role is private: the browser must not keep it, so the back button after logout shows nothing.
+    @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()

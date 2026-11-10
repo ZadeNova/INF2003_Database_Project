@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -62,28 +62,41 @@ class AnonymousOnlyMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-class RegisterView(AnonymousOnlyMixin, CreateView):
+class UsernameTakenMixin:
+    """Two sign-ups for the same name (ignoring case) at once both pass the form's check; the database refuses the second."""
+
+    def username_taken(self, form, error):
+        if not any(name in str(error) for name in ("user_username_ci_unique", "accounts_user_username_key")):
+            raise error
+        form.add_error("username", "A user with that username already exists.")
+        return self.form_invalid(form)
+
+
+class RegisterView(UsernameTakenMixin, AnonymousOnlyMixin, CreateView):
     form_class = CustomerCreationForm
     template_name = "accounts/register.html"
     success_url = reverse_lazy("accounts:login")
 
     def form_valid(self, form):
-        with transaction.atomic():
-            user = form.save(commit=False)
-            user.role = User.Role.CUSTOMER
-            user.save()
-            CustomerProfile.objects.create(
-                user=user,
-                zip_prefix=form.cleaned_data["zip_prefix"],
-                city=form.cleaned_data["city"],
-                state=form.cleaned_data["state"],
-            )
+        try:
+            with transaction.atomic():
+                user = form.save(commit=False)
+                user.role = User.Role.CUSTOMER
+                user.save()
+                CustomerProfile.objects.create(
+                    user=user,
+                    zip_prefix=form.cleaned_data["zip_prefix"],
+                    city=form.cleaned_data["city"],
+                    state=form.cleaned_data["state"],
+                )
+        except IntegrityError as error:
+            return self.username_taken(form, error)
         self.object = user
         messages.success(self.request, "Account created. You can now log in.")
         return redirect(self.success_url)
 
 
-class SellerApplyView(AnonymousOnlyMixin, CreateView):
+class SellerApplyView(UsernameTakenMixin, AnonymousOnlyMixin, CreateView):
     """One transaction creates the seller's user and a pending seller row; neither exists without the other."""
 
     form_class = SellerApplicationForm
@@ -92,18 +105,21 @@ class SellerApplyView(AnonymousOnlyMixin, CreateView):
 
     def form_valid(self, form):
         data = form.cleaned_data
-        with transaction.atomic():
-            user = form.save(commit=False)
-            user.role = User.Role.SELLER
-            user.save()
-            Seller.objects.create(
-                user=user,
-                status=Seller.Status.PENDING,
-                shop_name=data["shop_name"],
-                city=data["city"],
-                state=data["state"],
-                zip_prefix=data["zip_prefix"],
-            )
+        try:
+            with transaction.atomic():
+                user = form.save(commit=False)
+                user.role = User.Role.SELLER
+                user.save()
+                Seller.objects.create(
+                    user=user,
+                    status=Seller.Status.PENDING,
+                    shop_name=data["shop_name"],
+                    city=data["city"],
+                    state=data["state"],
+                    zip_prefix=data["zip_prefix"],
+                )
+        except IntegrityError as error:
+            return self.username_taken(form, error)
         self.object = user
         messages.success(self.request, "Application submitted. Log in to follow its status.")
         return redirect(self.success_url)

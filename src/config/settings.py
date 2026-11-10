@@ -52,7 +52,11 @@ INSTALLED_APPS = [
     "dashboard",
     "activity",
 ]
+# Django caps urlencoded bodies but streams a multipart body of any size to disk before any view or form can refuse it.
+# A photo is at most 2 MB, so no request needs more than this.
+REQUEST_BODY_LIMIT_BYTES = 3 * 1024 * 1024
 MIDDLEWARE = [
+    "config.middleware.RequestSizeLimitMiddleware",
     "config.middleware.DatabaseUnavailableMiddleware",
     # After DatabaseUnavailableMiddleware so its process_exception sees an exception first (they run in
     # reverse order) and can record the class before the 503 is produced.

@@ -222,6 +222,12 @@ The "too many attempts" page (429) is a standalone error card like the 503 page:
 one sentence saying how long to wait, and one dark button back to sign in, the order or the shop. It never echoes the
 form, and it renders without touching the user or session, so it works during an outage.
 
+The other errors a visitor can reach use the same standalone card (`_standalone_error.html`, which `400`, `403_csrf`,
+`413` and `500` extend): a `<code> · <short reason>` eyebrow, one heading in plain words, one or two sentences saying what to
+do, and a dark button back to the shop. The form-not-submitted page (a missing or expired CSRF token) and the 500 page also
+carry the "check your order history before trying again" warning of the 503 page. None of them shows a stack trace, a path, a
+query or a setting.
+
 Trending fills the catalogue's existing panel and uses the same product grid, with written rank/view counts and a
 generated-activity label where applicable. Recently viewed uses the same grid on home and product pages. Seller
 Insights reuses the contained dashboard table and pager; missing view counts are written as unavailable, and the

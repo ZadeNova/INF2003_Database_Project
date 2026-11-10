@@ -1,0 +1,14 @@
+{% extends "_standalone_error.html" %}
+{% block title %}Form not submitted{% endblock %}
+{% block eyebrow %}403 · form not submitted{% endblock %}
+{% block heading %}Your session expired before the form was sent.{% endblock %}
+{% block body %}
+<p>For your safety the form was not submitted. Reload the page, sign in again if asked, and send it again.</p>
+<div class="message message--error" role="alert">
+    <span class="message__icon" aria-hidden="true">!</span>
+    <div>
+        <strong>If you were placing an order,</strong>
+        <p>check your order history before trying again, so you do not order twice.</p>
+    </div>
+</div>
+{% endblock %}

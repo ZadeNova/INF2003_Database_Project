@@ -268,6 +268,7 @@ Gunicorn kills a worker after 30 seconds and there are two of them, so one stuck
   as Redis is, so pages that never use MongoDB (the cart, checkout) are not queued behind a hung one. The shop listing
   and a shop page show icon cards (and no shop rating) while MongoDB is down.
 - **Photos.** An upload is re-encoded at most 2048 pixels on its longest side and must fit in 2 MB after encoding.
+- **Request size.** A request body over 3 MB (`REQUEST_BODY_LIMIT_BYTES`) is answered with a 413 page before anything reads it; Django caps urlencoded bodies itself but streams a multipart body of any size to disk.
 
 ## Benchmark (isolated databases)
 
