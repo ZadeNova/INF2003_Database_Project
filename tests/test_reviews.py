@@ -449,3 +449,17 @@ def test_subset_matches_the_reviews_collection_and_hides_taken_down_reviews(grap
     moderate_review(make_operator(), lines[1].pk, "takedown", "Spam")
     shown = [row["line_id"] for row in Client().get(f"/products/{item.pk}/").context["reviews"]]
     assert shown == [lines[0].pk]
+
+
+def test_the_audit_page_names_the_review_and_its_shop(graph, mongo_db):
+    buyer, item = graph
+    line = line_for(buyer, item)
+    operator = make_operator()
+    write_review(buyer, line.pk, "create", {"score": 2})
+    moderate_review(operator, line.pk, "takedown", "Abusive language")
+    client = Client()
+    client.force_login(operator)
+    body = client.get("/operator/audit/").content.decode()
+    assert "Shop unavailable" not in body
+    assert f"Review of {item.name}" in body and item.seller.display_name in body
+    assert f'href="/operator/reviews/{line.pk}/"' in body

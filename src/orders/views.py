@@ -107,7 +107,10 @@ class HistoryView(CustomerRequiredMixin, View):
 class CheckoutDetailView(CustomerRequiredMixin, View):
     def get(self, request, pk):
         record = get_object_or_404(
-            Checkout.objects.filter(customer=request.user).prefetch_related("orders__seller", "payments"), pk=pk
+            Checkout.objects.filter(customer=request.user).prefetch_related(
+                "orders__seller", "orders__refund", "payments"
+            ),
+            pk=pk,
         )
         return render(request, "orders/checkout_detail.html", {"checkout": record})
 

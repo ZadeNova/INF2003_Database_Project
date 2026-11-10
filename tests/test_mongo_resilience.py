@@ -62,3 +62,16 @@ def test_the_shop_listing_and_a_shop_page_still_work_without_mongodb(mongo_down)
     shop = client.get(reverse("catalogue:seller_shop", args=[item.seller.pk]))
     assert shop.status_code == 200 and b"lamp" in shop.content
     assert b"Bayesian shop rating" not in shop.content  # the rating comes from MongoDB, so the line is left out
+
+
+def test_the_wishlist_still_works_without_mongodb(mongo_down):
+    from checkout_helpers import customer
+
+    from wishlist.models import WishlistItem
+
+    buyer, item = customer(), product("teapot")
+    WishlistItem.objects.create(customer=buyer, product=item)
+    client = Client()
+    client.force_login(buyer)
+    response = client.get(reverse("wishlist:list"))
+    assert response.status_code == 200 and b"teapot" in response.content  # an icon card instead of the photo

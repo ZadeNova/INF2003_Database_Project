@@ -77,6 +77,9 @@ Added 8 November 2026 on Erfan's instruction, so nothing is forgotten when the r
   talk about delivery and service. Reviews also contain Olist's own anonymisation, such as Game of Thrones house names for shops.
 - **Demo path.** The video walks the showcase products on the home page (proper names and photos), not arbitrary
   products. The showcase is demonstration data set by `seed_demo`; the clean data and checksums are untouched.
+- **The dashboard during the demo (review round G).** Its sales-history blocks stop at the reporting date (the last
+  imported day), so a purchase made on camera changes the stock column and seller Insights, never the category or
+  seller-risk blocks. Do not say the dashboard updates with the demo purchase.
 - **Benchmark provenance.** The 2 November run came from another machine and is superseded; the final run is on the
   designated machine named in `host.json`. Mention the earlier out-of-memory kill and the identical-limits rerun as an
   honest method note.

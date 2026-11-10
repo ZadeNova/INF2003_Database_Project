@@ -849,6 +849,19 @@ Docker is the supported runtime. For VS Code and Pylance to resolve imports, cre
 lists it automatically). `.vscode/settings.json` uses the `python` on your path and adds `src/` for project imports on
 every operating system.
 
+## Submission package
+
+[scripts/package_submission.py](scripts/package_submission.py) builds the one zip the brief asks for: the report PDF,
+the slides, the video and a source zip made with `git archive` from a commit, so ignored files such as `.env` can never
+be included. Then check the finished zip:
+
+```sh
+python scripts/package_submission.py --report report.pdf --slides slides.pptx --video demo.mp4 --ref main --out ../Team82.zip
+python scripts/package_submission.py --check-only ../Team82.zip
+```
+
+Exit status 1 means a check failed; look at every WARN line by hand.
+
 ## Troubleshooting
 
 - **`mongo` never becomes healthy and mongosh reports an unrecognised option:** older startup commands treated a

@@ -3066,6 +3066,8 @@ h2 {
 .account-page .page__header > div { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 .account-page .panel, .account-page .detail-list dd, .account-page .optable__row > * { min-width:0; overflow-wrap:anywhere; }
 .account-page .optable__row--audit { grid-template-columns:0.9fr 0.9fr 1.7fr 1fr 2fr; }
+/* A status badge breaks only between words: inheriting `anywhere` split CANCELLED into CANCELL/ED at 375px. */
+.account-page .optable__row .badge { overflow-wrap:normal; word-break:keep-all; }
 .account-page .action-grid { grid-template-columns:repeat(auto-fit, minmax(min(28rem, 100%), 1fr)); }
 .account-page .detail-list { grid-template-columns:max-content minmax(0, 1fr); }
 .account-page .manage-filters__field { min-width:0; }
