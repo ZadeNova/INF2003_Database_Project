@@ -30,6 +30,9 @@ band for presentation (25%) and report (25%) and shows the project-quality work 
 | Packaging | `scripts/package_submission.py` builds the zip from a committed ref; `--check-only` passes |
 | Records | CONTRIBUTIONS.md with every student ID and each member's work; a deliverables line in docs/AI_USE.md; Olist CC BY-NC-SA attribution in the report's references; every member completes the peer-review survey |
 
+**Reuse disclosure.** The disclosure stays in [AI_USE.md](../AI_USE.md) and report appendix D; written approval is
+not required under [the 31 October owner decision](../DECISIONS.md#reuse-disclosure-31-october-2026).
+
 **Out of scope:** new application features (frozen); Tier 2 work, which needs its own approved plan after the
 8 November check-in; editing or re-deriving benchmark numbers by hand.
 
@@ -51,7 +54,7 @@ the full one goes in appendix B.
 | 9 | Reflections: changes since the proposal, limitations, future work | 0.5 |
 
 Appendices (outside the page count): A theory map; B full ER diagram and cleaning ledger; C generated benchmark
-tables; D AI use; references, including the Olist licence.
+tables; D AI use and the reuse disclosure; references, including the Olist licence.
 
 ### Notes to carry into the report and video (collected during the improvements backlog)
 
@@ -154,11 +157,12 @@ Decision a is recorded in PLAN.md section 12 and closes open decision D2 in sect
 sections 4, 9, 10 and 12–16 and OVERVIEW.md sections 3 and 7. Spot-checked the theory map in the code (deferred
 money triggers, the `restock_one_unseen` partial unique index, `$facet`, the time-series TTL, B6 isolation
 strategies, the Bayesian update pipeline, both views) and confirmed the packager ships the Olist data;
-`scripts/check_docs.py` passed. Verdict APPROVE WITH CHANGES: settle decision d against the single-stack recording checklist, move the clean-machine run earlier and run it from
+`scripts/check_docs.py` passed. Verdict APPROVE WITH CHANGES: put a written-reuse-approval owner and date in the plan,
+settle decision d against the single-stack recording checklist, move the clean-machine run earlier and run it from
 `source_code.zip`, give implications more video time, add CRUD and a named comparison table, and add a proof column
 to the theory map.
 
-30 October 2026, fix round (Claude Code, the session that wrote the plan). All 15 findings applied
+30 October 2026, fix round (Claude Code, the session that wrote the plan). All 15 findings applied: reuse approval
 with owner and date; decision d reworked to one capture session with per-presenter voice-over; clean-machine runs by
 15 and 27 November from the archive zip; video re-timed (part ii 2:45 with pre-staged state, a 0:45 close, the
 delivery-delay implication in part ii, CRUD in part iii, a named comparison table); theory map with a proof column,
@@ -199,7 +203,7 @@ milestones. `scripts/check_docs.py` passed. Verdict APPROVE; the plan is ready f
 
 30 October 2026, owner direction (Chee Long): the team does everything together and the plan stays high level.
 Removed every per-person assignment (section owners, presenters, the named editor, footage capturer, assembler,
-clean-machine runner); decision a now closes D2 with no single editor. The report outline
+clean-machine runner and reuse-approval owner); decision a now closes D2 with no single editor. The report outline
 and video keep their budgets and timings without per-item detail; the draft theory-map rows and the per-part demo
 and slide lists were removed and remain in commit 875a325.
 
@@ -210,6 +214,10 @@ iv, as benchmark amendment i does.
 
 30 October 2026, pull request review (Claude Code, fresh session): the milestones now show the plan approved on
 30 October rather than 2 November, and the 4 November benchmark milestone points to the fallback runs.
+
+31 October 2026, Codex: recorded Chee Long's decision that written reuse approval is not required; retained the
+AI_USE.md and appendix D disclosure. Documentation check run; Claude Code
+(the session that wrote the brief; not a fresh session) approved this change on 31 October 2026.
 
 31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): re-checked the fix round and
 approved both preparation worktrees. The documentation check passed; Chee Long authorised committing, pushing and

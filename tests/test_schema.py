@@ -1,4 +1,4 @@
-"""Database constraints on real PostgreSQL."""
+"""Database constraints on real PostgreSQL, including ported idempotency coverage."""
 
 import uuid
 from datetime import datetime, timezone
