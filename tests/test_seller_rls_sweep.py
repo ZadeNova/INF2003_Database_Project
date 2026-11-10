@@ -197,6 +197,17 @@ def test_a_seller_ships_one_order_while_the_customer_cancels_its_sibling(run):
     )
 
 
+@pytest.mark.parametrize("run", range(10))
+def test_a_customer_cancels_both_orders_of_one_checkout_at_once_without_a_deadlock(run):
+    # Each cancel locks its own order, then inserts a refund whose checks lock the shared checkout. Taking the checkout
+    # lock first (lock_checkout_of_order) is what lets both succeed; without it two cancels deadlock on that row.
+    buyer, _, (first_order, second_order) = one_checkout_of_two_sellers()
+    results = run_together(lambda: cancel(buyer, first_order), lambda: cancel(buyer, second_order))
+    assert [kind for kind, _ in results] == ["done", "done"]
+    assert set(Order.objects.filter(checkout=first_order.checkout).values_list("status", flat=True)) == {"cancelled"}
+    assert Refund.objects.filter(checkout=first_order.checkout).count() == 2
+
+
 @pytest.mark.parametrize("run", range(5))
 def test_a_seller_ships_while_the_customer_cancels_the_same_order_and_exactly_one_wins(run):
     buyer, (first, _), (order, _) = one_checkout_of_two_sellers()

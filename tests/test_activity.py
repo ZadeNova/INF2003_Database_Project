@@ -242,9 +242,9 @@ def test_seed_activity_weighted_by_real_sales_labelled_and_relative_to_now(mongo
     buyer, most, least = customer(), product("popular"), product("quiet")
     for n in range(10):
         target = most if n < 9 else least
-        checkout, order = paid_order(buyer, target)
-        checkout.olist_order_id = f"{n:032d}"
-        checkout.save(update_fields=["olist_order_id"])
+        _, order = paid_order(
+            buyer, target, source_id=f"{n:032d}"
+        )  # an imported checkout carries its source id from the start
         OrderLine.objects.create(
             order=order, seller=target.seller, product=target, quantity=1, unit_price=10, freight=2
         )

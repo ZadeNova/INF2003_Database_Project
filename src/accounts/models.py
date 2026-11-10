@@ -85,6 +85,8 @@ class AuditLog(models.Model):
         indexes = [
             models.Index(F("created_at").desc(), F("id").desc(), name="audit_log_newest"),
             models.Index(fields=["action"], name="audit_log_action"),
+            # "The history of this one row" (a seller's status page, an operator's seller detail).
+            models.Index(F("table_name"), F("row_id"), F("created_at").desc(), name="audit_log_row_history"),
         ]
         constraints = [
             models.CheckConstraint(

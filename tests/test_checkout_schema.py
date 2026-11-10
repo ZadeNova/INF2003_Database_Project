@@ -12,8 +12,9 @@ from psycopg import errors, sql
 
 from accounts.audit import set_audit_context
 from accounts.models import AuditLog
+from catalogue.models import Product
 from config.privileges import grant_runtime
-from orders.models import Cart, CartLine, Checkout, Order, Payment, Refund
+from orders.models import Cart, CartLine, Checkout, Order, OrderLine, Payment, Refund
 from orders.services import add_to_cart, cart_review, change_order_status, checkout
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -177,10 +178,52 @@ def test_deferred_checks_cover_inserts_deletes_and_both_moved_parents(bad):
         elif bad == "payment-insert":
             Payment.objects.create(checkout=checkout, sequence=2, method="voucher", instalments=1, amount=1)
         else:
+            # The key guard would refuse the move first; switch it off (rolled back with the transaction) so that the
+            # deferred money check, which still covers both parents of a moved row, is the thing under test.
+            with connection.cursor() as cursor:
+                cursor.execute("ALTER TABLE orders_payment DISABLE TRIGGER orders_payment_key_guard")
             Payment.objects.filter(checkout=checkout).update(checkout=other)
         assert connection.in_atomic_block
     assert Checkout.objects.get(pk=checkout.pk).payments.get().amount == 12
     assert not other.payments.exists()
+
+
+KEY_CHANGES = {
+    "order-checkout": ("orders_order", "UPDATE orders_order SET checkout_id = %(other_checkout)s WHERE id = %(order)s"),
+    "checkout-customer": ("orders_checkout", "UPDATE orders_checkout SET customer_id = %(other_buyer)s WHERE id = %(checkout)s"),
+    "checkout-placed-at": ("orders_checkout", "UPDATE orders_checkout SET placed_at = placed_at + interval '1 day' WHERE id = %(checkout)s"),
+    "checkout-source-id": ("orders_checkout", "UPDATE orders_checkout SET olist_order_id = 'moved' WHERE id = %(checkout)s"),
+    "line-product": ("orders_orderline", "UPDATE orders_orderline SET product_id = %(second_product)s WHERE id = %(line)s"),
+    "payment-checkout": ("orders_payment", "UPDATE orders_payment SET checkout_id = %(other_checkout)s WHERE checkout_id = %(checkout)s"),
+    "refund-checkout": ("orders_refund", "UPDATE orders_refund SET checkout_id = %(other_checkout)s WHERE order_id = %(order)s"),
+}  # fmt: skip
+
+
+@pytest.mark.parametrize("change", sorted(KEY_CHANGES))
+def test_a_row_cannot_be_moved_to_another_parent_even_by_the_web_role(change):
+    table, statement = KEY_CHANGES[change]
+    buyer, item = customer(), product()
+    checkout, order = paid_order(buyer, item, status="cancelled")  # a cancelled order has its refund
+    line = OrderLine.objects.create(order=order, seller=item.seller, product=item, quantity=1, unit_price=10, freight=2)
+    other_buyer = customer("other-buyer")
+    other_checkout, _ = paid_order(other_buyer, product("other"))
+    second_product = Product.objects.create(
+        seller=item.seller, category=item.category, name="second", stock=1, price=1, freight=0, lead_time_days=1
+    )
+    ids = {
+        "order": order.pk,
+        "checkout": checkout.pk,
+        "line": line.pk,
+        "other_checkout": other_checkout.pk,
+        "other_buyer": other_buyer.pk,
+        "second_product": second_product.pk,
+    }
+    with runtime_connection() as runtime:
+        with pytest.raises(errors.CheckViolation, match=f"{table} keys cannot be changed"), runtime.transaction():
+            runtime.execute(statement, ids)
+        # The same rows can still be changed in the ways the application changes them.
+        runtime.execute("UPDATE orders_orderline SET quantity = quantity WHERE id = %s", [line.pk])
+        runtime.execute("UPDATE orders_checkout SET total = total WHERE id = %s", [checkout.pk])
 
 
 MONEY_TABLES = ("orders_checkout", "orders_order", "orders_orderline", "orders_payment", "orders_refund")

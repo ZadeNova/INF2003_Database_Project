@@ -348,6 +348,8 @@ def change_order_status(actor, order_id, action, reason=""):
     }[action]
     if len(reason) > MAX_REASON_LENGTH:
         raise CheckoutError(f"Keep the reason under {MAX_REASON_LENGTH} characters.")
+    if "\x00" in reason:  # PostgreSQL text cannot hold a NUL byte; forms refuse it, a hand-made request would not
+        raise CheckoutError("The reason contains a character that cannot be saved.")
     with transaction.atomic():
         set_audit_context(actor.pk, reason)
         if not User.objects.filter(pk=actor.pk, role=role, is_active=True).exists():

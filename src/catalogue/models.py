@@ -30,6 +30,9 @@ class Category(models.Model):
 # orders (at most MAX_CART_QUANTITY per cart line) can neither overflow the integer column nor break the ceiling.
 MAX_STOCK = 99_999
 STOCK_CEILING = 1_000_000
+# A lead time is days until the product can ship. Checkout adds it to today's date, so an absurd value would overflow
+# the calendar and fail every customer's checkout; a year is far beyond any real value (the imported data peaks at 30 days).
+MAX_LEAD_TIME_DAYS = 365
 
 
 class Product(models.Model):
@@ -64,6 +67,9 @@ class Product(models.Model):
                 condition=Q(freight__gte=0, freight__lte="9999999999.99"), name="product_freight_nonnegative_finite"
             ),
             models.CheckConstraint(condition=Q(stock__lte=STOCK_CEILING), name="product_stock_capped"),
+            models.CheckConstraint(
+                condition=Q(lead_time_days__lte=MAX_LEAD_TIME_DAYS), name="product_lead_time_capped"
+            ),
         ]
 
     @property

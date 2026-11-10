@@ -160,7 +160,7 @@ erDiagram
 | CustomerProfile / accounts_customerprofile | One user per profile and one profile per user; unique Olist customer identity. Multiple source customer addresses collapse to the latest retained purchase address, then source customer ID |
 | Seller / accounts_seller | One user per seller; unique Olist seller ID; status CHECK includes pending, approved, rejected and suspended. Generated shop names carry has_generated_content. The demonstration catalogue adds approved merchants `demo-seller-4` to `demo-seller-9` (no Olist id) |
 | Category / catalogue_category | Unique English slug; English/Portuguese names, one sprite icon mapping and the hand_translated flag. Rich category definitions live in MongoDB |
-| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
+| Product / catalogue_product | Unique (seller_id, olist_product_id) and (id, seller_id). Positive finite price; nonnegative finite freight, stock and lead time; lead time at most 365 days (`product_lead_time_capped`; checkout adds it to today's date, so an absurd value would overflow the calendar and fail every customer's checkout; the imported data peaks at 30); stock at most 1,000,000 (`product_stock_capped`; sellers can enter at most 99,999, leaving room for cancellation restocks). Nullable weight_g, length_cm, height_cm and width_cm; active, featured, taken_down, taken_down_reason, has_generated_content and demo_adjustment. Historical products are protected from deletion. GIN trigram index `product_name_trgm` on name |
 | Cart / orders_cart | One cart per customer (unique customer_id). Its row is the lock that serializes cart edits and checkout |
 | CartLine / orders_cartline | Unique (cart_id, product_id); quantity CHECK 1 to 999. Products in a cart are protected from deletion. Only products in purchasable_product can be added, and lines that leave the view are refused at checkout |
 | Checkout / orders_checkout | customer_id references the user's ID. Unique (customer_id, idempotency_key); imported keys are null, Olist order ID is unique. Nonnegative finite total. request_fingerprint stores the 64-character digest of the reviewed lines (product, quantity, unit price, freight), so a resubmitted key replays only the same reviewed cart; imported history keeps the empty database default |
@@ -168,7 +168,7 @@ erDiagram
 | OrderLine / orders_orderline | Positive quantity and unit price; nonnegative freight. Composite FKs (order_id, seller_id) and (product_id, seller_id) enforce ownership with ON DELETE RESTRICT. shipping_limit_at is the earliest original item's shifted deadline when repeated lines collapse |
 | Payment / orders_payment | Unique (checkout_id, sequence); positive sequence and instalments. Method CHECK: credit_card, boleto, voucher, debit_card; nonnegative finite amount. A row means money received; there is no payment-status column and no card-number field |
 | Refund / orders_refund | At most one per order; composite FK (order_id, checkout_id) prevents cross-checkout refunds. Nonnegative finite amount; reason, refunded_at and imported. Imported cancellations with payments receive their full order total |
-| AuditLog / audit_log | Written only by owner-owned triggers and the narrow review moderation function. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, and action |
+| AuditLog / audit_log | Written only by owner-owned triggers and the narrow review moderation function. table_name, row_id as text (so MongoDB IDs also fit), action, nullable actor FK (PROTECT; NULL means a system change), before/after JSONB snapshots of named fields only, reason and created_at (database default now()). CHECKs: identity fields nonblank; a non-NULL actor needs a non-blank reason. Indexes: (created_at DESC, id DESC) for the newest-first page, action, and (table_name, row_id, created_at DESC) for "the history of this one row" (a seller's status page, an operator's seller detail) |
 | Geolocation / accounts_geolocation | One row per zip prefix, median coordinates and separate modal city/state (lexical tie-break). Coordinates use exact numeric columns |
 
 Django creates B-tree indexes for ordinary FKs, primary keys and unique constraints. The initial migrations are
@@ -290,6 +290,16 @@ With one, only the destination timestamp may move, and `order_status_transition`
 it with `now()` whatever the statement said. Violations raise SQLSTATE 23514. The delay analysis is computed from
 these columns, so the web role can no longer make a late delivery look on time; the owner role (migrations, the import,
 tests) can still disable the trigger, and the importer does so while loading, like the other user triggers.
+
+**Order key guard (`orders` 0006).** Rows stay under the parent they were created for. One BEFORE UPDATE trigger per table
+(`<table>_key_guard`, all running `public.protect_order_keys()`, firing only when a guarded column changes) refuses
+changes to `orders_order.checkout_id`, `orders_checkout` (`customer_id`, `placed_at`, `olist_order_id`),
+`orders_orderline` (`order_id`, `product_id`), `orders_payment.checkout_id` and `orders_refund` (`checkout_id`,
+`order_id`) with SQLSTATE 23514. Without it a session that may update its own orders (a seller under row-level security)
+could move an order to another customer's checkout while the totals still matched, and the deferred money checks would
+pass. An order's `seller_id` is not in the list: its lines tie it by a composite foreign key and row-level security
+checks it. Nothing in the application updates these columns; the importer only inserts (and disables user triggers while
+it does).
 
 **Product search and audit (`catalogue` 0002).** The trusted pg_trgm extension and the `product_name_trgm` GIN index
 on product.name serve typo-tolerant name search. product_update_audit (AFTER UPDATE, only when price, stock, active or

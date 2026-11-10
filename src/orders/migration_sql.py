@@ -225,3 +225,34 @@ ALTER FUNCTION public.check_checkout_refunds() SECURITY INVOKER;
 ALTER FUNCTION public.check_checkout_money() SECURITY INVOKER;
 DROP FUNCTION public.mercer_seller();
 """
+
+
+# A row is created under one parent and stays there. Nothing in the application moves an order to another checkout, a
+# payment or refund to another checkout, a line to another order or product, or changes who placed a checkout and when,
+# so the database refuses it. (Moving a row to a parent with the same total would pass the deferred money checks, and
+# the reviews in MongoDB hold these ids.) An order's seller_id is already tied to its lines by a foreign key and to the
+# session by row-level security. The importer disables user triggers for its inserts, and inserts never fire this.
+ORDER_KEY_GUARD_TRIGGERS = {
+    "orders_order": "OLD.checkout_id IS DISTINCT FROM NEW.checkout_id",
+    "orders_checkout": "(OLD.customer_id, OLD.placed_at, OLD.olist_order_id) IS DISTINCT FROM "
+    "(NEW.customer_id, NEW.placed_at, NEW.olist_order_id)",
+    "orders_orderline": "(OLD.order_id, OLD.product_id) IS DISTINCT FROM (NEW.order_id, NEW.product_id)",
+    "orders_payment": "OLD.checkout_id IS DISTINCT FROM NEW.checkout_id",
+    "orders_refund": "(OLD.checkout_id, OLD.order_id) IS DISTINCT FROM (NEW.checkout_id, NEW.order_id)",
+}
+ORDER_KEY_GUARD = """
+CREATE FUNCTION public.protect_order_keys() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+BEGIN
+    RAISE EXCEPTION '% keys cannot be changed after the row is created', TG_TABLE_NAME USING ERRCODE = '23514';
+END $$;
+REVOKE EXECUTE ON FUNCTION public.protect_order_keys() FROM PUBLIC;
+"""
+ORDER_KEY_GUARD_REVERSE = ""
+for _table, _changed in ORDER_KEY_GUARD_TRIGGERS.items():
+    ORDER_KEY_GUARD += f"""
+CREATE TRIGGER {_table}_key_guard BEFORE UPDATE ON public.{_table}
+FOR EACH ROW WHEN ({_changed}) EXECUTE FUNCTION public.protect_order_keys();
+"""
+    ORDER_KEY_GUARD_REVERSE += f"DROP TRIGGER {_table}_key_guard ON public.{_table};\n"
+ORDER_KEY_GUARD_REVERSE += "DROP FUNCTION public.protect_order_keys();"

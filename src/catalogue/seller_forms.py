@@ -3,7 +3,7 @@ from decimal import Decimal
 from django import forms
 
 from .forms import attribute_field, attribute_text, typed_value
-from .models import MAX_STOCK, Category, Product
+from .models import MAX_LEAD_TIME_DAYS, MAX_STOCK, Category, Product
 
 
 class ProductForm(forms.ModelForm):
@@ -16,7 +16,12 @@ class ProductForm(forms.ModelForm):
     price = forms.DecimalField(min_value=Decimal("0.01"), max_digits=12, decimal_places=2, label="Price (S$)")
     freight = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, label="Shipping fee (S$)")
     stock = forms.IntegerField(min_value=0, max_value=MAX_STOCK, help_text="Up to 99,999 units per product.")
-    lead_time_days = forms.IntegerField(label="Ready to ship in (days)", min_value=0, max_value=2**31 - 1)
+    lead_time_days = forms.IntegerField(
+        label="Ready to ship in (days)",
+        min_value=0,
+        max_value=MAX_LEAD_TIME_DAYS,
+        help_text=f"Up to {MAX_LEAD_TIME_DAYS} days.",
+    )
     # What the seller saw when the form was opened. Sales change stock while a form is open, so the service
     # compares these with the live row instead of overwriting it with an old value.
     expected_stock = forms.CharField(required=False, widget=forms.HiddenInput)

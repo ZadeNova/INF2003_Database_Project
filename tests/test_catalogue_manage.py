@@ -302,6 +302,7 @@ def test_seller_cannot_choose_another_owner_or_edit_another_shop(shop, mongo_db)
     "field,value",
     [
         ("lead_time_days", ""),
+        ("lead_time_days", "366"),
         ("stock", "-1"),
         ("stock", "100000"),
         ("price", "0.00"),
