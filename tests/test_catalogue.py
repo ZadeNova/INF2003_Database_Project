@@ -194,6 +194,7 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
     call_command("seed_demo", stdout=StringIO())
     applicant = Seller.objects.select_related("user").get(user__username="demo-applicant")
     assert applicant.status == "pending" and applicant.has_generated_content and "generated" in applicant.shop_name
+    assert "pending" not in applicant.shop_name  # the name must still read right after the approval demo
     assert applicant.olist_seller_id is None and applicant.user.role == "seller"
     if not applicant.user.check_password(os.environ["DEMO_SELLER_PASSWORD"]):
         pytest.fail("Applicant password did not match DEMO_SELLER_PASSWORD (secret omitted)", pytrace=False)
@@ -213,6 +214,10 @@ def test_seed_demo_adds_a_pending_applicant_and_keeps_decided_statuses(imported)
     assert Seller.objects.get(pk=demo_seller.pk).status == "suspended"
     assert dict(demo_seller.products.exclude(demo_adjustment="").values_list("pk", "demo_adjustment")) == labels
     assert get_user_model().objects.count() == users
+    # A stack seeded with the earlier name ("…, pending approval") is renamed on the next run; nothing else is.
+    Seller.objects.filter(pk=applicant.pk).update(shop_name="Demo applicant shop (generated, pending approval)")
+    call_command("seed_demo", stdout=StringIO())
+    assert Seller.objects.get(pk=applicant.pk).shop_name == "Demo applicant shop (generated)"
 
 
 def test_seed_demo_writes_system_audit_rows_even_inside_a_callers_actor_context(imported):

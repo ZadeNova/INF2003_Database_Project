@@ -18,7 +18,8 @@ class SellerProductListView(SellerRequiredMixin, View):
 
     def get(self, request):
         products = Product.objects.filter(seller=self.seller).select_related("category").order_by("-id")
-        query = request.GET.get("q", "").strip()[:200]
+        # PostgreSQL text cannot hold a NUL byte; a hand-made URL would otherwise end in a 500.
+        query = request.GET.get("q", "").replace("\x00", "").strip()[:200]
         if query:
             products = products.filter(name__icontains=query)
         page = Paginator(products, 25).get_page(request.GET.get("page"))

@@ -26,7 +26,8 @@ class OperatorProductListView(OperatorRequiredMixin, View):
 
     def get(self, request):
         products = Product.objects.select_related("seller", "category").order_by("-id")
-        query = request.GET.get("q", "").strip()[:200]
+        # PostgreSQL text cannot hold a NUL byte; a hand-made URL would otherwise end in a 500.
+        query = request.GET.get("q", "").replace("\x00", "").strip()[:200]
         status = request.GET.get("status", "all")
         if query:
             products = products.filter(name__icontains=query)

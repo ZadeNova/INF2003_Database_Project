@@ -19,7 +19,9 @@ EXTRA_SELLERS = ("demo-seller-2", "demo-seller-3")
 RELISTED_LABEL = "relisted for demo visibility"
 SHOWCASE = "/app/data/demo_showcase/catalogue.json"
 APPLICANT = "demo-applicant"
-APPLICANT_SHOP = "Demo applicant shop (generated, pending approval)"
+APPLICANT_SHOP = "Demo applicant shop (generated)"
+# The earlier name; it read "pending approval" even after the approval demo. A rerun renames it (only that name).
+OLD_APPLICANT_SHOP = "Demo applicant shop (generated, pending approval)"
 
 
 class Command(BaseCommand):
@@ -145,6 +147,7 @@ class Command(BaseCommand):
                     "has_generated_content": True,
                 },
             )
+            Seller.objects.filter(user=applicant, shop_name=OLD_APPLICANT_SHOP).update(shop_name=APPLICANT_SHOP)
             user = seller.user
             if user.role != "seller":
                 raise CommandError("Imported seller has an invalid user role")

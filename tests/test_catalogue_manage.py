@@ -593,3 +593,29 @@ def test_operator_pages_require_the_role_and_csrf(shop, mongo_db):
         csrf.post(f"/products/operator/categories/{category.pk}/", {"name": "finish", "kind": "string"}).status_code
         == 403
     )
+
+
+@pytest.mark.parametrize("path", ["/products/mine/", "/products/operator/"])
+def test_a_nul_byte_in_the_product_list_search_is_ignored_not_a_server_error(shop, path):
+    seller, category, template, seller_client = shop
+    create(shop)
+    if path == "/products/operator/":
+        seller_client = Client()
+        seller_client.force_login(make_operator())
+    response = seller_client.get(path, {"q": "kettle\x00"})
+    assert response.status_code == 200 and b"Handmade kettle" in response.content
+
+
+def test_the_audit_page_shows_a_price_and_stock_line_only_when_they_changed(shop, mongo_db):
+    item = create(shop)
+    operator = make_operator()
+    client = Client()
+    client.force_login(operator)
+    assert (
+        client.post(f"/products/operator/{item.pk}/", {"action": "takedown", "reason": "No change"}).status_code == 302
+    )
+    client.post(f"/products/operator/{item.pk}/", {"action": "restore", "reason": "Fine"})
+    assert shop[3].post(f"/products/mine/{item.pk}/edit/", data(shop[1], price="15.00")).status_code == 302
+    body = client.get("/operator/audit/").content.decode()
+    # Four product rows (create, takedown, restore, edit); only the creation and the edit changed price or stock.
+    assert body.count("Price: S$") == 2 and "S$12.34 → S$15.00" in body

@@ -14,7 +14,7 @@ from django.views.generic.edit import CreateView
 from catalogue.models import Product, PurchasableProduct
 from config import ratelimit
 from config.ids import BIGINT_MAX
-from orders.models import Order
+from orders.models import Order, OrderLine
 
 from .audit import AUDIT_LABELS, SELLER_ACTIONS, StaleAction, allowed_actions, change_seller_status
 from .forms import AuditFilterForm, CustomerCreationForm, ReasonForm, SellerApplicationForm
@@ -262,6 +262,11 @@ class OperatorAuditView(OperatorRequiredMixin, ListView):
             "catalogue_product": lambda ids: {
                 product.pk: (product, product.seller)
                 for product in Product.objects.filter(pk__in=ids).select_related("seller")
+            },
+            # A review's audit row id is its order line: the line names the reviewed product and its shop.
+            "reviews": lambda ids: {
+                line.pk: (line.product, line.seller)
+                for line in OrderLine.objects.filter(pk__in=ids).select_related("product", "seller")
             },
         }
         wanted = {}

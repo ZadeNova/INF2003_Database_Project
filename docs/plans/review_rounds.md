@@ -338,3 +338,18 @@ from the contract above, where the fixes are made by Erfan's session):
 - F6 the wishlist order ends in the product id.
 - F7 the benchmark provenance states what telemetry is off instead of a blanket "disabled".
 - F8 a note in [dashboard](dashboard.md) on which stock query the recorded index plan belongs to.
+
+10 November 2026, round G (the whole system, end to end), run by Syahfariz in one Claude Opus 5.5 session on commit `16678bc`:
+journeys on the fixture and on a clean clone started with `scripts/start.py` (full data), the full suite once, the eight
+browser journeys, store outages and races. Nothing above minor, so the stopping rule is met. At Syahfariz's request, with
+Erfan's approval, the same session fixed G1 to G7 on `improvements/review-g-fixes`, with a regression test for each code change:
+
+- G1 a NUL byte in the seller's or operator's product search is ignored instead of a 500.
+- G2 the audit log names the reviewed product and its shop for review decisions, and hides a price and stock line that did not change.
+- G3 the demo applicant's shop is "Demo applicant shop (generated)"; `seed_demo` renames the earlier "pending approval" name.
+- G4 the wishlist shows icon cards while MongoDB is down instead of a 503.
+- G5 the purchase page shows a cancelled order's refund and no arrival estimate.
+- G6 status badges in the phone-width audit table break only between words.
+- G7 the README documents the submission packager.
+- G8 (a teammate's Windows path in a shipped benchmark log) and G9 (the dashboard stops at its reporting date, so a demo
+  purchase never shows there) need no code change; G9 is carried in [deliverables](deliverables.md).
