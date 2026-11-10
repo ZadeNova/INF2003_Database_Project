@@ -193,7 +193,7 @@ trigger on the same table. Raw SQL, seller edits and cancellation restocks all f
 ### View, triggers and privileges
 
 `purchasable_product` is the single visibility definition: an active product, not taken down, belonging to an approved
-seller. It includes sold-out products. It uses security_invoker and exposes product rows. The minimum pages query its
+seller. It includes sold-out products. It uses security_invoker and exposes product rows; its columns are written out (catalogue 0005, not `SELECT p.*`), so a new product column is added to the view on purpose, and a test compares the two lists. The minimum pages query its
 IDs through an unmanaged ORM model. Later workstreams reuse this definition.
 
 The customer_profile_role and seller_profile_role triggers require the linked user's role to match the profile;

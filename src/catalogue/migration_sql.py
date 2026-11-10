@@ -51,3 +51,25 @@ PRODUCT_INSERT_AUDIT_REVERSE = """
 DROP TRIGGER product_insert_audit ON public.catalogue_product;
 DROP FUNCTION public.audit_product_insert();
 """
+
+
+# `SELECT p.*` froze whatever columns the product table had when the view was first created. The same 19 columns, in the same
+# order, are now written out, so a column added to the product table is added to the view (or left out) on purpose. CREATE OR
+# REPLACE keeps the view's privileges and everything that depends on it; the option is repeated because the statement resets it.
+PRODUCT_COLUMNS = (
+    "id, olist_product_id, name, price, freight, stock, lead_time_days, weight_g, length_cm, height_cm, width_cm, active, "
+    "featured, taken_down, taken_down_reason, has_generated_content, demo_adjustment, category_id, seller_id"
+)
+_PURCHASABLE_FROM = (
+    "FROM catalogue_product p JOIN accounts_seller s ON s.id = p.seller_id "
+    "WHERE p.active AND NOT p.taken_down AND s.status = 'approved'"
+)
+PURCHASABLE_EXPLICIT_COLUMNS = (
+    "CREATE OR REPLACE VIEW purchasable_product WITH (security_invoker=true) AS SELECT "
+    + ", ".join("p." + name for name in PRODUCT_COLUMNS.split(", "))
+    + " "
+    + _PURCHASABLE_FROM
+)
+PURCHASABLE_ALL_COLUMNS = (
+    "CREATE OR REPLACE VIEW purchasable_product WITH (security_invoker=true) AS SELECT p.* " + _PURCHASABLE_FROM
+)
