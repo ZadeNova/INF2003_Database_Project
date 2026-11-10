@@ -2,24 +2,148 @@
 {% load static %}
 {% block title %}Stock planning — Operator — Mercer{% endblock %}
 {% block content %}<div class="page account-page dashboard-page">
-<div class="page__header"><div><p class="eyebrow">Operator console</p><h1 class="page__title">Stock planning</h1><p class="page__lead">{% if as_of %}Sales history as of {{ as_of|date:"j F Y" }}. Inventory shows current stock.{% else %}Import Olist to start planning.{% endif %}</p>{% if cache_status == "hit" or cache_status == "wait" %}<p class="page__lead">Delivery, category and review panels served from cache, computed {{ computed_at|timesince }} ago. Stock is always live.</p>{% endif %}</div>
-<form method="post" action="{% url 'dashboard:refresh' %}">{% csrf_token %}<button class="button" type="submit">Refresh sales history</button></form></div>
+<div class="page__header">
+      <div>
+        <p class="eyebrow">Operator console</p>
+        <h1 class="page__title">Stock planning</h1>
+        <p class="page__lead">
+          {% if as_of %}Sales history as of {{ as_of|date:"j F Y" }}. Inventory shows current stock.{% else %}Import Olist to start planning.{% endif %}</p>
+        {% if cache_status == "hit" or cache_status == "wait" %}<p class="page__lead">Delivery, category and review panels served from cache, computed {{ computed_at|timesince }} ago. Stock is always live.</p>
+        {% endif %}</div>
+<form method="post" action="{% url 'dashboard:refresh' %}">{% csrf_token %}<button class="button" type="submit">Refresh sales history</button>
+      </form>
+    </div>
 {% if ready %}
-<section class="panel checkout-panel" id="stock"><h2>Replenishment priorities</h2>{% include "dashboard/_source.html" with sources="PostgreSQL daily sales, products and shops" %}
+<section class="panel checkout-panel" id="stock">
+        <h2>Replenishment priorities</h2>{% include "dashboard/_source.html" with sources="PostgreSQL daily sales, products and shops" %}
 <p class="panel__note">Daily demand averages all 28 calendar days, including days with no sales. Replenish when days of cover are shorter than lead time.</p>
-<form method="get" class="catalogue-manage-filters">{% include "accounts/_form_fields.html" %}<button class="button button--outline-neutral" type="submit">Filter products</button></form>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Stock planning"><table class="dashboard-table"><thead><tr><th>Product</th><th>Stock</th><th>Units / day</th><th>Days of cover</th><th>Lead days</th><th>Action</th></tr></thead><tbody>
-{% for row in stock_pager.page %}<tr><td><a href="{% url 'catalogue:operator_product' row.product_id %}">{{ row.name }}</a><br><span class="panel__note">{{ row.category }} · Seller #{{ row.seller_id }}</span></td><td>{{ row.stock }}</td><td>{{ row.daily_demand|floatformat:3 }}</td><td>{{ row.days_cover|floatformat:1|default:"—" }}</td><td>{{ row.lead_time_days }}</td><td>{% if row.replenish %}<span class="badge badge--warning">Replenish</span>{% else %}Covered{% endif %}</td></tr>{% empty %}<tr><td colspan="6">No products match these filters.</td></tr>{% endfor %}</tbody></table></div>{% include "dashboard/_pager.html" with pager=stock_pager label="Stock" %}</section>
-<section class="panel checkout-panel" id="categories"><h2>Category performance</h2>{% include "dashboard/_source.html" with sources="PostgreSQL daily sales and categories" %}
+<form method="get" class="catalogue-manage-filters">{% include "accounts/_form_fields.html" %}<button class="button button--outline-neutral" type="submit">Filter products</button>
+        </form>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Stock planning">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Stock</th>
+                <th>Units / day</th>
+                <th>Days of cover</th>
+                <th>Lead days</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+{% for row in stock_pager.page %}<tr>
+                  <td>
+                    <a href="{% url 'catalogue:operator_product' row.product_id %}">{{ row.name }}</a><br><span class="panel__note">{{ row.category }} · Seller #{{ row.seller_id }}</span>
+                  </td>
+                  <td>{{ row.stock }}</td>
+                  <td>{{ row.daily_demand|floatformat:3 }}</td>
+                  <td>{{ row.days_cover|floatformat:1|default:"—" }}</td>
+                  <td>{{ row.lead_time_days }}</td>
+                  <td>
+                    {% if row.replenish %}<span class="badge badge--warning">Replenish</span>{% else %}Covered{% endif %}</td>
+                </tr>
+              {% empty %}<tr>
+                  <td colspan="6">No products match these filters.</td>
+                </tr>
+              {% endfor %}</tbody>
+          </table>
+        </div>{% include "dashboard/_pager.html" with pager=stock_pager label="Stock" %}</section>
+<section class="panel checkout-panel" id="categories">
+        <h2>Category performance</h2>{% include "dashboard/_source.html" with sources="PostgreSQL daily sales and categories" %}
 <p>Leading categories by revenue in {{ chart_month|date:"F Y" }} (through the reporting date).</p>
-<div class="dashboard-chart"><canvas id="category-revenue" role="img" aria-label="Leading categories by monthly revenue. Exact values are in the following table."></canvas></div>{{ chart|json_script:"category-chart-data" }}
-<div class="table-scroll" tabindex="0" role="region" aria-label="Category performance"><table class="dashboard-table"><thead><tr><th>Month</th><th>Category</th><th>Rank</th><th>Units</th><th>Revenue</th><th>Month change</th></tr></thead><tbody>{% for row in category_pager.page %}<tr><td>{{ row.month|date:"M Y" }}{% if row.month_to_date %} (to date){% endif %}</td><td>{{ row.category }}</td><td>{{ row.revenue_rank }}</td><td>{{ row.units }}</td><td>S${{ row.revenue|floatformat:2 }}</td><td>{% if row.change_percent is not None %}{{ row.change_percent|floatformat:1 }}%{% elif row.month_to_date %}month to date{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% include "dashboard/_pager.html" with pager=category_pager label="Category" %}</section>
-<section class="panel checkout-panel"><h2>Delivery delay and review score</h2>{% include "dashboard/_source.html" with sources="PostgreSQL delivered orders and geolocation; MongoDB reviews, joined by order" %}
+<div class="dashboard-chart">
+          <canvas id="category-revenue" role="img" aria-label="Leading categories by monthly revenue. Exact values are in the following table."></canvas>
+        </div>{{ chart|json_script:"category-chart-data" }}
+<div class="table-scroll" tabindex="0" role="region" aria-label="Category performance">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Category</th>
+                <th>Rank</th>
+                <th>Units</th>
+                <th>Revenue</th>
+                <th>Month change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in category_pager.page %}<tr>
+                  <td>{{ row.month|date:"M Y" }}{% if row.month_to_date %} (to date){% endif %}</td>
+                  <td>{{ row.category }}</td>
+                  <td>{{ row.revenue_rank }}</td>
+                  <td>{{ row.units }}</td>
+                  <td>S${{ row.revenue|floatformat:2 }}</td>
+                  <td>
+                    {% if row.change_percent is not None %}{{ row.change_percent|floatformat:1 }}%{% elif row.month_to_date %}month to date{% else %}—{% endif %}</td>
+                </tr>
+              {% endfor %}</tbody>
+          </table>
+        </div>{% include "dashboard/_pager.html" with pager=category_pager label="Category" %}</section>
+<section class="panel checkout-panel">
+        <h2>Delivery delay and review score</h2>{% include "dashboard/_source.html" with sources="PostgreSQL delivered orders and geolocation; MongoDB reviews, joined by order" %}
 <p class="panel__note">One mean score per order; copies of an order's review share its score, so multi-line orders count. Distance uses seller/customer zip centre points, where both exist.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Delivery delay"><table class="dashboard-table"><thead><tr><th>Delay</th><th>Delivered orders</th><th>Reviewed orders</th><th>Mean score</th><th>Mean distance (km)</th></tr></thead><tbody>{% for row in delay_rows %}<tr><td>{{ row.label }}</td><td>{{ row.orders }}</td><td>{{ row.reviewed_orders }}</td><td>{{ row.average_score|floatformat:2|default:"—" }}</td><td>{{ row.distance_km|floatformat:0|default:"—" }}</td></tr>{% endfor %}</tbody></table></div></section>
-<section class="panel checkout-panel" id="sellers"><h2>Seller delivery risk</h2>{% include "dashboard/_source.html" with sources="PostgreSQL deliveries and MongoDB order scores" %}<p class="panel__note">At least {{ seller_min_orders }} delivered orders within the reporting date are required. {{ seller_excluded_count }} sellers with fewer deliveries are excluded. At risk means more than 20% arrived late. Mean score uses available reviews only.</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="Seller delivery risk"><table class="dashboard-table"><thead><tr><th>Shop</th><th>Delivered orders</th><th>Late</th><th>Mean score</th><th>Risk</th></tr></thead><tbody>{% for row in seller_pager.page %}<tr><td><a href="{% url 'accounts:operator_seller' row.seller_id %}">{{ row.shop_name }}</a></td><td>{{ row.orders }}</td><td>{{ row.late_percent|floatformat:1 }}%</td><td>{{ row.average_score|floatformat:2|default:"—" }}</td><td>{% if row.at_risk %}<span class="badge badge--warning">At risk</span>{% else %}Within threshold{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% include "dashboard/_pager.html" with pager=seller_pager label="Seller" %}</section>
-<section class="panel checkout-panel"><h2>Products with poor reviews</h2>{% include "dashboard/_source.html" with sources="MongoDB review aggregation; PostgreSQL product names" %}<p class="panel__note">Average score at most 2 from at least 5 reviews.</p>{% for row in poor_rows %}<p><a href="{% url 'catalogue:operator_product' row.product.pk %}">{{ row.product.name }}</a> · {{ row.average|floatformat:2 }} / 5 · {{ row.count }} reviews</p>{% empty %}<p>No products meet this threshold.</p>{% endfor %}</section>
-{% else %}<section class="panel checkout-panel">{% if form.errors %}{% include "accounts/_form_fields.html" %}{% elif as_of %}<p>Refresh sales history to populate the panels. A new import does this automatically.</p>{% else %}<p>No imported orders are available yet.</p>{% endif %}</section>{% endif %}
-</div>{% endblock %}
+<div class="table-scroll" tabindex="0" role="region" aria-label="Delivery delay">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Delay</th>
+                <th>Delivered orders</th>
+                <th>Reviewed orders</th>
+                <th>Mean score</th>
+                <th>Mean distance (km)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in delay_rows %}<tr>
+                  <td>{{ row.label }}</td>
+                  <td>{{ row.orders }}</td>
+                  <td>{{ row.reviewed_orders }}</td>
+                  <td>{{ row.average_score|floatformat:2|default:"—" }}</td>
+                  <td>{{ row.distance_km|floatformat:0|default:"—" }}</td>
+                </tr>
+              {% endfor %}</tbody>
+          </table>
+        </div>
+      </section>
+<section class="panel checkout-panel" id="sellers">
+        <h2>Seller delivery risk</h2>{% include "dashboard/_source.html" with sources="PostgreSQL deliveries and MongoDB order scores" %}<p class="panel__note">At least {{ seller_min_orders }} delivered orders within the reporting date are required. {{ seller_excluded_count }} sellers with fewer deliveries are excluded. At risk means more than 20% arrived late. Mean score uses available reviews only.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Seller delivery risk">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Shop</th>
+                <th>Delivered orders</th>
+                <th>Late</th>
+                <th>Mean score</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in seller_pager.page %}<tr>
+                  <td>
+                    <a href="{% url 'accounts:operator_seller' row.seller_id %}">{{ row.shop_name }}</a>
+                  </td>
+                  <td>{{ row.orders }}</td>
+                  <td>{{ row.late_percent|floatformat:1 }}%</td>
+                  <td>{{ row.average_score|floatformat:2|default:"—" }}</td>
+                  <td>
+                    {% if row.at_risk %}<span class="badge badge--warning">At risk</span>{% else %}Within threshold{% endif %}</td>
+                </tr>
+              {% endfor %}</tbody>
+          </table>
+        </div>{% include "dashboard/_pager.html" with pager=seller_pager label="Seller" %}</section>
+<section class="panel checkout-panel">
+        <h2>Products with poor reviews</h2>{% include "dashboard/_source.html" with sources="MongoDB review aggregation; PostgreSQL product names" %}<p class="panel__note">Average score at most 2 from at least 5 reviews.</p>
+        {% for row in poor_rows %}<p>
+            <a href="{% url 'catalogue:operator_product' row.product.pk %}">{{ row.product.name }}</a> · {{ row.average|floatformat:2 }} / 5 · {{ row.count }} reviews</p>
+        {% empty %}<p>No products meet this threshold.</p>
+        {% endfor %}</section>
+{% else %}<section class="panel checkout-panel">
+        {% if form.errors %}{% include "accounts/_form_fields.html" %}{% elif as_of %}<p>Refresh sales history to populate the panels. A new import does this automatically.</p>
+        {% else %}<p>No imported orders are available yet.</p>
+        {% endif %}</section>
+    {% endif %}
+</div>
+{% endblock %}
 {% block scripts %}{% if ready %}<script src="{% static 'vendor/chart/chart.umd.min.js' %}" defer></script><script src="{% static 'js/dashboard.js' %}" defer></script>{% endif %}{% endblock %}

@@ -1,2 +1,9 @@
-<section class="panel checkout-panel"><h2>Trending{% if category %} in {{ category.display_name }}{% endif %}</h2><p class="panel__note">Product views over the past 24 hours. Generated demo activity is labelled.</p>
-{% if trending_products %}<div class="product-grid">{% for product in trending_products %}<div class="trending-pick"><p class="panel__note">Rank {{ product.event_rank }} · {{ product.event_views }} view{{ product.event_views|pluralize }}{% if product.generated_views %} · Includes generated views{% endif %}</p>{% include "catalogue/_product_card.html" %}</div>{% endfor %}</div>{% else %}<p>No recent views yet. Browse the shops to get things started.</p>{% endif %}</section>
+<section class="panel checkout-panel">
+  <h2>Trending{% if category %} in {{ category.display_name }}{% endif %}</h2>
+  <p class="panel__note">Product views over the past 24 hours. Generated demo activity is labelled.</p>
+{% if trending_products %}<div class="product-grid">
+      {% for product in trending_products %}<div class="trending-pick">
+          <p class="panel__note">Rank {{ product.event_rank }} · {{ product.event_views }} view{{ product.event_views|pluralize }}{% if product.generated_views %} · Includes generated views{% endif %}</p>{% include "catalogue/_product_card.html" %}</div>
+      {% endfor %}</div>
+  {% else %}<p>No recent views yet. Browse the shops to get things started.</p>
+  {% endif %}</section>

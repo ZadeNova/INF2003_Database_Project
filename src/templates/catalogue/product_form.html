@@ -3,12 +3,30 @@
 {% block content %}
 <div class="page account-page catalogue-page">
     <a href="{% url 'catalogue:seller_products' %}">Back to my products</a>
-    <div class="page__header"><div><p class="eyebrow">Seller centre</p><h1 class="page__title">{% if product %}Edit product{% else %}Add a product{% endif %}</h1></div></div>
-    <div class="panel catalogue-editor"><h2>Choose a category</h2><form method="get"><div class="form-field"><label for="choose-category">Category options</label><select id="choose-category" name="category">{% for category in categories %}<option value="{{ category.pk }}"{% if form.category.value|stringformat:"s" == category.pk|stringformat:"s" %} selected{% endif %}>{{ category.display_name }}</option>{% endfor %}</select></div><button class="button button--outline-neutral">Load options</button></form></div>
+    <div class="page__header">
+      <div>
+        <p class="eyebrow">Seller centre</p>
+        <h1 class="page__title">
+          {% if product %}Edit product{% else %}Add a product{% endif %}</h1>
+      </div>
+    </div>
+    <div class="panel catalogue-editor">
+      <h2>Choose a category</h2>
+      <form method="get">
+        <div class="form-field">
+          <label for="choose-category">Category options</label><select id="choose-category" name="category">{% for category in categories %}<option value="{{ category.pk }}"{% if form.category.value|stringformat:"s" == category.pk|stringformat:"s" %} selected{% endif %}>{{ category.display_name }}</option>{% endfor %}</select>
+        </div>
+        <button class="button button--outline-neutral">Load options</button>
+      </form>
+    </div>
     <form class="panel catalogue-editor" method="post" enctype="multipart/form-data">
         {% csrf_token %}{% include "accounts/_form_fields.html" %}
         <button class="button button--dark" type="submit">Save product</button>
     </form>
-    {% if product and product.active %}<form class="panel catalogue-editor" method="post" action="{% url 'catalogue:product_deactivate' product.pk %}">{% csrf_token %}<h2>Stop selling this product</h2><p>It will leave the shop. Past orders stay available.</p><button class="button button--outline-neutral" type="submit">Deactivate product</button></form>{% endif %}
+    {% if product and product.active %}<form class="panel catalogue-editor" method="post" action="{% url 'catalogue:product_deactivate' product.pk %}">{% csrf_token %}<h2>Stop selling this product</h2>
+        <p>It will leave the shop. Past orders stay available.</p>
+        <button class="button button--outline-neutral" type="submit">Deactivate product</button>
+      </form>
+    {% endif %}
 </div>
 {% endblock %}
