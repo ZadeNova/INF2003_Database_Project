@@ -123,8 +123,11 @@ def test_a_stale_lock_expires_and_a_waiting_request_falls_back_to_computing():
     started = time.monotonic()
     result = redis_store.cached("unit", 30, lambda: "computed here", lock_wait=0.1)
     assert (result.status, result.value) == ("miss", "computed here") and time.monotonic() - started < 1
-    time.sleep(0.4)
-    assert client.get(lock) is None  # it expired by itself
+    for _ in range(50):  # it expires by itself (about 300 ms); poll, because a clock step in the VM can delay that
+        if client.get(lock) is None:
+            break
+        time.sleep(0.1)
+    assert client.get(lock) is None
     client.delete(redis_store.key("unit"))
     started = time.monotonic()
     assert redis_store.cached("unit", 30, lambda: "again", lock_wait=5).status == "miss"

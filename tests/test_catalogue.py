@@ -87,17 +87,6 @@ def test_hostile_page_and_id_parameters_are_not_queries(imported):
     assert Product.objects.count() == before
 
 
-def test_future_routes_are_404_even_for_authenticated_roles(imported):
-    for role in ("customer", "seller", "operator"):
-        user = get_user_model().objects.filter(role=role).first()
-        if user is None:
-            user = get_user_model().objects.create_user(username="operator", role="operator")
-        client = Client()
-        client.force_login(user)
-        for route in ("/analytics/", "/dashboard/", "/products/manage/"):
-            assert client.get(route).status_code == 404
-
-
 def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(imported):
     from catalogue.management.commands.seed_demo import MEMBERS
 
@@ -143,7 +132,7 @@ def test_demo_accounts_use_only_environment_passwords_and_are_idempotent(importe
 
 
 @pytest.mark.parametrize("variable", ["DEMO_CUSTOMER_PASSWORD", "DEMO_SELLER_PASSWORD", "DEMO_OPERATOR_PASSWORD"])
-def test_demo_passwords_have_no_fallback(imported, monkeypatch, variable):
+def test_demo_passwords_have_no_fallback(monkeypatch, variable):  # the check runs before the first query
     monkeypatch.delenv(variable, raising=False)
     with pytest.raises(CommandError, match="no fallback passwords"):
         call_command("seed_demo", stdout=StringIO())

@@ -60,7 +60,10 @@ needed once after a change to the roles or the database images because their set
 ```sh
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
 docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_health.py
+docker compose run --rm migrate pytest -q -p no:cacheprovider -m slow /app/tests   # the full-data checks, only where the full Olist files exist
 ```
+
+The default run leaves out tests marked `slow` (the full local Olist data checks); run them with `-m slow`.
 
 Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
 database; `web` holds only the runtime role. The tests use the real databases, never mocks or SQLite. `tests/` is

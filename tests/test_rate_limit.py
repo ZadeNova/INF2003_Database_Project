@@ -46,25 +46,37 @@ def keys():
 # The window itself -----------------------------------------------------------------------------------------------
 
 
+def age(name, subject, seconds):
+    """Make every stored attempt of this counter `seconds` older, instead of sleeping.
+
+    The Docker VM's wall clock steps back by about a second every 30 s, and Redis's TIME (which the window uses) moves with
+    it, while time.sleep follows a different clock: a test that sleeps a few seconds against a window of a few seconds
+    fails whenever a step lands inside it. Moving the recorded times keeps the same property with margins of many seconds.
+    """
+    client = keys()[0]
+    key = redis_store.key(f"limit:{name}:{redis_store.digest(subject)}")
+    for member, score in client.zrange(key, 0, -1, withscores=True):
+        client.zadd(key, {member: score - seconds * 1000}, xx=True)
+
+
 def test_a_window_blocks_after_the_limit_and_frees_one_slot_as_the_oldest_attempt_leaves():
-    # A three-second window with wide margins: a late wake-up on a busy machine must not change the outcome.
-    assert redis_store.window_hit("t", "s", 2, 3).allowed  # t = 0.0
-    time.sleep(1.5)
-    assert redis_store.window_hit("t", "s", 2, 3).allowed  # t = 1.5
-    blocked = redis_store.window_hit("t", "s", 2, 3)
+    assert redis_store.window_hit("t", "s", 2, 60).allowed  # first attempt
+    age("t", "s", 30)
+    assert redis_store.window_hit("t", "s", 2, 60).allowed  # second attempt: the first is 30 s old
+    blocked = redis_store.window_hit("t", "s", 2, 60)
     assert not blocked.allowed and blocked.count == 2
-    time.sleep(1.7)  # t = 3.2: only the first attempt has left the window
-    assert redis_store.window_hit("t", "s", 2, 3).allowed
-    assert not redis_store.window_hit("t", "s", 2, 3).allowed  # the second attempt is still inside it (until 4.5)
+    age("t", "s", 35)  # the first attempt is now 65 s old and has left the window; the second is 35 s old and has not
+    assert redis_store.window_hit("t", "s", 2, 60).allowed
+    assert not redis_store.window_hit("t", "s", 2, 60).allowed  # the second attempt is still inside it
 
 
 def test_blocked_attempts_are_not_recorded_so_a_block_ends_when_the_oldest_attempt_leaves():
-    assert redis_store.window_hit("t", "s", 1, 3).allowed  # t = 0.0
-    time.sleep(1.5)
+    assert redis_store.window_hit("t", "s", 1, 60).allowed  # the only recorded attempt
+    age("t", "s", 30)
     for _ in range(3):
-        assert not redis_store.window_hit("t", "s", 1, 3).allowed  # t = 1.5
-    time.sleep(1.7)  # t = 3.2; had the blocked attempts been recorded, the window would last until 4.5
-    assert redis_store.window_hit("t", "s", 1, 3).allowed
+        assert not redis_store.window_hit("t", "s", 1, 60).allowed  # blocked, so not recorded
+    age("t", "s", 35)  # the recorded attempt is 65 s old; had the blocked ones been recorded they would be 35 s old
+    assert redis_store.window_hit("t", "s", 1, 60).allowed
 
 
 def test_checking_does_not_record_and_recording_ignores_the_limit():
@@ -279,6 +291,20 @@ def test_a_refused_save_does_not_use_up_the_allowance(shop, settings):
     assert save_review(client, lines[1]).status_code == 302  # both real saves fit: the errors were not counted
 
 
+def test_review_saves_are_not_limited_when_redis_is_unreachable(shop, settings):
+    limits(settings, review=(1, 60))
+    settings.REDIS_PORT = 1
+    redis_store.reset_for_tests()
+    buyer, item = shop
+    first, second = delivered_line(buyer, item), delivered_line(buyer, item)
+    client = Client()
+    client.force_login(buyer)
+    assert save_review(client, first).status_code == 302
+    assert (
+        save_review(client, second).status_code == 302
+    )  # a limit of one would have refused this, if it could be counted
+
+
 def test_the_review_limit_is_per_customer(shop, settings):
     limits(settings, review=(1, 60))
     buyer, item = shop
@@ -293,17 +319,15 @@ def test_the_review_limit_is_per_customer(shop, settings):
 
 
 def test_retry_after_waits_for_enough_entries_to_leave_when_parallel_requests_overshot_the_limit():
-    # A ten-second window: a stall of several seconds in the Docker VM (which moves Redis's clock too) cannot age the
-    # first entries out before the check.
     for _ in range(2):
-        redis_store.window_record("t", "s", 2, 10)  # t = 0
-    time.sleep(2)
+        redis_store.window_record("t", "s", 2, 60)
+    age("t", "s", 30)  # the first two entries are 30 s old
     for _ in range(2):
-        redis_store.window_record("t", "s", 2, 10)  # t = 2: four entries in a window that allows two
-    blocked = redis_store.window_check("t", "s", 2, 10)
-    # Two entries must leave before one more is allowed: the third in order, recorded at t = 2, leaves at t = 12, about
-    # ten seconds from now. The oldest entry alone (the earlier logic) would say about eight.
-    assert not blocked.allowed and blocked.count == 4 and 9 <= blocked.retry_after <= 11
+        redis_store.window_record("t", "s", 2, 60)  # four entries in a window that allows two
+    blocked = redis_store.window_check("t", "s", 2, 60)
+    # Two entries must leave before one more is allowed: the third in order, just recorded, leaves in about 60 s. The
+    # oldest entry alone (the earlier logic) would say about 30.
+    assert not blocked.allowed and blocked.count == 4 and 45 < blocked.retry_after <= 60
 
 
 def test_signing_in_to_a_look_alike_name_does_not_touch_the_counter_of_the_account_it_resembles(settings):

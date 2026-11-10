@@ -49,26 +49,20 @@ def as_of_text():
     return as_of_date().isoformat()
 
 
-def test_history_is_cached_and_stock_planning_stays_live(imported):
-    as_of = as_of_date()
-    first, second = dashboard_data(as_of), dashboard_data(as_of)
-    assert (first["cache_status"], second["cache_status"]) == ("miss", "hit")
-    assert comparable(first) == comparable(second)  # a type-exact round trip: Decimals, dates, lists
-    assert second["computed_at"] <= timezone.now()
-    target = second["stock_rows"][0]["product_id"]
-    Product.objects.filter(pk=target).update(stock=987)
-    third = dashboard_data(as_of)
-    assert third["cache_status"] == "hit"  # the history did not need recomputing...
-    assert next(row for row in third["stock_rows"] if row["product_id"] == target)["stock"] == 987  # ...stock is live
-
-
-def test_the_data_is_identical_cold_warm_and_with_redis_off(imported, settings):
+def test_the_data_is_identical_cold_warm_and_with_redis_off_and_stock_planning_stays_live(imported, settings):
     as_of = as_of_date()
     cold, warm = dashboard_data(as_of), dashboard_data(as_of)
     settings.REDIS_ENABLED = False
     off = dashboard_data(as_of)
     assert (cold["cache_status"], warm["cache_status"], off["cache_status"]) == ("miss", "hit", "off")
-    assert comparable(cold) == comparable(warm) == comparable(off)
+    assert comparable(cold) == comparable(warm) == comparable(off)  # a type-exact round trip: Decimals, dates, lists
+    settings.REDIS_ENABLED = True
+    assert warm["computed_at"] <= timezone.now()
+    target = warm["stock_rows"][0]["product_id"]
+    Product.objects.filter(pk=target).update(stock=987)
+    live = dashboard_data(as_of)
+    assert live["cache_status"] == "hit"  # the history did not need recomputing...
+    assert next(row for row in live["stock_rows"] if row["product_id"] == target)["stock"] == 987  # ...stock is live
 
 
 def test_a_sales_history_refresh_makes_the_cached_entry_unreachable(imported):

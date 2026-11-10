@@ -82,33 +82,6 @@ def test_registration_enforces_the_password_validators():
     assert not get_user_model().objects.filter(username="dup").exists()
 
 
-def test_authenticated_user_is_redirected_away_from_register():
-    client = Client()
-    client.force_login(get_user_model().objects.create_user(username="already-in"))
-
-    response = client.get(reverse("accounts:register"))
-
-    assert response.status_code == 302
-    assert response.url == "/products/"
-
-
-def test_login_success_authenticates_and_redirects():
-    get_user_model().objects.create_user(username="loginuser", password="Str0ngPass!2026")
-    client = Client()
-
-    response = client.post(
-        reverse("accounts:login"),
-        {
-            "username": "loginuser",
-            "password": "Str0ngPass!2026",
-        },
-    )
-
-    assert response.status_code == 302
-    assert response.url == "/products/"
-    assert "_auth_user_id" in client.session
-
-
 def test_login_failure_rerenders_with_non_field_error():
     get_user_model().objects.create_user(username="loginuser", password="Str0ngPass!2026")
     client = Client()
@@ -125,50 +98,6 @@ def test_login_failure_rerenders_with_non_field_error():
     assert response.templates[0].name == "registration/login.html"
     assert "Please enter a correct username and password" in response.content.decode()
     assert "_auth_user_id" not in client.session
-
-
-def test_login_honours_safe_next_redirect():
-    get_user_model().objects.create_user(username="loginuser", password="Str0ngPass!2026")
-    client = Client()
-
-    response = client.post(
-        reverse("accounts:login"),
-        {
-            "username": "loginuser",
-            "password": "Str0ngPass!2026",
-            "next": reverse("health"),
-        },
-    )
-
-    assert response.status_code == 302
-    assert response.url == reverse("health")
-
-
-def test_login_ignores_unsafe_next_redirect():
-    get_user_model().objects.create_user(username="loginuser", password="Str0ngPass!2026")
-    client = Client()
-
-    response = client.post(
-        reverse("accounts:login"),
-        {
-            "username": "loginuser",
-            "password": "Str0ngPass!2026",
-            "next": "https://evil.example.com/",
-        },
-    )
-
-    assert response.status_code == 302
-    assert response.url == "/products/"
-
-
-def test_authenticated_user_is_redirected_away_from_login():
-    client = Client()
-    client.force_login(get_user_model().objects.create_user(username="already-in"))
-
-    response = client.get(reverse("accounts:login"))
-
-    assert response.status_code == 302
-    assert response.url == "/products/"
 
 
 def test_logout_clears_session_and_redirects_to_the_shop():

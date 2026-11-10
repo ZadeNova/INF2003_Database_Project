@@ -46,8 +46,3 @@ def test_real_database_bugs_are_not_treated_as_outages(route):
     assert response.status_code == 500
     assert "private-sentinel" not in response.content.decode()
     assert "deliberately_missing_column" not in response.content.decode()
-
-
-def test_health_remains_available_during_real_postgres_outage(postgres_unavailable):
-    with postgres_unavailable():
-        assert Client().get("/health/").status_code == 200

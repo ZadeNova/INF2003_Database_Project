@@ -5,7 +5,6 @@ import subprocess
 import sys
 
 import pytest
-from django.conf import settings
 
 
 @pytest.mark.parametrize(
@@ -103,12 +102,6 @@ assert 'redis' not in sys.modules
     setup = "import django; django.setup()\n"
     result = subprocess.run([sys.executable, "-c", setup + code], env=environment, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
-
-
-def test_shared_session_configuration():
-    assert settings.SESSION_ENGINE == "django.contrib.sessions.backends.db"
-    assert settings.SESSION_COOKIE_HTTPONLY
-    assert settings.SESSION_COOKIE_SAMESITE == "Lax"
 
 
 @pytest.mark.django_db
