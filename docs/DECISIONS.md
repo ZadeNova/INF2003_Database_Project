@@ -153,14 +153,15 @@ The approved scope decisions remain in [the workstream plan](plans/olist-import.
 
 | ID | Decision | Why |
 |---|---|---|
-| foundation-a | `DESIGN.md`:| The UI work decides the design |
-| foundation-b | The `CustomerSegment` model goes with the `reporting` app|
+| foundation-a | `DESIGN.md`: strip dead links and AWS text only; the full rewrite moves to `catalogue` | The UI work decides the design |
+| foundation-b | Remove the K-means scripts now; the `CustomerSegment` model goes with the `reporting` app in `olist-import` | Avoids a throwaway migration |
 | foundation-c | MongoDB container, users and health check land in `foundation`, not `catalogue` | `olist-import` needs it running |
 | foundation-d | Images are pinned by digest | Reproducible benchmarks |
 | foundation-e | `scripts/check_docs.py` uses only the standard library and runs on the host | Works in the git hook without a virtual environment |
 | foundation-f | Latest stable PostgreSQL (18) and MongoDB (9.0), checked at pin time | The brief asks for the latest systems |
 | foundation-g | Two PostgreSQL roles: an owner (migrate, import, pytest) and a runtime role for `web` (rows only) | Makes AGENTS.md rule 5 true; before, the app role owned its database |
-| foundation-i | `.env` and `.env.example` live at the repository root, next to the one `compose.yaml` | Compose reads `.env` from the project directory |
+| foundation-h | Delete the old load harness; `benchmark` writes a new local load script | The old harness was built around the AWS variants and shoe sizes |
+| foundation-i | `.env` and `.env.example` live at the repository root, next to the one `compose.yaml` | Compose reads `.env` from the project directory; the old location relied on `include` |
 | foundation-j | pytest runs in the `migrate` service (`docker compose run --rm migrate pytest ...`), not `web` | Only the owner role may create the test database, and `web` must never hold it |
 | foundation-k | The MongoDB replica set is initialised by `src/docker/mongo-start.sh` beside `mongod`, with the keyfile generated into a named volume | A bind-mounted keyfile cannot be chmod 400 on Windows; the replica set and users must be created while `mongod` already runs with the keyfile |
 | foundation-l | The startup event no longer carries an `environment` field | `DJANGO_ENV` is gone, so there is only one environment |
@@ -313,7 +314,7 @@ is evidence that the gate rejects incorrect data.
 | dashboard-i4 (review amendment, 24 October 2026) | List and flag sellers only with at least ten delivered orders by the as-of date; above 20% late is at risk. Order at-risk sellers first, then late share descending and seller ID; show the excluded count. Mean score uses reviewed orders only | A handful of deliveries gives an unstable risk signal and obscures sellers with substantial history; unreviewed deliveries still count in the lateness denominator |
 | dashboard-i5 | A calendar-month gap yields no month-on-month percentage, and the chart shows the latest month's leading categories | Comparing with an older observed month would mislabel the change; the full category history stays in the table |
 | dashboard-i6 | Keep analytical SQL importable; the Bayesian counterpart expects the benchmark's future SQL reviews relation and is tested with a statement-local CTE | No review scores are persisted in PostgreSQL by the application; no benchmark implementation is started |
-| dashboard-i7 | Vendor Chart.js 4.5.1 with its source map and MIT licence | The chart works without a runtime CDN and Django's static manifest resolves the upstream source-map reference idk what this means help im flagging it|
+| dashboard-i7 | Vendor Chart.js 4.5.1 with its source map and MIT licence | The chart works without a runtime CDN and Django's static manifest resolves the upstream source-map reference |
 | dashboard-i8 (team review decision, 24 October 2026) | Accept a few seconds on the full data for Tier 1 and preload the dashboard before filming; leave caching to the Tier 2 redis workstream | The Python cross-store delay join preserves decision c's single-store ownership. Its measured cost is report material, not authorization to start Tier 2 work |
 
 ## activity implementation (24 October 2026; review pending)
@@ -331,6 +332,11 @@ is evidence that the gate rejects incorrect data.
 | activity-i9 (integration fix) | Return a committed wishlistChanged event and update all matching visible buttons before the HTMX swap | A product can occur in detail and recently viewed simultaneously; both controls must keep the same action and pressed state |
 | activity-i10 (team review decision, 24 October 2026) | Keep Insights on the real rolling window; on recording day, run seed_activity and place a few demo purchases before filming the seller's page | Imported sales become near-empty after the imported data ends. Browsing events expire, so anchoring the window to imported history cannot preserve comparable views and sales |
 
+## Reuse disclosure (31 October 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| deliverables-no-written-reuse-approval | Chee Long decided on 31 October 2026 that written approval from the professors is not required for building on the earlier module project. Keep the reuse disclosure in docs/AI_USE.md and report appendix D; this supersedes the written-approval requirement carried over from Phase 0 | Mercer is a substantially different project after most of the earlier project was changed |
 
 ## Improvements batch 2 (8 November 2026)
 

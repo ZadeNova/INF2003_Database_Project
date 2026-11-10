@@ -311,7 +311,7 @@ request-timing rehearsal passed; fixture evidence stays ignored and unstaged. Th
 final runs remain with Chee Long; benchmark stays in progress in PLAN.md section 14.
 
 31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): reviewed both preparation
-worktrees. The reviewer ran Ruff format/check in the dev image,
+worktrees and approved the reuse-decision documentation. The reviewer ran Ruff format/check in the dev image,
 check_docs, host tests and freshly loaded fixture benchmark tests; all passed. Codex's fix round gives B2-derived
 B4 cases the B2 count and records B4's one-client matrix and per-case counts, clarifies automatic report generation,
 repairs README wording and records the reviewer accurately. Chee Long chose a category page instead of the home
