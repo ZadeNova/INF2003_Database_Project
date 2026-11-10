@@ -6,7 +6,7 @@ from django.views import View
 from accounts.mixins import OperatorRequiredMixin
 
 from .forms import DashboardFilters
-from .services import as_of_date, dashboard_data, refresh_sales, sales_populated
+from .services import RefreshRunning, as_of_date, dashboard_data, refresh_sales, sales_populated
 
 
 def pager(rows, request, key):
@@ -57,6 +57,10 @@ class RefreshView(OperatorRequiredMixin, View):
     http_method_names = ["post"]
 
     def post(self, request):
-        refresh_sales()
+        try:
+            refresh_sales(wait=False)
+        except RefreshRunning:
+            messages.info(request, "A refresh is already running. Reload the dashboard in a few seconds to see it.")
+            return redirect("dashboard:home")
         messages.success(request, "Sales history refreshed.")
         return redirect("dashboard:home")

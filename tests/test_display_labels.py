@@ -119,10 +119,15 @@ def test_insights_sort_by_views_then_conversion(mongo_db):
             [
                 {
                     "ts": now - timedelta(hours=1),
-                    "meta": {"type": "view", "product_id": item.pk, "category": item.category_id, "session_key": "s"},
+                    "meta": {
+                        "type": "view",
+                        "product_id": item.pk,
+                        "category": item.category_id,
+                        "session_key": f"s{n}",
+                    },
                     "is_generated": False,
                 }
-                for _ in range(views)
+                for n in range(views)
             ]
         )
     order = [row["product"].pk for row in seller_insights(quiet.seller, now=now)["insights"]]
@@ -141,3 +146,10 @@ def test_imported_products_show_a_short_sku_and_new_products_do_not(mongo_db):
     assert (
         "SKU None" not in listing(other) and "SKU None" not in Client().get(f"/products/{other.pk}/").content.decode()
     )
+
+
+def test_a_shop_without_reviews_says_so_instead_of_showing_the_prior(mongo_db):
+    """Review round F3: with no reviews the Bayesian score is only the platform prior, so it is not shown."""
+    item = product("unreviewed")
+    body = Client().get(f"/products/shops/{item.seller_id}/").content.decode()
+    assert "No reviews yet." in body and "Bayesian shop rating" not in body

@@ -15,15 +15,16 @@ from config import redis_keys, redis_store
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
-def event(item, when, *, generated=False):
-    meta = {"type": "view", "product_id": item.pk, "category": item.category_id, "session_key": "synthetic-test"}
+def event(item, when, *, generated=False, visitor="synthetic-test"):
+    meta = {"type": "view", "product_id": item.pk, "category": item.category_id, "session_key": visitor}
     return {"ts": when, "meta": meta, "is_generated": generated}
 
 
 def add_views(mongo_db, items, counts, hours_ago=1):
     when = timezone.now() - timedelta(hours=hours_ago)
     for item, count in zip(items, counts, strict=True):
-        mongo_db.events.insert_many([event(item, when) for _ in range(count)])
+        # Distinct visitors: one visitor's reloads count once (review round F2).
+        mongo_db.events.insert_many([event(item, when, visitor=f"synthetic-test-{n}") for n in range(count)])
 
 
 def ranked(response):

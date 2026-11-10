@@ -77,19 +77,41 @@ def recently_viewed_pipeline(identity, now):
     ]
 
 
+def views_per_visitor():
+    """Count a product's views as distinct visitors in the window, so reloading a page cannot inflate them.
+
+    The first group keeps one row per (product, visitor): the user id when signed in, otherwise the keyed session hash.
+    Generated events (`seed_activity`) all share one synthetic session, so each counts as its own visit, by its event
+    id. A visitor with a fresh session each time still counts again; that limit is disclosed.
+    """
+    generated = {"$eq": ["$is_generated", True]}
+    return [
+        {
+            "$group": {
+                "_id": {
+                    "product": "$meta.product_id",
+                    "visitor": {"$cond": [generated, "$_id", {"$ifNull": ["$meta.user_id", "$meta.session_key"]}]},
+                },
+                "generated": {"$max": generated},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.product",
+                "views": {"$sum": 1},
+                "generated_views": {"$sum": {"$cond": ["$generated", 1, 0]}},
+            }
+        },
+    ]
+
+
 def trending_pipeline(now, category=None):
     match = {"meta.type": "view", "ts": {"$gte": now - timedelta(hours=24), "$lte": now}}
     if category is not None:
         match["meta.category"] = category
     return [
         {"$match": match},
-        {
-            "$group": {
-                "_id": "$meta.product_id",
-                "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
-            }
-        },
+        *views_per_visitor(),
         {"$setWindowFields": {"sortBy": {"views": -1}, "output": {"rank": {"$rank": {}}}}},
         # Sorting by the computed rank keeps the ID tie-breaker after the rank stage. Sorting by
         # views + ID can be coalesced into the window's ordering by the MongoDB optimizer.
@@ -171,13 +193,7 @@ def conversion_pipeline(product_ids, now):
                 "ts": {"$gte": now - timedelta(days=30), "$lte": now},
             }
         },
-        {
-            "$group": {
-                "_id": "$meta.product_id",
-                "views": {"$sum": 1},
-                "generated_views": {"$sum": {"$cond": [{"$eq": ["$is_generated", True]}, 1, 0]}},
-            }
-        },
+        *views_per_visitor(),
     ]
 
 
@@ -216,14 +232,12 @@ def seller_insights(seller, *, now=None):
                 "product": item,
                 "views": None if unavailable else count,
                 "units": sold,
-                "conversion_percent": Decimal(sold) * 100 / count if count and not unavailable else None,
+                "units_per_view": Decimal(sold) / count if count and not unavailable else None,
                 "generated_views": views.get(item.pk, {}).get("generated_views", 0),
             }
         )
-    # Most-viewed first, then best conversion; newest product breaks ties (all ties when event data is unavailable).
-    rows.sort(
-        key=lambda row: (row["views"] or 0, row["conversion_percent"] or Decimal(0), row["product"].pk), reverse=True
-    )
+    # Most-viewed first, then most units per view; newest product breaks ties (all ties when event data is unavailable).
+    rows.sort(key=lambda row: (row["views"] or 0, row["units_per_view"] or Decimal(0), row["product"].pk), reverse=True)
     return {
         "insights": rows,
         "events_unavailable": unavailable,
