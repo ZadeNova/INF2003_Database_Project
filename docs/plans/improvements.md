@@ -40,12 +40,12 @@ only bug fixes go in.
 | 1 | #59, #50, #61, #60, #58, #56, #2 | Tiny fixes | done 8 Nov (touched test modules pass; full suite after batch 3) |
 | 2 | #53, #51, #54, #69 | Small fixes with a migration or shared helper | done 8 Nov (full suite run; four existing audit-count tests updated for the new creation row and rerun green) |
 | 3 | #49, #55, #52 with #10, #57 | Integrity and the dashboard; Opus review checkpoint after | done 8 Nov (full suite green; dashboard timings re-measured on full data) |
-| 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
+| 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | done 10 Nov (photos merged; full suite, seeding and browser journeys green) |
 | 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | done 8 Nov (two Opus reviews, two fix rounds, full suite green); the measurement scripts are part of Batch 6 |
 | 6 | #10 step 2 (first, [plan](dashboard_summaries.md)), #5, #13, #17 | Benchmark amendment, designated machine | built 10 Nov: #10 step 2 (one Opus review, one fix round, full suite green); #5 with the amendment l and Redis tooling (two Opus reviews, two fix rounds, [amendment m8](benchmark.md#decisions)); #13 report-only. Still to do, by running: #17 and the pilot checks listed under Batch 6, after the freeze |
 | 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | cut 10 Nov (diminishing returns; see the plan's review notes) |
 | 7 | #27, #33, #63, #73 | Code-quality pass and test-suite review, then the full codebase review in several iterations (scope under Batch 7) | open |
-| 8 | #48 (RLS); optional #62, #42, #20 | Row-level security, settled last | built 10 Nov (steps 1 to 5: migration, code, tests, docs, browser journeys, speed check; one Opus review and its fix round done); go/no-go 13 Nov |
+| 8 | #48 (RLS); optional #62, #42, #20 | Row-level security, settled last | built 10 Nov; #42 and #20 done, #62 skipped (steps 1 to 5: migration, code, tests, docs, browser journeys, speed check; one Opus review and its fix round done); go/no-go 13 Nov |
 | 8b | #72 | Synthetic scale runs for B1, B4, B5 and B7 (parked): code-side work, only after batches 1–8, before any report, slides or video work | parked |
 | 9 | #38, #47, #70, #46, #39, #15, #41, #6, #43, #44, #26, #40, #1, #14, #3 | Demo, evidence and deliverables, alongside and after the freeze | open |
 | Disclose | #29–#32, #35, #36, #64–#68 | One line each in the report's limitations | open |
