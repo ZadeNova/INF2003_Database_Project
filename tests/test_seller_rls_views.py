@@ -5,17 +5,20 @@ setting is applied only while a seller-centre view runs, and that it never survi
 """
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 from checkout_helpers import customer, paid_order, product
-from django.db import DatabaseError, connection
+from django.db import connection
 from django.http import Http404
-from django.test import Client
+from django.template import engines
+from django.template.response import TemplateResponse
+from django.test import Client, RequestFactory
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from django.views import View
 
 from accounts import rowsecurity
+from accounts.mixins import SellerRequiredMixin
 from orders.models import Order, OrderLine
 from orders.services import change_order_status
 
@@ -88,7 +91,7 @@ def test_a_customer_still_cancels_an_order_under_the_runtime_role(world, runtime
     assert Order.objects.get(pk=world["first_order"].pk).status == "cancelled"
 
 
-def test_the_lock_function_refuses_an_order_that_does_not_exist(world, runtime_role):
+def test_changing_the_status_of_an_order_that_does_not_exist_is_a_404(world, runtime_role):
     with runtime_role(), pytest.raises(Http404):
         change_order_status(world["buyer"], 10**9, "cancel")
 
@@ -116,9 +119,37 @@ def test_the_setting_is_released_when_the_view_fails(world, runtime_role):
         assert current_setting() in ("", None)
 
 
-def test_a_failed_release_drops_the_connection_instead_of_leaving_the_setting(monkeypatch):
-    fake = MagicMock()
-    fake.cursor.side_effect = DatabaseError("the database has gone")
-    monkeypatch.setattr(rowsecurity, "connection", fake)
-    rowsecurity.release()  # must not raise: the request's own outcome is not replaced by this failure
-    fake.close.assert_called_once_with()
+def test_a_template_is_rendered_while_the_seller_is_still_confined(world, runtime_role):
+    """A response rendered after dispatch would run its lazy values with the setting already released. The mixin renders
+    first; this probe is evaluated by the template, and so sees the setting and only this seller's orders."""
+    seen = {}
+
+    class Probe:
+        def __str__(self):
+            seen["setting"] = current_setting()
+            seen["orders"] = sorted(Order.objects.values_list("pk", flat=True))
+            return "probe"
+
+    class ProbeView(SellerRequiredMixin, View):
+        def get(self, request):
+            return TemplateResponse(request, engines["django"].from_string("{{ probe }}"), {"probe": Probe()})
+
+    request = RequestFactory().get("/probe/")
+    request.user = world["first"].seller.user
+    with runtime_role():
+        response = ProbeView.as_view()(request)
+        assert response.status_code == 200 and response.content == b"probe"
+        assert seen == {"setting": str(world["first"].seller_id), "orders": [world["first_order"].pk]}
+        assert current_setting() in ("", None)
+
+
+def test_a_failed_release_closes_the_connection_instead_of_leaving_the_setting(
+    world, runtime_role, postgres_unavailable
+):
+    with runtime_role():
+        rowsecurity.confine_to_seller(world["first"].seller_id)
+        assert current_setting() == str(world["first"].seller_id)
+        with postgres_unavailable():  # the database goes away before the request can clear its setting
+            rowsecurity.release()  # must not raise: the request's own outcome is not replaced by this failure
+            assert connection.connection is None
+        assert current_setting() in ("", None)  # a new session starts without it

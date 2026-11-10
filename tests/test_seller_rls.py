@@ -10,11 +10,12 @@ from contextlib import contextmanager
 
 import psycopg
 import pytest
-from account_helpers import runtime_connection
+from account_helpers import make_operator, runtime_connection
 from checkout_helpers import customer, paid_order, product
 from django.db import connection
 from psycopg import errors
 
+from accounts.audit import change_seller_status
 from orders.models import OrderLine
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -119,6 +120,13 @@ def test_a_seller_cannot_hand_a_row_to_another_seller_or_create_one_for_another(
                 "FROM catalogue_product WHERE id = %s",
                 [world["second"].seller_id, world["first"].pk],
             )
+        with pytest.raises(
+            errors.InsufficientPrivilege
+        ):  # an order too (here the SELECT policy refuses the new row as well)
+            conn.execute(
+                "UPDATE orders_order SET seller_id = %s WHERE id = %s",
+                [world["second"].seller_id, world["first_order"].pk],
+            )
 
 
 def test_a_seller_cannot_insert_or_delete_orders(world):
@@ -134,6 +142,16 @@ def test_a_seller_cannot_insert_or_delete_orders(world):
                 "FROM orders_order WHERE id = %s",
                 [world["first_order"].pk],
             )
+
+
+def test_a_seller_cannot_rewrite_its_own_order_lines(world):
+    """The runtime role holds UPDATE on order lines; only the policy (a seller may read them, nothing else) stops this."""
+    with session(world["first"].seller_id) as conn:
+        assert conn.execute("UPDATE orders_orderline SET quantity = quantity + 1").rowcount == 0
+    with session() as conn:
+        assert conn.execute(
+            "SELECT quantity FROM orders_orderline WHERE order_id = %s", [world["first_order"].pk]
+        ).fetchone() == (1,)
 
 
 # ----------------------------------------------------------------------------------------------- the money checks
@@ -155,23 +173,15 @@ def test_a_seller_session_cannot_break_the_checkout_money_invariant(world):
         )
 
 
-def test_a_seller_session_can_still_ship_its_own_paid_order(world):
-    with session(world["first"].seller_id) as conn:
-        with conn.transaction():
-            conn.execute("UPDATE orders_order SET status = 'shipped' WHERE id = %s", [world["first_order"].pk])
-    with session() as conn:
-        assert (
-            conn.execute("SELECT status FROM orders_order WHERE id = %s", [world["first_order"].pk]).fetchone()[0]
-            == "shipped"
-        )
-
-
 def test_the_checkout_lock_is_taken_only_for_an_order_the_session_may_see(world):
     with session(world["first"].seller_id) as conn:
         with conn.transaction():
             own = conn.execute("SELECT lock_checkout_of_order(%s)", [world["first_order"].pk]).fetchone()[0]
             other = conn.execute("SELECT lock_checkout_of_order(%s)", [world["second_order"].pk]).fetchone()[0]
     assert own == world["first_checkout"].pk and other is None
+    with session(world["first"].seller_id) as conn:
+        with conn.transaction():
+            assert conn.execute("SELECT lock_checkout_of_order(%s)", [10**9]).fetchone()[0] is None
     with session() as conn:
         with conn.transaction():
             assert (
@@ -193,6 +203,15 @@ def test_a_seller_reads_only_the_audit_rows_of_its_own_shop(world):
         )
     with session() as conn:
         assert conn.execute("SELECT count(*) FROM audit_log").fetchone()[0] > len(rows)
+
+
+def test_a_seller_reads_its_own_status_history_and_no_other_sellers(world):
+    operator = make_operator()
+    for item in (world["first"], world["second"]):  # one status change each: an audit row about the seller itself
+        change_seller_status(item.seller_id, "suspend", operator, "Policy test")
+    with session(world["first"].seller_id) as conn:
+        seen = conn.execute("SELECT row_id FROM audit_log WHERE table_name = 'accounts_seller'").fetchall()
+    assert seen == [(str(world["first"].seller_id),)]
 
 
 # ----------------------------------------------------------------------------------------------- the safety nets

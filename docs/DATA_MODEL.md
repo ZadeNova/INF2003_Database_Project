@@ -347,13 +347,17 @@ Rules these policies taught, kept for anyone adding a table:
   `UPDATE ... WHERE` also need the row to pass SELECT.
 - **Foreign-key checks bypass policies**, so an FK error against a hidden row reveals that it exists. No table a seller can
   insert into references a restricted table, so nothing is exposed today.
-- **Django's `save()` on an unchanged row falls back to an `INSERT`**, which the order policies refuse; seller code uses
-  `.update()` or raw SQL for those writes.
+- **Django's `save()` falls back to an `INSERT` when its UPDATE matches no row.** On a seller's own row (changed or not) it
+  works; on a row the policy hides the UPDATE matches nothing, the `INSERT` is refused and the call raises an error.
+- **An UPDATE's new row must also pass the SELECT policy**, so a seller cannot hand an order to another seller even without
+  the `WITH CHECK`, which is kept as a second guard (it is the only guard on products, whose SELECT policy allows all).
 - An index on `seller_id` is used only because the views keep their own filter (a policy expression alone cannot use it).
 - The seller orders page no longer joins the checkout, and the shipping query's checkout join is a `LEFT JOIN`.
 
-Not covered, said plainly: **customer sessions are not confined**; the policies limit rows, not columns; cart, wishlist,
-customer-profile, `django_session` and the dashboard materialized views are unrestricted; MongoDB has no equivalent, so
+Not covered, said plainly: **customer sessions are not confined**; the policies limit rows, not columns; `accounts_user`
+(every user's email and password hash), `accounts_seller`, the cart, wishlist, restock-alert and customer-profile tables,
+`django_session` and the dashboard materialized views are unrestricted; the runtime role can call the refresh and audit
+functions; MongoDB has no equivalent, so
 seller-scoped reviews stay application-enforced.
 
 ### Dashboard materialization and reporting date

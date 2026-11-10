@@ -39,7 +39,7 @@ def seller_views():
     while pending:
         for subclass in pending.pop().__subclasses__():
             if subclass.__name__ not in found:
-                if not subclass.__name__.endswith("Mixin"):  # a mixin is not a page
+                if not subclass.__name__.endswith("Mixin") and not subclass.__module__.startswith("test"):  # a page
                     found.add(subclass.__name__)
                 pending.append(subclass)
     return found

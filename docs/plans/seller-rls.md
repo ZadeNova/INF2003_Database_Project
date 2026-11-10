@@ -139,7 +139,7 @@ customer-profile table.
 
 ## Steps (small, with a short review after each)
 
-0. **Survey and plan review**: done (above). Steps 1 to 4 are built (11 November); step 5 is still to do.
+0. **Survey and plan review**: done (above). Steps 1 to 5 are built (10 November), with one Opus 5.5 review and one fix round.
 1. **Migration** (in the `orders` app, after the latest `catalogue` and `accounts` migrations): `mercer_seller()`, the policies,
    `ALTER FUNCTION … SECURITY DEFINER` for the two money functions and `lock_checkout_of_order`; reversible, grants unchanged.
    Tests as the raw runtime role: the demo statements (read, update, insert, delete across two sellers, an unfiltered query, an
@@ -168,3 +168,5 @@ the seller mixin), the test plan could not run the real service under the polici
 `audit_log` leak was understated (policy added). Minor: the index test proved nothing and is dropped, the helper uses
 `NULLIF`, the guard test uses an explicit map, extra tests added, small documentation rules. Nothing else in the plan was
 found worse than stated.
+
+10 November 2026, step 5 checks run by the implementer. The eight Chromium journeys pass against the runtime web service on a fresh fixture-loaded project (migration 0005 applied, policies active). Speed check on the full dev data, read-only, as the runtime role with the setting unset: the policy filters change the plan of a bulk scan (an `orders_order` join `orders_orderline` loses its parallel hash join and becomes a nested loop, several times slower than for the owner), so any bulk scan of those tables by the runtime role pays this. The application's dashboard paths read the maintained summaries, whose refresh functions are SECURITY DEFINER, so none of them is affected; the live delay-bucket fallback joins customer profiles and stayed in the millisecond range. The benchmark connects as the owner and is unaffected (D5). No numbers are recorded here; rerun `EXPLAIN (ANALYZE)` after `SET ROLE` to reproduce. The independent Opus 5.5 build review found no blocker and no major defect: no route leaked another seller's rows and the setting never survived a request (660 mixed requests against the real gunicorn service, 18 deliberately broken variants of the code). Its minors were all fixed in one round: tests for the order hand-over, order-line writes, the audit seller-row clause and render-before-release; a lock-function test that reaches the NULL branch; the failed-release test rewritten on a real connection; the corrected `save()` rule; the fuller list of unrestricted tables.

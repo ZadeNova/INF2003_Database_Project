@@ -487,7 +487,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `redis` | Redis sliding-window rate limiting and two cache-aside reads (dashboard history, trending), measured off, cold, warm and down; see [the plan](docs/plans/redis.md) | `dashboard`, `activity` | 2 | done 8 Nov (limiter, trending and dashboard caches; two reviews, two fix rounds); measurement tooling built 9 Nov (Batch 6), the experiment itself runs after Batch 8 |
 | `dashboard_summaries` | A PostgreSQL materialized view of per-order delivery delays beside a MongoDB `$out` summary of per-order review scores, with the live path as fallback; see [the plan](docs/plans/dashboard_summaries.md) | `dashboard`, `reviews` | 1 | done 9 Nov (Batch 6, first; one Opus review, one fix round, full suite green) |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
-| `seller-rls` | Row-level security for sellers, seller-scoped dashboard; see [the plan](docs/plans/seller-rls.md) | `checkout` | 2 | in progress (plan approved 10 Nov; migration, code and tests built 11 Nov, docs done; browser journeys, speed check and Opus review to do; go/no-go 13 Nov) |
+| `seller-rls` | Row-level security for sellers, seller-scoped dashboard; see [the plan](docs/plans/seller-rls.md) | `checkout` | 2 | in progress (plan approved 10 Nov; built 10 Nov including browser journeys, the speed check and the Opus 5.5 review with its fix round; go/no-go 13 Nov) |
 | `durability` | Durability benchmark, replication and failover (E6), backup and restore drill (E7), scale-up runs | `benchmark` | 2 | not started |
 | `search` | Full-text search on review text, benchmark B7 (E1) | `reviews` | 2 | not started |
 | `qa` | Product Q&A (M2) | `catalogue` | 2 | not started |
