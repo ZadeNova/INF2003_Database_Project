@@ -43,7 +43,7 @@ only bug fixes go in.
 | 4 | #11, #19, #21, #7, #18, #34, #8, #16 | UI and MongoDB claims | open |
 | 5 | #25, #12 (Redis) | Redis, its own short plan first ([redis](redis.md), drafted 8 Nov) | done 8 Nov (two Opus reviews, two fix rounds, full suite green); the measurement scripts are part of Batch 6 |
 | 6 | #10 step 2 (first, [plan](dashboard_summaries.md)), #5, #13, #17 | Benchmark amendment, designated machine | built 10 Nov: #10 step 2 (one Opus review, one fix round, full suite green); #5 with the amendment l and Redis tooling (two Opus reviews, two fix rounds, [amendment m8](benchmark.md#decisions)); #13 report-only. Still to do, by running: #17 and the pilot checks listed under Batch 6, after the freeze |
-| 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | open |
+| 6b | #71 | Full-text search on review text, both engines; only after batches 1–6 are green | cut 10 Nov (diminishing returns; see the plan's review notes) |
 | 7 | #27, #33, #63, #73 | Code-quality pass and test-suite review, then the full codebase review in several iterations (scope under Batch 7) | open |
 | 8 | #48 (RLS); optional #62, #42, #20 | Row-level security, settled last | built 10 Nov (steps 1 to 5: migration, code, tests, docs, browser journeys, speed check; one Opus review and its fix round done); go/no-go 13 Nov |
 | 8b | #72 | Synthetic scale runs for B1, B4, B5 and B7 (parked): code-side work, only after batches 1–8, before any report, slides or video work | parked |
@@ -136,7 +136,7 @@ experiment and #17 follow, in that order, each alone on the machine ([benchmark]
 
 | # | Area | Item | Fix | Effort | Status |
 |---|---|---|---|---|---|
-| 71 | MongoDB, benchmark | Full-text search on review text: a MongoDB text index against PostgreSQL `tsvector` with a GIN index, compared with query plans (PLAN.md Tier 2 `search`, E1, B7). A second same-feature comparison for the NoSQL half; the English review text already exists | Short plan first. Reviews live only in MongoDB, so the application gains MongoDB text search and the PostgreSQL side runs on the bench review copy as B7; no SQL review table in the application. Build only after batches 1–6 are green | M, approval | plan drafted 10 Nov ([search](search.md)), awaiting decisions; kill switch 12 Nov |
+| 71 | MongoDB, benchmark | Full-text search on review text: a MongoDB text index against PostgreSQL `tsvector` with a GIN index, compared with query plans (PLAN.md Tier 2 `search`, E1, B7). A second same-feature comparison for the NoSQL half; the English review text already exists | Short plan first. Reviews live only in MongoDB, so the application gains MongoDB text search and the PostgreSQL side runs on the bench review copy as B7; no SQL review table in the application. Build only after batches 1–6 are green | M, approval | cut 10 Nov (Erfan) after an independent plan review ([search](search.md#review-notes)); future work |
 
 ## Batch 7: code-quality pass, then the full codebase review
 

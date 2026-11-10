@@ -489,7 +489,7 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard; see [the plan](docs/plans/seller-rls.md) | `checkout` | 2 | in progress (plan approved 10 Nov; built 10 Nov including browser journeys, the speed check and the Opus 5.5 review with its fix round; go/no-go 13 Nov) |
 | `durability` | Durability benchmark, replication and failover (E6), backup and restore drill (E7), scale-up runs | `benchmark` | 2 | not started |
-| `search` | Full-text search on review text, benchmark B7 (E1); see [the plan](docs/plans/search.md) | `reviews` | 2 | plan drafted 10 Nov, awaiting Erfan's decisions D1 to D7 (cut on 12 Nov if not green) |
+| `search` | Full-text search on review text, benchmark B7 (E1); see [the plan](docs/plans/search.md) | `reviews` | 2 | cut 10 Nov after an independent plan review (diminishing returns); future work |
 | `qa` | Product Q&A (M2) | `catalogue` | 2 | not started |
 
 Status is one of: not started, planning, ready (plan approved, waiting for implementation), in progress, review, done. This column is the only progress index; update it when

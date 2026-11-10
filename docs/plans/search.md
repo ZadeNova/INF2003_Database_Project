@@ -1,6 +1,9 @@
 # search: Full-text search on review text, MongoDB text index against PostgreSQL tsvector (benchmark B7)
 
 status: draft
+
+> **Cut on 10 November 2026 (Erfan) after the independent plan review: not built, listed as future work.** The rubric
+> gain was about one mark against 12 to 16 hours, and the plan's central claim failed on the real data. See the review notes.
 plan owner: Erfan · implementer: Claude Code · reviewer: Opus 5.5 (plan, then build) · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `reviews`, `benchmark` (done) · backlog item #71
 ([improvements](improvements.md#batch-6b-full-text-search-on-review-text)) · **time-box: built and green by the end of 12 November,
@@ -89,4 +92,27 @@ accepts). The comparison runs on one dataset of this size.
 
 ## Review notes
 
-(empty: the plan review has not been run yet)
+10 November 2026, independent Opus 5.5 plan review, run on scratch MongoDB 9.0 and PostgreSQL 18 containers loaded with the
+100,758 dev reviews. **Verdict: cut.** Erfan agreed. The main findings, kept as the reason and as future-work notes:
+
+- **The semantics failed.** MongoDB combines quoted terms with AND, but matches each as a literal, case- and accent-insensitive
+  substring, with no stemming (re-verified by the implementer on a scratch collection: a quoted "arrived" missed "Arriving",
+  a quoted "products" missed "great product"). On the data the page's own example, "late" "delivery", returned 195 results on
+  MongoDB and 97 on PostgreSQL, many of them irrelevant. Unquoted `$text` (OR of stemmed words) agrees with PostgreSQL.
+- **The tokenisers disagree.** With the plan's `to_tsvector`, the engines agreed on only 2 of 22 common words, because the
+  machine translation often drops the space after a full stop and PostgreSQL's parser reads `product.It` as a host name.
+  Replacing punctuation (but not the underscore) before indexing brought it to 21 of 22. A fair comparison needs that
+  normalisation recorded as a decision.
+- **Placement.** `import_olist` calls `mongo_setup` on the bench database, so an app text index would appear in B4 and B5
+  figures and break amendment l7's like-for-like comparison. `bench_review_text` would also need `olist_review_id` and
+  `order_line_id` for an exact tie-break (3,554 `answered_at` values are shared).
+- **Scoped searches still read every match.** `$text` always uses the text index, so a search inside one product examined
+  the same keys as a global one; the count is a second full pass. A plan difference worth reporting if this is ever built.
+- **The product page** has its own pager and a bare-rating count that a search would make wrong; `headline.py` is B2-only and
+  B7 would need its own benchmark amendment.
+- **Value.** Existing work already earns the implementation and comparison lines; search would share a slack of about half a
+  page and 15 seconds of video with Redis, row-level security and the summaries. The same hours are worth more in Batch 7,
+  the report and the video.
+
+If revived: unquoted OR semantics or single words, input kept to word characters only, the normalisation above, B7 only
+(no page) with its own amendment, and the placement settled before any code.
