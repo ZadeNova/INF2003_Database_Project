@@ -326,7 +326,7 @@ Do NOT repeat the layer reviews; use them only to choose where to look. Report a
 10 November 2026, round F (reads and analytics), run by Syahfariz in one Claude Opus 5.5 session on commit `1748f2e` with the
 full data. Every dashboard number matched an independent derivation on the live, summary and cached paths, and the benchmark
 gate and report held up. Eight findings, none blocker or major. At Syahfariz's request the same session fixed them on
-`improvements/review-f-fixes`, with a regression test for each code change, for Erfan to verify before merge (this departs
+`improvements/review-f-fixes`, with a regression test for each code change. Erfan approved the report and every fix in person on 10 November (this departs
 from the contract above, where the fixes are made by Erfan's session):
 
 - F1 the refresh button no longer queues behind a running refresh ([DECISIONS](../DECISIONS.md), `refresh-no-queue`).
