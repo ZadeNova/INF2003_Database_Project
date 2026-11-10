@@ -84,7 +84,7 @@ the root user is used only at initialisation. SQL-injection negative tests cover
 
 | # | Item | Database content shown |
 |---|---|---|
-| T1 | **Olist import** replacing the shoe data, with documented cleaning rules (`olist-import`) | Real data, about 100k orders; FK integrity at import; ER diagram with the normalisation (3NF) justified, and the deliberate denormalisation in MongoDB explained (module theory) |
+| T1 | **Olist import** with documented cleaning rules (`olist-import`) | Real data, about 100k orders; FK integrity at import; ER diagram with the normalisation (3NF) justified, and the deliberate denormalisation in MongoDB explained (module theory) |
 | T1b | **Three roles and accounts**: customer, seller, operator; seller registration and approval; operator console (approve or suspend sellers, take down products and reviews, category attribute templates, audit log) | Role-based access; seller status workflow enforced by a constraint and a transition trigger; sellers scoped to their own rows in every query |
 | T2 | **Catalogue and seller shop pages**: generated English names and descriptions, product images (D10 to D12), an active catalogue of products ordered at least twice (D13), specifications in MongoDB, attribute search with **faceted filters** | Document model, `$jsonSchema` validation, multikey index; a `$facet` pipeline returns results plus counts per category, rating and attribute in one query; **live schema evolution** (a new attribute for a category with no migration, against `ALTER TABLE`) |
 | T2b | **Seller product CRUD**: sellers create, edit and deactivate their own products (price, stock) in PostgreSQL, edit specifications in MongoDB and upload a photo to GridFS; the operator can take products down; deactivate instead of delete | CRUD on both databases (a brief requirement); `ON DELETE RESTRICT` protects products with order history; restocking drives the T5 trigger; an **audit trigger** records every price and stock change (who, when, before and after as JSONB) |
@@ -118,8 +118,7 @@ installs remain reproducible. Final deliverables follow section 13.
 
 ### Tier 3: stretch, probably never
 
-MongoDB change streams, vector search (pgvector against MongoDB `$vectorSearch`), product variants, category tree, K-means (degenerate on Olist:
-about 3% of customers reorder), geospatial queries on the geolocation table (MongoDB
+MongoDB change streams, vector search (pgvector against MongoDB `$vectorSearch`), product variants, category tree, geospatial queries on the geolocation table (MongoDB
 `2dsphere` against PostGIS), CPU and memory dashboard panels (need cAdvisor or exporters), full raw-SQL conversion.
 
 **Cut rule.** At the 8 November checkpoint, a Tier 2 item that cannot be demoed that day is dropped. Tier 3 is not
@@ -345,10 +344,10 @@ updated at each checkpoint, for fair peer review), and `docs/` with `DATA_MODEL.
 (one per workstream, kept after close-out as the record) and `licenses/`. Benchmark tables are generated from `benchmarks/results/`, not hand-written.
 
 **Tests.** The Olist import and schema, and every later workstream brings its own tests. Tests that check behaviour independent of the
-dataset (security negatives, idempotent checkout, database unavailability) are ported rather than deleted. CI runs
+dataset (security negatives, idempotent checkout, database unavailability) are included. CI runs
 against a small committed fixture subset of Olist, not the full dataset.
 
-## 11. Repository conversion (`foundation`; done, see `docs/plans/foundation.md`)
+## 11. Foundation (`foundation`; done, see `docs/plans/foundation.md`)
 
 ## 12. Team and work split (proposal; edit freely)
 

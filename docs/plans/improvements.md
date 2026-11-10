@@ -245,7 +245,6 @@ what those show. These items present existing work rather than add features.
 | 22 | "Live" facet counts wording | done (wording); `hx-get` live filtering dropped |
 | 28 | Host Python minimum | done 7 Nov |
 | 37 | Untracked `RESUME_*` notes | done |
-| 4 | Email to the professors | removed by Erfan |
 | 45 | A second real dataset | dropped 8 Nov |
 | 23, 24 | Phone filter panel; confirmation before irreversible actions | dropped: the video is filmed at desktop width and markers will not see them |
 | Observability, Redis sessions, cart or stock | | skipped: no measurable gain, or AGENTS.md rule 2 |

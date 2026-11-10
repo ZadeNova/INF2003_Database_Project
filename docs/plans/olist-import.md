@@ -100,7 +100,6 @@ Demo passwords (`DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR
 - **Accounts:** `seed_demo` creates usable logins (one customer per member, one operator, one seller tied to a high-volume
   Olist seller), passwords from `.env`. It also guarantees the demo seller owns one sold-out product and one product that
   the dashboard will flag (for the `wishlist` and `dashboard` exit checks), labelled as demo adjustments.
-  `analytics/build_shoe_dataset.py`, `analytics/export_coverage.py` and their tests.
 - **Minimum working after phase 1:** home, product list and product detail render from the new schema; the three demo
   logins work. Cart, checkout, order and dashboard routes return 404.
 - **Fixture:** `scripts/make_fixture.py` picks a deterministic raw subset (about 1,000 Olist orders, including at least two
