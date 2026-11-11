@@ -442,3 +442,40 @@ was retained. Fresh Claude Code review and the required green main run after mer
 <!-- stage-3-local-results:end -->
 
 29 October 2026 — Review notes: Claude Code (the session that wrote the stage 3 brief; not a fresh session) reviewed `9fbfed4afbf0f0a18e47e6b0861a236153cd99ad`. The owner reports an independent full-AST comparison, including docstrings, of every Python file in formatting commit `16a6ef5238b894eea035de51d524acd599a34c98` against `594cc71`: no differences; its only other change is the Ruff line length from 230 to 120. Pinned Ruff 0.17.0 lint and format checks passed on both the working tree and a git-archive export, with LF stored blobs; check_docs and host tests passed. The reviewer read the gate/docs commit in full and confirmed the unchanged required quality-job name, central E501 ignore, full blame-ignore hash and accurate README/AGENTS/PLAN/DECISIONS edits; branch cleanup was confirmed. The full Django suite was not rerun in review because the AST proof and recorded local run passed; CI reruns it on the PR. PLAN.md now records CI as done; this plan retains status: done, and the stage 3 exit closes on the first green main run after merge.
+
+## Browser installation DNS recovery (11 November 2026)
+
+Owner-authorised maintenance of the completed CI contract during Phase 5. The browser job in
+[main run 43033832127](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43033832127)
+failed during `playwright install --with-deps chromium`. Fresh Claude Code (Opus) review read both attempts' full
+logs: APT tried `azure.archive.ubuntu.com`, `archive.ubuntu.com` and `security.ubuntu.com`, and all failed. APT retained
+the first error text for an item, which named Azure even after fallback failures. The exact DNS cause is unproved;
+this evidence does not isolate an Azure-only outage.
+
+**First review: not approved.** The first candidate removed Azure from the mirror list and set APT retries and
+HTTP/HTTPS timeouts. The reviewer found that the official fallbacks already failed, the retry setting reduced APT's
+default, the connection timeout did not bound DNS lookups, and strict update errors added an unrelated-repository
+failure condition. Its correct syntax and local passes did not establish a remedy. The new decision is grouped with
+[the existing CI decisions](../DECISIONS.md#ci-browser-installation-dns-recovery-11-november-2026).
+
+**Fix round.** Keep the runner's APT sources, mirror order, settings and signature checks. The browser install step
+reads hostnames from the active runner mirror list and fails clearly if that configuration is missing, unused or
+has no HTTP(S) hosts. Each of at most three rounds bounds each DNS lookup with `timeout 10s getent ahosts`; any
+resolving configured mirror permits the unchanged pinned Playwright install, so a failed first mirror alone does
+not block its fallbacks. If no host resolves, skip that doomed install; after that or a naturally returned install
+failure, wait ten seconds then twenty seconds between rounds. Only a successful installer exit passes the step;
+exhaustion fails it. The twenty-minute step limit remains the final backstop and can expire during a long install
+before another attempt starts. No per-attempt timeout kills APT or dpkg. DNS readiness is a diagnostic and a chance
+for transient recovery, not proof of package connectivity or a fix for a persistent resolver fault.
+
+Local checks passed: YAML parsing and comparison confirming only the browser install step changed; Git Bash syntax;
+safe substitutes proving fallback DNS permits installation, DNS failures skip installs, natural install failures
+retry, exhaustion fails, success stops retries and missing/unused/empty mirror configurations fail clearly;
+`python scripts/check_docs.py` and `git diff --check`. No real DNS, install or retry sleeps were used locally.
+
+Fresh Claude Code (Opus) fix-round review: **APPROVE**. Applied its recommendation to raise the install-step
+limit to twenty minutes within the unchanged twenty-five-minute job limit, allowing more time for a slow fallback.
+This would not have rescued the observed sustained outage: persistent DNS failure still fails clearly. A hosted
+browser run remains pending; local substitutes do not prove hosted recovery. No local Docker, WSL, database,
+browser or benchmark commands are part of this isolated `ci/ubuntu-browser-mirror` repair.
+The completed workstream remains done; every required check, pin and MongoDB kernel constraint is retained.

@@ -92,6 +92,12 @@ runner versions, timeouts and artifact retention. The [CI plan](plans/ci.md#revi
 | ci-i22 | Run `python -m ruff format --check .` immediately after Ruff lint in the existing required `quality` job, preserving its display name | The existing required check includes formatting without a ruleset change; stage 3 closes after its green main run |
 | ci-i23 | Record the full formatting commit hash in root `.git-blame-ignore-revs`, and document the per-clone `blame.ignoreRevsFile` setting beside hooksPath | GitHub and configured local blame skip mechanical reflow so authorship remains useful |
 
+## CI browser installation DNS recovery (11 November 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i24 | Within the hosted browser install step's twenty-minute limit, probe DNS for the active runner mirror hosts, allow any resolving mirror, and retry the unchanged pinned install at most three times with short waits. Preserve runner APT sources/settings/signatures and all CI gates | The [CI fix-round record](plans/ci.md#browser-installation-dns-recovery-11-november-2026) records that Azure and both official fallbacks failed. Fresh Opus review rejected the mirror-only candidate. Bounded DNS diagnostics and install retries allow transient recovery without assuming Azure alone failed; persistent failures still fail the check. Fresh Opus fix-round review approved; its suggested longer step limit allows more time for slow fallback installs within the unchanged job limit. Hosted verification remains pending |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |

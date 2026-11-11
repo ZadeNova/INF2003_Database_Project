@@ -94,6 +94,11 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 | `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
 | `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 
+The hosted browser installer checks DNS for the runner's configured Ubuntu mirrors and retries a failed install
+with short waits, within a twenty-minute step limit. The [CI follow-up](docs/plans/ci.md#browser-installation-dns-recovery-11-november-2026)
+records failures at Azure and both official fallbacks, the rejected first candidate, approved fix-round review
+and pending hosted verification. The runner's APT sources, settings and signature checks are preserved.
+
 The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
 data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
 [audit wrapper](scripts/audit_requirements.py) rejects expired exceptions and any advisory with a fix, including
