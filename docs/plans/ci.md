@@ -479,3 +479,55 @@ This would not have rescued the observed sustained outage: persistent DNS failur
 browser run remains pending; local substitutes do not prove hosted recovery. No local Docker, WSL, database,
 browser or benchmark commands are part of this isolated `ci/ubuntu-browser-mirror` repair.
 The completed workstream remains done; every required check, pin and MongoDB kernel constraint is retained.
+
+**Hosted result: failed.** The PR run [43043906693](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43043906693)
+(browser job 130602694912, commit `656de3a`) timed out on `archive.ubuntu.com`, `azure.archive.ubuntu.com` and
+`security.ubuntu.com` in all three DNS rounds, so the installer never ran and the journeys were skipped; the other
+four jobs passed. The retries could only help a short blip, and this failure was not one.
+
+**Evidence (second review, Claude Code, Opus).** Read from the full browser-job logs of the PR run, both main attempts
+(130567389449, 130575043360) and the passing PR #43 job (130518209692):
+
+- The observed failures affected the three configured Ubuntu mirror names. In the same jobs, PyPI downloads,
+  Docker Hub pulls and the checkout worked, and the failing `apt-get update` fetched `packages.microsoft.com` while
+  every Ubuntu name gave `Temporary failure resolving`.
+- The repository and runner image did not change. PR #43's job passed on 11 November at 12:21 UTC; main failed from
+  13:59 UTC on the identical Git tree (`3057ca5`), with the same runner image (ubuntu-22.04 20261101.347.1) and
+  agent. The failures came from three Azure regions (eastus2, westus, centralus), and centralus and westus had also
+  passed earlier that day.
+- The underlying cause remains unproved. The pattern supports an infrastructure fault affecting Ubuntu names
+  (Canonical's DNS or Azure's resolvers), but no public Canonical or GitHub incident could be confirmed (the
+  Canonical status page did not render for automated reading), and these logs cannot exclude intermittent
+  runner-local resolver or network behaviour, including around Compose networking. They do rule out an Azure-only
+  mirror fault, because the official fallbacks failed too. IPv6 was not examined. The fix does not depend on the cause.
+- `--with-deps` in the pinned Playwright 1.63.0 only runs the APT dependency installer before the same browser
+  download. Chrome for Testing and the headless shell come from `cdn.playwright.dev`. Two observations differ:
+  - Both failed main attempts found all 22 `chromium` packages Playwright lists for Ubuntu 22.04 already installed,
+    and asked the archive only for seven optional fonts (`fonts-unifont`, `fonts-ipafont-gothic`, `fonts-wqy-zenhei`,
+    `fonts-tlwg-loma-otf`, `fonts-freefont-ttf`, `xfonts-cyrillic`, `xfonts-scalable`) and two helper packages.
+    Their package lists were stale, because `apt-get update` had failed.
+  - The passing job, with fresh lists, installed the same nine packages and also upgraded four, including
+    `libglib2.0-0` from `2.72.4-0ubuntu2.10` to `2.72.4-0ubuntu2.11`, one of the 22. So no passing run has used the
+    image's unupgraded libraries; the next hosted run must show that Chromium works with them.
+- The DNS probe also added failure conditions of its own: a missing or changed mirror list, and a 10-second lookup
+  limit, shorter than the time APT allowed each lookup in these logs, which could skip an install that would have
+  worked. It could never rescue a run in which APT itself fails to resolve.
+
+**Second fix round.** Replace the probe and retries with `python -m playwright install chromium` and return the step
+to the job's own limit. The pinned versions, CDN downloads, journeys, artifact and redaction steps, kernel guard
+and `ubuntu-22.04` are unchanged. Playwright validates Chromium's shared libraries with `ldd` when a browser
+directory has no fresh `DEPENDENCIES_VALIDATED` marker (it is valid for 30 days). Installation runs that check but
+catches a failure, only warns and writes no marker; the next launch then repeats it, and a failure there stops the
+journeys with the missing packages named. Hosted runners start with no browser directory, so every run validates.
+An installer or download error still exits non-zero. The journeys check DOM text, not rendering, and take
+screenshots only on failure, so the missing CJK and Thai fonts should change no assertion; the hosted run must
+confirm this. Rejected: falling
+back to a browser-only install after `--with-deps` fails, which would give the job two possible setups and spend
+many minutes on doomed lookups first. The README keeps `--with-deps` for Linux machines without the libraries.
+Decision: [ci-i25](../DECISIONS.md#ci-browser-installation-dns-recovery-11-november-2026), which supersedes ci-i24
+before merge.
+
+Host-only checks are listed in the PR handoff. Fresh Codex review found no Major issue. It raised one Medium and
+two Minor documentation findings: the passing run's library upgrade, root-cause exclusions stated too strongly, and
+cached rather than per-launch validation. All three are corrected above. A passing hosted browser job is still
+pending; neither local checks nor logs show that the hosted install succeeds.

@@ -94,10 +94,13 @@ use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubun
 | `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
 | `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
 
-The hosted browser installer checks DNS for the runner's configured Ubuntu mirrors and retries a failed install
-with short waits, within a twenty-minute step limit. The [CI follow-up](docs/plans/ci.md#browser-installation-dns-recovery-11-november-2026)
-records failures at Azure and both official fallbacks, the rejected first candidate, approved fix-round review
-and pending hosted verification. The runner's APT sources, settings and signature checks are preserved.
+The hosted browser job installs only the pinned Chromium builds (`python -m playwright install chromium`), without
+`--with-deps`: the ubuntu-22.04 runner image already has every Chromium library Playwright lists. Playwright
+validates them on a fresh browser directory; a failure only warns during installation but stops the first launch,
+so a missing library still fails the journeys. The flag needed the Ubuntu archive, whose mirror names stopped
+resolving on hosted runners on 11 November; the
+[CI follow-up](docs/plans/ci.md#browser-installation-dns-recovery-11-november-2026) records the evidence, the two
+earlier candidates and pending hosted verification.
 
 The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
 data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
@@ -162,7 +165,8 @@ PY
 Keep the host test temporary repositories outside this checkout: Git would otherwise inherit its ignore rules.
 The short system-temp path also avoids Windows path-length failures.
 
-Browser job, with a fresh project. Chromium's Linux system dependencies use `--with-deps`; on Windows use
+Browser job, with a fresh project. On a Linux machine without Chromium's system libraries, keep `--with-deps` as
+below; on Windows, or a machine that already has them (as the hosted runner image does), use
 `python -m playwright install chromium`. The wrapper exports only the three demo logins to the test process,
 filters database credentials, and redacts console output. Parent Django database fixtures are excluded by
 `--confcutdir`; the browser subtree is excluded from the Docker Django suite.

@@ -302,58 +302,13 @@ jobs:
       - name: Smoke the documented install and all three role landings
         run: docker compose -p "$COMPOSE_PROJECT_NAME" run --rm migrate python /app/scripts/smoke_olist.py
       - name: Install pinned browser tools and Chromium
-        timeout-minutes: 20
         run: |
           python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
-          # Inspect the active runner mirror list without changing APT sources or settings.
-          if [ ! -f /etc/apt/apt-mirrors.txt ] || \
-            ! grep -Eq '^[[:space:]]*deb(-src)?[[:space:]].*mirror\+file:/etc/apt/apt-mirrors\.txt[[:space:]]' \
-              /etc/apt/sources.list; then
-            echo "::error::Expected ubuntu-22.04 runner APT mirror-list configuration is missing or unused."
-            exit 1
-          fi
-          mapfile -t mirror_hosts < <(python - <<'PY'
-          from pathlib import Path
-          from urllib.parse import urlsplit
-          hosts = set()
-          for line in Path("/etc/apt/apt-mirrors.txt").read_text().splitlines():
-              fields = line.split()
-              if not fields or fields[0].startswith("#"):
-                  continue
-              uri = urlsplit(fields[0])
-              if uri.scheme in {"http", "https"} and uri.hostname:
-                  hosts.add(uri.hostname)
-          for host in sorted(hosts):
-              print(host)
-          PY
-          )
-          if [ "${#mirror_hosts[@]}" -eq 0 ]; then
-            echo "::error::No HTTP(S) mirror hostnames found in the active runner APT mirror list."
-            exit 1
-          fi
-          for attempt in 1 2 3; do
-            dns_ready=false
-            for host in "${mirror_hosts[@]}"; do
-              if timeout 10s getent ahosts "$host" >/dev/null; then
-                echo "Ubuntu mirror DNS resolved: $host (attempt $attempt/3)."
-                dns_ready=true
-              else
-                echo "::warning::Ubuntu mirror DNS lookup failed or timed out: $host (attempt $attempt/3)."
-              fi
-            done
-            if [ "$dns_ready" = true ]; then
-              if python -m playwright install --with-deps chromium; then
-                exit 0
-              else
-                echo "::warning::Chromium installation attempt $attempt/3 exited $?; see installer output."
-              fi
-            else
-              echo "::warning::No configured Ubuntu mirror hostname resolved; skipping install attempt $attempt/3."
-            fi
-            if [ "$attempt" -lt 3 ]; then sleep "$(( attempt * 10 ))"; fi
-          done
-          echo "::error::Chromium installation did not succeed after three attempts; see DNS and installer output."
-          exit 1
+          # Browser builds only, from Playwright's CDN. The runner image already has every Chromium library that
+          # Playwright 1.63 lists for Ubuntu 22.04; --with-deps needed the Ubuntu archive, whose names stopped
+          # resolving on 11 November (ci.md). Playwright validates the libraries on a fresh browser directory; a
+          # failure only warns here but stops the first launch in the journeys.
+          python -m playwright install chromium
       - name: Run the serial Chromium demo story
         run: |
           args=()
