@@ -171,8 +171,13 @@ class Stack:
         raise ExperimentError("The limiter timing printed nothing")
 
     # ------------------------------------------------------------------------------------------- http
+    @staticmethod
+    def anonymous_opener():
+        """A fresh anonymous visitor; cookies are retained only by this opener."""
+        return build_opener(NoRedirect(), HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
     def openers(self):
-        anonymous = build_opener(NoRedirect(), HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        anonymous = self.anonymous_opener()
         cookies = http.cookiejar.CookieJar()
         operator = build_opener(NoRedirect(), HTTPCookieProcessor(cookies))
         login_operator(operator, cookies, self.base_url, self.env_file)

@@ -105,6 +105,27 @@ def test_anonymous_identity_is_keyed_hash_and_histories_remain_separate(mongo_db
     assert anonymous.get("/products/").context["recent_products"] == []
 
 
+def test_fresh_anonymous_visitors_can_overtake_a_seeded_leader_but_reloads_cannot(mongo_db):
+    leader, control = product("burn-in-leader"), product("burn-in-control")
+    now = timezone.now()
+    mongo_db.events.insert_many([event(leader, now - timedelta(minutes=1), generated=True) for _ in range(36)])
+    path = f"/products/{control.pk}/"
+    repeated = Client()
+    for _ in range(40):
+        assert repeated.get(path).status_code == 200
+    rows = list(mongo_db.events.aggregate(trending_pipeline(timezone.now())))
+    assert [(row["_id"], row["views"]) for row in rows] == [(leader.pk, 36), (control.pk, 1)]
+
+    for _ in range(40):
+        assert Client().get(path).status_code == 200
+    rows = list(mongo_db.events.aggregate(trending_pipeline(timezone.now())))
+    assert [(row["_id"], row["views"], row["rank"]) for row in rows] == [(control.pk, 41, 1), (leader.pk, 36, 2)]
+    assert rows[0]["generated_views"] == 0 and rows[1]["generated_views"] == 36
+    control_events = list(mongo_db.events.find({"meta.product_id": control.pk}))
+    assert len(control_events) == 80 and len({row["meta"]["session_key"] for row in control_events}) == 41
+    assert all(row["is_generated"] is False and "user_id" not in row["meta"] for row in control_events)
+
+
 def test_recently_viewed_last_ten_distinct_newest_first_and_hidden_filtered(mongo_db):
     buyer = customer()
     items = [product(str(n)) for n in range(12)]

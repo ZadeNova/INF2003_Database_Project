@@ -152,9 +152,11 @@ runs the rounds, [redis_stampede.py](../../benchmarks/redis_stampede.py) the sta
 - Each round orders the conditions by a seeded Williams design instead of a plain Latin square: every condition still holds
   every position once, and each also follows every other condition exactly once, so what one condition leaves behind (a warm
   cache, a paused Redis) reaches every other condition equally. The seed fixes which condition takes which place.
-- Before round 1, an untimed burn-in views the control product until it leads the trending ranking and the ranking then holds
-  still for a further pass (the control records view events, which reorder the ranking the shop and search pages show; the
-  most viewed product stays first however many more views it gets), and fails the experiment if it never settles.
+- Before round 1, each untimed burn-in control view uses a fresh anonymous cookie jar, because trending counts distinct
+  visitors and repeated views from one session count once. The ranking probe keeps its original session and clears the
+  cached ranking before every check. The control must lead and the ranking must then hold still for a further pass; failure
+  to settle still stops the experiment. The pass size and limit, measured sessions and sample counts are unchanged; provenance
+  labels the burn-in visitor policy. See the [authorised repair](benchmark.md#redis-burn-in-correction-11-november-2026).
 - A sample with page data and no off sample in its round to compare with is refused ("no off reference"), not accepted.
 - The limiter timing fails the experiment if any call did not reach Redis, because the store fails open and would otherwise
   report an unreachable Redis as a very cheap call.
