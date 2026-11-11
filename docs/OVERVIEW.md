@@ -35,17 +35,25 @@ orders**, one per seller. The checkout holds the payment; each seller ships thei
 
 ## 3. The demo story
 
-This is the path the video follows, and it touches almost every feature:
+The video follows the brief's order, so the story is told in four parts. The clip-by-clip runbook, with logins and
+commands, is in [deliverables](plans/deliverables.md#recording-runbook-backlog-70-38-47-26); the spoken script is in
+the slide deck's speaker notes.
 
-1. A customer searches with a typo ("garden tols") and still finds matching products, then narrows the results with filters; each
-   search shows how many products match every filter value. The home page shows trending products.
-2. They add products from three different sellers and pay once: one checkout, three orders, stock reduced exactly.
-3. Each seller logs in and ships their own order; the operator marks them delivered.
-4. The customer reviews an item: the product's rating, review count and latest reviews update at once.
-5. A seller restocks a sold-out product: a customer who wishlisted it gets an alert straight away.
-6. The operator adds a new attribute to a category live, approves a new seller, and opens the dashboard: products that
-   will run out, the best categories, and sellers whose late deliveries are causing bad reviews.
-7. The benchmark results: how PostgreSQL and MongoDB compare on the same data and the same tasks.
+1. **Background.** What Mercer is, its three roles, the Olist data and how it was cleaned, and why each store owns the
+   data it does.
+2. **Relational database.** The ER design and the rules PostgreSQL enforces itself: a terminal session in which the web
+   app's own database role is refused a dropped table, a deleted order, an edited audit log, an illegal status change,
+   a back-dated delivery and payments that do not add up, and then sees only one seller's orders under row-level
+   security. A customer buys from three sellers and pays once (one checkout, three orders, stock reduced exactly); two
+   terminals race for the last unit and one is refused. The operator dashboard shows that late deliveries cause bad
+   reviews.
+3. **NoSQL and the comparison.** The document design; a typo search ("garden tols") that still finds the products,
+   with a count for every filter value; the operator adding a category attribute live; the customer's review updating
+   the product's rating and latest reviews at once; trending and seller insights from the activity stream; MongoDB
+   refusing documents its validators and unique index forbid. Then the two databases compared side by side, with the
+   last-unit and lost-update results.
+4. **Performance.** How the benchmark is kept fair, and what B1, B2, B4 and B5 found, including the query plans behind
+   the index results. Then testing, the conclusions and the limits.
 
 ## 4. Architecture: two databases, each with its own job
 

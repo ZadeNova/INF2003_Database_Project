@@ -9,7 +9,7 @@ section 12; write what you did, not what you were assigned.
 | MUHAMMAD ERFAN BIN MOHAN | 2500722 | Planning and setup |
 | MOHAMMED SYAHFARIZ BIN EFFENDY | 2500717 | Supporting developer, QA |
 | JUN KEAT LIM | 2501004 | Supporting developer, QA |
-| JOASH | to add | Supporting developer, QA |
+| JOASH TAN EE | 2501571 | Supporting developer, QA |
 
 ## Phase 0 (21 to 25 October)
 

@@ -16,6 +16,30 @@ The authoritative schedule and workstream statuses are in [PLAN.md section 13](P
 Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
 [docs/DATA_MODEL.md](docs/DATA_MODEL.md).
 
+## Marker's tour
+
+Start the app first: [Set up and run](#set-up-and-run-fresh-clone), then
+[Load Olist and demo accounts](#load-olist-and-demo-accounts) (or `python scripts/start.py` for both). The logins are in
+[Demo logins](#demo-logins). Each row names where to see a feature, the code that implements it and a test that proves
+it against the real databases (paths under `src/` and `tests/`).
+
+| Feature | Store | See it | Code | Proof |
+|---|---|---|---|---|
+| Typo-tolerant search with a count for every filter value | PostgreSQL `pg_trgm` GIN index, MongoDB `$facet` | Home page: search `garden tols`, then pick a filter | `catalogue/search.py` | `test_catalogue_search.py` |
+| One cart across three sellers, one payment, one order per seller | PostgreSQL transaction | A demo customer adds products from three shops, then `/cart/` and Checkout | `orders/services.py` | `test_checkout.py` |
+| The last unit is sold once under concurrency | PostgreSQL row locks | [Database demonstrations](#database-demonstrations-psql-and-mongosh): the last-unit race | `orders/services.py` | `test_checkout_concurrency.py` |
+| Money, status and timestamp rules enforced by the database | PostgreSQL CHECK constraints, deferred and status triggers | [Database demonstrations](#database-demonstrations-psql-and-mongosh): `database_says_no.sql` | `orders/migration_sql.py`, `orders/migrations/0004_order_timestamp_guard.py` | `test_checkout_schema.py`, `test_order_timestamps.py` |
+| Restricted runtime role and a read-only, trigger-written audit log | PostgreSQL roles, `SECURITY DEFINER` | `demo-operator`: `/operator/audit/` | `docker/10-roles.sh`, `config/privileges.py` | `test_database_roles.py`, `test_audit_privileges.py` |
+| Seller row-level security under the seller pages | PostgreSQL policies | `demo-seller`: `/seller/orders/` | `accounts/rowsecurity.py`, `orders/migrations/0005_seller_row_security.py` | `test_seller_rls.py` |
+| Seller products written to both stores, photos re-encoded into GridFS | PostgreSQL, MongoDB, GridFS | `demo-seller`: `/products/mine/new/` | `catalogue/services.py`, `catalogue/photos.py` | `test_catalogue_manage.py`, `test_photos.py` |
+| Live schema change: a new category attribute without a migration | MongoDB templates, wildcard index | `demo-operator`: `/products/operator/categories/` | `catalogue/operator_views.py` | `test_catalogue_manage.py` (`test_adding_an_option_needs_no_migration_or_collmod_and_immediately_facets`) |
+| Reviews: one per order line; rating summary and latest five updated in one transaction | MongoDB transaction, unique index | A demo customer reviews a delivered line from `/orders/` (buy, ship as the seller, deliver as the operator first) | `reviews/services.py` | `test_reviews.py` |
+| Recently viewed, Trending now and seller views-to-sales | MongoDB time series with a 30-day TTL | Home page; `demo-seller`: `/seller/insights/` | `activity/services.py` | `test_activity.py` |
+| Restock alert to every customer who saved a product | PostgreSQL trigger, partial unique index | A customer saves a sold-out product; the seller restocks it; `/alerts/` | `wishlist/migrations/0001_wishlist_restock.py` | `test_wishlist.py` |
+| Operator dashboard: materialized views, window functions, the delivery-delay finding | PostgreSQL materialized views, MongoDB `$out` summary | `demo-operator`: `/operator/dashboard/` | `dashboard/queries.py` | `test_dashboard.py`, `test_order_review_scores.py` |
+| Cache and rate limits, never a source of truth | Redis | Reload the dashboard or the home page | `config/redis_store.py`, `config/ratelimit.py` | `test_redis_store.py`, `test_rate_limit.py` |
+| PostgreSQL against MongoDB on identical data (B1 to B6) | Both | [Authoritative November evidence](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides) | `benchmarks/` | `benchmarks/tests/` |
+
 ## Requirements
 
 - Docker Desktop (Windows, macOS) or Docker Engine (Linux) with Compose 2.20 or later, using Linux containers. Start
@@ -31,6 +55,10 @@ Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.
 [Load Olist and demo accounts](#load-olist-and-demo-accounts)), skips the import when the database already holds data,
 and finishes with the smoke check. Docker must be running. Run it again at any time; `--dry-run` prints the commands.
 The manual steps follow.
+
+**From the submission zip:** extract `source_code.zip` and open a terminal in the extracted folder. It is not a Git
+repository, so skip the two `git config` lines; every other command is the same. The data files are included, so no
+download or Kaggle account is needed.
 
 From the repository root:
 
@@ -54,492 +82,6 @@ It prints `{"postgresql": "ok", "mongodb": "ok", "migrations": "applied"}`.
 
 Stop with `docker compose down`; the databases are kept. `docker compose down --volumes` also deletes them, which is
 needed once after a change to the roles or the database images because their set-up scripts run only on an empty volume.
-
-## Tests
-
-```sh
-docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
-docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_health.py
-docker compose run --rm migrate pytest -q -p no:cacheprovider -m slow /app/tests   # the full-data checks, only where the full Olist files exist
-```
-
-The default run leaves out tests marked `slow` (the full local Olist data checks); run them with `-m slow`.
-
-Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
-database; `web` holds only the runtime role. The tests use the real databases, never mocks or SQLite. `tests/` is
-mounted along with read-only `compose.yaml` for startup regression checks, but the image copies `src/` at build time,
-so run `docker compose build migrate web` after changing application
-code. `migrate` uses the dev image; `web` uses the runtime image. Test counts are not written here; the run prints them. The app image has no Git, so its four Git-index-only
-documentation tests are also run on the host with Python/pytest and Git:
-
-```sh
-python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py tests/test_package_submission.py
-python scripts/check_docs.py
-```
-
-The main suite and all database tests remain in Docker. The host command disables the database conftest because these
-checks operate only on temporary documentation trees and submission archives.
-
-### Continuous integration
-
-[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, with a manual
-`workflow_dispatch` entry for the failure-artifact canary. It needs no repository secrets. `databases` and `browser`
-use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubuntu-24.04`. Every job has a timeout.
-
-| Job | Checks |
-|---|---|
-| `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
-| `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
-| `quality` | Ruff lint (E, F, I, B, S, DJ, SIM) and the 120-column format check, then audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
-| `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
-| `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
-
-The hosted browser job installs only the pinned Chromium builds (`python -m playwright install chromium`), without
-`--with-deps`: the ubuntu-22.04 runner image already has every Chromium library Playwright lists. Playwright
-validates them on a fresh browser directory; a failure only warns during installation but stops the first launch,
-so a missing library still fails the journeys. The flag needed the Ubuntu archive, whose mirror names stopped
-resolving on hosted runners on 11 November; the
-[CI follow-up](docs/plans/ci.md#browser-installation-dns-recovery-11-november-2026) records the evidence, the two
-earlier candidates and pending hosted verification.
-
-The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
-data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
-[audit wrapper](scripts/audit_requirements.py) rejects expired exceptions and any advisory with a fix, including
-an advisory whose exception was valid before a fix appeared. Exception metadata lives in
-[.github/pip-audit-exceptions.toml](.github/pip-audit-exceptions.toml). The Argos file is audited without installing
-its deliberately unused Torch/Stanza dependency tree.
-
-To reproduce the CI checks from the repository root, activate a Python 3.13 virtual environment and install
-`src/requirements-dev.txt`. The following commands use Bash (Git Bash on Windows). The private environment below
-does not change the main stack's `.env`. `dc` always supplies the explicit isolated project and environment file.
-
-```sh
-python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
-mkdir -p .cache/ci-local
-python - <<'PY'
-import sys
-sys.path.insert(0, "src")
-from tools.init_env import complete_env
-complete_env(".cache/ci-local/environment.env", ".env.example")
-PY
-export CI_ENV_FILE="$PWD/.cache/ci-local/environment.env"
-export MONGO_PORT=0 APP_PORT=8011
-export MSYS_NO_PATHCONV=1
-dc() { docker compose --env-file "$CI_ENV_FILE" -p "$COMPOSE_PROJECT_NAME" "$@"; }
-```
-
-Database job, including coverage and pipeline tests:
-
-```sh
-export COMPOSE_PROJECT_NAME=mercer-ci-databases-local
-dc build migrate
-dc --profile tools build tools
-dc up --detach --wait --wait-timeout 300 db mongo redis
-dc run --rm migrate
-dc run --rm migrate python manage.py makemigrations --check --dry-run
-dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
-dc run --rm migrate python manage.py seed_demo
-mkdir -p coverage-reports
-chmod a+rwx coverage-reports
-dc run --rm --volume "$PWD/coverage-reports:/reports" migrate python /app/scripts/coverage_suite.py --output /reports
-dc --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
-dc --profile tools down --volumes --remove-orphans
-```
-
-Quality and host checks need no databases:
-
-```sh
-python -m ruff check .
-python -m ruff format --check .
-python scripts/audit_requirements.py
-python scripts/check_docs.py
-CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
-python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_start_script.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
-python - <<'PY'
-from xml.etree import ElementTree
-suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")
-assert int(suite.get("skipped", 0)) == 0, "Host checks must not skip"
-PY
-```
-
-Keep the host test temporary repositories outside this checkout: Git would otherwise inherit its ignore rules.
-The short system-temp path also avoids Windows path-length failures.
-
-Browser job, with a fresh project. On a Linux machine without Chromium's system libraries, keep `--with-deps` as
-below; on Windows, or a machine that already has them (as the hosted runner image does), use
-`python -m playwright install chromium`. The wrapper exports only the three demo logins to the test process,
-filters database credentials, and redacts console output. Parent Django database fixtures are excluded by
-`--confcutdir`; the browser subtree is excluded from the Docker Django suite.
-
-```sh
-export COMPOSE_PROJECT_NAME=mercer-ci-browser-local
-dc build migrate web
-dc up --detach --wait --wait-timeout 300 db mongo redis
-dc run --rm migrate
-dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
-dc run --rm migrate python manage.py seed_demo
-dc run --rm migrate python manage.py seed_activity --count 2000
-dc up --detach --wait --wait-timeout 300 web
-dc run --rm migrate python /app/scripts/smoke_olist.py
-python -m playwright install --with-deps chromium
-python -m scripts.browser_suite --env-file "$CI_ENV_FILE" --base-url "http://127.0.0.1:$APP_PORT" --output test-results
-dc down --volumes --remove-orphans
-```
-
-Before filming, run this browser suite once against a fresh full-data stack using
-[Load Olist and demo accounts](#load-olist-and-demo-accounts), then `seed_activity --count 2000`.
-
-For a local artifact check, before teardown run the same browser wrapper with
-`--force-browser-failure --canary-only`; a failing canary is the expected result. Normal runs leave this off.
-Failures retain a trace and screenshot; passwords and authentication cookies are redacted before upload. The
-workflow uploads only sanitized failure artifacts, retained for seven days. To prove hosted behavior, manually
-dispatch the reviewed workflow with `force_browser_failure: true` and inspect its failed browser job's artifacts.
-Local results do not replace that hosted exit check. The format gate runs in the required `quality` job; the separate
-benchmark fixture job is described below and is not a required ruleset check.
-
-## Configuration
-
-`src/tools/init_env.py` creates `.env` from [.env.example](.env.example) and, run again later, adds keys a newer version
-needs without changing existing ones. `.env` is git-ignored: never commit it or paste resolved Compose output.
-After updating to the benchmark harness, rerun `python src/tools/init_env.py` even for ordinary app startup:
-Compose validates required `BENCH_*` interpolation before filtering profiles, so older environments fail until completed.
-The same applies to `REDIS_PASSWORD`, added with the Redis service.
-
-| Variable | Purpose |
-|---|---|
-| `DJANGO_SECRET_KEY` | At least 50 characters; generated |
-| `DJANGO_DEBUG` | `true` turns debug on; off by default |
-| `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated; keep `127.0.0.1` for the container health check |
-| `APP_PORT`, `MONGO_PORT` | Host ports (127.0.0.1 only) |
-| `COVERAGE_SOURCE` | Coverage source directory: defaults to src on the host; migrate sets /app to match its image layout |
-| `POSTGRES_DB` | Database name |
-| `POSTGRES_OWNER_USER`, `POSTGRES_OWNER_PASSWORD` | Owner role: owns the database; runs migrations, the importer and pytest |
-| `POSTGRES_RUNTIME_USER`, `POSTGRES_RUNTIME_PASSWORD` | Runtime role used by `web`: reads and writes rows, no DDL, DROP or TRUNCATE |
-| `POSTGRES_ADMIN_PASSWORD` | Bootstrap superuser, given only to the `db` service |
-| `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
-| `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
-| `REDIS_PASSWORD` | Password of the Redis application user (generated). Redis has no host port; only `web` and `migrate` hold the password |
-| `REDIS_ENABLED` | `true` (default) or `false`: false makes every code path use the databases and never imports the Redis client. The bench profile always sets it false |
-| `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_USER`, `REDIS_KEY_PREFIX` | Optional; Compose sets host and port. The test suite pins database 15 and the prefix `mercer-test:v1:` itself, so it can never touch the application's keys |
-| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Fixed, documented demo logins for seeding and tests (see [demo logins](#demo-logins)); CI exports only these login values to host browser tests, masks them, and filters database credentials; must be set, no fallback |
-| `BENCH_DB` | Fixed `bench`; the harness refuses any other database or host |
-| `BENCH_ADMIN_PASSWORD` | Isolated PostgreSQL bootstrap secret; only bench-db receives it |
-| `BENCH_OWNER_USER`, `BENCH_OWNER_PASSWORD` | Separate benchmark owner, with CREATEDB and pg_checkpoint for templates/checkpoints |
-| `BENCH_RUNTIME_USER`, `BENCH_RUNTIME_PASSWORD` | Separate runtime role needed by unchanged app migrations; the harness uses the owner |
-| `BENCH_MONGO_ROOT_USER`, `BENCH_MONGO_ROOT_PASSWORD` | Isolated replica-set bootstrap; host runner uses docker exec for server-setting readback without exposing credentials |
-| `BENCH_MONGO_USER`, `BENCH_MONGO_PASSWORD` | Separate MongoDB user with readWrite on bench only |
-
-Credentials are set up on an empty volume only: editing `.env` does not rotate an existing database password.
-
-## Services
-
-| Service | Role |
-|---|---|
-| `db` | PostgreSQL 18; creates the owner and runtime roles on first start (`src/docker/10-roles.sh`) |
-| `mongo` | MongoDB 9.0 as the single-node replica set `rs0` with authentication (`src/docker/mongo-start.sh`); healthy once the set and the application user exist. The app connects with `replicaSet=rs0`; tools on the host need `directConnection=true` |
-| `redis` | Redis 8 (`src/docker/redis-start.sh`): rate limits and two caches, never a source of truth. An ACL user with only the commands the app needs (no `FLUSHALL`, `CONFIG` or `KEYS`), 64 MB, `volatile-lru`, no persistence, no host port. `web` starts without it (the shop fails open); `migrate` waits for it |
-| `migrate` | Owner role and dev image (`-app-dev`): migrations, import, seeding, pytest and coverage; data/configuration mounted read-only |
-| `web` | Runtime image (`-app`) and PostgreSQL runtime role; Gunicorn on 127.0.0.1 only, without the dev tools |
-| `tools` | Optional tools profile; pinned offline profiling, cleaning, generation and pipeline tests; only working directories mounted, with raw source read-only and no .env mount |
-| `translation` | Optional isolated translation profile; pinned Argos package/tokenizer and CTranslate2 inference; offline at runtime, raw source read-only, no .env mount |
-| `bench-db` | Optional bench profile; same PostgreSQL digest, separate roles/data, explicit durability, 512 MB shared buffers and 512 MB shared memory, no published port |
-| `bench-mongo` | Optional bench profile; same MongoDB digest, separate single-node replica set and keyfile, 0.75 GiB WiredTiger cache, readWrite on bench only, no published port |
-| `bench-runner` | Optional bench profile; app dev image and matching drivers, source mounts read-only and results writable; no Docker socket. Each of these three services has 2 CPUs, 2 GiB memory and no extra swap |
-
-The database and Redis images are pinned by digest in [compose.yaml](compose.yaml); the reasons are in
-[docs/DECISIONS.md](docs/DECISIONS.md).
-
-### Redis: rate limits and caches
-
-[The plan](docs/plans/redis.md) has the reasoning; [the key table](docs/DATA_MODEL.md#redis-keys) lists every key.
-- **Rate limits.** Five sign-in attempts per username and address in 15 minutes (counted before the password is checked,
-  cleared by a successful login), 100 failed sign-ins per address in 15 minutes (a success never counts) and ten review
-  saves per customer per hour. Over a limit the page is `429` with `Retry-After`. The limits are the `RATE_LIMITS`
-  setting. Under Docker every client shares one address, so after a few mistyped demo passwords run
-  `docker compose run --rm migrate python manage.py clear_rate_limits`.
-- **Caches.** The trending ranking for 60 seconds, and the operator dashboard's delivery, category and review blocks
-  until "Refresh sales history" or a review takedown or restore (stock planning is always live). The dashboard says when
-  it was served from cache, and its response carries `X-Cache` (`HIT`, `MISS`, `WAIT`, `DOWN` or `OFF`).
-- **Failing open.** If Redis is disabled, down or slow the shop keeps working: caches become misses and limits allow the
-  action. The first failure costs one 200 ms timeout and Redis is then skipped for 30 seconds. Each request line in the
-  web log carries `redis_ms`, `redis_commands` and `cache`.
-- **Turning it off** for a comparison on the same commit: set `REDIS_ENABLED=false` in `.env` and recreate `web`.
-
-### When a database is slow or down
-
-Gunicorn kills a worker after 30 seconds and there are two of them, so one stuck request must not hold a worker that long.
-- **PostgreSQL.** The `web` service (the runtime role) sets `POSTGRES_SESSION_OPTIONS` in [compose.yaml](compose.yaml):
-  a row lock is waited for at most 10 seconds, a statement runs at most 25 seconds and an idle open transaction is ended
-  after 60 seconds. A timeout is an `OperationalError`, which the middleware answers with a 503 and `Retry-After`;
-  migrations, the importer and the tests run as the owner without these limits.
-- **MongoDB.** A connection attempt waits at most 3 seconds, `web` bounds every operation to 10 seconds
-  (`MONGO_SOCKET_TIMEOUT_MS`), and after a lost connection the same client is skipped for 5 seconds (`config/mongo.py`),
-  as Redis is, so pages that never use MongoDB (the cart, checkout) are not queued behind a hung one. The shop listing
-  and a shop page show icon cards (and no shop rating) while MongoDB is down.
-- **Photos.** An upload is re-encoded at most 2048 pixels on its longest side and must fit in 2 MB after encoding.
-- **Request size.** A request body over 3 MB (`REQUEST_BODY_LIMIT_BYTES`) is answered with a 413 page before anything reads it; Django caps urlencoded bodies itself but streams a multipart body of any size to disk.
-
-## Benchmark (isolated databases)
-
-The approved [benchmark contract](docs/plans/benchmark.md) owns the method and final-run machine. Use explicit
-projects; the runner rejects `mercer`. Budget at least six VM CPUs and eight GiB of Docker memory, plus initial image
-downloads. Each load and correctness pass can take several minutes on a laptop; the full repeated matrix takes
-longer. Actual load/run durations and peak resources are emitted in the retained console/provenance/stats evidence,
-not maintained as prose estimates. Run trials with other heavy workloads stopped. The runner labels an undersized VM
-and refuses `--final` there or on a dirty tree. Warm database buffers are intentional; application caches and telemetry
-are disabled.
-
-From the root (host Python 3.13, standard library only; all database drivers run in the container):
-
-```sh
-python src/tools/init_env.py
-python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
-docker compose -p mercer-bench-local --profile bench build bench-runner
-docker compose -p mercer-bench-local --profile bench up --detach --wait bench-db bench-mongo
-docker compose -p mercer-bench-local --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
-python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
-docker compose -p mercer-bench-trial --profile bench build bench-runner
-docker compose -p mercer-bench-trial --profile bench up --detach --wait bench-db bench-mongo
-docker compose -p mercer-bench-trial --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
-python -m benchmarks.run --project mercer-bench-trial --require-clean --mode measure --only baseline,B1,B4 --operations-per-client 5 --label trial
-```
-
-For the designated-machine run, use the [final-run checklist](#final-run-checklist-next-session) below after review.
-The loader requires empty destinations; to reload, explicitly tear down only
-the named benchmark project with `docker compose -p mercer-bench-local --profile bench down --volumes` and repeat.
-Never remove application volumes. PostgreSQL mutation runs use bench_run cloned from bench_template; MongoDB restores
-checksummed NDJSON in ignored benchmarks/results/.state. Each restored MongoDB collection is dropped and recreated
-with its validator and ordered index catalogue; secondary indexes are bulk-built after inserting the documents.
-Both baselines and index catalogues are checked before and after each mutation, including failed attempts.
-B5 runs first and refuses any project with a nonzero restores_since_load counter. Storage probes wait for the
-explicit automatic checkpoint interval plus a margin; the round-trip client needs no extra database privilege.
-B4 restores the original index catalogue in a finally block.
-
-B2 times its queries as first written and, beside them, an idiomatic computation and a maintained summary for each
-engine ([amendment m](docs/plans/benchmark.md#decisions)); the idiomatic and summary variants of both engines return the
-benchmark's columns and nothing else. The pairs that headline each comparison are fixed in
-[benchmarks/headline.py](benchmarks/headline.py), recorded in the provenance and printed by the report as
-`report/b2-headline.csv`; the originals and the application's own queries are reported separately
-(`report/B2*-originals.csv`, no ratio). The load builds the summaries on both engines and B2refresh times rebuilding each
-of them, PostgreSQL's including the application's delivery view.
-
-The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
-CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
-driver versions and container limits. All workers connect and ping before a barrier; each first result is
-canonicalised against golden before a second barrier releases timing. Later results use plain fetched-row equality.
-The default is five measured operations per client at 1/10/50 clients (`--operations-per-client`), except B2: it
-uses 1/10 clients and twenty operations per client (`--b2-operations-per-client`, minimum five). B2refresh uses one
-client with the B2 count. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the
-default count. Provenance records each B4 case's operation count. Each worker also validates one untimed reference
-operation; B3 keeps fifty buyers. Correctness query passes stay at one client and one operation. The per-workload
-matrix is recorded in provenance alongside the legacy default keys. Throughput excludes setup, initial
-canonicalisation and teardown. The Python no-op
-measures harness overhead; SELECT 1 and MongoDB ping provide the per-engine round-trip noise baselines.
-Per-run CPU is the median of the one-second Docker runner intervals overlapping its timed window, so short runs
-have coarse attribution. Runs at or above 180% runner CPU remain visible with client_saturated=true and contribute
-no headline ratio; summary.csv keeps their metrics and report tables mark them as not headline. Regenerate every chart/table with
-`python -m benchmarks.report benchmarks/results/<run-directory>`. Report files are CSV/SVG, with ratios and absolute
-latencies; amendment-j.csv evaluates noise per B1 parameter set/client count and B4 index. Failed checks have no
-accepted timing. B1 broad retains the planner-chosen MongoDB plan as the headline; documents_hinted separately
-uses spec_attributes with the same golden. No scale-up generator is built; the owner decides after reading that table.
-`report/memory.csv` reports median and peak memory per container for the whole run and each workload. Workload rows
-include only samples whose timestamps lie in the union of that workload's `runs.csv` windows; the median is
-sample-weighted, without interpolation. Whole-run rows also include setup and restoration. Untimed workloads and
-windows without samples retain blank figures with an explicit status. Docker's rounded `MemUsage` makes converted
-byte values approximate. `report/memory-settings.csv` records the original caps, caches and input footprint; the
-footprint is populated only when local input files match every checksum in provenance. Stopped-container CPU
-placeholders are skipped for CPU attribution; independently valid memory samples remain usable. These tables do
-not measure memory for the same operation across engines.
-New result directories are ignored while collecting evidence so subsequent runs can use the same clean commit.
-After inspecting them, stage only the intended directories with `git add -f -- benchmarks/results/<run-directory>`.
-Use --require-clean for recorded reruns; it refuses uncommitted source changes.
-
-Use a different fixture project for benchmark tests:
-
-```sh
-python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
-docker compose -p mercer-bench-fixture --profile bench build bench-runner
-docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
-docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
-docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
-docker compose -p mercer-bench-fixture --profile bench down --volumes
-docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
-docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
-python -m benchmarks.run --project mercer-bench-fixture --source /app/fixtures/olist/clean --golden fixture --mode correctness --label fixture
-docker compose -p mercer-bench-fixture --profile bench down --volumes
-```
-
-Regenerate independent golden CSVs with
-`python -m benchmarks.reference.compute --source tests/fixtures/olist/clean --output benchmarks/golden/fixture` and
-`python -m benchmarks.reference.compute --source data/derived/olist/clean --output benchmarks/golden/full`.
-The reference never imports a database driver. Its committed output schema fixes decimal scales and Python
-ROUND_HALF_EVEN, and its CSVs have stable LF newlines across Windows and Linux.
-Tests require a freshly loaded fixture project; their restores invalidate B5's freshness counter, so the example
-reloads before the separate correctness pass. The optional CI job does the same, checks the MongoDB kernel range,
-and uploads only the directory printed by its current runner invocation. --only B5,B5restore on a fresh project
-records a fresh footprint plus two restore cycles in storage-restores.csv. The stated storage tolerance is 10%
-with a 64 KiB allocation floor per collection and metric; physical storage probes wait for automatic checkpoints.
-The results-directory permission command lets the container's UID write on Linux; it affects only benchmark
-evidence. The host runner creates writable run directories and replaces container-owned provenance atomically.
-
-Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_pg_queries/db_mongo_ms/db_mongo_commands
-in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.
-
-### Final-run checklist (next session)
-
-Current report sources, actual experiment limits and historical exclusions are recorded in the
-[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides).
-This checklist remains the reproduction procedure.
-
-The fresh run on Chee Long's machine, on the head of `main` after `improvements/backlog` is merged (record the commit hash and use `--require-clean`), follows [amendment l](docs/plans/benchmark.md#decisions): one clean commit after
-the last code batch, a pilot, then three sessions, each of steps 4 to 5 below with 50 operations per client (B2: 10); the
-baselines run at the start and end of every session, and the headline is the median across sessions. Record the actual
-host and VM resources, leave Windows headroom, and check usable memory against the gate in step 1. The older
-12-CPU/24-GB allocation belonged to a teammate's PC; the owner's actual-resource amendment and the measured overrides
-are recorded in the [11 November close-out](docs/plans/benchmark.md#fresh-driver-evidence-and-collector-blockers-11-november-2026).
-Steps 6 onward (the per-request timing and Redis experiment) run only after every benchmark engine is stopped.
-The driver sessions, stampede/limiter, PR #41 page timing and PR #43 Redis conditions have valid evidence. The Redis
-run retains legitimate refusals and reduced paired coverage; every required comparison is available with those limits.
-Use the [authoritative evidence index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)
-for source revisions, generated figures, historical exclusions and acceptance qualifications. The supplied fresh Opus
-evidence review confirms measurement completeness; its documentation corrections await fresh verification before
-repository delivery. No measurement rerun is required.
-
-Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
-[benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker
-VM settings checked. The commands below use dedicated projects; leave existing application projects alone.
-
-1. **Fresh full-data load.** From the repository root, run the following. To **reload** in steps 4 and 5, repeat the
-   last three commands (`down`, `up`, `load`); the loader requires empty destinations. Check the reported usable
-   memory, not just Docker Desktop's allocation label: `--final` requires at least six CPUs and 8,589,934,592
-   bytes (`8 * 1024**3`). An 8 GB allocation can report less usable memory; raise the allocation until this check
-   meets the gate before loading or piloting.
-
-   ```sh
-   docker info --format 'CPUs={{.NCPU}} memory_bytes={{.MemTotal}}'
-   python src/tools/init_env.py
-   docker compose -p mercer-bench-final --profile bench build bench-runner
-   docker compose -p mercer-bench-final --profile bench down --volumes
-   docker compose -p mercer-bench-final --profile bench up --detach --wait bench-db bench-mongo
-   docker compose -p mercer-bench-final --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
-   ```
-
-2. **Pilot.** Keep the printed results directory. B2 uses its default 20 operations per client at 1/10 clients.
-
-   ```sh
-   python -m benchmarks.run --project mercer-bench-final --mode measure --only baseline,B1,B2 --operations-per-client 100 --label pilot
-   ```
-
-3. **Choose the counts.** Use the pilot's `host.json` duration and `runs.csv` windows to project the full run, allowing
-   for the remaining workloads and reloads. Keep 100 default operations and 20 for B2 if it fits one sitting;
-   otherwise choose 50 and 10 and state the limit in the report. Check for failed cells/timeouts before continuing.
-   B3 always keeps fifty buyers. Retain the pilot and record the choice in the final run's provenance flags below.
-
-4. **Reload**, then run correctness on the clean tree. B5 refuses any earlier restore, so always reload before a
-   correctness run that includes B5, including a retry after a failed run.
-
-   ```sh
-   python -m benchmarks.run --project mercer-bench-final --mode correctness --require-clean --label final-correctness
-   ```
-
-5. **Reload again**, then run the final matrix. If step 3 selected the fallback, replace `100` with `50` and `20`
-   with `10` in this command. Keep the printed directory and check every correctness gate.
-
-   ```sh
-   python -m benchmarks.run --project mercer-bench-final --mode measure --final --require-clean --operations-per-client 100 --b2-operations-per-client 20 --label final
-   ```
-
-   **The fresh run (amendment l)** repeats this measure command three times on the same clean commit, with labels
-   `session-1` to `session-3`, reloading before each, and records the machine's facts with repeatable
-   `--note KEY=VALUE` options (power plan, sleep and update settings, storage type). The baselines run at the start and
-   end of every session and `report/drift.csv` flags a session whose end differs from its start. The runner also
-   records every container's state before and after and fails the run if a container was killed for memory, restarted or
-   stopped. Combine the sessions with the rule fixed in advance, the median across sessions of each session's run-level
-   median, with every session kept and a damaged one excluded with its reason (a failed check, a container event, a nonzero
-   exit code, or a run that never recorded an exit code or report because it was killed):
-
-   ```sh
-   python -m benchmarks.sessions benchmarks/results/<session-1> benchmarks/results/<session-2> benchmarks/results/<session-3> --output benchmarks/results/sessions
-   ```
-
-   `report/pooled.csv` in each session and `headline.csv` here pool the raw latencies; p95 appears only with 100 pooled
-   samples and p99 only with 500. The pilot may compare the baselines with and without CPU pinning: start the project
-   with `-f compose.yaml -f benchmarks/compose.pinned.yaml` on every compose command (see that file) and pass `--pin`.
-
-6. **Per-request evidence (k2).** Finish the benchmark first and stop its engines. The timing script refuses an
-   active benchmark runner and must never run alongside a benchmark. Prepare a separate full-data app stack using
-   unused loopback ports; this PowerShell example reads demo credentials from the ignored `.env` in place.
-
-   ```powershell
-   docker compose -p mercer-bench-final --profile bench stop
-   $env:APP_PORT = "18082"
-   $env:MONGO_PORT = "0"
-   docker compose -p mercer-request-final up --build --detach --wait
-   docker compose -p mercer-request-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
-   docker compose -p mercer-request-final run --rm migrate python manage.py seed_demo > $null
-   python -m benchmarks.request_timing --project mercer-request-final --base-url http://127.0.0.1:18082
-   ```
-
-   The script uses anonymous shopping requests and a separate in-memory operator session, one warm-up pass and
-   twenty sequential requests per page. It joins response IDs to this project's JSON web logs and saves
-   `requests.csv`, one aggregate CSV per page and `provenance.json`. The category page, facet and detail use the
-   first visible product with attributes in the supplied source files, skipping showcase-only products;
-   the Redis experiment uses the same selector for its controls. The chosen paths are recorded. It retains no
-   credentials, cookies or response bodies.
-   A fixture rehearsal uses `--source tests/fixtures/olist/clean` on a separately loaded fixture app project.
-
-   **The Redis experiment** ([protocol](docs/plans/redis.md#measurement-protocol)) runs next, alone, against the same kind of
-   separate app stack with `seed_activity` loaded as well (events expire after 30 days):
-
-   ```powershell
-   $env:APP_PORT = "18083"
-   $env:MONGO_PORT = "0"
-   docker compose -p mercer-redis-final up --build --detach --wait
-   docker compose -p mercer-redis-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
-   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_demo > $null
-   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_activity
-   python -m benchmarks.redis_experiment --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
-   python -m benchmarks.redis_stampede --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
-   ```
-
-   The first command first views the control product with a fresh anonymous cookie jar per untimed view until it leads the
-   distinct-visitor trending ranking and the ranking holds still, then measures off,
-   cold, warm and down in four rounds ordered by a seeded Williams design (every condition holds every position once and
-   follows every other condition once; 150 requests per cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
-   `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and
-   off and times the limiter. Smaller `--requests` and `--dashboard-requests` make a pilot, which is marked as such in its
-   provenance and is not evidence. Regenerate the tables with `python -m benchmarks.redis_report <folder>`.
-   Diagnostic schema 1 also writes `data-signatures.json` (public product-ID strings in exact digest order) and
-   `warm-up.csv` (the existing untimed priming responses with exact request-log joins; missing or duplicate priming logs
-   stop the whole run before any samples are written). Both priming and timed responses record UTC receipt time and monotonic milliseconds since the first untimed
-   request of their condition. Priming is excluded from measured samples and gates; no HTML or session data is saved.
-   Provenance records digest version 2. Link changes and warm misses remain refusals, including legitimate rolling-window
-   changes or expiry; the diagnostics provide evidence for investigation, not a cause or an acceptance override.
-
-7. **Regenerate tables if needed.** `benchmarks.run` already runs `benchmarks.report` for each benchmark run. Use
-   this command only to regenerate its tables and charts; the k2 directory has its own CSVs and does not use the
-   driver report generator.
-
-   ```sh
-   python -m benchmarks.report benchmarks/results/<run-directory>
-   ```
-
-8. **Retain the reviewed evidence.** Inspect all outputs, then explicitly stage only these run directories (replace
-   each placeholder with the directory printed by its command).
-
-   ```sh
-   git add -f -- benchmarks/results/<pilot-run-directory> benchmarks/results/<correctness-run-directory> benchmarks/results/<final-run-directory> benchmarks/results/<request-timing-directory>
-   ```
-
-9. **Tear down only the projects created here**, after the evidence is saved. In PowerShell, clear the temporary
-   port overrides for subsequent work.
-
-   ```powershell
-   docker compose -p mercer-bench-final --profile bench down --volumes
-   docker compose -p mercer-request-final down --volumes
-   docker compose -p mercer-redis-final down --volumes
-   Remove-Item Env:APP_PORT, Env:MONGO_PORT
-   ```
 
 ## Load Olist and demo accounts
 
@@ -807,6 +349,562 @@ first; `tests/test_seller_rls.py` does exactly that. Customer and operator sessi
 rules they taught and the limits are in [DATA_MODEL](docs/DATA_MODEL.md#seller-row-level-security-orders-0005); the
 tests are `tests/test_seller_rls*.py`.
 
+## Database demonstrations (psql and mongosh)
+
+The scripts in `scripts/demo/` show each database enforcing its own rules, outside the application. They connect as
+the application's restricted users (the PostgreSQL runtime role and the MongoDB `readWrite` user), read passwords from
+the containers' environment so none is typed or shown, and leave the data as they found it. Run them from the
+repository root with the stack up. The commands below are for Bash or Git Bash; PowerShell has no `<`, so there write
+`Get-Content scripts/demo/<file> -Raw | docker compose exec -T ...` (the rest of the command unchanged).
+
+**The database says no.** PostgreSQL refuses DDL, `TRUNCATE` and deleting money rows, edits to the audit log, an
+illegal status change, a back-dated delivery and payments that differ from the total (at `COMMIT`); then a seller
+session sees only that seller's orders (row-level security). MongoDB refuses a specification of the wrong shape, a review
+score of 6, a second review of one order line and a sixth embedded latest review, and keeps its user out of `admin`:
+
+```sh
+docker compose exec -T db sh -c 'psql -X -q -e -U "$APP_RUNTIME_USER" -d "$APP_DB_NAME"' < scripts/demo/database_says_no.sql
+docker compose exec -T mongo sh -c 'cat > /tmp/says_no.js && mongosh --quiet --username="$MONGO_APP_USER" --password="$MONGO_APP_PASSWORD" --authenticationDatabase admin "$MONGO_DB" /tmp/says_no.js' < scripts/demo/database_says_no.js
+```
+
+**Two buyers, one last unit.** The setup leaves one unit of a `demo-seller` product and prints its id; the restore puts
+the recorded stock back and prints the audit rows the race left. In between, open two terminals with
+`docker compose exec db sh -c 'psql -X -U "$APP_RUNTIME_USER" -d "$APP_DB_NAME"'` and type, replacing `<id>`:
+
+```sh
+docker compose exec -T db sh -c 'psql -X -q -U "$APP_RUNTIME_USER" -d "$APP_DB_NAME"' < scripts/demo/last_unit_setup.sql
+# Terminal A: BEGIN; SELECT id, stock FROM catalogue_product WHERE id = <id> FOR UPDATE;      (stock 1, row locked)
+# Terminal B: BEGIN; SELECT id, stock FROM catalogue_product WHERE id = <id> FOR UPDATE;      (waits for A)
+# Terminal A: UPDATE catalogue_product SET stock = stock - 1 WHERE id = <id>; COMMIT;        (A buys it)
+# Terminal B: (now shows stock 0) UPDATE catalogue_product SET stock = stock - 1 WHERE id = <id> AND stock >= 1;
+#             (UPDATE 0: nothing to sell) UPDATE catalogue_product SET stock = stock - 1 WHERE id = <id>;
+#             (refused by the stock CHECK constraint) ROLLBACK;
+docker compose exec -T db sh -c 'psql -X -q -U "$APP_RUNTIME_USER" -d "$APP_DB_NAME"' < scripts/demo/last_unit_restore.sql
+```
+
+This is the lock order checkout uses (`orders/services.py`); `tests/test_checkout_concurrency.py` races real
+connections, and benchmark B3 repeats it with 50 buyers for 10 units on both engines. Raising the stock from 0 in the
+restore also fires the restock-alert trigger for anyone who saved the product.
+
+**Cross-store check.** A product edit writes both stores without a distributed transaction, so a failure between the
+two writes is logged, not repaired; `check_specs` lists any product without a specification, orphan specifications and
+category mismatches (empty lists when both stores agree):
+
+```sh
+docker compose exec web python manage.py check_specs
+```
+
+## Troubleshooting
+
+- **`mongo` never becomes healthy and mongosh reports an unrecognised option:** older startup commands treated a
+  leading `-` in `MONGO_ROOT_PASSWORD` as an option. The startup script and healthcheck now use attached
+  `--username=...` and `--password=...` arguments; newly generated secrets also avoid a leading dash.
+  With these commands a dash-leading password works as it is, so there is no need to change it. If you do change it,
+  do so only on an empty MongoDB volume: credentials apply only when the volume is first created, and editing `.env`
+  does not rotate an existing database user's password. Do not delete application data to resolve this error.
+- **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
+  8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
+  Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.
+  Ubuntu reports every 7.0 kernel as `7.0.0-…` (for example Ubuntu 26.04), so MongoDB refuses it even when the fix is
+  included (MongoDB SERVER-136848); use Docker Desktop or an Ubuntu 22.04/24.04 kernel older than 6.19 there. CI
+  runs its database job on `ubuntu-22.04` for the same reason.
+- **Docker "cannot find the file specified" (`dockerDesktopLinuxEngine`) on Windows:** Docker Desktop is not running.
+- **Git Bash on Windows turns `/app/...` into a Windows path:** run the commands in PowerShell, or set
+  `MSYS_NO_PATHCONV=1` first.
+- **A variable "is missing a value"** from Compose: run `python src/tools/init_env.py`.
+- **Port already in use:** change `APP_PORT` or `MONGO_PORT` in `.env`.
+- **Host pytest reports Access denied for an existing pytest temp directory:** pass `--basetemp` with a new temporary
+  directory outside this repository. Keep the Git-index documentation tests outside the repository's ignored folders,
+  so their temporary trees do not inherit the parent repository's Git discovery.
+- **Roles or database images changed after you pulled:** `docker compose down --volumes`, then start again.
+- **SELinux hosts:** bind mounts carry the `:z` label already; no `chcon` is needed.
+
+## Configuration
+
+`src/tools/init_env.py` creates `.env` from [.env.example](.env.example) and, run again later, adds keys a newer version
+needs without changing existing ones. `.env` is git-ignored: never commit it or paste resolved Compose output.
+After updating to the benchmark harness, rerun `python src/tools/init_env.py` even for ordinary app startup:
+Compose validates required `BENCH_*` interpolation before filtering profiles, so older environments fail until completed.
+The same applies to `REDIS_PASSWORD`, added with the Redis service.
+
+| Variable | Purpose |
+|---|---|
+| `DJANGO_SECRET_KEY` | At least 50 characters; generated |
+| `DJANGO_DEBUG` | `true` turns debug on; off by default |
+| `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated; keep `127.0.0.1` for the container health check |
+| `APP_PORT`, `MONGO_PORT` | Host ports (127.0.0.1 only) |
+| `COVERAGE_SOURCE` | Coverage source directory: defaults to src on the host; migrate sets /app to match its image layout |
+| `POSTGRES_DB` | Database name |
+| `POSTGRES_OWNER_USER`, `POSTGRES_OWNER_PASSWORD` | Owner role: owns the database; runs migrations, the importer and pytest |
+| `POSTGRES_RUNTIME_USER`, `POSTGRES_RUNTIME_PASSWORD` | Runtime role used by `web`: reads and writes rows, no DDL, DROP or TRUNCATE |
+| `POSTGRES_ADMIN_PASSWORD` | Bootstrap superuser, given only to the `db` service |
+| `MONGO_ROOT_USER`, `MONGO_ROOT_PASSWORD` | MongoDB root, used only to initialise the replica set and users |
+| `MONGO_APP_USER`, `MONGO_APP_PASSWORD`, `MONGO_DB` | Application user: `readWrite` on `MONGO_DB` and `test_<MONGO_DB>` only |
+| `REDIS_PASSWORD` | Password of the Redis application user (generated). Redis has no host port; only `web` and `migrate` hold the password |
+| `REDIS_ENABLED` | `true` (default) or `false`: false makes every code path use the databases and never imports the Redis client. The bench profile always sets it false |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_USER`, `REDIS_KEY_PREFIX` | Optional; Compose sets host and port. The test suite pins database 15 and the prefix `mercer-test:v1:` itself, so it can never touch the application's keys |
+| `DEMO_CUSTOMER_PASSWORD`, `DEMO_SELLER_PASSWORD`, `DEMO_OPERATOR_PASSWORD` | Fixed, documented demo logins for seeding and tests (see [demo logins](#demo-logins)); CI exports only these login values to host browser tests, masks them, and filters database credentials; must be set, no fallback |
+| `BENCH_DB` | Fixed `bench`; the harness refuses any other database or host |
+| `BENCH_ADMIN_PASSWORD` | Isolated PostgreSQL bootstrap secret; only bench-db receives it |
+| `BENCH_OWNER_USER`, `BENCH_OWNER_PASSWORD` | Separate benchmark owner, with CREATEDB and pg_checkpoint for templates/checkpoints |
+| `BENCH_RUNTIME_USER`, `BENCH_RUNTIME_PASSWORD` | Separate runtime role needed by unchanged app migrations; the harness uses the owner |
+| `BENCH_MONGO_ROOT_USER`, `BENCH_MONGO_ROOT_PASSWORD` | Isolated replica-set bootstrap; host runner uses docker exec for server-setting readback without exposing credentials |
+| `BENCH_MONGO_USER`, `BENCH_MONGO_PASSWORD` | Separate MongoDB user with readWrite on bench only |
+
+Credentials are set up on an empty volume only: editing `.env` does not rotate an existing database password.
+
+## Services
+
+| Service | Role |
+|---|---|
+| `db` | PostgreSQL 18; creates the owner and runtime roles on first start (`src/docker/10-roles.sh`) |
+| `mongo` | MongoDB 9.0 as the single-node replica set `rs0` with authentication (`src/docker/mongo-start.sh`); healthy once the set and the application user exist. The app connects with `replicaSet=rs0`; tools on the host need `directConnection=true` |
+| `redis` | Redis 8 (`src/docker/redis-start.sh`): rate limits and two caches, never a source of truth. An ACL user with only the commands the app needs (no `FLUSHALL`, `CONFIG` or `KEYS`), 64 MB, `volatile-lru`, no persistence, no host port. `web` starts without it (the shop fails open); `migrate` waits for it |
+| `migrate` | Owner role and dev image (`-app-dev`): migrations, import, seeding, pytest and coverage; data/configuration mounted read-only |
+| `web` | Runtime image (`-app`) and PostgreSQL runtime role; Gunicorn on 127.0.0.1 only, without the dev tools |
+| `tools` | Optional tools profile; pinned offline profiling, cleaning, generation and pipeline tests; only working directories mounted, with raw source read-only and no .env mount |
+| `translation` | Optional isolated translation profile; pinned Argos package/tokenizer and CTranslate2 inference; offline at runtime, raw source read-only, no .env mount |
+| `bench-db` | Optional bench profile; same PostgreSQL digest, separate roles/data, explicit durability, 512 MB shared buffers and 512 MB shared memory, no published port |
+| `bench-mongo` | Optional bench profile; same MongoDB digest, separate single-node replica set and keyfile, 0.75 GiB WiredTiger cache, readWrite on bench only, no published port |
+| `bench-runner` | Optional bench profile; app dev image and matching drivers, source mounts read-only and results writable; no Docker socket. Each of these three services has 2 CPUs, 2 GiB memory and no extra swap |
+
+The database and Redis images are pinned by digest in [compose.yaml](compose.yaml); the reasons are in
+[docs/DECISIONS.md](docs/DECISIONS.md).
+
+### Redis: rate limits and caches
+
+[The plan](docs/plans/redis.md) has the reasoning; [the key table](docs/DATA_MODEL.md#redis-keys) lists every key.
+- **Rate limits.** Five sign-in attempts per username and address in 15 minutes (counted before the password is checked,
+  cleared by a successful login), 100 failed sign-ins per address in 15 minutes (a success never counts) and ten review
+  saves per customer per hour. Over a limit the page is `429` with `Retry-After`. The limits are the `RATE_LIMITS`
+  setting. Under Docker every client shares one address, so after a few mistyped demo passwords run
+  `docker compose run --rm migrate python manage.py clear_rate_limits`.
+- **Caches.** The trending ranking for 60 seconds, and the operator dashboard's delivery, category and review blocks
+  until "Refresh sales history" or a review takedown or restore (stock planning is always live). The dashboard says when
+  it was served from cache, and its response carries `X-Cache` (`HIT`, `MISS`, `WAIT`, `DOWN` or `OFF`).
+- **Failing open.** If Redis is disabled, down or slow the shop keeps working: caches become misses and limits allow the
+  action. The first failure costs one 200 ms timeout and Redis is then skipped for 30 seconds. Each request line in the
+  web log carries `redis_ms`, `redis_commands` and `cache`.
+- **Turning it off** for a comparison on the same commit: set `REDIS_ENABLED=false` in `.env` and recreate `web`.
+
+### When a database is slow or down
+
+Gunicorn kills a worker after 30 seconds and there are two of them, so one stuck request must not hold a worker that long.
+- **PostgreSQL.** The `web` service (the runtime role) sets `POSTGRES_SESSION_OPTIONS` in [compose.yaml](compose.yaml):
+  a row lock is waited for at most 10 seconds, a statement runs at most 25 seconds and an idle open transaction is ended
+  after 60 seconds. A timeout is an `OperationalError`, which the middleware answers with a 503 and `Retry-After`;
+  migrations, the importer and the tests run as the owner without these limits.
+- **MongoDB.** A connection attempt waits at most 3 seconds, `web` bounds every operation to 10 seconds
+  (`MONGO_SOCKET_TIMEOUT_MS`), and after a lost connection the same client is skipped for 5 seconds (`config/mongo.py`),
+  as Redis is, so pages that never use MongoDB (the cart, checkout) are not queued behind a hung one. The shop listing
+  and a shop page show icon cards (and no shop rating) while MongoDB is down.
+- **Photos.** An upload is re-encoded at most 2048 pixels on its longest side and must fit in 2 MB after encoding.
+- **Request size.** A request body over 3 MB (`REQUEST_BODY_LIMIT_BYTES`) is answered with a 413 page before anything reads it; Django caps urlencoded bodies itself but streams a multipart body of any size to disk.
+
+## Tests
+
+```sh
+docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests
+docker compose run --rm migrate pytest -q -p no:cacheprovider /app/tests/test_health.py
+docker compose run --rm migrate pytest -q -p no:cacheprovider -m slow /app/tests   # the full-data checks, only where the full Olist files exist
+```
+
+The default run leaves out tests marked `slow` (the full local Olist data checks); run them with `-m slow`.
+
+Tests run in the `migrate` service because it holds the PostgreSQL owner role, which pytest needs to create its test
+database; `web` holds only the runtime role. The tests use the real databases, never mocks or SQLite. `tests/` is
+mounted along with read-only `compose.yaml` for startup regression checks, but the image copies `src/` at build time,
+so run `docker compose build migrate web` after changing application
+code. `migrate` uses the dev image; `web` uses the runtime image. Test counts are not written here; the run prints them. The app image has no Git, so its four Git-index-only
+documentation tests are also run on the host with Python/pytest and Git:
+
+```sh
+python -m pytest --noconftest -q -p no:cacheprovider tests/test_check_docs.py tests/test_package_submission.py
+python scripts/check_docs.py
+```
+
+The main suite and all database tests remain in Docker. The host command disables the database conftest because these
+checks operate only on temporary documentation trees and submission archives.
+
+### Continuous integration
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on pull requests and pushes to `main`, with a manual
+`workflow_dispatch` entry for the failure-artifact canary. It needs no repository secrets. `databases` and `browser`
+use `ubuntu-22.04` with the MongoDB kernel guard; `host` and `quality` use `ubuntu-24.04`. Every job has a timeout.
+
+| Job | Checks |
+|---|---|
+| `databases` | Owner migrations and drift, fixture import and demo accounts, one full Django run under coverage, then pipeline tests. Enforces 80% line coverage of src excluding migrations; retains branch data in XML/HTML reports for seven days |
+| `host` | Documentation and Git-index/packaging tests; any skipped host test fails the job |
+| `quality` | Ruff lint (E, F, I, B, S, DJ, SIM) and the 120-column format check, then audits of runtime, dev, tools and the minimal translation environment; short, owned audit exceptions are validated before use |
+| `browser` | The documented HTTP smoke check of all three role landings, then one serial Chromium run against runtime-role web: registration, seller approval/upload/scoping, facets, checkout/lifecycle/refund, reviews, wishlist and analytics/activity |
+| `benchmark` | Optional ruleset check on ubuntu-22.04: load the benchmark fixture, run its real-database tests and B1–B6 correctness only, retain failed checks/plans/resources and generated tables. A duration artifact records each job; this does not change the four required checks |
+
+The hosted browser job installs only the pinned Chromium builds (`python -m playwright install chromium`), without
+`--with-deps`: the ubuntu-22.04 runner image already has every Chromium library Playwright lists. Playwright
+validates them on a fresh browser directory; a failure only warns during installation but stops the first launch,
+so a missing library still fails the journeys. The flag needed the Ubuntu archive, whose mirror names stopped
+resolving on hosted runners on 11 November; the
+[CI follow-up](docs/plans/ci.md#browser-installation-dns-recovery-11-november-2026) records the evidence, the two
+earlier candidates and pending hosted verification.
+
+The [coverage wrapper](scripts/coverage_suite.py) runs the suite once with branch measurement, keeps that original
+data for reports and derives a line-only report for the threshold. Unexecuted namespace files also count. The
+[audit wrapper](scripts/audit_requirements.py) rejects expired exceptions and any advisory with a fix, including
+an advisory whose exception was valid before a fix appeared. Exception metadata lives in
+[.github/pip-audit-exceptions.toml](.github/pip-audit-exceptions.toml). The Argos file is audited without installing
+its deliberately unused Torch/Stanza dependency tree.
+
+To reproduce the CI checks from the repository root, activate a Python 3.13 virtual environment and install
+`src/requirements-dev.txt`. The following commands use Bash (Git Bash on Windows). The private environment below
+does not change the main stack's `.env`. `dc` always supplies the explicit isolated project and environment file.
+
+```sh
+python -m pip install --disable-pip-version-check -r src/requirements-dev.txt
+mkdir -p .cache/ci-local
+python - <<'PY'
+import sys
+sys.path.insert(0, "src")
+from tools.init_env import complete_env
+complete_env(".cache/ci-local/environment.env", ".env.example")
+PY
+export CI_ENV_FILE="$PWD/.cache/ci-local/environment.env"
+export MONGO_PORT=0 APP_PORT=8011
+export MSYS_NO_PATHCONV=1
+dc() { docker compose --env-file "$CI_ENV_FILE" -p "$COMPOSE_PROJECT_NAME" "$@"; }
+```
+
+Database job, including coverage and pipeline tests:
+
+```sh
+export COMPOSE_PROJECT_NAME=mercer-ci-databases-local
+dc build migrate
+dc --profile tools build tools
+dc up --detach --wait --wait-timeout 300 db mongo redis
+dc run --rm migrate
+dc run --rm migrate python manage.py makemigrations --check --dry-run
+dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+dc run --rm migrate python manage.py seed_demo
+mkdir -p coverage-reports
+chmod a+rwx coverage-reports
+dc run --rm --volume "$PWD/coverage-reports:/reports" migrate python /app/scripts/coverage_suite.py --output /reports
+dc --profile tools run --rm tools pytest -q -rs -p no:cacheprovider analytics/tests
+dc --profile tools down --volumes --remove-orphans
+```
+
+Quality and host checks need no databases:
+
+```sh
+python -m ruff check .
+python -m ruff format --check .
+python scripts/audit_requirements.py
+python scripts/check_docs.py
+CI_HOST_TEMP="$(python -c 'import tempfile; print(tempfile.mkdtemp(prefix="mcih-"))')"
+python -m pytest --noconftest -q -rs -p no:cacheprovider --basetemp "$CI_HOST_TEMP" --junitxml .cache/ci-local/host.xml tests/test_check_docs.py tests/test_package_submission.py tests/test_redis_keys_doc.py tests/test_start_script.py tests/test_redis_restart.py tests/test_benchmark_tooling.py tests/test_redis_experiment.py
+python - <<'PY'
+from xml.etree import ElementTree
+suite = ElementTree.parse(".cache/ci-local/host.xml").getroot().find("testsuite")
+assert int(suite.get("skipped", 0)) == 0, "Host checks must not skip"
+PY
+```
+
+Keep the host test temporary repositories outside this checkout: Git would otherwise inherit its ignore rules.
+The short system-temp path also avoids Windows path-length failures.
+
+Browser job, with a fresh project. On a Linux machine without Chromium's system libraries, keep `--with-deps` as
+below; on Windows, or a machine that already has them (as the hosted runner image does), use
+`python -m playwright install chromium`. The wrapper exports only the three demo logins to the test process,
+filters database credentials, and redacts console output. Parent Django database fixtures are excluded by
+`--confcutdir`; the browser subtree is excluded from the Docker Django suite.
+
+```sh
+export COMPOSE_PROJECT_NAME=mercer-ci-browser-local
+dc build migrate web
+dc up --detach --wait --wait-timeout 300 db mongo redis
+dc run --rm migrate
+dc run --rm migrate python manage.py import_olist --source /app/tests/fixtures/olist/clean
+dc run --rm migrate python manage.py seed_demo
+dc run --rm migrate python manage.py seed_activity --count 2000
+dc up --detach --wait --wait-timeout 300 web
+dc run --rm migrate python /app/scripts/smoke_olist.py
+python -m playwright install --with-deps chromium
+python -m scripts.browser_suite --env-file "$CI_ENV_FILE" --base-url "http://127.0.0.1:$APP_PORT" --output test-results
+dc down --volumes --remove-orphans
+```
+
+Before filming, run this browser suite once against a fresh full-data stack using
+[Load Olist and demo accounts](#load-olist-and-demo-accounts), then `seed_activity --count 2000`.
+
+For a local artifact check, before teardown run the same browser wrapper with
+`--force-browser-failure --canary-only`; a failing canary is the expected result. Normal runs leave this off.
+Failures retain a trace and screenshot; passwords and authentication cookies are redacted before upload. The
+workflow uploads only sanitized failure artifacts, retained for seven days. To prove hosted behavior, manually
+dispatch the reviewed workflow with `force_browser_failure: true` and inspect its failed browser job's artifacts.
+Local results do not replace that hosted exit check. The format gate runs in the required `quality` job; the separate
+benchmark fixture job is described below and is not a required ruleset check.
+
+## Benchmark (isolated databases)
+
+The approved [benchmark contract](docs/plans/benchmark.md) owns the method and final-run machine. Use explicit
+projects; the runner rejects `mercer`. Budget at least six VM CPUs and eight GiB of Docker memory, plus initial image
+downloads. Each load and correctness pass can take several minutes on a laptop; the full repeated matrix takes
+longer. Actual load/run durations and peak resources are emitted in the retained console/provenance/stats evidence,
+not maintained as prose estimates. Run trials with other heavy workloads stopped. The runner labels an undersized VM
+and refuses `--final` there or on a dirty tree. Warm database buffers are intentional; application caches and telemetry
+are disabled.
+
+From the root (host Python 3.13, standard library only; all database drivers run in the container):
+
+```sh
+python src/tools/init_env.py
+python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
+docker compose -p mercer-bench-local --profile bench build bench-runner
+docker compose -p mercer-bench-local --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-local --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+python -m benchmarks.run --project mercer-bench-local --mode correctness --label first-pass
+docker compose -p mercer-bench-trial --profile bench build bench-runner
+docker compose -p mercer-bench-trial --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-trial --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+python -m benchmarks.run --project mercer-bench-trial --require-clean --mode measure --only baseline,B1,B4 --operations-per-client 5 --label trial
+```
+
+For the designated-machine run, use the [final-run checklist](#final-run-checklist-next-session) below after review.
+The loader requires empty destinations; to reload, explicitly tear down only
+the named benchmark project with `docker compose -p mercer-bench-local --profile bench down --volumes` and repeat.
+Never remove application volumes. PostgreSQL mutation runs use bench_run cloned from bench_template; MongoDB restores
+checksummed NDJSON in ignored benchmarks/results/.state. Each restored MongoDB collection is dropped and recreated
+with its validator and ordered index catalogue; secondary indexes are bulk-built after inserting the documents.
+Both baselines and index catalogues are checked before and after each mutation, including failed attempts.
+B5 runs first and refuses any project with a nonzero restores_since_load counter. Storage probes wait for the
+explicit automatic checkpoint interval plus a margin; the round-trip client needs no extra database privilege.
+B4 restores the original index catalogue in a finally block.
+
+B2 times its queries as first written and, beside them, an idiomatic computation and a maintained summary for each
+engine ([amendment m](docs/plans/benchmark.md#decisions)); the idiomatic and summary variants of both engines return the
+benchmark's columns and nothing else. The pairs that headline each comparison are fixed in
+[benchmarks/headline.py](benchmarks/headline.py), recorded in the provenance and printed by the report as
+`report/b2-headline.csv`; the originals and the application's own queries are reported separately
+(`report/B2*-originals.csv`, no ratio). The load builds the summaries on both engines and B2refresh times rebuilding each
+of them, PostgreSQL's including the application's delivery view.
+
+The runner prints its dated results directory. It holds raw operations, failed checks, run-level and median/range
+CSV summaries, query plans, Docker samples, source/golden hashes, host hardware, server settings, trigger state,
+driver versions and container limits. All workers connect and ping before a barrier; each first result is
+canonicalised against golden before a second barrier releases timing. Later results use plain fetched-row equality.
+The default is five measured operations per client at 1/10/50 clients (`--operations-per-client`), except B2: it
+uses 1/10 clients and twenty operations per client (`--b2-operations-per-client`, minimum five). B2refresh uses one
+client with the B2 count. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the
+default count. Provenance records each B4 case's operation count. Each worker also validates one untimed reference
+operation; B3 keeps fifty buyers. Correctness query passes stay at one client and one operation. The per-workload
+matrix is recorded in provenance alongside the legacy default keys. Throughput excludes setup, initial
+canonicalisation and teardown. The Python no-op
+measures harness overhead; SELECT 1 and MongoDB ping provide the per-engine round-trip noise baselines.
+Per-run CPU is the median of the one-second Docker runner intervals overlapping its timed window, so short runs
+have coarse attribution. Runs at or above 180% runner CPU remain visible with client_saturated=true and contribute
+no headline ratio; summary.csv keeps their metrics and report tables mark them as not headline. Regenerate every chart/table with
+`python -m benchmarks.report benchmarks/results/<run-directory>`. Report files are CSV/SVG, with ratios and absolute
+latencies; amendment-j.csv evaluates noise per B1 parameter set/client count and B4 index. Failed checks have no
+accepted timing. B1 broad retains the planner-chosen MongoDB plan as the headline; documents_hinted separately
+uses spec_attributes with the same golden. No scale-up generator is built; the owner decides after reading that table.
+`report/memory.csv` reports median and peak memory per container for the whole run and each workload. Workload rows
+include only samples whose timestamps lie in the union of that workload's `runs.csv` windows; the median is
+sample-weighted, without interpolation. Whole-run rows also include setup and restoration. Untimed workloads and
+windows without samples retain blank figures with an explicit status. Docker's rounded `MemUsage` makes converted
+byte values approximate. `report/memory-settings.csv` records the original caps, caches and input footprint; the
+footprint is populated only when local input files match every checksum in provenance. Stopped-container CPU
+placeholders are skipped for CPU attribution; independently valid memory samples remain usable. These tables do
+not measure memory for the same operation across engines.
+New result directories are ignored while collecting evidence so subsequent runs can use the same clean commit.
+After inspecting them, stage only the intended directories with `git add -f -- benchmarks/results/<run-directory>`.
+Use --require-clean for recorded reruns; it refuses uncommitted source changes.
+
+Use a different fixture project for benchmark tests:
+
+```sh
+python -c "from pathlib import Path; Path('benchmarks/results').chmod(0o777)"
+docker compose -p mercer-bench-fixture --profile bench build bench-runner
+docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner pytest -c /dev/null --rootdir=/app/benchmarks -q -p no:cacheprovider /app/benchmarks/tests
+docker compose -p mercer-bench-fixture --profile bench down --volumes
+docker compose -p mercer-bench-fixture --profile bench up --detach --wait bench-db bench-mongo
+docker compose -p mercer-bench-fixture --profile bench run --rm bench-runner python -m benchmarks.load --source /app/fixtures/olist/clean
+python -m benchmarks.run --project mercer-bench-fixture --source /app/fixtures/olist/clean --golden fixture --mode correctness --label fixture
+docker compose -p mercer-bench-fixture --profile bench down --volumes
+```
+
+Regenerate independent golden CSVs with
+`python -m benchmarks.reference.compute --source tests/fixtures/olist/clean --output benchmarks/golden/fixture` and
+`python -m benchmarks.reference.compute --source data/derived/olist/clean --output benchmarks/golden/full`.
+The reference never imports a database driver. Its committed output schema fixes decimal scales and Python
+ROUND_HALF_EVEN, and its CSVs have stable LF newlines across Windows and Linux.
+Tests require a freshly loaded fixture project; their restores invalidate B5's freshness counter, so the example
+reloads before the separate correctness pass. The optional CI job does the same, checks the MongoDB kernel range,
+and uploads only the directory printed by its current runner invocation. --only B5,B5restore on a fresh project
+records a fresh footprint plus two restore cycles in storage-restores.csv. The stated storage tolerance is 10%
+with a 64 KiB allocation floor per collection and metric; physical storage probes wait for automatic checkpoints.
+The results-directory permission command lets the container's UID write on Linux; it affects only benchmark
+evidence. The host runner creates writable run directories and replaces container-owned provenance atomically.
+
+Requests also expose `Server-Timing: pg;dur=…, mongo;dur=…` and db_pg_ms/db_pg_queries/db_mongo_ms/db_mongo_commands
+in the existing JSON request line. Counters use request-local state and never log SQL, parameters or command bodies.
+
+### Final-run checklist (next session)
+
+Current report sources, actual experiment limits and historical exclusions are recorded in the
+[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides).
+This checklist remains the reproduction procedure.
+
+The fresh run on Chee Long's machine, on the head of `main` after `improvements/backlog` is merged (record the commit hash and use `--require-clean`), follows [amendment l](docs/plans/benchmark.md#decisions): one clean commit after
+the last code batch, a pilot, then three sessions, each of steps 4 to 5 below with 50 operations per client (B2: 10); the
+baselines run at the start and end of every session, and the headline is the median across sessions. Record the actual
+host and VM resources, leave Windows headroom, and check usable memory against the gate in step 1. The older
+12-CPU/24-GB allocation belonged to a teammate's PC; the owner's actual-resource amendment and the measured overrides
+are recorded in the [11 November close-out](docs/plans/benchmark.md#fresh-driver-evidence-and-collector-blockers-11-november-2026).
+Steps 6 onward (the per-request timing and Redis experiment) run only after every benchmark engine is stopped.
+The driver sessions, stampede/limiter, PR #41 page timing and PR #43 Redis conditions have valid evidence. The Redis
+run retains legitimate refusals and reduced paired coverage; every required comparison is available with those limits.
+Use the [authoritative evidence index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)
+for source revisions, generated figures, historical exclusions and acceptance qualifications. The supplied fresh Opus
+evidence review confirms measurement completeness; its documentation corrections await fresh verification before
+repository delivery. No measurement rerun is required.
+
+Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
+[benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker
+VM settings checked. The commands below use dedicated projects; leave existing application projects alone.
+
+1. **Fresh full-data load.** From the repository root, run the following. To **reload** in steps 4 and 5, repeat the
+   last three commands (`down`, `up`, `load`); the loader requires empty destinations. Check the reported usable
+   memory, not just Docker Desktop's allocation label: `--final` requires at least six CPUs and 8,589,934,592
+   bytes (`8 * 1024**3`). An 8 GB allocation can report less usable memory; raise the allocation until this check
+   meets the gate before loading or piloting.
+
+   ```sh
+   docker info --format 'CPUs={{.NCPU}} memory_bytes={{.MemTotal}}'
+   python src/tools/init_env.py
+   docker compose -p mercer-bench-final --profile bench build bench-runner
+   docker compose -p mercer-bench-final --profile bench down --volumes
+   docker compose -p mercer-bench-final --profile bench up --detach --wait bench-db bench-mongo
+   docker compose -p mercer-bench-final --profile bench run --rm bench-runner python -m benchmarks.load --source /app/data/derived/olist/clean
+   ```
+
+2. **Pilot.** Keep the printed results directory. B2 uses its default 20 operations per client at 1/10 clients.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode measure --only baseline,B1,B2 --operations-per-client 100 --label pilot
+   ```
+
+3. **Choose the counts.** Use the pilot's `host.json` duration and `runs.csv` windows to project the full run, allowing
+   for the remaining workloads and reloads. Keep 100 default operations and 20 for B2 if it fits one sitting;
+   otherwise choose 50 and 10 and state the limit in the report. Check for failed cells/timeouts before continuing.
+   B3 always keeps fifty buyers. Retain the pilot and record the choice in the final run's provenance flags below.
+
+4. **Reload**, then run correctness on the clean tree. B5 refuses any earlier restore, so always reload before a
+   correctness run that includes B5, including a retry after a failed run.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode correctness --require-clean --label final-correctness
+   ```
+
+5. **Reload again**, then run the final matrix. If step 3 selected the fallback, replace `100` with `50` and `20`
+   with `10` in this command. Keep the printed directory and check every correctness gate.
+
+   ```sh
+   python -m benchmarks.run --project mercer-bench-final --mode measure --final --require-clean --operations-per-client 100 --b2-operations-per-client 20 --label final
+   ```
+
+   **The fresh run (amendment l)** repeats this measure command three times on the same clean commit, with labels
+   `session-1` to `session-3`, reloading before each, and records the machine's facts with repeatable
+   `--note KEY=VALUE` options (power plan, sleep and update settings, storage type). The baselines run at the start and
+   end of every session and `report/drift.csv` flags a session whose end differs from its start. The runner also
+   records every container's state before and after and fails the run if a container was killed for memory, restarted or
+   stopped. Combine the sessions with the rule fixed in advance, the median across sessions of each session's run-level
+   median, with every session kept and a damaged one excluded with its reason (a failed check, a container event, a nonzero
+   exit code, or a run that never recorded an exit code or report because it was killed):
+
+   ```sh
+   python -m benchmarks.sessions benchmarks/results/<session-1> benchmarks/results/<session-2> benchmarks/results/<session-3> --output benchmarks/results/sessions
+   ```
+
+   `report/pooled.csv` in each session and `headline.csv` here pool the raw latencies; p95 appears only with 100 pooled
+   samples and p99 only with 500. The pilot may compare the baselines with and without CPU pinning: start the project
+   with `-f compose.yaml -f benchmarks/compose.pinned.yaml` on every compose command (see that file) and pass `--pin`.
+
+6. **Per-request evidence (k2).** Finish the benchmark first and stop its engines. The timing script refuses an
+   active benchmark runner and must never run alongside a benchmark. Prepare a separate full-data app stack using
+   unused loopback ports; this PowerShell example reads demo credentials from the ignored `.env` in place.
+
+   ```powershell
+   docker compose -p mercer-bench-final --profile bench stop
+   $env:APP_PORT = "18082"
+   $env:MONGO_PORT = "0"
+   docker compose -p mercer-request-final up --build --detach --wait
+   docker compose -p mercer-request-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
+   docker compose -p mercer-request-final run --rm migrate python manage.py seed_demo > $null
+   python -m benchmarks.request_timing --project mercer-request-final --base-url http://127.0.0.1:18082
+   ```
+
+   The script uses anonymous shopping requests and a separate in-memory operator session, one warm-up pass and
+   twenty sequential requests per page. It joins response IDs to this project's JSON web logs and saves
+   `requests.csv`, one aggregate CSV per page and `provenance.json`. The category page, facet and detail use the
+   first visible product with attributes in the supplied source files, skipping showcase-only products;
+   the Redis experiment uses the same selector for its controls. The chosen paths are recorded. It retains no
+   credentials, cookies or response bodies.
+   A fixture rehearsal uses `--source tests/fixtures/olist/clean` on a separately loaded fixture app project.
+
+   **The Redis experiment** ([protocol](docs/plans/redis.md#measurement-protocol)) runs next, alone, against the same kind of
+   separate app stack with `seed_activity` loaded as well (events expire after 30 days):
+
+   ```powershell
+   $env:APP_PORT = "18083"
+   $env:MONGO_PORT = "0"
+   docker compose -p mercer-redis-final up --build --detach --wait
+   docker compose -p mercer-redis-final run --rm migrate python manage.py import_olist --source /app/data/derived/olist/clean
+   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_demo > $null
+   docker compose -p mercer-redis-final run --rm migrate python manage.py seed_activity
+   python -m benchmarks.redis_experiment --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
+   python -m benchmarks.redis_stampede --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
+   ```
+
+   The first command first views the control product with a fresh anonymous cookie jar per untimed view until it leads the
+   distinct-visitor trending ranking and the ranking holds still, then measures off,
+   cold, warm and down in four rounds ordered by a seeded Williams design (every condition holds every position once and
+   follows every other condition once; 150 requests per cheap page and 15 for the dashboard per condition and round) and writes `summary.csv`, `ratios.csv`, `verdicts.csv`,
+   `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and
+   off and times the limiter. Smaller `--requests` and `--dashboard-requests` make a pilot, which is marked as such in its
+   provenance and is not evidence. Regenerate the tables with `python -m benchmarks.redis_report <folder>`.
+   Diagnostic schema 1 also writes `data-signatures.json` (public product-ID strings in exact digest order) and
+   `warm-up.csv` (the existing untimed priming responses with exact request-log joins; missing or duplicate priming logs
+   stop the whole run before any samples are written). Both priming and timed responses record UTC receipt time and monotonic milliseconds since the first untimed
+   request of their condition. Priming is excluded from measured samples and gates; no HTML or session data is saved.
+   Provenance records digest version 2. Link changes and warm misses remain refusals, including legitimate rolling-window
+   changes or expiry; the diagnostics provide evidence for investigation, not a cause or an acceptance override.
+
+7. **Regenerate tables if needed.** `benchmarks.run` already runs `benchmarks.report` for each benchmark run. Use
+   this command only to regenerate its tables and charts; the k2 directory has its own CSVs and does not use the
+   driver report generator.
+
+   ```sh
+   python -m benchmarks.report benchmarks/results/<run-directory>
+   ```
+
+8. **Retain the reviewed evidence.** Inspect all outputs, then explicitly stage only these run directories (replace
+   each placeholder with the directory printed by its command).
+
+   ```sh
+   git add -f -- benchmarks/results/<pilot-run-directory> benchmarks/results/<correctness-run-directory> benchmarks/results/<final-run-directory> benchmarks/results/<request-timing-directory>
+   ```
+
+9. **Tear down only the projects created here**, after the evidence is saved. In PowerShell, clear the temporary
+   port overrides for subsequent work.
+
+   ```powershell
+   docker compose -p mercer-bench-final --profile bench down --volumes
+   docker compose -p mercer-request-final down --volumes
+   docker compose -p mercer-redis-final down --volumes
+   Remove-Item Env:APP_PORT, Env:MONGO_PORT
+   ```
+
 ## Regenerate the data (optional)
 
 The raw files are never edited. The preparation image pins Python by digest and pandas/NumPy/pytest versions, and has
@@ -887,31 +985,6 @@ python scripts/package_submission.py --check-only ../Team82.zip
 
 Exit status 1 means a check failed; look at every WARN line by hand.
 
-## Troubleshooting
-
-- **`mongo` never becomes healthy and mongosh reports an unrecognised option:** older startup commands treated a
-  leading `-` in `MONGO_ROOT_PASSWORD` as an option. The startup script and healthcheck now use attached
-  `--username=...` and `--password=...` arguments; newly generated secrets also avoid a leading dash.
-  With these commands a dash-leading password works as it is, so there is no need to change it. If you do change it,
-  do so only on an empty MongoDB volume: credentials apply only when the volume is first created, and editing `.env`
-  does not rotate an existing database user's password. Do not delete application data to resolve this error.
-- **`mongo` exits at start-up on Linux** with "MongoDB cannot start: Linux kernel versions 6.19 and newer ...": MongoDB
-  8.0 to 9.0 refuse kernels 6.19 to 7.0.13 (MongoDB SERVER-121912) when Docker Engine shares the host kernel. Use Docker
-  Desktop (its own virtual machine), a kernel older than 6.19 or 7.0.14 and later, or WSL2 on Windows.
-  Ubuntu reports every 7.0 kernel as `7.0.0-…` (for example Ubuntu 26.04), so MongoDB refuses it even when the fix is
-  included (MongoDB SERVER-136848); use Docker Desktop or an Ubuntu 22.04/24.04 kernel older than 6.19 there. CI
-  runs its database job on `ubuntu-22.04` for the same reason.
-- **Docker "cannot find the file specified" (`dockerDesktopLinuxEngine`) on Windows:** Docker Desktop is not running.
-- **Git Bash on Windows turns `/app/...` into a Windows path:** run the commands in PowerShell, or set
-  `MSYS_NO_PATHCONV=1` first.
-- **A variable "is missing a value"** from Compose: run `python src/tools/init_env.py`.
-- **Port already in use:** change `APP_PORT` or `MONGO_PORT` in `.env`.
-- **Host pytest reports Access denied for an existing pytest temp directory:** pass `--basetemp` with a new temporary
-  directory outside this repository. Keep the Git-index documentation tests outside the repository's ignored folders,
-  so their temporary trees do not inherit the parent repository's Git discovery.
-- **Roles or database images changed after you pulled:** `docker compose down --volumes`, then start again.
-- **SELinux hosts:** bind mounts carry the `:z` label already; no `chcon` is needed.
-
 ## Repository layout
 
 ```text
@@ -920,7 +993,7 @@ src/            Django application (Dockerfile, requirements, docker/ set-up scr
 tests/          pytest suite on the real databases
 analytics/      Olist profiler and pipeline tests
 data/           raw and derived Olist data, checksums, licences
-scripts/        check_docs.py (git hook and CI), package_submission.py
+scripts/        check_docs.py (git hook and CI), package_submission.py, demo/ (psql and mongosh demonstrations)
 docs/           DATA_MODEL.md, DECISIONS.md, AI_USE.md, licenses/, plans/ (one per workstream)
 ```
 
@@ -934,6 +1007,6 @@ Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#
 | MUHAMMAD ERFAN BIN MOHAN | 2500722 | Planning and setup |
 | MOHAMMED SYAHFARIZ BIN EFFENDY | 2500717 | Supporting developer, QA |
 | JUN KEAT LIM | 2501004 | Supporting developer, QA |
-| JOASH | to add | Supporting developer, QA |
+| JOASH TAN EE | 2501571 | Supporting developer, QA |
 
 Individual contributions: [CONTRIBUTIONS.md](CONTRIBUTIONS.md). AI use: [docs/AI_USE.md](docs/AI_USE.md).
