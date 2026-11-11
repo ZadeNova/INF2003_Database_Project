@@ -1007,6 +1007,6 @@ Where each kind of fact lives is the documentation map in [AGENTS.md](AGENTS.md#
 | MUHAMMAD ERFAN BIN MOHAN | 2500722 | Planning and setup |
 | MOHAMMED SYAHFARIZ BIN EFFENDY | 2500717 | Supporting developer, QA |
 | JUN KEAT LIM | 2501004 | Supporting developer, QA |
-| JOASH | to add | Supporting developer, QA |
+| JOASH TAN EE | 2501571 | Supporting developer, QA |
 
 Individual contributions: [CONTRIBUTIONS.md](CONTRIBUTIONS.md). AI use: [docs/AI_USE.md](docs/AI_USE.md).
