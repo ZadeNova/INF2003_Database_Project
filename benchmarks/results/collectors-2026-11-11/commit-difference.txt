@@ -1,0 +1,8 @@
+ PLAN.md                      |  2 +-
+ README.md                    |  3 ++-
+ benchmarks/request_timing.py | 18 +++++++++++-------
+ docs/AI_USE.md               |  1 +
+ docs/DECISIONS.md            |  6 ++++++
+ docs/plans/benchmark.md      | 22 ++++++++++++++++++++++
+ tests/test_request_timing.py | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 85 insertions(+), 9 deletions(-)

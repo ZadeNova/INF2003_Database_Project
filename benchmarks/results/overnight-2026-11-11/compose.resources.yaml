@@ -1,0 +1,5 @@
+services:
+  bench-db:
+    cpus: 4
+  bench-mongo:
+    cpus: 4

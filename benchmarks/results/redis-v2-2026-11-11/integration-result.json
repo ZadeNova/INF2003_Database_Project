@@ -1,0 +1,18 @@
+{
+  "main_integrated": "b82ac876e9ff0fa4d3f530d81d70fa2b434c8e43",
+  "original_head": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78",
+  "original_index_tree": "5228fdba32040a700e0d1fca145bfeff43b9135f",
+  "collector_index_tree": "6d8c9972cc8759322374049da30bf8ac2e8db655",
+  "prior_staged_evidence_blobs_unchanged": 1036,
+  "collector_index_unchanged": true,
+  "resolutions": [
+    {
+      "path": "PLAN.md",
+      "resolution": "retain pending evidence status for subsequent update"
+    },
+    {
+      "path": "PLAN.md",
+      "resolution": "retain pending evidence status for subsequent update"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+Updating eb9b39e..b82ac87
+Fast-forward
+ PLAN.md                        |   4 +-
+ README.md                      |   6 ++
+ benchmarks/redis_experiment.py |  85 +++++++++++++++++++------
+ benchmarks/redis_stats.py      |  12 +++-
+ docs/AI_USE.md                 |   1 +
+ docs/DECISIONS.md              |   1 +
+ docs/plans/benchmark.md        |  39 ++++++++++++
+ docs/plans/redis.md            |   9 ++-
+ tests/test_redis_experiment.py | 137 +++++++++++++++++++++++++++++++++++++++++
+ 9 files changed, 271 insertions(+), 23 deletions(-)

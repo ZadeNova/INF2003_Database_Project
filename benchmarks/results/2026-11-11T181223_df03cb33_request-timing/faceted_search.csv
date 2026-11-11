@@ -1,0 +1,2 @@
+page,path,requests,duration_ms_median,duration_ms_p95,db_pg_ms_median,db_pg_ms_p95,db_pg_queries_median,db_pg_queries_p95,db_mongo_ms_median,db_mongo_ms_p95,db_mongo_commands_median,db_mongo_commands_p95,db_share_percent_median,db_share_percent_p95,db_pg_queries_total,db_mongo_commands_total,db_share_percent_total
+faceted_search,/products/?category=33&attr_activity=fitness,20,210.65,245.99,176.446,211.26,10.0,10,8.219999999999999,9.231,8.0,8,87.81660933481737,89.25525427862921,200,160,88.07150421290115

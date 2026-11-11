@@ -1,0 +1,26 @@
+{
+  "copied_prior_result_directories": [
+    "2026-11-11T022529_505222f4_pilot-b2",
+    "2026-11-11T025810_505222f4_pilot-resource-b2",
+    "2026-11-11T053250_505222f4_pilot-memory-b2",
+    "2026-11-11T080502_505222f4_pilot-memory-unpinned",
+    "2026-11-11T081553_505222f4_pilot-memory-pinned",
+    "2026-11-11T081736_505222f4_overnight-correctness",
+    "2026-11-11T083004_505222f4_overnight-bm4",
+    "2026-11-11T083148_505222f4_overnight-session-1",
+    "2026-11-11T112007_505222f4_overnight-session-2",
+    "2026-11-11T141404_505222f4_overnight-session-3",
+    "2026-11-11T171240_505222f4_redis",
+    "2026-11-11T171256_505222f4_redis-stampede"
+  ],
+  "copied_overnight_index": "overnight-2026-11-11; analytical validators included, local orchestration excluded",
+  "original_checkout_modified": false,
+  "reconciled_documents": [
+    "PLAN.md",
+    "README.md",
+    "docs/AI_USE.md",
+    "docs/DECISIONS.md",
+    "docs/plans/benchmark.md"
+  ],
+  "PR41_additions": "preserved; PLAN status reconciled with explicit collector continuation"
+}

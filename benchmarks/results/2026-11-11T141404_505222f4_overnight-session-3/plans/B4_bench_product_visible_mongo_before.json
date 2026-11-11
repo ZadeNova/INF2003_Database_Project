@@ -1,0 +1,731 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "purchasable": {
+              "$eq": true
+            }
+          },
+          "indexFilterSet": false,
+          "queryHash": "80BDD74B",
+          "planCacheShapeHash": "80BDD74B",
+          "planCacheKey": "7403E8CA",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 132,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "transformBy": {
+              "_id": 1,
+              "lead_time_days": 1,
+              "stock": 1
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "filter": {
+                "purchasable": {
+                  "$eq": true
+                }
+              },
+              "nss": "bench.products",
+              "direction": "forward"
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 13538,
+          "executionTimeMillis": 3712,
+          "executionTimeMicros": 3712076,
+          "totalKeysExamined": 0,
+          "totalDocsExamined": 34211,
+          "executionStages": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "nReturned": 13538,
+            "executionTimeMillisEstimate": 4,
+            "works": 34212,
+            "advanced": 13538,
+            "needTime": 20673,
+            "needYield": 0,
+            "saveState": 16,
+            "restoreState": 15,
+            "isEOF": 1,
+            "transformBy": {
+              "_id": 1,
+              "lead_time_days": 1,
+              "stock": 1
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "filter": {
+                "purchasable": {
+                  "$eq": true
+                }
+              },
+              "nReturned": 13538,
+              "executionTimeMillisEstimate": 4,
+              "works": 34212,
+              "advanced": 13538,
+              "needTime": 20673,
+              "needYield": 0,
+              "saveState": 16,
+              "restoreState": 15,
+              "isEOF": 1,
+              "nss": "bench.products",
+              "direction": "forward",
+              "docsExamined": 34211,
+              "seeks": 0
+            }
+          }
+        }
+      },
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 5
+    },
+    {
+      "$lookup": {
+        "from": "orders",
+        "as": "sales",
+        "localField": "_id",
+        "foreignField": "lines.product_id",
+        "let": {
+          "pid": "$_id"
+        },
+        "pipeline": [
+          {
+            "$match": {
+              "$and": [
+                {
+                  "placed_at": {
+                    "$gte": {
+                      "$date": "2026-09-30T16:00:00Z"
+                    }
+                  }
+                },
+                {
+                  "placed_at": {
+                    "$lt": {
+                      "$date": "2026-10-28T16:00:00Z"
+                    }
+                  }
+                },
+                {
+                  "$or": [
+                    {
+                      "status": {
+                        "$not": {
+                          "$eq": "cancelled"
+                        }
+                      }
+                    },
+                    {
+                      "cancelled_at": {
+                        "$gte": {
+                          "$date": "2026-10-28T16:00:00Z"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "$unwind": {
+              "path": "$lines"
+            }
+          },
+          {
+            "$match": {
+              "$and": [
+                {
+                  "lines.product_id": {
+                    "$_internalExprEq": 34210
+                  }
+                },
+                {
+                  "$expr": {
+                    "$eq": [
+                      "$lines.product_id",
+                      {
+                        "$const": 34210
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "$dateTrunc": {
+                  "date": "$placed_at",
+                  "unit": {
+                    "$const": "day"
+                  },
+                  "timezone": {
+                    "$const": "Asia/Singapore"
+                  }
+                }
+              },
+              "units": {
+                "$sum": "$lines.quantity"
+              },
+              "$willBeMerged": false
+            }
+          }
+        ]
+      },
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 2221,
+      "totalDocsExamined": 4430,
+      "totalKeysExamined": 4430,
+      "collectionScans": 0,
+      "indexesUsed": [
+        "bench_order_product_date"
+      ],
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$set": {
+        "days": {
+          "$map": {
+            "input": {
+              "$const": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27
+              ]
+            },
+            "as": "offset",
+            "in": {
+              "$dateAdd": {
+                "startDate": {
+                  "$const": {
+                    "$date": "2026-09-30T16:00:00Z"
+                  }
+                },
+                "unit": {
+                  "$const": "day"
+                },
+                "amount": "$$offset",
+                "timezone": {
+                  "$const": "Asia/Singapore"
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 2221,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$unwind": {
+        "path": "$days"
+      },
+      "nReturned": 379064,
+      "executionTimeMillisEstimate": 2221
+    },
+    {
+      "$set": {
+        "units": {
+          "$convert": {
+            "input": {
+              "$sum": [
+                {
+                  "$map": {
+                    "input": {
+                      "$filter": {
+                        "input": "$sales",
+                        "as": "s",
+                        "cond": {
+                          "$eq": [
+                            "$$s._id",
+                            "$days"
+                          ]
+                        }
+                      }
+                    },
+                    "as": "s",
+                    "in": "$$s.units"
+                  }
+                }
+              ]
+            },
+            "to": {
+              "$const": "decimal"
+            }
+          }
+        }
+      },
+      "nReturned": 379064,
+      "executionTimeMillisEstimate": 2221,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "_id": 1,
+          "days": 1
+        },
+        "outputSortKeyMetadata": true
+      },
+      "totalDataSizeSortedBytesEstimate": 372161216,
+      "usedDisk": true,
+      "spills": 4,
+      "spilledBytes": 53777192,
+      "spilledRecords": 379064,
+      "spilledDataStorageSize": 6806188,
+      "nReturned": 379064,
+      "executionTimeMillisEstimate": 2878,
+      "peakTrackedMemBytes": 103808812
+    },
+    {
+      "$_internalSetWindowFields": {
+        "partitionBy": "$_id",
+        "sortBy": {
+          "days": 1
+        },
+        "output": {
+          "daily_demand": {
+            "$avg": "$units",
+            "window": {
+              "range": [
+                -27,
+                0
+              ],
+              "unit": "day"
+            }
+          },
+          "units_28": {
+            "$sum": "$units",
+            "window": {
+              "range": [
+                -27,
+                0
+              ],
+              "unit": "day"
+            }
+          }
+        }
+      },
+      "nReturned": 379064,
+      "executionTimeMillisEstimate": 3611,
+      "maxFunctionMemoryUsageBytes": {
+        "daily_demand": 1696,
+        "units_28": 1688
+      },
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 189416
+    },
+    {
+      "$match": {
+        "days": {
+          "$eq": {
+            "$date": "2026-10-27T16:00:00Z"
+          }
+        }
+      },
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 3695,
+      "expressionEvaluationPeakMemoryBytes": 512
+    },
+    {
+      "$project": {
+        "daily_demand": true,
+        "product_id": "$_id",
+        "days_cover": {
+          "$cond": [
+            {
+              "$gt": [
+                "$units_28",
+                {
+                  "$const": 0
+                }
+              ]
+            },
+            {
+              "$divide": [
+                {
+                  "$multiply": [
+                    "$stock",
+                    {
+                      "$const": 28
+                    }
+                  ]
+                },
+                "$units_28"
+              ]
+            },
+            {
+              "$const": null
+            }
+          ]
+        },
+        "replenish": {
+          "$and": [
+            {
+              "$gt": [
+                "$units_28",
+                {
+                  "$const": 0
+                }
+              ]
+            },
+            {
+              "$lt": [
+                {
+                  "$multiply": [
+                    "$stock",
+                    {
+                      "$const": 28
+                    }
+                  ]
+                },
+                {
+                  "$multiply": [
+                    "$lead_time_days",
+                    "$units_28"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "_id": false
+      },
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 3704,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "product_id": 1
+        }
+      },
+      "totalDataSizeSortedBytesEstimate": 9548920,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 13538,
+      "executionTimeMillisEstimate": 3704,
+      "peakTrackedMemBytes": 9548920
+    }
+  ],
+  "queryShapeHash": "4CE59B31390E234377AE32200B8BD683EFBC871F4FF798EA20279DD62B403969",
+  "peakTrackedMemBytes": 103844483,
+  "serverInfo": {
+    "host": "beabbea56182",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "purchasable": true
+        }
+      },
+      {
+        "$lookup": {
+          "from": "orders",
+          "localField": "_id",
+          "foreignField": "lines.product_id",
+          "let": {
+            "pid": "$_id"
+          },
+          "pipeline": [
+            {
+              "$match": {
+                "placed_at": {
+                  "$gte": {
+                    "$date": "2026-09-30T16:00:00Z"
+                  },
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                },
+                "$or": [
+                  {
+                    "status": {
+                      "$ne": "cancelled"
+                    }
+                  },
+                  {
+                    "cancelled_at": {
+                      "$gte": {
+                        "$date": "2026-10-28T16:00:00Z"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "$unwind": "$lines"
+            },
+            {
+              "$match": {
+                "$expr": {
+                  "$eq": [
+                    "$lines.product_id",
+                    "$$pid"
+                  ]
+                }
+              }
+            },
+            {
+              "$group": {
+                "_id": {
+                  "$dateTrunc": {
+                    "date": "$placed_at",
+                    "unit": "day",
+                    "timezone": "Asia/Singapore"
+                  }
+                },
+                "units": {
+                  "$sum": "$lines.quantity"
+                }
+              }
+            }
+          ],
+          "as": "sales"
+        }
+      },
+      {
+        "$set": {
+          "days": {
+            "$map": {
+              "input": {
+                "$range": [
+                  0,
+                  28
+                ]
+              },
+              "as": "offset",
+              "in": {
+                "$dateAdd": {
+                  "startDate": {
+                    "$date": "2026-09-30T16:00:00Z"
+                  },
+                  "unit": "day",
+                  "amount": "$$offset",
+                  "timezone": "Asia/Singapore"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "$unwind": "$days"
+      },
+      {
+        "$set": {
+          "units": {
+            "$toDecimal": {
+              "$sum": {
+                "$map": {
+                  "input": {
+                    "$filter": {
+                      "input": "$sales",
+                      "as": "s",
+                      "cond": {
+                        "$eq": [
+                          "$$s._id",
+                          "$days"
+                        ]
+                      }
+                    }
+                  },
+                  "as": "s",
+                  "in": "$$s.units"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "$setWindowFields": {
+          "partitionBy": "$_id",
+          "sortBy": {
+            "days": 1
+          },
+          "output": {
+            "daily_demand": {
+              "$avg": "$units",
+              "window": {
+                "range": [
+                  -27,
+                  0
+                ],
+                "unit": "day"
+              }
+            },
+            "units_28": {
+              "$sum": "$units",
+              "window": {
+                "range": [
+                  -27,
+                  0
+                ],
+                "unit": "day"
+              }
+            }
+          }
+        }
+      },
+      {
+        "$match": {
+          "days": {
+            "$date": "2026-10-27T16:00:00Z"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id",
+          "daily_demand": 1,
+          "days_cover": {
+            "$cond": [
+              {
+                "$gt": [
+                  "$units_28",
+                  0
+                ]
+              },
+              {
+                "$divide": [
+                  {
+                    "$multiply": [
+                      "$stock",
+                      28
+                    ]
+                  },
+                  "$units_28"
+                ]
+              },
+              null
+            ]
+          },
+          "replenish": {
+            "$and": [
+              {
+                "$gt": [
+                  "$units_28",
+                  0
+                ]
+              },
+              {
+                "$lt": [
+                  {
+                    "$multiply": [
+                      "$stock",
+                      28
+                    ]
+                  },
+                  {
+                    "$multiply": [
+                      "$lead_time_days",
+                      "$units_28"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "$sort": {
+          "product_id": 1
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794386188,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "8JYv0tqF+MIIMJJoYl5hdDhJkX0=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706792966941048841
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794386188,
+      "i": 1
+    }
+  }
+}

@@ -1,0 +1,10 @@
+session,cpu_model,host_reported_ram_bytes,vm_cpus,vm_usable_ram_bytes,vm_meets_gate,container,cpu_limit,memory_limit_bytes,memory_plus_swap_limit_bytes,cpuset
+1,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-db-1,4.0,3221225472,3221225472,0-3
+1,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-mongo-1,4.0,3221225472,3221225472,4-7
+1,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,runner,2.0,2147483648,2147483648,8-9
+2,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-db-1,4.0,3221225472,3221225472,0-3
+2,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-mongo-1,4.0,3221225472,3221225472,4-7
+2,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,runner,2.0,2147483648,2147483648,8-9
+3,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-db-1,4.0,3221225472,3221225472,0-3
+3,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,/mercer-bench-overnight-bench-mongo-1,4.0,3221225472,3221225472,4-7
+3,AMD Ryzen 5 5600X 6-Core Processor,17084600320,12,10429972480,True,runner,2.0,2147483648,2147483648,8-9

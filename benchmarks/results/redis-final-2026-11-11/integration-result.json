@@ -1,0 +1,19 @@
+{
+  "main_integrated": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78",
+  "branch": "benchmark/overnight-evidence-2026-11-11",
+  "pending_original_documents_preserved_in_backups_and_reconciled": true,
+  "collector_index_unchanged": true,
+  "collector_artifacts_copied": 984,
+  "additive_conflict_resolutions": [
+    {
+      "path": "PLAN.md",
+      "method": "retain pending evidence statuses; final Redis result status updated subsequently"
+    },
+    {
+      "path": "PLAN.md",
+      "method": "retain pending evidence statuses; final Redis result status updated subsequently"
+    }
+  ],
+  "new_result_directory": "2026-11-11T190658_eb9b39eb_redis",
+  "application_benchmark_edits_relative_to_current_main": []
+}

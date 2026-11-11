@@ -1,0 +1,49 @@
+{
+  "verified": true,
+  "exit_code": 1,
+  "rows": [
+    {
+      "output": "BM4_corrupted_result",
+      "engine": "postgres",
+      "variant": "expected_failure",
+      "clients": "1",
+      "run": "1",
+      "phase": "measured",
+      "seed": "82",
+      "status": "failed",
+      "accepted": "False",
+      "operations": "1",
+      "errors": "1",
+      "retries": "0",
+      "p50_ms": "",
+      "p95_ms": "",
+      "throughput_ops_s": "",
+      "window_start_ns": "1794357007304560747",
+      "window_end_ns": "1794357007304561647",
+      "runner_cpu_median_percent": "0.0",
+      "client_saturated": "False"
+    },
+    {
+      "output": "BM4_violated_invariant",
+      "engine": "mongo",
+      "variant": "expected_failure",
+      "clients": "10",
+      "run": "1",
+      "phase": "measured",
+      "seed": "82",
+      "status": "failed",
+      "accepted": "False",
+      "operations": "50",
+      "errors": "0",
+      "retries": "95",
+      "p50_ms": "",
+      "p95_ms": "",
+      "throughput_ops_s": "",
+      "window_start_ns": "1794357014141449968",
+      "window_end_ns": "1794357014221169082",
+      "runner_cpu_median_percent": "99.72",
+      "client_saturated": "False"
+    }
+  ],
+  "directory": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T083004_505222f4_overnight-bm4"
+}

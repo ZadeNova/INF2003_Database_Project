@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Github repos\INF2003_Database_Project\.cache\collectors-final\benchmarks\results\collectors-2026-11-11\validate_collectors.py", line 4, in <module>
+    from benchmarks import request_timing as timing
+ImportError: cannot import name 'request_timing' from 'benchmarks' (unknown location)

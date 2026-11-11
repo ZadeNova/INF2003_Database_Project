@@ -1,0 +1,6 @@
+round,condition,page,reason,samples
+1,warm,search,cache status 'miss' in a warm condition,1
+2,down,search,data differs from the off condition's in the same round,150
+2,down,shop,data differs from the off condition's in the same round,147
+2,warm,search,data differs from the off condition's in the same round,150
+2,warm,shop,data differs from the off condition's in the same round,150

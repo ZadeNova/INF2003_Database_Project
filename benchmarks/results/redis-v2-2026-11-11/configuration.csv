@@ -1,0 +1,6 @@
+container,image,image_id,cpus,memory_bytes,memory_swap_bytes,cpuset,docker_cpus,docker_memory_bytes
+/mercer-redis-digest2-final-db-1,postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8,sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8,0.0,0,0,,12,10429972480
+/mercer-redis-digest2-final-migrate-1,mercer-redis-digest2-final-app-dev,sha256:aa73532845c87de897afa7dd754cbb7b8e1e81f3fe9c470878fe0e70c9b907fc,0.0,0,0,,12,10429972480
+/mercer-redis-digest2-final-mongo-1,mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8,sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8,0.0,0,0,,12,10429972480
+/mercer-redis-digest2-final-redis-1,redis:8-bookworm@sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d,sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d,1.0,268435456,536870912,,12,10429972480
+/mercer-redis-digest2-final-web-1,mercer-redis-digest2-final-app,sha256:d6753be2588dff20a049682440eade98fdc52fbd1fe5fafb1d6c361a5966c78f,0.0,0,0,,12,10429972480

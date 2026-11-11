@@ -1,0 +1,141 @@
+ Image mercer-redis-report-final-app Building 
+ Image mercer-redis-report-final-app-dev Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.25kB 0.1s done
+#1 DONE 0.1s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 762B done
+#2 DONE 0.0s
+
+#3 [web internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [web internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 DONE 1.6s
+
+#5 [migrate internal] load .dockerignore
+#5 transferring context: 274B done
+#5 DONE 0.0s
+
+#6 [web runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#6 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#6 DONE 0.0s
+
+#7 [web internal] load build context
+#7 transferring context: 1.87MB 0.4s done
+#7 DONE 0.4s
+
+#8 [migrate runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#8 CACHED
+
+#9 [migrate runtime 5/6] COPY . .
+#9 CACHED
+
+#10 [migrate runtime 2/6] WORKDIR /app
+#10 CACHED
+
+#11 [migrate runtime 3/6] COPY requirements.txt .
+#11 CACHED
+
+#12 [migrate runtime 6/6] RUN python tools/collect_static.py
+#12 CACHED
+
+#13 [migrate dev 1/2] COPY requirements-dev.txt .
+#13 CACHED
+
+#14 [migrate dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#14 CACHED
+
+#15 [migrate] exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:34914b91ae031549e24f500243114b7fec1a294770f02c538dba9d5362e85b65 0.0s done
+#15 exporting config sha256:a2194a5c4c254dae4756acdcd369ed084aece4c1c1d3e85c984942adf71cd878
+#15 exporting config sha256:a2194a5c4c254dae4756acdcd369ed084aece4c1c1d3e85c984942adf71cd878 0.0s done
+#15 exporting attestation manifest sha256:ae14a72e16dc1899c883ebf29a72385d809e823c233960f6ff6d7b8656f726e0 0.0s done
+#15 exporting manifest list sha256:89b82562462292ad1f890ce8ff1efe18413de8e2b663d0831a2315ae3e2763e2 0.0s done
+#15 naming to docker.io/library/mercer-redis-report-final-app-dev:latest done
+#15 unpacking to docker.io/library/mercer-redis-report-final-app-dev:latest
+#15 unpacking to docker.io/library/mercer-redis-report-final-app-dev:latest 0.0s done
+#15 DONE 0.2s
+
+#16 [web] exporting to image
+#16 exporting layers done
+#16 exporting manifest sha256:aec9a0c142b1bc4d9b7ee6987155ad017a52633efa55b5d4dd026a10e407df9d 0.0s done
+#16 exporting config sha256:71fecd37a4a7e4b3629c3873d46af58c85fbedb684b504410dd07fb6ea8b20fe 0.0s done
+#16 exporting attestation manifest sha256:6abffdaa0e9c8f1a9fbec080dbf4cad992c6c05b78324857287bb3e0d525bc76 0.0s done
+#16 exporting manifest list sha256:5e065dc8518cb2c969cb7eaf85c98b9b1e9bb6c28255bd9bb65db70dcdefd9f6 0.0s done
+#16 naming to docker.io/library/mercer-redis-report-final-app:latest done
+#16 unpacking to docker.io/library/mercer-redis-report-final-app:latest 0.0s done
+#16 DONE 0.2s
+
+#17 [web] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [migrate] resolving provenance for metadata file
+#18 DONE 0.0s
+ Image mercer-redis-report-final-app-dev Built 
+ Image mercer-redis-report-final-app Built 
+ Volume mercer-redis-report-final_mongo_data Creating 
+ Volume mercer-redis-report-final_postgres_data Creating 
+ Volume mercer-redis-report-final_mongo_data Creating 
+ Volume mercer-redis-report-final_postgres_data Creating 
+ Network mercer-redis-report-final_default Creating 
+ Volume mercer-redis-report-final_mongo_keyfile Creating 
+ Volume mercer-redis-report-final_mongo_keyfile Creating 
+ Network mercer-redis-report-final_default Creating 
+ Volume mercer-redis-report-final_mongo_data Created 
+ Volume mercer-redis-report-final_mongo_data Created 
+ Volume mercer-redis-report-final_mongo_keyfile Created 
+ Volume mercer-redis-report-final_mongo_keyfile Created 
+ Volume mercer-redis-report-final_postgres_data Created 
+ Volume mercer-redis-report-final_postgres_data Created 
+ Network mercer-redis-report-final_default Created 
+ Network mercer-redis-report-final_default Created 
+ Container mercer-redis-report-final-redis-1 Creating 
+ Container mercer-redis-report-final-mongo-1 Creating 
+ Container mercer-redis-report-final-db-1 Creating 
+ Container mercer-redis-report-final-redis-1 Created 
+ Container mercer-redis-report-final-mongo-1 Created 
+ Container mercer-redis-report-final-db-1 Created 
+ Container mercer-redis-report-final-migrate-1 Creating 
+ Container mercer-redis-report-final-migrate-1 Created 
+ Container mercer-redis-report-final-web-1 Creating 
+ Container mercer-redis-report-final-web-1 Created 
+ Container mercer-redis-report-final-redis-1 Starting 
+ Container mercer-redis-report-final-db-1 Starting 
+ Container mercer-redis-report-final-mongo-1 Starting 
+ Container mercer-redis-report-final-redis-1 Started 
+ Container mercer-redis-report-final-db-1 Started 
+ Container mercer-redis-report-final-mongo-1 Started 
+ Container mercer-redis-report-final-db-1 Waiting 
+ Container mercer-redis-report-final-mongo-1 Waiting 
+ Container mercer-redis-report-final-redis-1 Waiting 
+ Container mercer-redis-report-final-db-1 Healthy 
+ Container mercer-redis-report-final-redis-1 Healthy 
+ Container mercer-redis-report-final-mongo-1 Healthy 
+ Container mercer-redis-report-final-migrate-1 Starting 
+ Container mercer-redis-report-final-migrate-1 Started 
+ Container mercer-redis-report-final-db-1 Waiting 
+ Container mercer-redis-report-final-mongo-1 Waiting 
+ Container mercer-redis-report-final-migrate-1 Waiting 
+ Container mercer-redis-report-final-redis-1 Waiting 
+ Container mercer-redis-report-final-mongo-1 Healthy 
+ Container mercer-redis-report-final-redis-1 Healthy 
+ Container mercer-redis-report-final-db-1 Healthy 
+ Container mercer-redis-report-final-migrate-1 Exited 
+ Container mercer-redis-report-final-web-1 Starting 
+ Container mercer-redis-report-final-web-1 Started 
+ Container mercer-redis-report-final-mongo-1 Waiting 
+ Container mercer-redis-report-final-redis-1 Waiting 
+ Container mercer-redis-report-final-migrate-1 Waiting 
+ Container mercer-redis-report-final-db-1 Waiting 
+ Container mercer-redis-report-final-web-1 Waiting 
+ Container mercer-redis-report-final-migrate-1 Exited 
+ Container mercer-redis-report-final-db-1 Healthy 
+ Container mercer-redis-report-final-redis-1 Healthy 
+ Container mercer-redis-report-final-mongo-1 Healthy 
+ Container mercer-redis-report-final-web-1 Healthy 

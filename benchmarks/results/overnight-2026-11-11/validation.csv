@@ -1,0 +1,4 @@
+session,directory,commit,exit_code,failed_checks,container_events,baseline_drift_flags,raw_sha256_verified,raw_operations,accepted_operations,raw_failed_operations,report_files,query_plan_files,duration_seconds
+1,2026-11-11T083148_505222f4_overnight-session-1,505222f41b7473260ed9f40bb3bbaf8eafa46757,0,0,0,0,True,480200,400150,0,66,68,9995.1905119
+2,2026-11-11T112007_505222f4_overnight-session-2,505222f41b7473260ed9f40bb3bbaf8eafa46757,0,0,0,0,True,480200,400150,0,66,68,10338.719631500004
+3,2026-11-11T141404_505222f4_overnight-session-3,505222f41b7473260ed9f40bb3bbaf8eafa46757,0,0,0,0,True,480200,400150,0,66,68,10580.883428699992

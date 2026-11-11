@@ -1,0 +1,135 @@
+ Image mercer-redis-collectors-app-dev Building 
+ Image mercer-redis-collectors-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.22kB 0.1s done
+#1 DONE 0.1s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 762B done
+#2 DONE 0.0s
+
+#3 [web internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 DONE 0.0s
+
+#4 [migrate internal] load .dockerignore
+#4 transferring context: 274B done
+#4 DONE 0.0s
+
+#5 [web runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#5 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#5 DONE 0.0s
+
+#6 [migrate internal] load build context
+#6 transferring context: 11.50kB 0.0s done
+#6 DONE 0.0s
+
+#7 [migrate runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#7 CACHED
+
+#8 [migrate runtime 2/6] WORKDIR /app
+#8 CACHED
+
+#9 [migrate runtime 5/6] COPY . .
+#9 CACHED
+
+#10 [migrate runtime 3/6] COPY requirements.txt .
+#10 CACHED
+
+#11 [migrate runtime 6/6] RUN python tools/collect_static.py
+#11 CACHED
+
+#12 [migrate dev 1/2] COPY requirements-dev.txt .
+#12 CACHED
+
+#13 [migrate dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#13 CACHED
+
+#14 [migrate] exporting to image
+#14 exporting layers done
+#14 exporting manifest sha256:3a748ffefdad3f640c4c2b181340542d5c7f3ab8e22354705c5e7ff06e6986a5
+#14 exporting manifest sha256:3a748ffefdad3f640c4c2b181340542d5c7f3ab8e22354705c5e7ff06e6986a5 0.0s done
+#14 exporting config sha256:30dfca09506e555ffb4284b041ce7fb8871dfde6abf39390cd45b3381bd69e72 0.0s done
+#14 exporting attestation manifest sha256:a0d3726177e2ade542b54fde8803e8ce632325be0dbf557f84c675c5181b8e43 0.0s done
+#14 exporting manifest list sha256:7f6af2e289318d4c99c7653a1a35e52cfb61269185e2e35c2e356794eccf20ab 0.0s done
+#14 naming to docker.io/library/mercer-redis-collectors-app-dev:latest done
+#14 unpacking to docker.io/library/mercer-redis-collectors-app-dev:latest
+#14 unpacking to docker.io/library/mercer-redis-collectors-app-dev:latest done
+#14 DONE 0.1s
+
+#15 [web] exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:96b4bd9654377f62991424eb172edafb4f9f5018e712c9bfa5330a80c3d60b6a 0.0s done
+#15 exporting config sha256:85cd06ae414e1ae24269c6051bd1f42ed69c5909afe2e60ff0721e7a3b6d0ee5 0.0s done
+#15 exporting attestation manifest sha256:2cee2b153835e42ee3169648866c7f016b981b7558ba6d8a9e26c2c79989e2d3 0.0s done
+#15 exporting manifest list sha256:7083e508a6994e221f6be3117cfc4ea950f3386f22dc281a380778e96c89caae 0.0s done
+#15 naming to docker.io/library/mercer-redis-collectors-app:latest done
+#15 unpacking to docker.io/library/mercer-redis-collectors-app:latest done
+#15 DONE 0.1s
+
+#16 [web] resolving provenance for metadata file
+#16 DONE 0.0s
+
+#17 [migrate] resolving provenance for metadata file
+#17 DONE 0.0s
+ Image mercer-redis-collectors-app Built 
+ Image mercer-redis-collectors-app-dev Built 
+ Volume mercer-redis-collectors_mongo_keyfile Creating 
+ Network mercer-redis-collectors_default Creating 
+ Volume mercer-redis-collectors_postgres_data Creating 
+ Volume mercer-redis-collectors_postgres_data Creating 
+ Network mercer-redis-collectors_default Creating 
+ Volume mercer-redis-collectors_mongo_data Creating 
+ Volume mercer-redis-collectors_mongo_data Creating 
+ Volume mercer-redis-collectors_mongo_keyfile Creating 
+ Volume mercer-redis-collectors_postgres_data Created 
+ Volume mercer-redis-collectors_postgres_data Created 
+ Volume mercer-redis-collectors_mongo_data Created 
+ Volume mercer-redis-collectors_mongo_data Created 
+ Volume mercer-redis-collectors_mongo_keyfile Created 
+ Volume mercer-redis-collectors_mongo_keyfile Created 
+ Network mercer-redis-collectors_default Created 
+ Network mercer-redis-collectors_default Created 
+ Container mercer-redis-collectors-db-1 Creating 
+ Container mercer-redis-collectors-redis-1 Creating 
+ Container mercer-redis-collectors-mongo-1 Creating 
+ Container mercer-redis-collectors-redis-1 Created 
+ Container mercer-redis-collectors-mongo-1 Created 
+ Container mercer-redis-collectors-db-1 Created 
+ Container mercer-redis-collectors-migrate-1 Creating 
+ Container mercer-redis-collectors-migrate-1 Created 
+ Container mercer-redis-collectors-web-1 Creating 
+ Container mercer-redis-collectors-web-1 Created 
+ Container mercer-redis-collectors-db-1 Starting 
+ Container mercer-redis-collectors-mongo-1 Starting 
+ Container mercer-redis-collectors-redis-1 Starting 
+ Container mercer-redis-collectors-db-1 Started 
+ Container mercer-redis-collectors-mongo-1 Started 
+ Container mercer-redis-collectors-redis-1 Started 
+ Container mercer-redis-collectors-redis-1 Waiting 
+ Container mercer-redis-collectors-db-1 Waiting 
+ Container mercer-redis-collectors-mongo-1 Waiting 
+ Container mercer-redis-collectors-db-1 Healthy 
+ Container mercer-redis-collectors-redis-1 Healthy 
+ Container mercer-redis-collectors-mongo-1 Healthy 
+ Container mercer-redis-collectors-migrate-1 Starting 
+ Container mercer-redis-collectors-migrate-1 Started 
+ Container mercer-redis-collectors-db-1 Waiting 
+ Container mercer-redis-collectors-mongo-1 Waiting 
+ Container mercer-redis-collectors-migrate-1 Waiting 
+ Container mercer-redis-collectors-redis-1 Waiting 
+ Container mercer-redis-collectors-redis-1 Healthy 
+ Container mercer-redis-collectors-mongo-1 Healthy 
+ Container mercer-redis-collectors-db-1 Healthy 
+ Container mercer-redis-collectors-migrate-1 Exited 
+ Container mercer-redis-collectors-web-1 Starting 
+ Container mercer-redis-collectors-web-1 Started 
+ Container mercer-redis-collectors-db-1 Waiting 
+ Container mercer-redis-collectors-migrate-1 Waiting 
+ Container mercer-redis-collectors-redis-1 Waiting 
+ Container mercer-redis-collectors-web-1 Waiting 
+ Container mercer-redis-collectors-mongo-1 Waiting 
+ Container mercer-redis-collectors-migrate-1 Exited 
+ Container mercer-redis-collectors-mongo-1 Healthy 
+ Container mercer-redis-collectors-db-1 Healthy 
+ Container mercer-redis-collectors-redis-1 Healthy 
+ Container mercer-redis-collectors-web-1 Healthy 

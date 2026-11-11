@@ -1,0 +1,31 @@
+{
+  "free_ram_kib": 2294212,
+  "CPU": {
+    "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "NumberOfCores": 6,
+    "NumberOfLogicalProcessors": 12
+  },
+  "clean": null,
+  "cache_preparation": "idle WSL file cache released before setup; no VM/resource/power/clock/TTL settings changed",
+  "final_branch_tree": "5228fdba32040a700e0d1fca145bfeff43b9135f",
+  "running": null,
+  "time": "2026-11-11T22:01:06.8268957+08:00",
+  "RAM": 17084600320,
+  "commit": "b82ac876e9ff0fa4d3f530d81d70fa2b434c8e43",
+  "docker": "12 10429972480",
+  "collector_worktree_tree": "6d8c9972cc8759322374049da30bf8ac2e8db655",
+  "free_disk": [
+    {
+      "Name": "C",
+      "Free": 492266078208
+    },
+    {
+      "Name": "D",
+      "Free": 985167032320
+    },
+    {
+      "Name": "Temp",
+      "Free": 492266078208
+    }
+  ]
+}

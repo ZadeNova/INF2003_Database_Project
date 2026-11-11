@@ -229,3 +229,18 @@ materialized view already covers history while Redis covers the repeated read); 
 disagree after an invalidation); why fail open (a cache outage must not become a shop outage); why JSON (a stored value
 cannot execute); why the address limit is loose (shared networks); why no sorted-set leaderboard (no measurable gain at this
 traffic, recorded as rejected) while the limiter does use one (it is the correct structure for a sliding window).
+
+## Measurement evidence status (11 November 2026)
+
+The [authoritative benchmark index](benchmark.md#authoritative-november-evidence-for-report-and-slides) owns the measured
+findings, commits, configurations, reports, refusals and limitations. The application implementation remains done;
+measurement acceptance and repository review/merge are separate. After merged PR #43, the full default version-2
+experiment has usable paired evidence for every required comparison, including dashboard off/warm. Legitimate
+shop/search data-order refusals and a warm search cache miss remain excluded; reduced paired coverage and thin cells
+are disclosed in the index. The earlier PR #42 formatting-only dashboard failure remains historical, superseded evidence.
+The existing protocol does not require zero refusals. Findings support cached reads on accepted pairs, not benefit on
+every page. Earlier stampede/limiter evidence is retained without a rerun. No protocol or application code changed in
+this measurement/consolidation task. The supplied fresh Opus evidence review confirms measurement completeness and
+requests documentation corrections only; see the [benchmark review record](benchmark.md#review-notes). Those
+corrections passed fresh Opus re-review apart from two wording follow-ups, now applied. Fresh Opus follow-up approved those fixes and report readiness. No measurement rerun is required; repository
+delivery is authorised; successful PR checks and merge remain required.

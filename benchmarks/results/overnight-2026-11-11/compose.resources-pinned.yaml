@@ -1,0 +1,7 @@
+services:
+  bench-db:
+    cpuset: '0-3'
+  bench-mongo:
+    cpuset: '4-7'
+  bench-runner:
+    cpuset: '8-9'

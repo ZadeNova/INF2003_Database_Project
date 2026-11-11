@@ -1,0 +1,370 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "$and": [
+              {
+                "attributes.activity": {
+                  "$eq": "running"
+                }
+              },
+              {
+                "attributes.material": {
+                  "$eq": "polyester"
+                }
+              }
+            ]
+          },
+          "indexFilterSet": false,
+          "queryHash": "206E1E65",
+          "planCacheShapeHash": "206E1E65",
+          "planCacheKey": "BEBD046D",
+          "optimizationTimeMillis": 3,
+          "optimizationTimeMicros": 3705,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": true,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "attributes.material": {
+                    "$eq": "polyester"
+                  }
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.activity": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.activity": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.activity\", \"attributes.activity\"]"
+                    ],
+                    "attributes.activity": [
+                      "[\"running\", \"running\"]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": [
+            {
+              "isCached": false,
+              "stage": "SORT",
+              "sortPattern": {
+                "_id": 1
+              },
+              "memLimit": 104857600,
+              "type": "simple",
+              "inputStage": {
+                "stage": "PROJECTION_SIMPLE",
+                "transformBy": {
+                  "_id": 1
+                },
+                "inputStage": {
+                  "stage": "FETCH",
+                  "filter": {
+                    "attributes.activity": {
+                      "$eq": "running"
+                    }
+                  },
+                  "nss": "bench.products",
+                  "inputStage": {
+                    "stage": "IXSCAN",
+                    "nss": "bench.products",
+                    "keyPattern": {
+                      "$_path": 1,
+                      "attributes.material": 1
+                    },
+                    "indexName": "spec_attributes",
+                    "isMultiKey": false,
+                    "multiKeyPaths": {
+                      "$_path": [],
+                      "attributes.material": []
+                    },
+                    "isUnique": false,
+                    "isSparse": false,
+                    "isPartial": false,
+                    "indexVersion": 2,
+                    "direction": "forward",
+                    "indexBounds": {
+                      "$_path": [
+                        "[\"attributes.material\", \"attributes.material\"]"
+                      ],
+                      "attributes.material": [
+                        "[\"polyester\", \"polyester\"]"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "$and": [
+                    {
+                      "attributes.activity": {
+                        "$eq": "running"
+                      }
+                    },
+                    {
+                      "attributes.material": {
+                        "$eq": "polyester"
+                      }
+                    }
+                  ]
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "indexName": "_id_",
+                  "isMultiKey": false,
+                  "isUnique": true,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 330,
+          "executionTimeMillis": 4,
+          "executionTimeMicros": 4007,
+          "totalKeysExamined": 1019,
+          "totalDocsExamined": 1019,
+          "executionStages": {
+            "isCached": true,
+            "stage": "SORT",
+            "nReturned": 330,
+            "executionTimeMillisEstimate": 0,
+            "works": 1351,
+            "advanced": 330,
+            "needTime": 1020,
+            "needYield": 0,
+            "saveState": 6,
+            "restoreState": 5,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 15180,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 15180,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 330,
+              "executionTimeMillisEstimate": 0,
+              "works": 1020,
+              "advanced": 330,
+              "needTime": 689,
+              "needYield": 0,
+              "saveState": 6,
+              "restoreState": 5,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "attributes.material": {
+                    "$eq": "polyester"
+                  }
+                },
+                "nReturned": 330,
+                "executionTimeMillisEstimate": 0,
+                "works": 1020,
+                "advanced": 330,
+                "needTime": 689,
+                "needYield": 0,
+                "saveState": 6,
+                "restoreState": 5,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 1019,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 1019,
+                  "executionTimeMillisEstimate": 0,
+                  "works": 1020,
+                  "advanced": 1019,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 6,
+                  "restoreState": 5,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.activity": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.activity": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.activity\", \"attributes.activity\"]"
+                    ],
+                    "attributes.activity": [
+                      "[\"running\", \"running\"]"
+                    ]
+                  },
+                  "keysExamined": 1019,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 330,
+      "executionTimeMillisEstimate": 3
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 330,
+      "executionTimeMillisEstimate": 3,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "DAB2A8AC8392DDEEA64E39FE81C360213BC7D85F6578AE4ED22251F06D57CBA4",
+  "peakTrackedMemBytes": 28290,
+  "serverInfo": {
+    "host": "33c803018bed",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.activity": "running",
+          "attributes.material": "polyester"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794367708,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "vIzV4jdJy6lcXiSu2oCppG/HaEY=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706748174727118857
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794367708,
+      "i": 1
+    }
+  }
+}

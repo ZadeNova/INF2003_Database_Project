@@ -1,0 +1,32 @@
+{
+  "clean_status": null,
+  "free_ram_kib": 4371012,
+  "running": null,
+  "host_ram": 17084600320,
+  "time": "2026-11-11T19:04:00.3301275+08:00",
+  "free_disk": [
+    {
+      "Name": "C",
+      "Free": 492309921792
+    },
+    {
+      "Name": "D",
+      "Free": 985167032320
+    },
+    {
+      "Name": "Temp",
+      "Free": 492309921792
+    }
+  ],
+  "wsl_config": [
+    "[wsl2]",
+    "memory=10GB"
+  ],
+  "docker": "12 10429972480",
+  "host_cpu": {
+    "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "NumberOfCores": 6,
+    "NumberOfLogicalProcessors": 12
+  },
+  "source": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78"
+}

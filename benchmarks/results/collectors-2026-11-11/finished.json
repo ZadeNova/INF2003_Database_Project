@@ -1,0 +1,9 @@
+{
+  "finished": 1794392100.3465796,
+  "errors": [
+    {
+      "project": "mercer-redis-collectors",
+      "error": "redis-experiment exited 1"
+    }
+  ]
+}

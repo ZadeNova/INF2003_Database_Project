@@ -1,0 +1,16 @@
+{
+  "staged_files": 989,
+  "bytes": 115397242,
+  "private_secret_scan": "passed without displaying secret values",
+  "only_evidence_and_docs": true,
+  "original_checkout_unchanged": true,
+  "application_and_benchmark_source_changed": false,
+  "fresh_evidence_review": "pending",
+  "commit_push_pr": "not performed",
+  "working_docs_check": "passed",
+  "staged_docs_check": "passed",
+  "staged_diff_check": "passed",
+  "host_checks": "passed; host-tests.xml",
+  "redis_condition_measurement": "blocked before timing; no accepted samples",
+  "page_measurement": "passed and validated"
+}

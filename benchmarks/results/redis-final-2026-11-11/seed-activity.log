@@ -1,0 +1,13 @@
+ Container mercer-redis-report-final-redis-1 Running 
+ Container mercer-redis-report-final-mongo-1 Running 
+ Container mercer-redis-report-final-db-1 Running 
+ Container mercer-redis-report-final-mongo-1 Waiting 
+ Container mercer-redis-report-final-redis-1 Waiting 
+ Container mercer-redis-report-final-db-1 Waiting 
+ Container mercer-redis-report-final-redis-1 Healthy 
+ Container mercer-redis-report-final-db-1 Healthy 
+ Container mercer-redis-report-final-mongo-1 Healthy 
+ Container mercer-redis-report-final-migrate-run-d42c5f8eb3bb Creating 
+ Container mercer-redis-report-final-migrate-run-d42c5f8eb3bb Created 
+MongoDB collections, validators and indexes ready.
+{"seed_activity": "complete", "events_written": 200000, "is_generated": true, "window_end": "2026-11-11T11:06:21.150950+00:00", "seed": 82}

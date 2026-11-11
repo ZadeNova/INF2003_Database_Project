@@ -1,0 +1,4 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,runner_cpu_median_percent,runner_cpu_median_percent_min,runner_cpu_median_percent_max,client_saturated_runs,client_saturated,headline,not_headline_reason,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B4_bench_product_visible,mongo,after,1,passed,5,0,0,0,0.08,0.07,0.08,0,False,True,,3383.163437,3359.69586,3401.853741,3597.937584,3485.744154,3608.954478,0.2925353026902976,0.29095915623205915,0.2946655436727458,1.0005077064800403,before/variant
+B4_bench_product_visible,mongo,before,1,passed,5,0,0,0,0.08,0.06,0.09,0,False,True,,3384.881091,3380.550607,3398.44918,3519.912496,3464.440417,3725.691714,0.2916096688740763,0.29034818409032986,0.2940513187244728,1.0,before/variant
+B4_bench_product_visible,mongo,restore,1,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,before/variant

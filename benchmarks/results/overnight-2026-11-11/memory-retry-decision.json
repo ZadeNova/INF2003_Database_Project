@@ -1,0 +1,6 @@
+{
+  "excluded": "pilot-resource-b2",
+  "action": "fresh full reload and pilot at equal 4CPU/3GiB per engine; runner remains 2CPU/2GiB; caches unchanged; existing WSL 10GB retained",
+  "cause": "MongoDB killed by 2GiB memory cap during repeated B2refresh/refresh_scores; state OOMKilled true",
+  "code_changes": "none"
+}

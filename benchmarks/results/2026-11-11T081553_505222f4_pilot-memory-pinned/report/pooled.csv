@@ -1,0 +1,19 @@
+output,engine,variant,clients,samples,p50_ms,p95_ms,p99_ms,min_ms,max_ms,p95_label,p99_label
+baseline,python,noop,1,250,0.0001,0.0002,,0.0,0.0003,,not enough data
+baseline,python,noop,10,2500,0.0001,0.0002,0.0003,0.0,0.0007,,
+baseline,python,noop,50,12500,0.0001,0.0002,0.0003,0.0,0.109105,,
+baseline_end,python,noop,1,250,0.0001,0.0002,,0.0,0.0007,,not enough data
+baseline_end,python,noop,10,2500,0.0001,0.0002,0.0004,0.0,0.0007,,
+baseline_end,python,noop,50,12500,0.0001,0.0002,0.0003,0.0,0.082504,,
+baseline_roundtrip,mongo,ping,1,250,0.162207,0.22491,,0.155207,0.295613,,not enough data
+baseline_roundtrip,mongo,ping,10,2500,2.016189,4.5512,5.879558,0.166207,8.940692,,
+baseline_roundtrip,mongo,ping,50,12500,9.477916,22.35658,30.161622,0.215109,53.983366,,
+baseline_roundtrip,postgres,select1,1,250,0.105404,0.171507,,0.102504,0.324514,,not enough data
+baseline_roundtrip,postgres,select1,10,2500,1.404761,3.323743,4.580297,0.105405,7.917242,,
+baseline_roundtrip,postgres,select1,50,12500,6.155066,14.727746,19.400936,0.109105,33.539446,,
+baseline_roundtrip_end,mongo,ping,1,250,0.169107,0.270712,,0.154407,0.343415,,not enough data
+baseline_roundtrip_end,mongo,ping,10,2500,1.980688,4.302191,5.637851,0.178108,8.909996,,
+baseline_roundtrip_end,mongo,ping,50,12500,9.390617,21.358249,27.792837,0.167508,46.022249,,
+baseline_roundtrip_end,postgres,select1,1,250,0.107704,0.174208,,0.102005,0.299613,,not enough data
+baseline_roundtrip_end,postgres,select1,10,2500,1.325259,3.203742,4.138383,0.125806,6.07477,,
+baseline_roundtrip_end,postgres,select1,50,12500,6.213776,14.784457,19.875383,0.110305,55.736375,,

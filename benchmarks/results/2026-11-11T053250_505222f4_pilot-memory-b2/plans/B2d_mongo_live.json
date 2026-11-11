@@ -1,0 +1,615 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.orders",
+          "parsedQuery": {
+            "$and": [
+              {
+                "status": {
+                  "$eq": "delivered"
+                }
+              },
+              {
+                "delivered_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              },
+              {
+                "placed_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              }
+            ]
+          },
+          "indexFilterSet": false,
+          "queryHash": "4D40F84C",
+          "planCacheShapeHash": "4D40F84C",
+          "planCacheKey": "99EBFFB8",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 161,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "transformBy": {
+              "_id": 1,
+              "delivered_at": 1,
+              "estimated_delivery": 1
+            },
+            "inputStage": {
+              "stage": "FETCH",
+              "filter": {
+                "delivered_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              },
+              "nss": "bench.orders",
+              "inputStage": {
+                "stage": "IXSCAN",
+                "nss": "bench.orders",
+                "keyPattern": {
+                  "status": 1,
+                  "placed_at": 1
+                },
+                "indexName": "bench_order_status_date",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                  "status": [],
+                  "placed_at": []
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                  "status": [
+                    "[\"delivered\", \"delivered\"]"
+                  ],
+                  "placed_at": [
+                    "[new Date(-9223372036854775808), new Date(1793203200000))"
+                  ]
+                }
+              }
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 96665,
+          "executionTimeMillis": 9921,
+          "executionTimeMicros": 9921582,
+          "totalKeysExamined": 97118,
+          "totalDocsExamined": 97118,
+          "executionStages": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "nReturned": 96665,
+            "executionTimeMillisEstimate": 126,
+            "works": 97119,
+            "advanced": 96665,
+            "needTime": 453,
+            "needYield": 0,
+            "saveState": 29,
+            "restoreState": 28,
+            "isEOF": 1,
+            "transformBy": {
+              "_id": 1,
+              "delivered_at": 1,
+              "estimated_delivery": 1
+            },
+            "inputStage": {
+              "stage": "FETCH",
+              "filter": {
+                "delivered_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              },
+              "nReturned": 96665,
+              "executionTimeMillisEstimate": 121,
+              "works": 97119,
+              "advanced": 96665,
+              "needTime": 453,
+              "needYield": 0,
+              "saveState": 29,
+              "restoreState": 28,
+              "isEOF": 1,
+              "nss": "bench.orders",
+              "docsExamined": 97118,
+              "alreadyHasObj": 0,
+              "inputStage": {
+                "stage": "IXSCAN",
+                "nReturned": 97118,
+                "executionTimeMillisEstimate": 31,
+                "works": 97119,
+                "advanced": 97118,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 29,
+                "restoreState": 28,
+                "isEOF": 1,
+                "nss": "bench.orders",
+                "keyPattern": {
+                  "status": 1,
+                  "placed_at": 1
+                },
+                "indexName": "bench_order_status_date",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                  "status": [],
+                  "placed_at": []
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                  "status": [
+                    "[\"delivered\", \"delivered\"]"
+                  ],
+                  "placed_at": [
+                    "[new Date(-9223372036854775808), new Date(1793203200000))"
+                  ]
+                },
+                "keysExamined": 97118,
+                "seeks": 1,
+                "dupsTested": 0,
+                "dupsDropped": 0,
+                "peakTrackedMemBytes": 0
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 96665,
+      "executionTimeMillisEstimate": 126
+    },
+    {
+      "$set": {
+        "delay": {
+          "$dateDiff": {
+            "startDate": "$estimated_delivery",
+            "endDate": "$delivered_at",
+            "unit": {
+              "$const": "day"
+            },
+            "timezone": {
+              "$const": "Asia/Singapore"
+            }
+          }
+        }
+      },
+      "nReturned": 96665,
+      "executionTimeMillisEstimate": 126,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$lookup": {
+        "from": "reviews",
+        "as": "scores",
+        "localField": "_id",
+        "foreignField": "order_id",
+        "let": {},
+        "pipeline": [
+          {
+            "$match": {
+              "$and": [
+                {
+                  "taken_down": {
+                    "$eq": false
+                  }
+                },
+                {
+                  "answered_at": {
+                    "$lt": {
+                      "$date": "2026-10-28T16:00:00Z"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$group": {
+              "_id": {
+                "$const": null
+              },
+              "score": {
+                "$avg": {
+                  "$convert": {
+                    "input": "$score",
+                    "to": {
+                      "$const": "decimal"
+                    }
+                  }
+                }
+              },
+              "$willBeMerged": false
+            }
+          }
+        ]
+      },
+      "nReturned": 96665,
+      "executionTimeMillisEstimate": 9919,
+      "totalDocsExamined": 97227,
+      "totalKeysExamined": 97227,
+      "collectionScans": 0,
+      "indexesUsed": [
+        "bench_review_order_date"
+      ],
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$set": {
+        "score": {
+          "$ifNull": [
+            {
+              "$first": [
+                "$scores.score"
+              ]
+            },
+            {
+              "$const": null
+            }
+          ]
+        },
+        "bucket": {
+          "$switch": {
+            "branches": [
+              {
+                "case": {
+                  "$lt": [
+                    "$delay",
+                    {
+                      "$const": -7
+                    }
+                  ]
+                },
+                "then": {
+                  "$const": "early_over_7"
+                }
+              },
+              {
+                "case": {
+                  "$lte": [
+                    "$delay",
+                    {
+                      "$const": 0
+                    }
+                  ]
+                },
+                "then": {
+                  "$const": "early_up_to_7_or_on_time"
+                }
+              },
+              {
+                "case": {
+                  "$lte": [
+                    "$delay",
+                    {
+                      "$const": 7
+                    }
+                  ]
+                },
+                "then": {
+                  "$const": "late_1_to_7"
+                }
+              },
+              {
+                "case": {
+                  "$lte": [
+                    "$delay",
+                    {
+                      "$const": 14
+                    }
+                  ]
+                },
+                "then": {
+                  "$const": "late_8_to_14"
+                }
+              }
+            ],
+            "default": {
+              "$const": "late_over_14"
+            }
+          }
+        }
+      },
+      "nReturned": 96665,
+      "executionTimeMillisEstimate": 9919,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$group": {
+        "_id": "$bucket",
+        "orders": {
+          "$sum": {
+            "$const": 1
+          }
+        },
+        "reviewed_orders": {
+          "$sum": {
+            "$cond": [
+              {
+                "$ne": [
+                  "$score",
+                  {
+                    "$const": null
+                  }
+                ]
+              },
+              {
+                "$const": 1
+              },
+              {
+                "$const": 0
+              }
+            ]
+          }
+        },
+        "average_score": {
+          "$avg": "$score"
+        },
+        "$willBeMerged": false
+      },
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 9919,
+      "maxAccumulatorMemoryUsageBytes": {
+        "orders": 1000,
+        "reviewed_orders": 1000,
+        "average_score": 880
+      },
+      "totalOutputDataSizeBytes": 1713,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 3008
+    },
+    {
+      "$project": {
+        "orders": true,
+        "reviewed_orders": true,
+        "average_score": true,
+        "bucket": "$_id",
+        "_id": false
+      },
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 9919,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "bucket": 1
+        }
+      },
+      "totalDataSizeSortedBytesEstimate": 1801,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 9919,
+      "peakTrackedMemBytes": 1801
+    }
+  ],
+  "queryShapeHash": "DE596072B43055E477C88DE929CB9348B8F3529CB42C767866E50DC9584E9931",
+  "peakTrackedMemBytes": 4809,
+  "serverInfo": {
+    "host": "65d1ed5b6bc3",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "orders",
+    "pipeline": [
+      {
+        "$match": {
+          "status": "delivered",
+          "placed_at": {
+            "$lt": {
+              "$date": "2026-10-28T16:00:00Z"
+            }
+          },
+          "delivered_at": {
+            "$lt": {
+              "$date": "2026-10-28T16:00:00Z"
+            }
+          }
+        }
+      },
+      {
+        "$set": {
+          "delay": {
+            "$dateDiff": {
+              "startDate": "$estimated_delivery",
+              "endDate": "$delivered_at",
+              "unit": "day",
+              "timezone": "Asia/Singapore"
+            }
+          }
+        }
+      },
+      {
+        "$lookup": {
+          "from": "reviews",
+          "localField": "_id",
+          "foreignField": "order_id",
+          "pipeline": [
+            {
+              "$match": {
+                "taken_down": false,
+                "answered_at": {
+                  "$lt": {
+                    "$date": "2026-10-28T16:00:00Z"
+                  }
+                }
+              }
+            },
+            {
+              "$group": {
+                "_id": null,
+                "score": {
+                  "$avg": {
+                    "$toDecimal": "$score"
+                  }
+                }
+              }
+            }
+          ],
+          "as": "scores"
+        }
+      },
+      {
+        "$set": {
+          "score": {
+            "$ifNull": [
+              {
+                "$first": "$scores.score"
+              },
+              null
+            ]
+          },
+          "bucket": {
+            "$switch": {
+              "branches": [
+                {
+                  "case": {
+                    "$lt": [
+                      "$delay",
+                      -7
+                    ]
+                  },
+                  "then": "early_over_7"
+                },
+                {
+                  "case": {
+                    "$lte": [
+                      "$delay",
+                      0
+                    ]
+                  },
+                  "then": "early_up_to_7_or_on_time"
+                },
+                {
+                  "case": {
+                    "$lte": [
+                      "$delay",
+                      7
+                    ]
+                  },
+                  "then": "late_1_to_7"
+                },
+                {
+                  "case": {
+                    "$lte": [
+                      "$delay",
+                      14
+                    ]
+                  },
+                  "then": "late_8_to_14"
+                }
+              ],
+              "default": "late_over_14"
+            }
+          }
+        }
+      },
+      {
+        "$group": {
+          "_id": "$bucket",
+          "orders": {
+            "$sum": 1
+          },
+          "reviewed_orders": {
+            "$sum": {
+              "$cond": [
+                {
+                  "$ne": [
+                    "$score",
+                    null
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          },
+          "average_score": {
+            "$avg": "$score"
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "bucket": "$_id",
+          "orders": 1,
+          "reviewed_orders": 1,
+          "average_score": 1
+        }
+      },
+      {
+        "$sort": {
+          "bucket": 1
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794352470,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "XT/C9WygOu1DhOJ/CF9Epaqf1Ws=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706658676198604809
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794352470,
+      "i": 1
+    }
+  }
+}

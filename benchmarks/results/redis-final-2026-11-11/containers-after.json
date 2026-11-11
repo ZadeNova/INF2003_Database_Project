@@ -1,0 +1,111 @@
+[
+  {
+    "name": "/mercer-redis-report-final-db-1",
+    "image_id": "sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+    "image_tag": "postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "paused": false,
+      "restarts": 0,
+      "exit_code": 0
+    },
+    "environment": {
+      "POSTGRES_DB": "postgres"
+    }
+  },
+  {
+    "name": "/mercer-redis-report-final-migrate-1",
+    "image_id": "sha256:89b82562462292ad1f890ce8ff1efe18413de8e2b663d0831a2315ae3e2763e2",
+    "image_tag": "mercer-redis-report-final-app-dev",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "exited",
+      "oom": false,
+      "paused": false,
+      "restarts": 0,
+      "exit_code": 0
+    },
+    "environment": {
+      "REDIS_ENABLED": "true",
+      "MONGO_DB": "mercer",
+      "POSTGRES_DB": "mercer",
+      "DJANGO_DEBUG": "false"
+    }
+  },
+  {
+    "name": "/mercer-redis-report-final-mongo-1",
+    "image_id": "sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+    "image_tag": "mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "paused": false,
+      "restarts": 0,
+      "exit_code": 0
+    },
+    "environment": {
+      "MONGO_DB": "mercer"
+    }
+  },
+  {
+    "name": "/mercer-redis-report-final-redis-1",
+    "image_id": "sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d",
+    "image_tag": "redis:8-bookworm@sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d",
+    "limits": {
+      "NanoCpus": 1000000000,
+      "Memory": 268435456,
+      "MemorySwap": 536870912,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "paused": false,
+      "restarts": 0,
+      "exit_code": 0
+    },
+    "environment": {}
+  },
+  {
+    "name": "/mercer-redis-report-final-web-1",
+    "image_id": "sha256:5e065dc8518cb2c969cb7eaf85c98b9b1e9bb6c28255bd9bb65db70dcdefd9f6",
+    "image_tag": "mercer-redis-report-final-app",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "paused": false,
+      "restarts": 0,
+      "exit_code": 0
+    },
+    "environment": {
+      "MONGO_DB": "mercer",
+      "REDIS_ENABLED": "true",
+      "DJANGO_DEBUG": "false",
+      "POSTGRES_DB": "mercer"
+    }
+  }
+]

@@ -1,0 +1,67 @@
+{
+  "power": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "docker": "12 10429972480 Docker Desktop (containerized) 6.18.54.1-microsoft-standard-WSL2",
+  "free": [
+    {
+      "Name": "C",
+      "Used": 489557364736,
+      "Free": 509580369920
+    },
+    {
+      "Name": "D",
+      "Used": 15019278336,
+      "Free": 985167032320
+    },
+    {
+      "Name": "Temp",
+      "Used": 489557364736,
+      "Free": 509580369920
+    }
+  ],
+  "disks": [
+    {
+      "FriendlyName": "WDC WD10EZEX-00BBHA0",
+      "MediaType": "HDD",
+      "Size": 1000204886016
+    },
+    {
+      "FriendlyName": "GIGABYTE GP-ASM2NE6100TTTD",
+      "MediaType": "SSD",
+      "Size": 1000204886016
+    }
+  ],
+  "containers": [
+    "mercer-web-1 Exited (255) 2 weeks ago 9103e8c0f54e",
+    "mercer-migrate-1 Exited (0) 2 weeks ago 9103e8c0f54e",
+    "mercer-mongo-1 Exited (255) 2 weeks ago mongo:9.0",
+    "mercer-catalogue-web-1 Exited (255) 2 weeks ago a0305e5827db",
+    "mercer-catalogue-migrate-1 Exited (0) 2 weeks ago a0305e5827db",
+    "mercer-checkout-web-1 Exited (255) 2 weeks ago 528d268f6649",
+    "mercer-checkout-migrate-1 Exited (0) 2 weeks ago 528d268f6649",
+    "mercer-checkout-db-1 Exited (255) 2 weeks ago postgres:18-bookworm",
+    "mercer-checkout-mongo-1 Exited (255) 2 weeks ago mongo:9.0",
+    "mercer-catalogue-db-1 Exited (255) 2 weeks ago postgres:18-bookworm",
+    "mercer-catalogue-mongo-1 Exited (255) 2 weeks ago mongo:9.0",
+    "mercer-db-1 Exited (255) 2 weeks ago postgres:18-bookworm"
+  ],
+  "computer": {
+    "Manufacturer": "Gigabyte Technology Co., Ltd.",
+    "Model": "B550M DS3H",
+    "TotalPhysicalMemory": 17084600320,
+    "NumberOfLogicalProcessors": 12
+  },
+  "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "cpu": {
+    "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "NumberOfCores": 6,
+    "NumberOfLogicalProcessors": 12
+  },
+  "wsl": [
+    "[wsl2]",
+    "memory=10GB"
+  ],
+  "os": {
+    "FreePhysicalMemory": 5580032,
+    "TotalVisibleMemorySize": 16684180
+  }
+}

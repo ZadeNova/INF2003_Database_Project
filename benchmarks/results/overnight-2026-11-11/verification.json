@@ -1,0 +1,10 @@
+{
+  "verified_sessions": 3,
+  "same_source_golden_drivers_durability": true,
+  "raw_hashes_verified": true,
+  "all_recorded_checks_passed": true,
+  "all_recorded_engine_exits_zero": true,
+  "bm4": true,
+  "independent_review": "not performed",
+  "validation": "passed"
+}

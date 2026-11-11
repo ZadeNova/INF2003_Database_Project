@@ -1,0 +1,549 @@
+{
+  "explainVersion": "2",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.daily_product_sales",
+          "parsedQuery": {},
+          "indexFilterSet": false,
+          "queryHash": "E0BF611C",
+          "planCacheShapeHash": "E0BF611C",
+          "planCacheKey": "CF33BE33",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 354,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "queryPlan": {
+              "stage": "GROUP",
+              "planNodeId": 3,
+              "inputStage": {
+                "stage": "COLLSCAN",
+                "planNodeId": 1,
+                "filter": {},
+                "nss": "bench.daily_product_sales",
+                "direction": "forward"
+              }
+            },
+            "slotBasedPlan": {
+              "slots": "$$RESULT=s16 env: { s7 = TimeZoneDatabase(Antarctica/Casey...Asia/Damascus) (timeZoneDB) }",
+              "stages": "[3] project [s16 = newObj(\"_id\", s13, \"units\", s14, \"revenue\", s15)] \n[3] project [s13 = newObj(\"category\", s3, \"month\", s12), s14 = doubleDoubleSumFinalize(s9), s15 = doubleDoubleSumFinalize(s11)] \n[3] group [s3, s12] [s9 = aggDoubleDoubleSum(s6), s11 = aggDoubleDoubleSum(s5)] spillSlots[s8, s10] mergingExprs[aggMergeDoubleDoubleSums(s8), aggMergeDoubleDoubleSums(s10)] \n[3] project [s12 = \n    let [\n        l3.0 = dateTrunc(s7, s4, \"month\", 1ll, \"Asia/Singapore\", \"sun\") \n    ] \n    in \n        if exists(l3.0) \n        then makeOwn(move(l3.0)) \n        else \n            if isNullish(s4) \n            then null \n            elif typeMatch(s4, 131712) \n            then Nothing \n            else fail(7157932, \"$dateTrunc parameter 'date' must be coercible to date\") \n] \n[1] scan generic [s1 = record, s2 = recordId] [s3 = category_id, s4 = day, s5 = revenue, s6 = units] @\"243c7df4-d437-400b-b4f1-e98e877130f9\" "
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 1278,
+          "executionTimeMillis": 139,
+          "executionTimeMicros": 139440,
+          "totalKeysExamined": 0,
+          "totalDocsExamined": 93397,
+          "executionStages": {
+            "stage": "project",
+            "planNodeId": 3,
+            "nReturned": 1278,
+            "executionTimeMillisEstimate": 129,
+            "opens": 1,
+            "closes": 1,
+            "saveState": 14,
+            "restoreState": 13,
+            "isEOF": 1,
+            "projections": {
+              "16": "newObj(\"_id\", s13, \"units\", s14, \"revenue\", s15) "
+            },
+            "inputStage": {
+              "stage": "project",
+              "planNodeId": 3,
+              "nReturned": 1278,
+              "executionTimeMillisEstimate": 129,
+              "opens": 1,
+              "closes": 1,
+              "saveState": 14,
+              "restoreState": 13,
+              "isEOF": 1,
+              "projections": {
+                "13": "newObj(\"category\", s3, \"month\", s12) ",
+                "14": "doubleDoubleSumFinalize(s9) ",
+                "15": "doubleDoubleSumFinalize(s11) "
+              },
+              "inputStage": {
+                "stage": "group",
+                "planNodeId": 3,
+                "nReturned": 1278,
+                "executionTimeMillisEstimate": 129,
+                "opens": 1,
+                "closes": 1,
+                "saveState": 14,
+                "restoreState": 13,
+                "isEOF": 1,
+                "groupBySlots": [
+                  3,
+                  12
+                ],
+                "expressions": {
+                  "9": "aggDoubleDoubleSum(s6) ",
+                  "11": "aggDoubleDoubleSum(s5) ",
+                  "initExprs": {
+                    "9": null,
+                    "11": null,
+                    "mergingExprs": {
+                      "8": "aggMergeDoubleDoubleSums(s8) ",
+                      "10": "aggMergeDoubleDoubleSums(s10) "
+                    }
+                  }
+                },
+                "usedDisk": false,
+                "spills": 0,
+                "spilledBytes": 0,
+                "spilledRecords": 0,
+                "spilledDataStorageSize": 0,
+                "peakTrackedMemBytes": 249210,
+                "inputStage": {
+                  "stage": "project",
+                  "planNodeId": 3,
+                  "nReturned": 93397,
+                  "executionTimeMillisEstimate": 101,
+                  "opens": 1,
+                  "closes": 2,
+                  "saveState": 14,
+                  "restoreState": 13,
+                  "isEOF": 1,
+                  "projections": {
+                    "12": "\n    let [\n        l3.0 = dateTrunc(s7, s4, \"month\", 1ll, \"Asia/Singapore\", \"sun\") \n    ] \n    in \n        if exists(l3.0) \n        then makeOwn(move(l3.0)) \n        else \n            if isNullish(s4) \n            then null \n            elif typeMatch(s4, 131712) \n            then Nothing \n            else fail(7157932, \"$dateTrunc parameter 'date' must be coercible to date\") \n"
+                  },
+                  "inputStage": {
+                    "stage": "scan",
+                    "planNodeId": 1,
+                    "nReturned": 93397,
+                    "executionTimeMillisEstimate": 9,
+                    "opens": 1,
+                    "closes": 2,
+                    "saveState": 14,
+                    "restoreState": 13,
+                    "isEOF": 1,
+                    "numReads": 93397,
+                    "recordSlot": 1,
+                    "recordIdSlot": 2,
+                    "scanFieldNames": [
+                      "category_id",
+                      "day",
+                      "revenue",
+                      "units"
+                    ],
+                    "scanFieldSlots": [
+                      3,
+                      4,
+                      5,
+                      6
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132
+    },
+    {
+      "$set": {
+        "category_id": "$_id.category",
+        "month": "$_id.month"
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "month": 1,
+          "revenue": -1
+        },
+        "outputSortKeyMetadata": true
+      },
+      "totalDataSizeSortedBytesEstimate": 1453086,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "peakTrackedMemBytes": 1453086
+    },
+    {
+      "$_internalSetWindowFields": {
+        "partitionBy": "$month",
+        "sortBy": {
+          "revenue": -1
+        },
+        "output": {
+          "revenue_rank": {
+            "$rank": {}
+          }
+        }
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "maxFunctionMemoryUsageBytes": {
+        "revenue_rank": 504
+      },
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 2586
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "category_id": 1,
+          "month": 1
+        },
+        "outputSortKeyMetadata": true
+      },
+      "totalDataSizeSortedBytesEstimate": 1371294,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "peakTrackedMemBytes": 1371294
+    },
+    {
+      "$_internalSetWindowFields": {
+        "partitionBy": "$category_id",
+        "sortBy": {
+          "month": 1
+        },
+        "output": {
+          "previous_revenue": {
+            "$shift": {
+              "by": -1,
+              "output": "$revenue",
+              "default": null
+            }
+          },
+          "previous_month": {
+            "$shift": {
+              "by": -1,
+              "output": "$month",
+              "default": null
+            }
+          }
+        }
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "maxFunctionMemoryUsageBytes": {
+        "previous_month": 0,
+        "previous_revenue": 0
+      },
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 4004
+    },
+    {
+      "$set": {
+        "change_percent": {
+          "$cond": [
+            {
+              "$and": [
+                {
+                  "$eq": [
+                    "$previous_month",
+                    {
+                      "$dateSubtract": {
+                        "startDate": "$month",
+                        "unit": {
+                          "$const": "month"
+                        },
+                        "amount": {
+                          "$const": 1
+                        },
+                        "timezone": {
+                          "$const": "Asia/Singapore"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "$gt": [
+                    "$previous_revenue",
+                    {
+                      "$const": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$divide": [
+                {
+                  "$multiply": [
+                    {
+                      "$subtract": [
+                        "$revenue",
+                        "$previous_revenue"
+                      ]
+                    },
+                    {
+                      "$const": 100
+                    }
+                  ]
+                },
+                "$previous_revenue"
+              ]
+            },
+            {
+              "$const": null
+            }
+          ]
+        },
+        "month": {
+          "$dateToString": {
+            "date": "$month",
+            "format": {
+              "$const": "%Y-%m-%d"
+            },
+            "timezone": {
+              "$const": "Asia/Singapore"
+            }
+          }
+        }
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$project": {
+        "category_id": true,
+        "month": true,
+        "units": true,
+        "revenue": true,
+        "revenue_rank": true,
+        "change_percent": true,
+        "_id": false
+      },
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 132,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "month": 1,
+          "revenue_rank": 1,
+          "category_id": 1
+        }
+      },
+      "totalDataSizeSortedBytesEstimate": 1124568,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 1278,
+      "executionTimeMillisEstimate": 139,
+      "peakTrackedMemBytes": 1124568
+    }
+  ],
+  "queryShapeHash": "987B6C48A363AAE6D0CA61FBA35008D82791114FD5A560205B8721581B2911C4",
+  "peakTrackedMemBytes": 2824852,
+  "serverInfo": {
+    "host": "b9c6316df9b7",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "daily_product_sales",
+    "pipeline": [
+      {
+        "$group": {
+          "_id": {
+            "category": "$category_id",
+            "month": {
+              "$dateTrunc": {
+                "date": "$day",
+                "unit": "month",
+                "timezone": "Asia/Singapore"
+              }
+            }
+          },
+          "units": {
+            "$sum": "$units"
+          },
+          "revenue": {
+            "$sum": "$revenue"
+          }
+        }
+      },
+      {
+        "$set": {
+          "category_id": "$_id.category",
+          "month": "$_id.month"
+        }
+      },
+      {
+        "$setWindowFields": {
+          "partitionBy": "$month",
+          "sortBy": {
+            "revenue": -1
+          },
+          "output": {
+            "revenue_rank": {
+              "$rank": {}
+            }
+          }
+        }
+      },
+      {
+        "$setWindowFields": {
+          "partitionBy": "$category_id",
+          "sortBy": {
+            "month": 1
+          },
+          "output": {
+            "previous_revenue": {
+              "$shift": {
+                "output": "$revenue",
+                "by": -1
+              }
+            },
+            "previous_month": {
+              "$shift": {
+                "output": "$month",
+                "by": -1
+              }
+            }
+          }
+        }
+      },
+      {
+        "$set": {
+          "change_percent": {
+            "$cond": [
+              {
+                "$and": [
+                  {
+                    "$eq": [
+                      "$previous_month",
+                      {
+                        "$dateSubtract": {
+                          "startDate": "$month",
+                          "unit": "month",
+                          "amount": 1,
+                          "timezone": "Asia/Singapore"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$gt": [
+                      "$previous_revenue",
+                      0
+                    ]
+                  }
+                ]
+              },
+              {
+                "$divide": [
+                  {
+                    "$multiply": [
+                      {
+                        "$subtract": [
+                          "$revenue",
+                          "$previous_revenue"
+                        ]
+                      },
+                      100
+                    ]
+                  },
+                  "$previous_revenue"
+                ]
+              },
+              null
+            ]
+          },
+          "month": {
+            "$dateToString": {
+              "date": "$month",
+              "format": "%Y-%m-%d",
+              "timezone": "Asia/Singapore"
+            }
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "category_id": 1,
+          "month": 1,
+          "units": 1,
+          "revenue": 1,
+          "revenue_rank": 1,
+          "change_percent": 1
+        }
+      },
+      {
+        "$sort": {
+          "month": 1,
+          "revenue_rank": 1,
+          "category_id": 1
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794364571,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "/Ybq5N4OFnaqj5eE0bT/29436Ew=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706704804147363849
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794364571,
+      "i": 1
+    }
+  }
+}

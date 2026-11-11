@@ -1,0 +1,9 @@
+services:
+  bench-db:
+    cpus: 4
+    mem_limit: 3g
+    memswap_limit: 3g
+  bench-mongo:
+    cpus: 4
+    mem_limit: 3g
+    memswap_limit: 3g

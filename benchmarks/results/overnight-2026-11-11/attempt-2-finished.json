@@ -1,0 +1,13 @@
+{
+  "finished": 1794346184.8673337,
+  "errors": [
+    {
+      "phase": "benchmark",
+      "error": "pilot-resource-b2 exited 1"
+    },
+    {
+      "phase": "apps",
+      "error": "request-timing exited 1"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "driver_and_stampede_commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "collector_commit": "df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e",
+  "changed_files": [
+    "PLAN.md",
+    "README.md",
+    "benchmarks/request_timing.py",
+    "docs/AI_USE.md",
+    "docs/DECISIONS.md",
+    "docs/plans/benchmark.md",
+    "tests/test_request_timing.py"
+  ],
+  "application_and_data_unchanged": true,
+  "request_selection_fix": "PR #41; select first visible source-backed product with attributes"
+}

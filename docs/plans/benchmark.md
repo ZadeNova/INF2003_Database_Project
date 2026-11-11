@@ -127,6 +127,10 @@ Chee Long accepted these decisions on 22 October 2026; plan approved the same da
 | d | Seeded fixed parameter sets per workload (B1 selective to broad); one untimed warm-up pass, then five measured runs with fixed operation counts per client count. Report median across runs of per-run p50, p95 and throughput, with their ranges. Count retries separately; latency runs from first attempt to success. After mutating B3/B6 runs, restore PostgreSQL from a template database and MongoDB from NDJSON or a dump, including after failures; verify initial state before every run. Warm-up must leave that initial logical state intact; rewarm restored databases. Warm-cache measurement only |
 | e | Python harness in its own container, psycopg 3/PyMongo at app versions, one thread per client, `perf_counter_ns`, no-op overhead baseline (HTTP load script cut by amendment j), raw JSON-lines output and CSV summary |
 
+Decision b and amendment l1 retain the planned settings as history; the owner-authorised
+[11 November actual limits](#authoritative-november-evidence-for-report-and-slides) supersede their engine/VM/power
+settings for the report. The index links the separate driver and application-stack configurations for each experiment.
+
 **Outcome amendments (proposed 24 October 2026; approved by Chee Long, 27 October 2026).** These fill the gap between
 the method, which the contract already fixes, and what the rubric grades: analysis, conclusions, implications and a
 rigorous SQL-to-NoSQL comparison ([RUBRICS.md](../../RUBRICS.md) section 5, presentation part iii).
@@ -252,6 +256,37 @@ stampede, limiter or final Redis measurements are authorised by this repair. Fre
 before commit; final collection remains separate, on one reviewed clean revision with the default full-data protocol.
 
 ## Review notes
+
+12 November 2026 — Codex applied the fresh Opus re-review's two wording requests without changing measurements.
+The reviewer independently verified preservation, manifests, inventory and byte-identical offline regeneration,
+and reported passing documentation/diff checks and host tests. The verdict was CHANGES REQUIRED, with approval
+conditional on these two fixes; no subsequent reviewer approval or repository delivery is claimed.
+
+12 November 2026 — Fresh Claude Code Opus follow-up verdict: **APPROVE CORRECTIONS**. Both wording
+fixes, preservation, normal/staged docs and diff checks, and the staged manifest passed independent review.
+Measurement is complete and the documentation is ready for report and slide preparation. The owner authorised
+relocating this note, committing the approved evidence, integrating latest main and opening a consolidated PR;
+merge is not authorised. Repository close-out still requires successful PR checks and merge.
+
+11 November 2026, consolidated evidence review (fresh Claude Code Opus session; supplied review of HEAD `b82ac876`
+and the staged evidence). Verdict: **CHANGES REQUIRED, documentation only**. The reviewer confirmed that measurement
+is complete under the existing protocol, with legitimate refusals/reduced paired coverage and no required rerun.
+The supplied review reports offline normal/staged documentation and diff checks, host checks without skips, staged
+hash verification, byte-identical Redis report/derived-record regeneration and cross-session table regeneration in
+scratch. Those are the reviewer's checks, distinct from the original collection logs and this correction round.
+
+The six requested corrections cover expectation-versus-finding/cause statements for B1–B6, historical supersession,
+actual per-experiment limits, page-collector data-state attribution, the daily-sales refresh tie, and evidence paths
+plus the thin outage-cell caveat. Codex (GPT-6.1 Sol Max) applied them in one documentation/index correction round;
+fresh Opus re-review verified all six corrections and requested two wording fixes, now applied: explicitly
+state that the orders-of-magnitude expectation was not met and qualify the unseeded trending state. Raw measurements and historical validation records
+are unchanged. This review does not approve commit, push, PR or merge, and repository close-out is not complete.
+
+Correction-round offline validation regenerated the cross-session tables and ran the unchanged Redis validator in a
+scratch copy: derived records and Redis reports reproduced byte-identically. Source checks confirmed the refresh
+range overlap, actual limits, corrected B5/B6 targets, first accepted outage requests and live-path reordering.
+Normal/staged documentation and diff checks and staged-blob manifest verification are the delivery checks for these
+documentation/index edits; this round runs no databases or services. Fresh Opus correction verification is complete; see the approval above.
 
 11 November 2026, Redis acceptance repair (Codex implementation; fresh Claude Code Opus review passed).
 The real-template HIT and WAIT cases reproduced the old conditional-whitespace defect before implementation.
@@ -413,7 +448,365 @@ the pilot and full-data runs remain for the next session.
 
 31 October 2026, owner-requested CI follow-up (Codex): [PR #33's Django job](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/41170847257/job/124448283477) stopped at collection because the app image has no benchmarks package; the timing test module now uses pytest.importorskip and qualified helper calls so it skips in that image while the host job still requires its tests to run without skips.
 
+### Authoritative November evidence for report and slides
+
+Use this index, not the historical pending-status snapshots or fix handoffs in earlier result directories. Collection
+and repository delivery are separate: PR #43 Redis measurement now has usable evidence for every required comparison,
+with disclosed refusals and reduced coverage. The supplied fresh Opus evidence review confirms measurement completeness
+and requires documentation corrections only; see [review notes](#review-notes). Fresh Opus re-review verified all six corrections; its two wording follow-ups have been applied. Fresh Opus follow-up approved the corrections. Repository delivery is authorised; PR checks and merge remain required.
+
+| Evidence group | Measured revision | Actual limits | Authoritative outputs and status |
+|---|---|---|---|
+| B1–B6 | `505222f41b7473260ed9f40bb3bbaf8eafa46757` | [Per-session engine/runner caps and cpusets](../../benchmarks/results/overnight-2026-11-11/hardware.csv); [VM/power](../../benchmarks/results/overnight-2026-11-11/preflight.json). Engines 4 CPUs/3 GiB each; runner 2 CPUs/2 GiB; existing 10-GB/12-vCPU WSL VM, Balanced power | All three [session sources and raw evidence](../../benchmarks/results/redis-v2-2026-11-11/authoritative-evidence.csv); use the [cross-session headline](../../benchmarks/results/overnight-2026-11-11/sessions/headline.csv), [registered B2 pairs](../../benchmarks/results/overnight-2026-11-11/sessions/b2-headline.csv), and indexed per-session B5 footprint/B6 states, plans and resources. [Fresh correctness pass and restore audits](../../benchmarks/results/2026-11-11T081736_505222f4_overnight-correctness); [BM4 rejection verification](../../benchmarks/results/overnight-2026-11-11/bm4-verification.json). Valid; do not use pilots for headlines |
+| Application page timing | `df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e` | [Container caps](../../benchmarks/results/collectors-2026-11-11/mercer-request-collectors-containers.json), [VM](../../benchmarks/results/collectors-2026-11-11/preflight.json): database/web uncapped; Redis service 1 CPU/256 MiB, disabled for requests | [Raw joined requests and provenance](../../benchmarks/results/2026-11-11T181223_df03cb33_request-timing); [generated page summary](../../benchmarks/results/collectors-2026-11-11/page-summary.csv). Valid sequential collector immediately after import/demo seeding without seeded activity; its store split is specific to that state |
+| Redis conditions | `b82ac876e9ff0fa4d3f530d81d70fa2b434c8e43` | [Application-stack configuration](../../benchmarks/results/redis-v2-2026-11-11/configuration.csv): database/web uncapped; Redis 1 CPU/256 MiB; existing VM allocation | [Raw samples, reports and chart](../../benchmarks/results/2026-11-11T220303_b82ac876_redis); [comparison usability](../../benchmarks/results/redis-v2-2026-11-11/comparison-usability.csv). Complete requested collection; all comparisons available with disclosed refusals and reduced paired coverage |
+| Redis stampede | `505222f41b7473260ed9f40bb3bbaf8eafa46757` | Default application stack in the [recorded command](../../benchmarks/results/overnight-2026-11-11/commands.csv), [host/VM provenance](../../benchmarks/results/2026-11-11T171256_505222f4_redis-stampede/provenance.json); [Compose caps](../../compose.yaml) | [Original experiment](../../benchmarks/results/2026-11-11T171256_505222f4_redis-stampede/stampede.csv); [generated round summary](../../benchmarks/results/overnight-2026-11-11/stampede-summary.csv). Valid standalone evidence |
+| Redis limiter | `505222f41b7473260ed9f40bb3bbaf8eafa46757` | Same default application stack and [host/VM provenance](../../benchmarks/results/2026-11-11T171256_505222f4_redis-stampede/provenance.json) as stampede; [Compose caps](../../compose.yaml) | [Measured aggregate table](../../benchmarks/results/2026-11-11T171256_505222f4_redis-stampede/limiter.csv) and original provenance. Valid; the existing tool retained aggregates rather than per-call latencies |
+| Historical only: 2 November and pilots | Each original provenance retains its revision | [2 November planned/actual settings](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/provenance.json); pilot-specific settings remain in each directory | [2 November close-out and its source directories](#designated-machine-final-and-close-out-2-november-2026), [original pilot](../../benchmarks/results/2026-11-01T220402_b53e5d0a_pilot), [11 November pilot/attempt index](../../benchmarks/results/overnight-2026-11-11/attempts.csv) and [historical common cells](../../benchmarks/results/overnight-2026-11-11/historical-common-cells.csv). Superseded for report figures; preserve failures and original source rules as history |
+
+Do not compare absolute times across B1–B6, page timing and Redis: their caps, workload and activity state differ.
+The historical same-PC runs also differ in code, data and counts; they establish no causal build-speedup claim.
+
+The [machine-readable revision map](../../benchmarks/results/redis-v2-2026-11-11/revision-map.json) explains the
+separate commits: PR #41 repaired source-backed selection, PR #42 repaired distinct-visitor burn-in, and PR #43 repaired
+the dashboard digest and added versioned refusal diagnostics. Application
+code, data and Compose configuration are unchanged between these revisions; B1–B6, page timing, stampede and limiter
+were not rerun or relabelled. Current main was fast-forwarded into `benchmark/overnight-evidence-2026-11-11` after
+explicit backups and three-way reconciliation of pending documents. The collector worktree's staged tree was preserved
+([integration record](../../benchmarks/results/redis-final-2026-11-11/integration-result.json)). Required prior evidence
+was deliberately copied for portable repository links. Earlier staging manifests remain historical snapshots, not
+inventories of the final reconciled documents.
+
+#### Redis digest-version-2 final measurement after PR #43
+
+The reviewed current-main revision in the table above was measured from a separate clean detached worktree. A new
+`mercer-redis-digest2-final` project on loopback port 18087 received a fresh full Olist import, `seed_demo` and default
+`seed_activity`. The complete default-count experiment used seed 82 and `--require-clean`; no pilot or count overrides,
+TTL/clock changes, extra measured-request priming, gate bypasses or favourable-result retries were used. Other measurement
+stacks were stopped. Only this task's services were stopped afterwards; its volumes and all earlier evidence remain.
+The [command outcomes](../../benchmarks/results/redis-v2-2026-11-11/command-outcomes.csv) record successful preparation,
+measurement and teardown. There were no operationally failed new attempts.
+
+Actual CPU/RAM, disk and Docker limits are in the [preflight](../../benchmarks/results/redis-v2-2026-11-11/preflight.json).
+The [configuration table](../../benchmarks/results/redis-v2-2026-11-11/configuration.csv) records the application-stack
+limits and image identities: the existing owner-PC VM allocation was retained, not the teammate's allocation. PostgreSQL,
+MongoDB and web use the default uncapped application limits inside that VM; Redis retains its configured cap. These are
+separate from the earlier B1–B6 engine caps. Idle WSL file cache was released before setup with all containers stopped;
+no allocation, global power, security or update setting changed. The original branch's staged evidence and the separate
+collector worktree's staged tree survived [main integration](../../benchmarks/results/redis-v2-2026-11-11/integration-result.json).
+
+**Acceptance.** The [validation record](../../benchmarks/results/redis-v2-2026-11-11/validation.json),
+[condition coverage](../../benchmarks/results/redis-v2-2026-11-11/condition-coverage.csv) and
+[generated comparison-usability table](../../benchmarks/results/redis-v2-2026-11-11/comparison-usability.csv) supply
+counts and paired-round availability. Burn-in achieved control leadership and stable ranking. Every prescribed round,
+condition and measured request was retained. Separately joined untimed records remain in
+[warm-up.csv](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/warm-up.csv); their IDs are disjoint from measured
+samples. The strict collector joins succeeded before output, and the validator checked priming completeness, UTC and
+monotonic timing consistency, and exact SHA correspondence for every public product-link signature. See
+[timing and priming](../../benchmarks/results/redis-v2-2026-11-11/timing-and-priming.csv) and
+[data signatures](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/data-signatures.json).
+Existing report tools regenerate all tables and the chart byte-identically. Digest version 2 and diagnostic schema 1
+are recorded; earlier hashes were neither reinterpreted nor combined with this attempt.
+
+**Findings and implications.** Use the generated [ratios](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/ratios.csv),
+[verdicts](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/verdicts.csv),
+[bootstrap intervals](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/bootstrap.csv) and
+[chart](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/chart.svg) for numerical report/slide values.
+Warm shop, search and dashboard comparisons exceed the measured control noise floor on accepted paired rounds.
+This supports caching those repeated reads for Mercer, including dashboard history after the digest repair. Cold and
+outage comparisons do not show a consistent effect beyond that noise floor; this does not establish that misses or
+outages are free. Product-detail and category-trending controls do not support a universal Redis benefit.
+
+**Refusals and limits.** The [refusal table](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/refusals.csv),
+[per-round refusals](../../benchmarks/results/redis-v2-2026-11-11/refusals-by-round.csv) and
+[diagnosis](../../benchmarks/results/redis-v2-2026-11-11/refusal-diagnosis.json) distinguish confirmed observations from
+hypotheses. Round-two shop/search public-link signatures retain the same multiset but change order: product `8914`
+moves relative to neighbouring links. Those data-equality failures remain rejected. Rolling-window event expiry is a
+possible mechanism, not directly proven. One measured warm search response is a confirmed cache miss; timing is
+consistent with expiry, but key creation, TTL and eviction were not directly recorded. No dashboard samples are refused.
+Shop/search warm and search outage comparisons have reduced paired-round coverage, losing full Williams balance.
+The [shop/down round-two accepted cell](../../benchmarks/results/redis-v2-2026-11-11/condition-coverage.csv) contains
+only the first 3 timed shop requests after Redis was paused, before the link order changed. Its first request pays the
+configured Redis timeout, so the [raw requests](../../benchmarks/results/2026-11-11T220303_b82ac876_redis/samples.csv)
+include the pause cost in this very small cell; its down/off ratio is inflated by that cost and is not a steady-state
+outage estimate. The first observed reordering occurs while Redis is down and the live database path is used, which
+supports a live-data change rather than a stale cached ordering; the expiry mechanism remains unproven.
+The usability table exposes minimum accepted cell sizes. The approved gates permit refusals and report available paired rounds: they do not impose zero
+refusals or a new minimum number of paired rounds. Every required comparison is available, with those qualifications.
+Keep the report's insufficient-tail and optimistic-bootstrap labels. Sequential loopback traffic, one machine, warm
+databases, synthetic activity, live rankings and worker back-off limit generalisation to production concurrency.
+
+**Status and supersession.** All required measurement groups now have valid evidence with their recorded limitations.
+This version-2 attempt supersedes earlier Redis-condition attempts for report headlines only; all historical artifacts,
+failures and diagnoses below remain unchanged. B1–B6, page timing, stampede and limiter were neither rerun nor relabelled.
+The main index above owns authoritative sources. Normal/staged documentation, diff, host tooling and artifact checks
+are recorded in [checks.json](../../benchmarks/results/redis-v2-2026-11-11/checks.json).
+That file and validation.json retain their pre-review status snapshots; the [review notes](#review-notes) own current
+status. The supplied fresh Opus review confirms complete measurement and requests documentation corrections only.
+Fresh Opus re-review verified all six corrections; its two wording follow-ups have been applied.
+No measurement rerun is required. The earlier
+[review prompt](../../benchmarks/results/redis-v2-2026-11-11/opus-review-prompt.txt) is retained as history.
+Fresh Opus follow-up approved both wording fixes and report readiness. Repository delivery is authorised;
+overall repository close-out still requires successful PR checks and merge.
+
+#### Historical superseded Redis execution and acceptance gaps after PR #42
+
+This section records the earlier checkpoint; the version-2 measurement above resolves its dashboard blocker. It must
+not supply current Redis headline figures. References to remaining work here describe that historical checkpoint.
+
+The sole new measurement used a separate clean current-main worktree and a new `mercer-redis-report-final` project at
+loopback port 18086. Full Olist import, demo seeding and default activity seeding preceded the default-count, seed-82
+`--require-clean` experiment. No earlier activity was reused. The existing PC/WSL allocation was retained; default
+application container limits, image identities and VM limits are in the
+[configuration table](../../benchmarks/results/redis-final-2026-11-11/configuration.csv) and
+[preflight](../../benchmarks/results/redis-final-2026-11-11/preflight.json). These are application-stack limits, distinct
+from the driver engine caps. Benchmark/request measurement stacks were stopped. No application/benchmark code or
+system allocation was changed. Only owned services were started and later stopped; all volumes and prior artifacts remain.
+
+The repaired burn-in passed the unchanged control-leader and ranking-stability requirements. All prescribed conditions,
+rounds, default sample counts and seeded order were collected; response IDs, metrics, matrices and reports validated
+([validation](../../benchmarks/results/redis-final-2026-11-11/validation.json),
+[coverage](../../benchmarks/results/redis-final-2026-11-11/condition-coverage.csv),
+[command outcomes](../../benchmarks/results/redis-final-2026-11-11/command-outcomes.csv)). Regenerating the reports from
+raw samples with the existing report code produced byte-identical outputs. Exit zero does not waive sample refusals.
+
+**Findings and allowed uses.** The [original refusal table](../../benchmarks/results/2026-11-11T190658_eb9b39eb_redis/refusals.csv),
+[refusals by round](../../benchmarks/results/redis-final-2026-11-11/refusals-by-round.csv),
+[ratios](../../benchmarks/results/2026-11-11T190658_eb9b39eb_redis/ratios.csv) and
+[verdicts](../../benchmarks/results/2026-11-11T190658_eb9b39eb_redis/verdicts.csv) supply all numerical values:
+
+- Warm shop and search requests are faster in their accepted paired rounds and exceed the measured negative-control
+  noise floor. These are accepted-subset findings, not complete four-round Williams comparisons: a whole round's
+  warm shop/search data disagreed with its off reference. Search also had a warm cache miss. Their reduced pooled
+  samples do not support every requested tail percentile; retain the generated tail labels and optimistic bootstrap labels.
+- Cold-miss and outage comparisons that have accepted pairs do not show a consistent effect beyond the control noise
+  floor. Search outage pairing is also incomplete. This does not prove a miss or outage costs nothing; paused Redis,
+  worker back-off, sequential traffic and the observed noise limit that conclusion.
+- Every warm-dashboard sample failed the data-equivalence gate. There is no accepted dashboard off/warm ratio or
+  bootstrap interval. Do not infer dashboard speedup from rejected raw latencies or fill the missing bar in the chart.
+  The independent earlier stampede experiment remains narrower evidence about coalesced recomputations.
+
+**New normalization blocker.** An untimed diagnostic reproduced both recorded dashboard digest classes. The off and
+warm bodies match after inter-tag whitespace normalization, but the existing digest removes the conditional cache
+paragraph while retaining its extra conditional newline/indentation. The sanitized
+[diagnosis](../../benchmarks/results/redis-final-2026-11-11/dashboard-digest-diagnosis.json) shows that formatting-only
+mismatch; it does not retroactively accept samples or change any stored digest. A reviewed collector normalization fix
+and fresh full Redis collection are required for the missing warm-dashboard comparison. No application change, gate
+bypass, count reduction or identical retry was made here.
+
+The shop/search data rejections are separate: [digest blocks](../../benchmarks/results/redis-final-2026-11-11/digest-blocks.json)
+show a mid-round change followed by changed warm data. The collector retained hashes, not the HTML bodies or changed
+link identities, so the exact historical link change cannot be reconstructed. A rolling trending window is a possible
+cause, not a proven attribution. Keep those samples refused; future repair/review must also inspect their implications.
+One machine, loopback, sequential clients, synthetic activity, two workers, warm databases, cache expiry and live ranking
+changes limit generalisation. The measured effects do not establish that Redis helps every page.
+
+**Delivery and remaining work.** All original failures below remain historical evidence: CPU-timeout pilot, MongoDB-OOM
+pilot, source-selection failures and the PR #41 burn-in failure must not supply comparison headlines. BM4 remains a
+separate expected rejection. The PR #42 run is a new completed execution with partial accepted comparisons, not an
+unqualified successful final Redis comparison. The overall benchmark close-out is **not complete** while the dashboard
+warm comparison is missing. Relevant host checks passed
+([generated test record](../../benchmarks/results/redis-final-2026-11-11/host-tests.xml)); normal/staged documentation,
+diff and artifact checks are retained in the current index. Fresh Claude Code review remains pending, with a
+[consolidated review prompt](../../benchmarks/results/redis-final-2026-11-11/opus-review-prompt.txt).
+No commit, push, consolidated PR or merge has been performed for this evidence. Current measurement completeness
+and repository delivery must be assessed independently.
+
+### Fresh driver evidence and collector blockers (11 November 2026)
+
+Chee Long authorised this unattended rerun and machine adaptation. Codex fetched origin, verified that
+`improvements/backlog` is an ancestor of `origin/main`, and fast-forwarded the clean local main to measurement commit
+`505222f41b7473260ed9f40bb3bbaf8eafa46757` (PR #40). No application or benchmark source changed during the driver experiment.
+Those measurements finished before the documentation branch `benchmark/overnight-evidence-2026-11-11` was created.
+The supplied fresh Opus review subsequently confirmed complete measurement and requested documentation corrections;
+[current review status](#review-notes) records the completed re-review and applied wording follow-ups. Nothing was committed or pushed.
+
+**Evidence index.** The [generated validation table](../../benchmarks/results/overnight-2026-11-11/validation.csv),
+[coverage matrix](../../benchmarks/results/overnight-2026-11-11/coverage.csv),
+[attempts](../../benchmarks/results/overnight-2026-11-11/attempts.csv) and
+[command exit statuses](../../benchmarks/results/overnight-2026-11-11/commands.csv) are the numerical record.
+The [cross-session headline](../../benchmarks/results/overnight-2026-11-11/sessions/headline.csv) uses the approved
+median of session medians; [session membership](../../benchmarks/results/overnight-2026-11-11/sessions/sessions.csv)
+retains every session. All recorded sessions are usable; no recorded session was selected or excluded for its speed.
+Per-session CSV/SVG reports, plans, storage, resource samples and checksummed compressed raw operations remain in
+[session 1](../../benchmarks/results/2026-11-11T083148_505222f4_overnight-session-1),
+[session 2](../../benchmarks/results/2026-11-11T112007_505222f4_overnight-session-2) and
+[session 3](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3).
+
+**Machine and deviations.** [Hardware and actual container limits](../../benchmarks/results/overnight-2026-11-11/hardware.csv)
+and [preflight](../../benchmarks/results/overnight-2026-11-11/preflight.json) identify the Ryzen 5 5600X, host RAM,
+SSD storage and the existing WSL memory allocation. The teammate's 12-CPU/24-GB VM prescription was superseded by the
+owner's actual-resource authorisation: the existing 10-GB WSL limit and 12 virtual CPUs were retained, with Windows
+headroom. The runner's actual usable-memory/CPU gate passed; every recorded session used `--final --require-clean`.
+Both engines settled at 4 CPUs and 3 GiB with no container swap; the runner stayed at 2 CPUs and 2 GiB. PostgreSQL
+shared_buffers and WiredTiger cache remained 512 MB and 0.75 GiB. The
+[pinning decision](../../benchmarks/results/overnight-2026-11-11/resource-decision.json) compares relative baseline
+spread and adopts disjoint cpusets. Ignored Compose overrides preserve these reversible settings; actual cpusets
+are recorded even though `--pin` was omitted because its fixed file list would omit the resource override.
+Balanced power and existing sleep/update/security settings were retained. At the user's later request, Steam was
+closed gracefully during session 1; WSL file cache was released with engines stopped before sessions 2 and 3 loaded,
+and after all work. No timed window was interrupted. This background-state change is a limitation, with no detected
+start/end baseline drift. No Docker restart or unrelated project stop occurred.
+
+The [first pilot](../../benchmarks/results/2026-11-11T022529_505222f4_pilot-b2) repeatedly timed out PostgreSQL's
+B2b app variant under the original CPU cap and was deliberately stopped; its exit 137 is operator termination,
+not an engine OOM. The [equal-CPU retry](../../benchmarks/results/2026-11-11T025810_505222f4_pilot-resource-b2)
+passed the queries but lost MongoDB to its memory cap during repeated summary rebuilding. Both are excluded.
+The [fresh memory pilot](../../benchmarks/results/2026-11-11T053250_505222f4_pilot-memory-b2) passed before resources
+were settled. The [fresh full-data correctness pass](../../benchmarks/results/2026-11-11T081736_505222f4_overnight-correctness)
+includes both physical restore audits. Separate
+[BM4 verification](../../benchmarks/results/overnight-2026-11-11/bm4-verification.json) confirms deliberate bad results
+and a violated invariant were rejected with no accepted timing. Each measurement session then reloaded again.
+
+All applicable B1–B6 variants, originals and refresh costs were retained, with the amendment-l counts, five measured
+repetitions and B3's fifty buyers. B7 stayed excluded. Engine order was not alternated, as already disclosed in l5.
+Warm buffers, one Windows/WSL machine, a capped local client, generated attributes, a single-node replica set,
+client-saturation/headline flags and pooled-tail sample gates remain limitations. Read each session's noise verdicts
+alongside the headline flag; a statistically repeatable small difference need not exceed round-trip noise.
+
+**Findings and implications for Mercer.** Numerical values come from the linked generators, never this prose:
+
+- **B1:** [Cross-session attribute comparisons](../../benchmarks/results/overnight-2026-11-11/b1-comparison.csv)
+  contradict the expectation that JSONB and MongoDB equality filters would be close: MongoDB is slower here. The
+  expected EAV penalty is visible at one client, but often narrows to near JSONB under concurrency; consult the table's
+  session ranges rather than assuming one ranking for every client count. The saved broad
+  [planner-chosen plan](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/plans/B1_broad_mongo_documents.json)
+  scans the `_id_` index across the collection; the [attribute-hinted plan](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/plans/B1_broad_mongo_documents_hinted.json)
+  examines fewer documents and is faster, but remains diagnostic. That establishes the broad plan-choice cost;
+  the cause of the general JSONB/MongoDB equality-filter gap is not established. MongoDB specifications remain
+  justified by flexible category documents and the subset pattern; generated sparse attributes on this dataset do
+  not establish a document-store search-speed advantage.
+- **B2:** The expectation partly held: PostgreSQL leads the joined analytics and maintained reads reduce work, but
+  expected MongoDB competitiveness on embedded order lines was contradicted. Every registered like-for-like
+  [query pair](../../benchmarks/results/overnight-2026-11-11/sessions/b2-headline.csv) favours PostgreSQL here;
+  the cause of the overall engine gap is not established by the [saved plans](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/plans).
+  Precomputation explains faster summary reads: summaries beat the live queries, but the original
+  orders-of-magnitude expectation was not met; see the measured comparisons in
+  [headline.csv](../../benchmarks/results/overnight-2026-11-11/sessions/headline.csv). Idiomatic queries and maintained summaries are separate from the
+  original display-oriented queries. Refresh is a separate cost: daily-sales refresh is a tie at the observed
+  overlapping [session ranges](../../benchmarks/results/overnight-2026-11-11/sessions/headline.csv), while delivery-score
+  refresh favours PostgreSQL. This supports Mercer's PostgreSQL analytics and materialized views. Summary staleness,
+  no-change refresh behaviour, precomputed MongoDB flags and category joins prevent a claim about all SQL and document workloads.
+- **B3:** Both engines preserve the stock/order/payment invariants and restore their baselines
+  ([states](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/report/B3-states.csv)).
+  The expectation held: both are correct, PostgreSQL queues without transaction retries, and MongoDB's write conflicts
+  require more retries as contention rises, with higher tail latency in the [cross-session results](../../benchmarks/results/overnight-2026-11-11/sessions/headline.csv).
+  The conflict/retry records support that contention mechanism; they do not isolate every component of the latency gap.
+  PostgreSQL's trigger-off path has higher throughput here; trigger-on results expose the auditing cost. Mercer's
+  money/stock transaction belongs in PostgreSQL; the trigger-off headline compares minimal operations and cannot
+  represent the production checkout's full cost.
+- **B4:** [Index comparisons](../../benchmarks/results/overnight-2026-11-11/b4-comparison.csv) show substantial gains
+  from the selected SQL indexes and MongoDB attribute/review indexes, as expected for selective filters. The saved
+  [before/after plans](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/plans) show selective
+  index paths replacing broader scans. The product-visible index changes the scan but leaves the per-product lookup
+  work, and its effect is within the session noise verdicts, consistent with the expectation of little benefit
+  when much of the data is still processed. Keep indexes tied to real filters and plans; do not generalise from one
+  index or interpret the within-noise case as a reliable gain. Every index catalogue was restored.
+- **B5:** [Storage evidence](../../benchmarks/results/overnight-2026-11-11/historical-storage.csv) exposes representation
+  and index costs. The expectation partly held: EAV's attribute representation is larger than JSONB, and MongoDB's
+  product footprint is smaller; GIN and the other indexes add storage. A universal MongoDB-smallest ranking cannot
+  be inferred across the [unequal payloads](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/report/B5.csv).
+  The exact contribution of compression versus modelling/index allocation is not established by these probes.
+  Embedded order lines and MongoDB review text mean these are representation-specific footprints, not equal-payload
+  total-store ratios. Fresh-load probes and restore audits are retained; the linked generated table distinguishes
+  historical rows from each November session.
+- **B6:** [Expected and observed states](../../benchmarks/results/2026-11-11T141404_505222f4_overnight-session-3/report/B6-states.csv)
+  match the expectation: naive read/modify/write loses an update in both engines, while locks/serializability and
+  MongoDB transactions/atomic increments preserve the intended decrements, with retries where expected. The forced
+  competing reads expose the overwrite; locking, conflict detection/retry or an atomic decrement prevents it.
+  This motivates Mercer's explicit concurrency control; B6 remains a correctness demonstration, not a latency contest.
+- **Application page timing:** the historical source-selection failure is preserved in the
+  [original readback](../../benchmarks/results/overnight-2026-11-11/collector-blocker.json). After PR #41, the complete
+  [page collector](../../benchmarks/results/2026-11-11T181223_df03cb33_request-timing) passed on its separately named
+  revision. Its [generated page table](../../benchmarks/results/collectors-2026-11-11/page-summary.csv) shows that
+  database work dominates category, product-list and faceted-search requests.
+  The dashboard spends substantial time in both stores and also outside database calls; detail requests have a
+  smaller database share. The [recorded procedure](../../benchmarks/results/collectors-2026-11-11/commands.jsonl)
+  collected pages immediately after import and demo seeding, without `seed_activity`: there was no seeded activity, and trending held at most
+  the collector's own single-visitor views, unlike the activity-seeded Redis experiment. Its PostgreSQL/MongoDB split is specific to that initial data state and
+  must not be combined with the Redis off-condition figures. The PostgreSQL attribution difference between those
+  experiments has no established cause; a planner-statistics explanation is unproven. The general claim that
+  PostgreSQL dominates these pages is therefore unsupported. Database work remains a major request share in both
+  experiments; optimisation should follow the relevant state. A store-split headline would need a controlled
+  follow-up; it is not needed to complete the existing measurements. This is warmed, sequential HTML request timing
+  with Redis disabled, excluding browser asset/render work and concurrent load.
+- **Redis (historical checkpoint; superseded for condition claims by the [authoritative index](#authoritative-november-evidence-for-report-and-slides)):**
+  the [stampede/limiter evidence](../../benchmarks/results/2026-11-11T171256_505222f4_redis-stampede) and
+  [generated round summary](../../benchmarks/results/overnight-2026-11-11/stampede-summary.csv) show the dashboard lock
+  coalescing cold recomputations and retain the measured limiter overhead. Two web workers, fixed condition order,
+  loopback and one machine limit generalisation; the existing tool retains aggregates rather than individual
+  stampede/limiter request latencies. The original off/cold/warm/down attempt hit the source mismatch
+  ([historical failure](../../benchmarks/results/overnight-2026-11-11/redis-final-experiment.log)). The PR #41 continuation
+  passed selection but failed the distinct-visitor burn-in described below. At that checkpoint no cache-condition
+  speedup, bootstrap interval or cold/warm/down claim was available; PR #43's version-2 evidence now supplies those
+  comparisons with the qualifications above. These app experiments ran only with benchmark engines stopped.
+
+**Historical comparison and remaining work.** [Provenance comparison](../../benchmarks/results/overnight-2026-11-11/machine-comparison.json)
+finds matching CPU and reported physical RAM, consistent with the owner's confirmation of the same PC; no unique
+hardware serial was collected. These are not cross-machine results. The
+[source differences](../../benchmarks/results/overnight-2026-11-11/source-differences.txt) include regenerated product
+names, changed B2d goldens/semantics, new idiomatic and summary variants and later application/schema changes.
+[Common B1/B4 cells](../../benchmarks/results/overnight-2026-11-11/historical-common-cells.csv) and the storage table
+provide historical context only: source data, code, counts, caps and pinning differ, so they do not measure a causal
+build speedup. These sessions supersede the 2 November B1–B6 driver evidence for the current build; older evidence
+and all failed pilots remain in place, without archival or deletion. Fresh application timing subsequently passed on the collector-only revision below. Redis condition measurements
+were blocked at that checkpoint. The historical PR #42 gaps and subsequent valid version-2 measurement are indexed above; repository delivery remains pending.
+The fresh Opus re-review is complete; its two wording follow-ups have been applied ([review notes](#review-notes)). [Artifact verification](../../benchmarks/results/overnight-2026-11-11/verification.json)
+passed; documentation validation is retained in
+[check-docs.log](../../benchmarks/results/overnight-2026-11-11/check-docs.log).
+
+#### Collector continuation after PR #41 (11 November 2026)
+
+**Historical checkpoint:** PR #42 subsequently repaired this burn-in failure. Use the authoritative index above for the subsequent attempts and completed version-2 measurement.
+
+PR #41 was fetched and verified merged into main. Both collector attempts used the clean committed revision
+`df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e`, in an isolated worktree. The
+[revision comparison](../../benchmarks/results/collectors-2026-11-11/source-revisions.json) records that only collector
+selection, tests and documentation differ from the driver/stampede revision `505222f41b7473260ed9f40bb3bbaf8eafa46757`;
+application code, data and Compose configuration are unchanged. Earlier evidence retains its original commit.
+No B1–B6, stampede or limiter measurement was rerun. The original uncommitted overnight documentation was reconciled
+with PR #41's additions and preserved unchanged in its original checkout.
+
+Fresh isolated full-data projects `mercer-request-collectors` and `mercer-redis-collectors` used loopback ports 18084
+and 18085, the documented import and demo seeding, and default application service limits. Redis activity was seeded
+with the documented defaults immediately before its attempt. The request stack stopped before Redis started; all
+owned services are now stopped and volumes preserved. The existing host/WSL allocation was retained, not the
+teammate's allocation. [Preflight](../../benchmarks/results/collectors-2026-11-11/preflight.json), sanitized container
+snapshots and [command outcomes](../../benchmarks/results/collectors-2026-11-11/command-outcomes.csv) retain the facts.
+
+The page run's source-backed selection, response/log joins, counts and all aggregate values were independently
+recomputed using the repository's existing functions
+([validation](../../benchmarks/results/collectors-2026-11-11/validation.json)). Its raw joined requests, selected
+request-log records, per-page aggregates and original provenance remain in the linked result directory. The
+[generated page table](../../benchmarks/results/collectors-2026-11-11/page-summary.csv) supplies the numerical findings.
+The source-selection fix's prior fresh Opus review is recorded separately in the existing PR #41 notes; this evidence
+handoff has not received an independent review.
+
+**Historical blocker: Redis ranking burn-in (repaired by PR #42).** The complete default experiment was invoked with `--require-clean`,
+without pilot flags or reduced counts. It exhausted the existing untimed settling procedure and rejected the run
+before any timed condition. The [failed attempt](../../benchmarks/results/2026-11-11T181359_df03cb33_redis/failure.json)
+and [read-only database diagnosis](../../benchmarks/results/collectors-2026-11-11/redis-failure-diagnosis.json) show
+repeated views from one session but only one counted visitor for the control product, while seeded leaders have more
+visitors. `settle_ranking` reuses one cookie jar; `views_per_visitor` deliberately deduplicates it. Repeating those views
+cannot satisfy the required leader condition. Activity was present in the valid trending window and the collection
+retained its TTL; this is not the historical showcase mismatch or an empty seed.
+
+No timed samples, condition summaries, ratios, bootstrap intervals, verdicts or chart were produced for this failed
+attempt. No gate, count, data or application/benchmark code was changed, and a deterministic identical retry was not
+made. A separately reviewed burn-in fix is required, followed by only the full Redis experiment from its documented
+fresh seeded state. Page timing and all earlier valid measurements need no rerun. Do not claim Redis helps every page:
+its cache-condition effect is still unmeasured on this build; the earlier stampede evidence remains a narrower result.
+
+The evidence/documentation branch is `benchmark/collector-evidence-2026-11-11`, in `.cache/collectors-final`.
+Required prior evidence is included deliberately so links are portable; local orchestration and credentials are excluded.
+Relevant [host checks](../../benchmarks/results/collectors-2026-11-11/host-tests.xml) passed. Current documentation and
+staged-index checks are retained in the collector evidence index. Fresh Claude Code review is pending; the CLI was
+not available here, so commit, push and PR creation are paused under AGENTS.md. The overall close-out remains incomplete.
+
 ### Designated-machine final and close-out (2 November 2026)
+
+**Historical:** superseded for report figures by the [authoritative November index](#authoritative-november-evidence-for-report-and-slides).
+The source-selection instruction and validation below apply to the 2 November checkpoint only.
 
 Chee Long directed the final run and this close-out on the designated Windows PC. All six retained directories
 identify the clean measurement commit `b53e5d0`; the BM4 controls were captured before any close-out source edit.

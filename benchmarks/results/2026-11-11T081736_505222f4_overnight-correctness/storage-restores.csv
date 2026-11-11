@@ -1,0 +1,7 @@
+engine,representation,data_bytes,index_bytes,cache_bytes,cycle,within_tolerance
+mongo,products,2240512,1671168,805306368,0,True
+mongo,orders,8626176,5255168,805306368,0,True
+mongo,products,2265088,1753088,805306368,1,True
+mongo,orders,8724480,5525504,805306368,1,True
+mongo,products,2273280,1740800,805306368,2,True
+mongo,orders,8642560,5480448,805306368,2,True

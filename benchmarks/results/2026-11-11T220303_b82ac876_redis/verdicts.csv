@@ -1,0 +1,10 @@
+page,pair,effect,noise_floor,same_side_every_round,claim
+shop,off/warm,1.7273168364871418,0.07484407484407485,True,yes
+shop,cold/off,0.0011520826957787111,0.07484407484407485,False,no: not distinguishable from the noise floor
+shop,down/off,0.0006360725055573058,0.07484407484407485,False,no: not distinguishable from the noise floor
+search,off/warm,0.9584002140181913,0.07484407484407485,True,yes
+search,cold/off,0.014555409292852595,0.07484407484407485,False,no: not distinguishable from the noise floor
+search,down/off,0.018612116658698108,0.07484407484407485,False,no: not distinguishable from the noise floor
+dashboard,off/warm,4.493166708938346,0.07484407484407485,True,yes
+dashboard,cold/off,0.002977556920020774,0.07484407484407485,False,no: not distinguishable from the noise floor
+dashboard,down/off,0.014944221061611307,0.07484407484407485,False,no: not distinguishable from the noise floor

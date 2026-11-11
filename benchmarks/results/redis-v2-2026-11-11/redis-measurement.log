@@ -1,0 +1,17 @@
+round 1 down
+round 1 cold
+round 1 warm
+round 1 off
+round 2 cold
+round 2 off
+round 2 down
+round 2 warm
+round 3 off
+round 3 warm
+round 3 cold
+round 3 down
+round 4 warm
+round 4 down
+round 4 off
+round 4 cold
+{"results": "C:\\Github repos\\INF2003_Database_Project\\.cache\\redis-v2-measurement\\benchmarks\\results\\2026-11-11T220303_b82ac876_redis", "accepted": 9242, "refused": 598, "pilot": false}

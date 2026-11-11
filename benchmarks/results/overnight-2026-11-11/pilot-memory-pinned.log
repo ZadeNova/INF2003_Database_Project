@@ -1,0 +1,119 @@
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T081553_505222f4_pilot-memory-pinned", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "state": "started"}
+ Container mercer-bench-overnight-bench-db-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Waiting 
+ Container mercer-bench-overnight-bench-db-1 Waiting 
+ Container mercer-bench-overnight-bench-mongo-1 Healthy 
+ Container mercer-bench-overnight-bench-db-1 Healthy 
+ Container mercer-bench-overnight-load-client Creating 
+ Container mercer-bench-overnight-load-client Created 
+baseline python/noop clients=1 run=0 warmup: passed
+baseline python/noop clients=1 run=1 measured: passed
+baseline python/noop clients=1 run=2 measured: passed
+baseline python/noop clients=1 run=3 measured: passed
+baseline python/noop clients=1 run=4 measured: passed
+baseline python/noop clients=1 run=5 measured: passed
+baseline python/noop clients=10 run=0 warmup: passed
+baseline python/noop clients=10 run=1 measured: passed
+baseline python/noop clients=10 run=2 measured: passed
+baseline python/noop clients=10 run=3 measured: passed
+baseline python/noop clients=10 run=4 measured: passed
+baseline python/noop clients=10 run=5 measured: passed
+baseline python/noop clients=50 run=0 warmup: passed
+baseline python/noop clients=50 run=1 measured: passed
+baseline python/noop clients=50 run=2 measured: passed
+baseline python/noop clients=50 run=3 measured: passed
+baseline python/noop clients=50 run=4 measured: passed
+baseline python/noop clients=50 run=5 measured: passed
+baseline_roundtrip postgres/select1 clients=1 run=0 warmup: passed
+baseline_roundtrip postgres/select1 clients=1 run=1 measured: passed
+baseline_roundtrip postgres/select1 clients=1 run=2 measured: passed
+baseline_roundtrip postgres/select1 clients=1 run=3 measured: passed
+baseline_roundtrip postgres/select1 clients=1 run=4 measured: passed
+baseline_roundtrip postgres/select1 clients=1 run=5 measured: passed
+baseline_roundtrip postgres/select1 clients=10 run=0 warmup: passed
+baseline_roundtrip postgres/select1 clients=10 run=1 measured: passed
+baseline_roundtrip postgres/select1 clients=10 run=2 measured: passed
+baseline_roundtrip postgres/select1 clients=10 run=3 measured: passed
+baseline_roundtrip postgres/select1 clients=10 run=4 measured: passed
+baseline_roundtrip postgres/select1 clients=10 run=5 measured: passed
+baseline_roundtrip postgres/select1 clients=50 run=0 warmup: passed
+baseline_roundtrip postgres/select1 clients=50 run=1 measured: passed
+baseline_roundtrip postgres/select1 clients=50 run=2 measured: passed
+baseline_roundtrip postgres/select1 clients=50 run=3 measured: passed
+baseline_roundtrip postgres/select1 clients=50 run=4 measured: passed
+baseline_roundtrip postgres/select1 clients=50 run=5 measured: passed
+baseline_roundtrip mongo/ping clients=1 run=0 warmup: passed
+baseline_roundtrip mongo/ping clients=1 run=1 measured: passed
+baseline_roundtrip mongo/ping clients=1 run=2 measured: passed
+baseline_roundtrip mongo/ping clients=1 run=3 measured: passed
+baseline_roundtrip mongo/ping clients=1 run=4 measured: passed
+baseline_roundtrip mongo/ping clients=1 run=5 measured: passed
+baseline_roundtrip mongo/ping clients=10 run=0 warmup: passed
+baseline_roundtrip mongo/ping clients=10 run=1 measured: passed
+baseline_roundtrip mongo/ping clients=10 run=2 measured: passed
+baseline_roundtrip mongo/ping clients=10 run=3 measured: passed
+baseline_roundtrip mongo/ping clients=10 run=4 measured: passed
+baseline_roundtrip mongo/ping clients=10 run=5 measured: passed
+baseline_roundtrip mongo/ping clients=50 run=0 warmup: passed
+baseline_roundtrip mongo/ping clients=50 run=1 measured: passed
+baseline_roundtrip mongo/ping clients=50 run=2 measured: passed
+baseline_roundtrip mongo/ping clients=50 run=3 measured: passed
+baseline_roundtrip mongo/ping clients=50 run=4 measured: passed
+baseline_roundtrip mongo/ping clients=50 run=5 measured: passed
+baseline_end python/noop clients=1 run=0 warmup: passed
+baseline_end python/noop clients=1 run=1 measured: passed
+baseline_end python/noop clients=1 run=2 measured: passed
+baseline_end python/noop clients=1 run=3 measured: passed
+baseline_end python/noop clients=1 run=4 measured: passed
+baseline_end python/noop clients=1 run=5 measured: passed
+baseline_end python/noop clients=10 run=0 warmup: passed
+baseline_end python/noop clients=10 run=1 measured: passed
+baseline_end python/noop clients=10 run=2 measured: passed
+baseline_end python/noop clients=10 run=3 measured: passed
+baseline_end python/noop clients=10 run=4 measured: passed
+baseline_end python/noop clients=10 run=5 measured: passed
+baseline_end python/noop clients=50 run=0 warmup: passed
+baseline_end python/noop clients=50 run=1 measured: passed
+baseline_end python/noop clients=50 run=2 measured: passed
+baseline_end python/noop clients=50 run=3 measured: passed
+baseline_end python/noop clients=50 run=4 measured: passed
+baseline_end python/noop clients=50 run=5 measured: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=0 warmup: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=1 measured: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=2 measured: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=3 measured: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=4 measured: passed
+baseline_roundtrip_end postgres/select1 clients=1 run=5 measured: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=0 warmup: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=1 measured: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=2 measured: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=3 measured: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=4 measured: passed
+baseline_roundtrip_end postgres/select1 clients=10 run=5 measured: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=0 warmup: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=1 measured: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=2 measured: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=3 measured: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=4 measured: passed
+baseline_roundtrip_end postgres/select1 clients=50 run=5 measured: passed
+baseline_roundtrip_end mongo/ping clients=1 run=0 warmup: passed
+baseline_roundtrip_end mongo/ping clients=1 run=1 measured: passed
+baseline_roundtrip_end mongo/ping clients=1 run=2 measured: passed
+baseline_roundtrip_end mongo/ping clients=1 run=3 measured: passed
+baseline_roundtrip_end mongo/ping clients=1 run=4 measured: passed
+baseline_roundtrip_end mongo/ping clients=1 run=5 measured: passed
+baseline_roundtrip_end mongo/ping clients=10 run=0 warmup: passed
+baseline_roundtrip_end mongo/ping clients=10 run=1 measured: passed
+baseline_roundtrip_end mongo/ping clients=10 run=2 measured: passed
+baseline_roundtrip_end mongo/ping clients=10 run=3 measured: passed
+baseline_roundtrip_end mongo/ping clients=10 run=4 measured: passed
+baseline_roundtrip_end mongo/ping clients=10 run=5 measured: passed
+baseline_roundtrip_end mongo/ping clients=50 run=0 warmup: passed
+baseline_roundtrip_end mongo/ping clients=50 run=1 measured: passed
+baseline_roundtrip_end mongo/ping clients=50 run=2 measured: passed
+baseline_roundtrip_end mongo/ping clients=50 run=3 measured: passed
+baseline_roundtrip_end mongo/ping clients=50 run=4 measured: passed
+baseline_roundtrip_end mongo/ping clients=50 run=5 measured: passed
+{"amendment_j": [], "outputs": ["baseline", "baseline_end", "baseline_roundtrip", "baseline_roundtrip_end"], "report": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T081553_505222f4_pilot-memory-pinned\\report"}
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T081553_505222f4_pilot-memory-pinned", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "exit_code": 0, "duration_seconds": 29.493496899987804}

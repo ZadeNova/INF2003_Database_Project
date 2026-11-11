@@ -1,0 +1,20 @@
+{
+  "earlier_host_file": "benchmarks\\results\\2026-11-02T004351_b53e5d0a_final\\host.json",
+  "earlier_hardware": {
+    "cpu": {
+      "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+      "NumberOfCores": 6,
+      "NumberOfLogicalProcessors": 12
+    },
+    "ram": 17084600320
+  },
+  "current_cpu": {
+    "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "NumberOfCores": 6,
+    "NumberOfLogicalProcessors": 12
+  },
+  "current_physical_ram": 17084600320,
+  "cpu_name_matches": true,
+  "ram_matches": true,
+  "limitation": "CPU and physical RAM match; host serial identifiers not collected. Owner confirms same PC. Code/data/protocol differ; no cross-machine claim."
+}

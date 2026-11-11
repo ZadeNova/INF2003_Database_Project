@@ -1,0 +1,2 @@
+page,path,requests,duration_ms_median,duration_ms_p95,db_pg_ms_median,db_pg_ms_p95,db_pg_queries_median,db_pg_queries_p95,db_mongo_ms_median,db_mongo_ms_p95,db_mongo_commands_median,db_mongo_commands_p95,db_share_percent_median,db_share_percent_p95,db_pg_queries_total,db_mongo_commands_total,db_share_percent_total
+category,/products/category/sports-leisure/,20,481.375,542.29,436.846,500.348,11.0,11,14.187999999999999,15.622,8.0,8,94.47157465342315,95.01244721459,220,162,93.92707288772824

@@ -1,0 +1,26 @@
+{
+  "source_commit": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78",
+  "branch": "benchmark/overnight-evidence-2026-11-11",
+  "normal_docs": "passed",
+  "staged_docs": "passed",
+  "diff_checks": "passed",
+  "host_checks": {
+    "tests": 106,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "private_secret_scan_staged_blobs": "passed; no secret values displayed",
+  "runtime_orchestration_excluded": true,
+  "all_prior_artifact_bytes_unchanged": true,
+  "collector_index_unchanged": true,
+  "Redis_execution_exit_zero": true,
+  "Redis_complete_requested_matrix": true,
+  "Redis_complete_accepted_comparisons": false,
+  "overall_benchmark_closeout_complete": false,
+  "containers_running": 0,
+  "independent_evidence_review": "pending; Claude CLI unavailable",
+  "new_evidence_commit_push_PR": "not performed",
+  "repository_delivery": "pending review, CI and merge",
+  "hash_manifest_scope": "staged blobs before adding this checks record and the hash manifest itself; portable across line-ending conversion"
+}

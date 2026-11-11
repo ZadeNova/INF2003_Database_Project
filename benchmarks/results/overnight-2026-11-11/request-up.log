@@ -1,0 +1,221 @@
+ Image redis:8-bookworm@sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d Pulling 
+ aa0194a72deb Pulling fs layer 0B
+ ef0fcbfbfd13 Pulling fs layer 0B
+ dd051e1b8c92 Pulling fs layer 0B
+ ac27e7330dd4 Pulling fs layer 0B
+ de401d840885 Pulling fs layer 0B
+ 0ba71901fcef Pulling fs layer 0B
+ 4f4fb700ef54 Pulling fs layer 0B
+ 4f4fb700ef54 Already exists 0B
+ ef0fcbfbfd13 Download complete 0B
+ dd051e1b8c92 Downloading 2.097MB
+ aa0194a72deb Download complete 0B
+ dd051e1b8c92 Downloading 3.146MB
+ 0ba71901fcef Download complete 0B
+ dd051e1b8c92 Downloading 4.194MB
+ dd051e1b8c92 Downloading 5.243MB
+ dd051e1b8c92 Downloading 6.291MB
+ de401d840885 Download complete 0B
+ dd051e1b8c92 Downloading 7.34MB
+ dd051e1b8c92 Downloading 9.437MB
+ ac27e7330dd4 Downloading 1.049MB
+ dd051e1b8c92 Downloading 10.49MB
+ ac27e7330dd4 Downloading 2.097MB
+ dd051e1b8c92 Downloading 11.53MB
+ ac27e7330dd4 Downloading 4.194MB
+ dd051e1b8c92 Downloading 12.58MB
+ ac27e7330dd4 Downloading 5.243MB
+ 494429863431 Download complete 0B
+ dd051e1b8c92 Downloading 13.63MB
+ ac27e7330dd4 Downloading 6.291MB
+ dd051e1b8c92 Downloading 14.68MB
+ ac27e7330dd4 Downloading 7.34MB
+ dd051e1b8c92 Downloading 15.73MB
+ ac27e7330dd4 Downloading 8.389MB
+ ac27e7330dd4 Downloading 9.437MB
+ dd051e1b8c92 Downloading 16.78MB
+ dd051e1b8c92 Downloading 17.83MB
+ ac27e7330dd4 Downloading 10.49MB
+ dd051e1b8c92 Downloading 18.87MB
+ ac27e7330dd4 Downloading 11.53MB
+ b593c8993884 Downloading 1.049MB
+ dd051e1b8c92 Downloading 19.92MB
+ ac27e7330dd4 Downloading 12.58MB
+ b593c8993884 Download complete 0B
+ dd051e1b8c92 Downloading 20.97MB
+ ac27e7330dd4 Downloading 13.63MB
+ dd051e1b8c92 Downloading 22.02MB
+ ac27e7330dd4 Downloading 14.68MB
+ dd051e1b8c92 Downloading 23.07MB
+ ac27e7330dd4 Downloading 15.73MB
+ dd051e1b8c92 Downloading 24.12MB
+ ac27e7330dd4 Downloading 16.78MB
+ dd051e1b8c92 Downloading 25.17MB
+ ac27e7330dd4 Downloading 18.87MB
+ dd051e1b8c92 Downloading 26.21MB
+ ac27e7330dd4 Downloading 19.92MB
+ dd051e1b8c92 Downloading 27.26MB
+ ac27e7330dd4 Downloading 20.97MB
+ dd051e1b8c92 Download complete 0B
+ ac27e7330dd4 Downloading 22.02MB
+ dd051e1b8c92 Extracting 1B
+ ac27e7330dd4 Downloading 23.07MB
+ dd051e1b8c92 Extracting 1B
+ ac27e7330dd4 Downloading 24.12MB
+ dd051e1b8c92 Extracting 1B
+ ac27e7330dd4 Download complete 0B
+ dd051e1b8c92 Extracting 1B
+ dd051e1b8c92 Extracting 1B
+ dd051e1b8c92 Extracting 1B
+ dd051e1b8c92 Extracting 1B
+ dd051e1b8c92 Extracting 1B
+ ef0fcbfbfd13 Pull complete 0B
+ de401d840885 Pull complete 0B
+ dd051e1b8c92 Pull complete 0B
+ ac27e7330dd4 Extracting 1B
+ ac27e7330dd4 Extracting 1B
+ ac27e7330dd4 Extracting 1B
+ 4f4fb700ef54 Pull complete 0B
+ aa0194a72deb Pull complete 0B
+ 0ba71901fcef Pull complete 0B
+ ac27e7330dd4 Pull complete 0B
+ Image redis:8-bookworm@sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d Pulled 
+ Image mercer-request-overnight-app-dev Building 
+ Image mercer-request-overnight-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.12kB 0.1s done
+#1 DONE 0.1s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 762B done
+#2 DONE 0.0s
+
+#3 [migrate internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [migrate internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 DONE 1.5s
+
+#5 [web internal] load .dockerignore
+#5 transferring context: 274B done
+#5 DONE 0.0s
+
+#6 [web runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#6 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#6 DONE 0.0s
+
+#7 [web internal] load build context
+#7 transferring context: 11.58kB 0.0s done
+#7 DONE 0.0s
+
+#8 [migrate runtime 5/6] COPY . .
+#8 CACHED
+
+#9 [migrate runtime 3/6] COPY requirements.txt .
+#9 CACHED
+
+#10 [migrate runtime 2/6] WORKDIR /app
+#10 CACHED
+
+#11 [migrate runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#11 CACHED
+
+#12 [migrate runtime 6/6] RUN python tools/collect_static.py
+#12 CACHED
+
+#13 [migrate dev 1/2] COPY requirements-dev.txt .
+#13 CACHED
+
+#14 [migrate dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#14 CACHED
+
+#15 [migrate] exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:8cd4983e2359759100de83cd4390109696d5c8726aa2a3ee22699c4aaa811792 0.0s done
+#15 exporting config sha256:fed4a29451425e546d86e7ec4af3b75d3677fb3e8211af0a1905dafd252c5228 0.0s done
+#15 exporting attestation manifest sha256:d6ffb9a23f5c7898bf56ddd03dc2cc6e0352f52bfdc8f07cd766a58a5bc8b789 0.0s done
+#15 exporting manifest list sha256:1493819ab613fb81956e5bb7092eff5cfe60a29cf726a7ab6da6fea89af8a6ca 0.0s done
+#15 naming to docker.io/library/mercer-request-overnight-app-dev:latest done
+#15 unpacking to docker.io/library/mercer-request-overnight-app-dev:latest done
+#15 DONE 0.1s
+
+#16 [web] exporting to image
+#16 exporting layers done
+#16 exporting manifest sha256:10f2ea3103815535667db997d1cbf832c9e84041ed4a983672b6b86f36b84f97 0.0s done
+#16 exporting config sha256:43ef53d97307114603d1589156304a54be36b9b99e5915e64c90be45c5faf87d 0.0s done
+#16 exporting attestation manifest sha256:cff57c2f192d7ff7e439da88476901656f39f00c61f11d447100098d72a5b2b5 0.0s done
+#16 exporting manifest list sha256:f72ada29453bc098a4c59ccb20002e84cde909f8be7d7f25a6435609eb62f991 0.0s done
+#16 naming to docker.io/library/mercer-request-overnight-app:latest done
+#16 unpacking to docker.io/library/mercer-request-overnight-app:latest 0.0s done
+#16 DONE 0.1s
+
+#17 [web] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [migrate] resolving provenance for metadata file
+#18 DONE 0.0s
+ Image mercer-request-overnight-app-dev Built 
+ Image mercer-request-overnight-app Built 
+ Volume mercer-request-overnight_mongo_data Creating 
+ Volume mercer-request-overnight_postgres_data Creating 
+ Volume mercer-request-overnight_mongo_data Creating 
+ Volume mercer-request-overnight_mongo_keyfile Creating 
+ Volume mercer-request-overnight_mongo_keyfile Creating 
+ Network mercer-request-overnight_default Creating 
+ Volume mercer-request-overnight_postgres_data Creating 
+ Network mercer-request-overnight_default Creating 
+ Volume mercer-request-overnight_mongo_data Created 
+ Volume mercer-request-overnight_mongo_data Created 
+ Volume mercer-request-overnight_mongo_keyfile Created 
+ Volume mercer-request-overnight_mongo_keyfile Created 
+ Volume mercer-request-overnight_postgres_data Created 
+ Volume mercer-request-overnight_postgres_data Created 
+ Network mercer-request-overnight_default Created 
+ Network mercer-request-overnight_default Created 
+ Container mercer-request-overnight-mongo-1 Creating 
+ Container mercer-request-overnight-db-1 Creating 
+ Container mercer-request-overnight-redis-1 Creating 
+ Container mercer-request-overnight-db-1 Created 
+ Container mercer-request-overnight-mongo-1 Created 
+ Container mercer-request-overnight-redis-1 Created 
+ Container mercer-request-overnight-migrate-1 Creating 
+ Container mercer-request-overnight-migrate-1 Created 
+ Container mercer-request-overnight-web-1 Creating 
+ Container mercer-request-overnight-web-1 Created 
+ Container mercer-request-overnight-mongo-1 Starting 
+ Container mercer-request-overnight-db-1 Starting 
+ Container mercer-request-overnight-redis-1 Starting 
+ Container mercer-request-overnight-mongo-1 Started 
+ Container mercer-request-overnight-db-1 Started 
+ Container mercer-request-overnight-redis-1 Started 
+ Container mercer-request-overnight-mongo-1 Waiting 
+ Container mercer-request-overnight-redis-1 Waiting 
+ Container mercer-request-overnight-db-1 Waiting 
+ Container mercer-request-overnight-db-1 Healthy 
+ Container mercer-request-overnight-redis-1 Healthy 
+ Container mercer-request-overnight-mongo-1 Healthy 
+ Container mercer-request-overnight-migrate-1 Starting 
+ Container mercer-request-overnight-migrate-1 Started 
+ Container mercer-request-overnight-db-1 Waiting 
+ Container mercer-request-overnight-mongo-1 Waiting 
+ Container mercer-request-overnight-migrate-1 Waiting 
+ Container mercer-request-overnight-redis-1 Waiting 
+ Container mercer-request-overnight-mongo-1 Healthy 
+ Container mercer-request-overnight-redis-1 Healthy 
+ Container mercer-request-overnight-db-1 Healthy 
+ Container mercer-request-overnight-migrate-1 Exited 
+ Container mercer-request-overnight-web-1 Starting 
+ Container mercer-request-overnight-web-1 Started 
+ Container mercer-request-overnight-mongo-1 Waiting 
+ Container mercer-request-overnight-redis-1 Waiting 
+ Container mercer-request-overnight-db-1 Waiting 
+ Container mercer-request-overnight-migrate-1 Waiting 
+ Container mercer-request-overnight-web-1 Waiting 
+ Container mercer-request-overnight-mongo-1 Healthy 
+ Container mercer-request-overnight-db-1 Healthy 
+ Container mercer-request-overnight-redis-1 Healthy 
+ Container mercer-request-overnight-migrate-1 Exited 
+ Container mercer-request-overnight-web-1 Healthy 

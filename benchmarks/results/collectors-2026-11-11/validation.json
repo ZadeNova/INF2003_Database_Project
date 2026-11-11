@@ -1,0 +1,20 @@
+{
+  "page_collector_passed": true,
+  "response_log_joins_verified": 100,
+  "requests_per_page": {
+    "category": 20,
+    "product_list": 20,
+    "faceted_search": 20,
+    "product_detail": 20,
+    "operator_dashboard": 20
+  },
+  "aggregate_reproduction": "all values match existing aggregate()",
+  "selected_source_product": 34118,
+  "paths_source_verified": true,
+  "source_manifest_sha256": "24efcc82c2f70ab53d8b9d6459f06dd71fdf6f822d3c664684505b85dfe659c4",
+  "redis_collector_passed": false,
+  "redis_burn_in_failed": true,
+  "redis_timed_samples": 0,
+  "overall_closeout_complete": false,
+  "independent_evidence_review": "pending"
+}

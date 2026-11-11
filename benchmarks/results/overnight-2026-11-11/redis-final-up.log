@@ -1,0 +1,155 @@
+ Image mercer-redis-overnight-app-dev Building 
+ Image mercer-redis-overnight-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.11kB 0.1s done
+#1 DONE 0.1s
+
+#2 [web internal] load build definition from Dockerfile
+#2 transferring dockerfile: 762B 0.0s done
+#2 DONE 0.0s
+
+#3 [migrate internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [migrate internal] load metadata for docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#3 DONE 1.7s
+
+#5 [web internal] load .dockerignore
+#5 transferring context: 274B done
+#5 DONE 0.0s
+
+#6 [migrate runtime 1/6] FROM docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e
+#6 resolve docker.io/library/python:3.13-slim-bookworm@sha256:ed86c82274b3c69b52fb5820f358f0bd7df0b603332063cb5c6e32bd220c3e6e 0.0s done
+#6 DONE 0.0s
+
+#7 [web internal] load build context
+#7 transferring context: 11.58kB 0.0s done
+#7 DONE 0.0s
+
+#8 [migrate runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#8 CACHED
+
+#9 [migrate runtime 5/6] COPY . .
+#9 CACHED
+
+#10 [migrate runtime 3/6] COPY requirements.txt .
+#10 CACHED
+
+#11 [migrate runtime 2/6] WORKDIR /app
+#11 CACHED
+
+#12 [migrate runtime 6/6] RUN python tools/collect_static.py
+#12 CACHED
+
+#13 [migrate dev 1/2] COPY requirements-dev.txt .
+#13 CACHED
+
+#14 [migrate dev 2/2] RUN python -m pip install --no-cache-dir -r requirements-dev.txt && python -m pip check
+#14 CACHED
+
+#11 [web runtime 2/6] WORKDIR /app
+#11 CACHED
+
+#10 [web runtime 3/6] COPY requirements.txt .
+#10 CACHED
+
+#9 [web runtime 5/6] COPY . .
+#9 CACHED
+
+#8 [web runtime 4/6] RUN python -m pip install --no-cache-dir -r requirements.txt && python -m pip check
+#8 CACHED
+
+#12 [web runtime 6/6] RUN python tools/collect_static.py
+#12 CACHED
+
+#15 [migrate] exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:bfb0270f163c4ff4884901ac35ea67b622a2924f64c0c80057471e2b795dddeb 0.0s done
+#15 exporting config sha256:34cc916b8ec23b285f3ed03515b51a7f5d344eeb2aad2cf734e17ffc22633ada 0.0s done
+#15 exporting attestation manifest sha256:8cc664b89b26c9be7387d4f1c07f125ad8c8b54780c63b1de4aeb8f79ba81fde 0.0s done
+#15 exporting manifest list sha256:09063585f445cc775e92d85db67ef8f41c42e44974793f598f09a051d1759558 0.0s done
+#15 naming to docker.io/library/mercer-redis-overnight-app-dev:latest
+#15 naming to docker.io/library/mercer-redis-overnight-app-dev:latest done
+#15 unpacking to docker.io/library/mercer-redis-overnight-app-dev:latest done
+#15 DONE 0.1s
+
+#16 [web] exporting to image
+#16 exporting layers done
+#16 exporting manifest sha256:7246ad516885d163932fa053ba6799be94caced385c7fd894e9b710456672812 0.0s done
+#16 exporting config sha256:815705428432a423965d2cc8b66c287f33569d4148e46b8a64d49d0b290505f3 0.0s done
+#16 exporting attestation manifest sha256:0897bacb297164d4fbb7777f718623432511b664e1da49f9c3fc3d92ba4c6847 0.0s done
+#16 exporting manifest list sha256:9f0c1b5d962e6444aebaf0e9f5c76bb6e86e6810aba554e9224247fe1589e103 0.0s done
+#16 naming to docker.io/library/mercer-redis-overnight-app:latest done
+#16 unpacking to docker.io/library/mercer-redis-overnight-app:latest done
+#16 DONE 0.1s
+
+#17 [web] resolving provenance for metadata file
+#17 DONE 0.0s
+
+#18 [migrate] resolving provenance for metadata file
+#18 DONE 0.0s
+ Image mercer-redis-overnight-app-dev Built 
+ Image mercer-redis-overnight-app Built 
+ Volume mercer-redis-overnight_mongo_data Creating 
+ Volume mercer-redis-overnight_postgres_data Creating 
+ Network mercer-redis-overnight_default Creating 
+ Volume mercer-redis-overnight_mongo_keyfile Creating 
+ Volume mercer-redis-overnight_mongo_keyfile Creating 
+ Volume mercer-redis-overnight_postgres_data Creating 
+ Volume mercer-redis-overnight_mongo_data Creating 
+ Network mercer-redis-overnight_default Creating 
+ Volume mercer-redis-overnight_mongo_keyfile Created 
+ Volume mercer-redis-overnight_mongo_keyfile Created 
+ Volume mercer-redis-overnight_mongo_data Created 
+ Volume mercer-redis-overnight_mongo_data Created 
+ Volume mercer-redis-overnight_postgres_data Created 
+ Volume mercer-redis-overnight_postgres_data Created 
+ Network mercer-redis-overnight_default Created 
+ Network mercer-redis-overnight_default Created 
+ Container mercer-redis-overnight-db-1 Creating 
+ Container mercer-redis-overnight-mongo-1 Creating 
+ Container mercer-redis-overnight-redis-1 Creating 
+ Container mercer-redis-overnight-redis-1 Created 
+ Container mercer-redis-overnight-db-1 Created 
+ Container mercer-redis-overnight-mongo-1 Created 
+ Container mercer-redis-overnight-migrate-1 Creating 
+ Container mercer-redis-overnight-migrate-1 Created 
+ Container mercer-redis-overnight-web-1 Creating 
+ Container mercer-redis-overnight-web-1 Created 
+ Container mercer-redis-overnight-mongo-1 Starting 
+ Container mercer-redis-overnight-db-1 Starting 
+ Container mercer-redis-overnight-redis-1 Starting 
+ Container mercer-redis-overnight-mongo-1 Started 
+ Container mercer-redis-overnight-db-1 Started 
+ Container mercer-redis-overnight-redis-1 Started 
+ Container mercer-redis-overnight-redis-1 Waiting 
+ Container mercer-redis-overnight-db-1 Waiting 
+ Container mercer-redis-overnight-mongo-1 Waiting 
+ Container mercer-redis-overnight-db-1 Healthy 
+ Container mercer-redis-overnight-redis-1 Healthy 
+ Container mercer-redis-overnight-mongo-1 Healthy 
+ Container mercer-redis-overnight-migrate-1 Starting 
+ Container mercer-redis-overnight-migrate-1 Started 
+ Container mercer-redis-overnight-migrate-1 Waiting 
+ Container mercer-redis-overnight-redis-1 Waiting 
+ Container mercer-redis-overnight-db-1 Waiting 
+ Container mercer-redis-overnight-mongo-1 Waiting 
+ Container mercer-redis-overnight-redis-1 Healthy 
+ Container mercer-redis-overnight-mongo-1 Healthy 
+ Container mercer-redis-overnight-db-1 Healthy 
+ Container mercer-redis-overnight-migrate-1 Exited 
+ Container mercer-redis-overnight-web-1 Starting 
+ Container mercer-redis-overnight-web-1 Started 
+ Container mercer-redis-overnight-db-1 Waiting 
+ Container mercer-redis-overnight-migrate-1 Waiting 
+ Container mercer-redis-overnight-mongo-1 Waiting 
+ Container mercer-redis-overnight-web-1 Waiting 
+ Container mercer-redis-overnight-redis-1 Waiting 
+ Container mercer-redis-overnight-redis-1 Healthy 
+ Container mercer-redis-overnight-mongo-1 Healthy 
+ Container mercer-redis-overnight-migrate-1 Exited 
+ Container mercer-redis-overnight-db-1 Healthy 
+ Container mercer-redis-overnight-web-1 Healthy 

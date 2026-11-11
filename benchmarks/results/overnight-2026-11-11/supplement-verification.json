@@ -1,0 +1,7 @@
+{
+  "stampede_provenance_verified": true,
+  "limiter_calls_reached_redis": "existing script fails otherwise",
+  "raw_limiter_latencies": "not retained by existing tool; aggregates only",
+  "measurement_code_changed": false,
+  "command_records": 48
+}

@@ -1,0 +1,19 @@
+{
+  "diagnostic_only": true,
+  "measured_samples_unchanged": true,
+  "off_cache": "OFF",
+  "warm_cache": "HIT",
+  "existing_digest_equal": false,
+  "equal_after_inter_tag_whitespace_normalisation": true,
+  "off_digest_matches_measured": true,
+  "warm_digest_matches_measured": true,
+  "sanitised_existing_normalisation_diff": [
+    "--- off\n",
+    "+++ warm\n",
+    "@@ -97,2 +97,3 @@\n",
+    "           Sales history as of 28 October 2026. Inventory shows current stock.</p>",
+    "+        ",
+    "         </div>"
+  ],
+  "finding": "Existing digest removes the conditional cache paragraph but leaves its surrounding conditional newline/indentation; no acceptance gate or saved sample was modified."
+}

@@ -398,3 +398,65 @@ is evidence that the gate rejects incorrect data.
 | ruff-rules | Ruff now selects E, F, I, B (bugbear), S (bandit), DJ (Django) and SIM (simplifications); superseding ci-i12's E/F/I (10 November, backlog #27). Ignored with a reason in `pyproject.toml`: S603 and S607 (subprocess calls take fixed argument lists, never a shell, and find docker, git and python on PATH deliberately), DJ008 (no admin, so a `__str__` would be dead code); per file: S101, S105, S106, S107, S314 and S608 in tests, S608 and S311 in the benchmark, S311 in the two data generators, S608 in `migration_sql.py` (SQL assembled from constants). Two `null=True` string fields stay (`DJ001`: NULL means no reason, or not an imported product). C901 and PLR are not enabled: a complexity limit needs a threshold fitted to the code, and the six functions above 15 (the importer, the cleaner, `read_catalogue`, the benchmark `run`, `demonstrate`, `seed_demo.handle`) are disclosed in the report instead | The Excellent coding-quality band is judged by a marker who may run a stricter linter; the bug, security and Django rules flagged risky patterns (`zip` silently truncating, a loop variable captured by a closure, a bare `Exception` in a test, `assert` in benchmark setup that `python -O` would strip) and fixing them took small edits in about 36 files. Rules with a high noise-to-signal ratio on this code (magic values in tests, branch counts) were left out |
 | views-per-visitor | Trending and seller insights count a product's views as distinct visitors in their window (the user id, otherwise the keyed session hash); every generated event counts as its own visit (review round F2, 10 November) | One session reloading a page put a product at the top of Trending (60 reloads against 2 real views). Distinct visitors is the usual "unique views" measure and needs no extra write per view; a visitor who drops the cookie each time is disclosed (improvements #78) |
 | refresh-no-queue | The operator's "Refresh sales history" button takes the refresh lock with `pg_try_advisory_xact_lock` and, if another refresh holds it, returns at once with "A refresh is already running"; the import and tests still wait (review round F1, 10 November) | A full-data refresh takes about 4–5 s under one lock and the web service has two workers, so repeated clicks queued behind each other and stalled every other page (a shopper's page took 12.7 s with four refreshes queued). A second refresh straight after the first adds nothing |
+
+## Benchmark resource adaptation and evidence (11 November 2026)
+
+Chee Long explicitly authorised actual-resource adaptation, unattended execution and documentation after measurements;
+no application/benchmark code edits, merge, push or commit were authorised. The
+[close-out](plans/benchmark.md#fresh-driver-evidence-and-collector-blockers-11-november-2026) owns the findings and links
+all generated numerical evidence.
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-actual-host | Retain this PC's existing 10-GB WSL allocation and 12 virtual CPUs; the 24-GB teammate allocation does not apply. Record actual usable memory and CPU, reported host RAM and SSD storage. Preserve Balanced power and existing system settings | Leave Windows headroom on the actual machine; all recorded sessions passed the unchanged final hardware guard |
+| benchmark-resource-retries | Exclude the CPU-timeout pilot and subsequent MongoDB-OOM pilot. Reload and settle both engines equally at 4 CPUs and 3 GiB, runner at 2 CPUs and 2 GiB, no container swap, original database cache settings. Adopt the baseline pilot's disjoint cpusets via ignored Compose overrides | The requested full variant matrix must finish without weakening query timeouts or correctness gates; settings are reversible and recorded from Docker |
+| benchmark-ram-request | At the user's later request, close Steam gracefully; release WSL file cache only with engines stopped before subsequent fresh loads, and after all measurements. Do not interrupt a timed window or restart Docker | Reduce Windows memory pressure while preserving container limits, source, queries and database warm-ups; disclose the changed background state and retain drift checks |
+| benchmark-current-evidence | Use the clean fetched main measurement commit throughout, keep all original variants, failed attempts and old evidence, and use every successful session under the predeclared aggregation rule. Make only documentation edits afterward, with review pending | Preserve provenance; owner forbade code changes, cherry-picking, archival, commit and push |
+| benchmark-collector-blocker | Accept the driver sessions and separate Redis stampede/limiter output, but refuse fresh page timings and Redis cache-condition conclusions until the showcase/source-selection defect receives a reviewed code fix | Both collectors reject the newly featured product absent from their Olist source. No source substitution, query change or weakened gate is used to manufacture a result |
+| benchmark-same-pc | Treat the earlier evidence as the same PC on owner confirmation, supported by matching CPU/RAM provenance; retain historical common-cell/storage tables with build, data and resource differences disclosed | The earlier plan's desktop description is not the measured provenance. These observations cannot support cross-machine reproducibility or a causal build-speedup claim |
+
+## Collector-only continuation after PR #41 (11 November 2026)
+
+The [collector continuation](plans/benchmark.md#collector-continuation-after-pr-41-11-november-2026) owns its findings
+and generated numerical evidence. This supersedes the earlier source-selection blocker for page timing, while
+preserving every historical failed attempt.
+
+| ID | Decision | Why |
+|---|---|---|
+| collector-revision-split | Keep driver/stampede evidence on 505222f41b7473260ed9f40bb3bbaf8eafa46757 and the two new collector attempts on merged PR #41 revision df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e. Use fresh isolated app projects, with the existing actual host allocation | The fix affects collector selection, tests and docs only; the application and source data are unchanged. No prior evidence is relabelled or rerun |
+| redis-burn-in-blocker | Accept the validated page run, but reject the Redis attempt before timed conditions. Preserve its diagnosis and require a reviewed burn-in fix before a fresh full Redis-only attempt; do not bypass the leader condition or change the application | Repeated views from one cookie jar count as one distinct visitor, so they cannot overtake the seeded ranking. Source selection now works, but the old burn-in assumption no longer matches application semantics |
+| evidence-delivery-review | Reconcile original overnight documentation without altering that checkout, deliberately include linked prior evidence, stage only evidence/docs, and pause before commit/push for a fresh Claude Code review | The original evidence was still ignored/uncommitted. Portable links and an actual independent review are required; that review has not run here |
+
+## Consolidated benchmark evidence and Redis acceptance (11 November 2026)
+
+The [authoritative index](plans/benchmark.md#authoritative-november-evidence-for-report-and-slides) owns the findings and
+all generated numerical evidence. This updates current status without erasing earlier failure decisions.
+
+| ID | Decision | Why |
+|---|---|---|
+| redis-pr42-execution | Run only the full default Redis experiment on clean merged PR #42 revision eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78, using a new full-data isolated project and freshly seeded activity. Retain actual host allocation and default app-service configuration | The reviewed visitor fix must be measured without polluted activity or concurrent measurements; valid earlier evidence is neither rerun nor relabelled |
+| redis-acceptance-gaps | Keep every raw sample and apply existing gates without overrides. Preserve qualified shop/search accepted-subset findings, mark incomplete pairs and leave dashboard off/warm unavailable. Do not call overall close-out complete | Exit zero accompanies real refusals. The dashboard digest falsely distinguishes formatting whitespace after cache-note removal; separate shop/search data drift and a cache miss also remain refused |
+| redis-normalization-followup | Diagnose off/warm HTML only through a separate untimed, sanitized comparison; do not repair code or retroactively accept timings. Require a reviewed normalization fix before fresh Redis collection | The diagnostic matches recorded digest classes and isolates formatting-only whitespace, but the precommitted gate still governs this evidence |
+| benchmark-consolidation | Use existing benchmark/overnight-evidence-2026-11-11, fast-forward current main after explicit backups and document reconciliation, preserve the collector worktree index and deliberately include required prior artifacts. Pause before commit/push for fresh review | A single portable report/slide index must preserve both worktrees' contributions, historical provenance and teammate changes; delivery remains pending review, CI and merge |
+
+### Redis version-2 evidence acceptance (11 November 2026)
+
+The [benchmark evidence index](plans/benchmark.md#authoritative-november-evidence-for-report-and-slides) records the
+fresh clean PR #43 measurement separately from historical source revisions. Earlier digest-version samples remain
+unchanged and are never retroactively reclassified. Accept only the existing gates' valid samples and available paired
+rounds; retain legitimate refusals, reduced Williams balance and thin cells instead of retrying for favourable results
+or inventing a zero-refusal threshold. Product-link reordering and a warm cache miss are confirmed observations;
+rolling-window expiry and key expiry mechanisms remain qualified hypotheses. All required comparisons are available;
+the supplied fresh Opus review confirms measurement completeness. Its documentation corrections await fresh verification
+before repository delivery. No application/protocol changes were made.
+
+### Report citation corrections after the supplied Opus review (11 November 2026)
+
+The supplied fresh Opus evidence review confirms complete measurements with no required rerun and requests
+documentation corrections only. The [authoritative index](plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)
+now links actual limits per experiment and supersedes 2 November/pilot figures for report use, while preserving the
+original evidence. Expectations are compared with findings without inventing causes; daily-sales refresh is a tie,
+and the page collector's initial unseeded-activity store split cannot be generalised or combined with Redis figures.
+The [review notes](plans/benchmark.md#review-notes) record the correction round and pending fresh verification.
+Historical validation/check records remain snapshots of their original runs, rather than being rewritten to imply
+approval of later documentation. No commit, push, PR or merge is covered by this correction round.

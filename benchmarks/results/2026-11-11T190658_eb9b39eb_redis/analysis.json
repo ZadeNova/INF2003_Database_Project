@@ -1,0 +1,14 @@
+{
+  "accepted": 9242,
+  "noise_floor": 0.05780075187969902,
+  "refused": 598,
+  "request_fields": [
+    "duration_ms",
+    "db_pg_ms",
+    "db_pg_queries",
+    "db_mongo_ms",
+    "db_mongo_commands",
+    "redis_ms",
+    "redis_commands"
+  ]
+}

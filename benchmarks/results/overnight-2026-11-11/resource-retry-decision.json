@@ -1,0 +1,6 @@
+{
+  "resource_override": "compose.resources.yaml",
+  "reason": "B2b postgres/app at 10 clients repeatedly times out on final operation; 2 CPU cap saturated, memory below cap. Abort excluded pilot and retry fresh with equal 4 CPU engine caps; retain 2GiB memory and cache settings, runner 2CPU 2GiB. No timeout, query or application changes.",
+  "source": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "failure": "pilot-b2; QueryCanceled at 120s"
+}

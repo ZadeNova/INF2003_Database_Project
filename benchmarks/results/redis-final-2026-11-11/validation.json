@@ -1,0 +1,17 @@
+{
+  "command_exit_zero": true,
+  "source_commit": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78",
+  "pilot": false,
+  "burn_in_passes": 3,
+  "burn_in_leadership_and_stability": "required by settle() before entering rounds; unchanged gates passed",
+  "full_requested_matrix": true,
+  "raw_samples": 9840,
+  "unique_request_ids": 9840,
+  "accepted": 9242,
+  "refused": 598,
+  "reports_regenerate_byte_identically": true,
+  "warm_dashboard_accepted": 0,
+  "all_required_comparisons_available": false,
+  "overall_closeout_complete": false,
+  "independent_review": "pending"
+}

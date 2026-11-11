@@ -1,0 +1,32 @@
+{
+  "control_product_id": 34118,
+  "real_control_view_events": 1001,
+  "distinct_control_sessions": 1,
+  "generated_events": 200000,
+  "events_in_trending_window": 7699,
+  "latest_event_ts": "2026-11-11T10:14:50.665000",
+  "control_ranked_row": {
+    "_id": 34118,
+    "views": 1,
+    "generated_views": 0,
+    "rank": 977
+  },
+  "leader": {
+    "_id": 20501,
+    "views": 36,
+    "generated_views": 36,
+    "rank": 1
+  },
+  "ranked_products": 4723,
+  "collection_options": {
+    "expireAfterSeconds": 2592000,
+    "timeseries": {
+      "timeField": "ts",
+      "metaField": "meta",
+      "granularity": "seconds",
+      "bucketMaxSpanSeconds": 3600,
+      "fixedBucketing": true
+    }
+  },
+  "reason": "Burn-in reuses one cookie jar; distinct-visitor counting means repeated views cannot make the control product the leader."
+}

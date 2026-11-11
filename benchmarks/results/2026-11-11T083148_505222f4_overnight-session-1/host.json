@@ -1,0 +1,217 @@
+{
+  "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "container_events": [],
+  "container_state_before": {
+    "mercer-bench-overnight-bench-db-1": {
+      "exit_code": 0,
+      "oom_killed": false,
+      "restarts": 0,
+      "status": "running"
+    },
+    "mercer-bench-overnight-bench-mongo-1": {
+      "exit_code": 0,
+      "oom_killed": false,
+      "restarts": 0,
+      "status": "running"
+    }
+  },
+  "containers": [
+    {
+      "image": "postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+      "image_digests": [
+        "postgres@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8"
+      ],
+      "limits": {
+        "CpusetCpus": "0-3",
+        "Memory": 3221225472,
+        "MemorySwap": 3221225472,
+        "NanoCpus": 4000000000,
+        "ShmSize": 536870912
+      },
+      "name": "/mercer-bench-overnight-bench-db-1"
+    },
+    {
+      "image": "mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+      "image_digests": [
+        "mongo@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8"
+      ],
+      "limits": {
+        "CpusetCpus": "4-7",
+        "Memory": 3221225472,
+        "MemorySwap": 3221225472,
+        "NanoCpus": 4000000000,
+        "ShmSize": 67108864
+      },
+      "name": "/mercer-bench-overnight-bench-mongo-1"
+    }
+  ],
+  "docker_version": {
+    "Client": {
+      "ApiVersion": "1.56",
+      "Arch": "amd64",
+      "BuildTime": "Thu Sep  3 21:53:38 2026",
+      "Context": "desktop-linux",
+      "DefaultAPIVersion": "1.56",
+      "GitCommit": "88096ef",
+      "GoVersion": "go1.26.8",
+      "Os": "windows",
+      "Version": "29.8.0"
+    },
+    "Server": {
+      "ApiVersion": "1.56",
+      "Arch": "amd64",
+      "BuildTime": "2026-09-03T21:51:20.000000000+00:00",
+      "Components": [
+        {
+          "Details": {
+            "ApiVersion": "1.56",
+            "Arch": "amd64",
+            "BuildTime": "Thu Sep  3 21:51:20 2026",
+            "Experimental": "false",
+            "GitCommit": "3ce5872",
+            "GoVersion": "go1.26.8",
+            "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+            "MinAPIVersion": "1.40",
+            "Module": "github.com/moby/moby/v2",
+            "ModuleVersion": "v2.0.0+unknown",
+            "Os": "linux"
+          },
+          "Name": "Engine",
+          "Version": "29.8.0"
+        },
+        {
+          "Details": {
+            "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+          },
+          "Name": "containerd",
+          "Version": "v2.3.5"
+        },
+        {
+          "Details": {
+            "GitCommit": "v1.5.1-0-g8f2685a4"
+          },
+          "Name": "runc",
+          "Version": "1.5.1"
+        },
+        {
+          "Details": {
+            "GitCommit": "de40ad0"
+          },
+          "Name": "docker-init",
+          "Version": "0.19.0"
+        }
+      ],
+      "GitCommit": "3ce5872",
+      "GoVersion": "go1.26.8",
+      "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+      "MinAPIVersion": "1.40",
+      "Os": "linux",
+      "Platform": {
+        "Name": "Docker Desktop 4.92.0 (240144)"
+      },
+      "Version": "29.8.0"
+    }
+  },
+  "docker_vm": {
+    "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+    "MemTotal": 10429972480,
+    "NCPU": 12,
+    "OperatingSystem": "Docker Desktop (containerized)",
+    "SwapTotal": null
+  },
+  "duration_seconds": 9995.1905119,
+  "exit_code": 0,
+  "final": true,
+  "hardware": {
+    "cpu": {
+      "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+      "NumberOfCores": 6,
+      "NumberOfLogicalProcessors": 12
+    },
+    "ram": 17084600320
+  },
+  "machine_notes": {
+    "allocation": "existing WSL 10GB; 12 vCPUs; 16GiB physical; no global change",
+    "cpusets": "COMPOSE_FILE records actual limits; --pin omitted because its fixed -f list omits the resource override",
+    "engine_cpu": "4 CPUs each; raised equally after reproducible timeouts at 2 CPUs; memory raised equally to 3GiB after MongoDB OOM; caches unchanged",
+    "pinning_decision": "True; median relative baseline spread 0.1326628470457681 unpinned vs 0.11790565370378321 pinned",
+    "power": "Balanced retained; no power/update/security changes",
+    "protocol": "amendments l and m; 50 default and 10 B2 operations; B7 excluded",
+    "provenance": "Ryzen 5 5600X and physical RAM match 2-Nov host.json; same-machine supported"
+  },
+  "mongo_server_readback": {
+    "cache_bytes": 805306368,
+    "default_write_concern": {
+      "$clusterTime": {
+        "clusterTime": {
+          "$timestamp": "7706705027485663430"
+        },
+        "signature": {
+          "hash": "ebGwRfOpi5NE8WbDbDDTMw3jYwk=",
+          "keyId": {
+            "high": 1794357040,
+            "low": 9,
+            "unsigned": false
+          }
+        }
+      },
+      "defaultReadConcern": {
+        "level": "local"
+      },
+      "defaultReadConcernSource": "implicit",
+      "defaultWriteConcern": {
+        "w": "majority",
+        "wtimeout": 0
+      },
+      "defaultWriteConcernSource": "implicit",
+      "localUpdateWallClockTime": "2026-11-11T00:31:47.789Z",
+      "ok": 1,
+      "operationTime": {
+        "$timestamp": "7706705027485663430"
+      }
+    },
+    "majority_journal_default": true,
+    "options": {
+      "net": {
+        "bindIp": "*"
+      },
+      "replication": {
+        "replSet": "rs0"
+      },
+      "security": {
+        "keyFile": "/keyfile/mongo.key"
+      },
+      "storage": {
+        "syncPeriodSecs": 60,
+        "wiredTiger": {
+          "engineConfig": {
+            "cacheSizeGB": 0.75
+          }
+        }
+      }
+    }
+  },
+  "os": "Windows-10-10.0.19045-SP0",
+  "pinned": false,
+  "project": "mercer-bench-overnight",
+  "resource_sample_count": 29980,
+  "runner_actual_limits": {
+    "CpusetCpus": "8-9",
+    "Memory": 2147483648,
+    "MemorySwap": 2147483648,
+    "NanoCpus": 2000000000,
+    "ShmSize": 67108864
+  },
+  "runner_limits": {
+    "cpus": 2,
+    "memory_bytes": 2147483648,
+    "memory_swap_bytes": 2147483648
+  },
+  "sampled_containers": [
+    "mercer-bench-overnight-bench-db-1",
+    "mercer-bench-overnight-bench-mongo-1",
+    "mercer-bench-overnight-load-client"
+  ],
+  "started_at": "2026-11-11T08:31:48.311695+08:00",
+  "vm_meets_plan": true
+}

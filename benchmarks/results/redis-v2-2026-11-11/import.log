@@ -1,0 +1,59 @@
+ Container mercer-redis-digest2-final-mongo-1 Running 
+ Container mercer-redis-digest2-final-redis-1 Running 
+ Container mercer-redis-digest2-final-db-1 Running 
+ Container mercer-redis-digest2-final-redis-1 Waiting 
+ Container mercer-redis-digest2-final-db-1 Waiting 
+ Container mercer-redis-digest2-final-mongo-1 Waiting 
+ Container mercer-redis-digest2-final-db-1 Healthy 
+ Container mercer-redis-digest2-final-redis-1 Healthy 
+ Container mercer-redis-digest2-final-mongo-1 Healthy 
+ Container mercer-redis-digest2-final-migrate-run-4313726f1bef Creating 
+ Container mercer-redis-digest2-final-migrate-run-4313726f1bef Created 
+Checksums and CSV headers verified.
+MongoDB collections, validators and indexes ready.
+PostgreSQL users: 99191 rows
+PostgreSQL customers: 96096 rows
+PostgreSQL sellers: 3095 rows
+PostgreSQL categories: 74 rows
+PostgreSQL products: 34211 rows
+PostgreSQL checkouts: 98074 rows
+PostgreSQL orders: 99295 rows
+PostgreSQL order_lines: 101547 rows
+PostgreSQL payments: 102436 rows
+PostgreSQL refunds: 460 rows
+PostgreSQL geolocation: 19015 rows
+PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows.
+MongoDB reviews: 5000 documents loaded
+MongoDB reviews: 10000 documents loaded
+MongoDB reviews: 15000 documents loaded
+MongoDB reviews: 20000 documents loaded
+MongoDB reviews: 25000 documents loaded
+MongoDB reviews: 30000 documents loaded
+MongoDB reviews: 35000 documents loaded
+MongoDB reviews: 40000 documents loaded
+MongoDB reviews: 45000 documents loaded
+MongoDB reviews: 50000 documents loaded
+MongoDB reviews: 55000 documents loaded
+MongoDB reviews: 60000 documents loaded
+MongoDB reviews: 65000 documents loaded
+MongoDB reviews: 70000 documents loaded
+MongoDB reviews: 75000 documents loaded
+MongoDB reviews: 80000 documents loaded
+MongoDB reviews: 85000 documents loaded
+MongoDB reviews: 90000 documents loaded
+MongoDB reviews: 95000 documents loaded
+MongoDB reviews: 100000 documents loaded
+MongoDB reviews: 100758 documents
+MongoDB product_specs: 5000 documents loaded
+MongoDB product_specs: 10000 documents loaded
+MongoDB product_specs: 15000 documents loaded
+MongoDB product_specs: 20000 documents loaded
+MongoDB product_specs: 25000 documents loaded
+MongoDB product_specs: 30000 documents loaded
+MongoDB product_specs: 34211 documents
+MongoDB platform_stats: 1 documents
+MongoDB category_templates: 74 documents
+Cross-store references and ledger row counts reconciled.
+Daily product sales, delivery summary and review score summary refreshed.
+Olist import complete in 27.903 seconds.
+Import metrics: {"duration_seconds": 27.903, "output_counts": {"categories": 74, "category_templates": 74, "checkouts": 98074, "customers": 96096, "geolocation": 19015, "order_lines": 101547, "orders": 99295, "payments": 102436, "platform_stats": 1, "product_specs": 34211, "products": 34211, "refunds": 460, "reviews": 100758, "sellers": 3095, "users": 99191}, "process_peak_rss_kib": 252704, "source": "/app/data/derived/olist/clean"}

@@ -1,0 +1,401 @@
+{
+  "application_caches": "none",
+  "b2_headline": {
+    "B2a": {
+      "live": [
+        "idiomatic",
+        "idiomatic"
+      ],
+      "maintained": [
+        "summary",
+        "summary"
+      ]
+    },
+    "B2b": {
+      "live": [
+        "idiomatic",
+        "idiomatic"
+      ],
+      "maintained": [
+        "summary",
+        "summary"
+      ]
+    },
+    "B2c": {
+      "live": [
+        "live",
+        "idiomatic"
+      ]
+    },
+    "B2d": {
+      "live": [
+        "idiomatic",
+        "idiomatic"
+      ],
+      "maintained": [
+        "summary",
+        "summary"
+      ]
+    }
+  },
+  "b2_refresh": {
+    "daily product sales": [
+      "refresh",
+      "refresh"
+    ],
+    "delivery scores": [
+      "refresh_scores",
+      "refresh_scores"
+    ]
+  },
+  "buffer_state": "warm",
+  "clients": [
+    1,
+    10,
+    50
+  ],
+  "cpu_attribution": "median of one-second Docker runner sample intervals overlapping the timed operation window; 180 percent is saturated",
+  "files": {
+    "categories.csv": "3c821fc000be3c767a673b56a2156d43a21a5712ab900eefdf880b84fe5055a0",
+    "category_templates.ndjson": "7b73dbc6c64c0092d5ddd3060540fa33177abc7cca4096f2604c64b6ce3ba004",
+    "checkouts.csv": "48e86b62531cf69907e7745b02ff2ad5519e6c6e41926c1ca000696a22e0deb2",
+    "cleaning_ledger.json": "52733029c95ddb5189b27fc12628a89b2b7ad72d820a2749744046f28b10c675",
+    "customers.csv": "5d481d647417666250993642f62637229be18dfb0e003bab504d81b296f0243a",
+    "geolocation.csv": "d0ddab332c325e8d174fcf8ddd7a43eae18a78ad46e019e0da3d9e74e2ca5312",
+    "order_lines.csv": "8f3dbc63071491a1f1f123d3dd40994303bf74c99ee0fb03501a1b8ef17815fc",
+    "orders.csv": "8d5fd925e8722c43dbbc23b5d1c7158642cef8ca797b6a20e28fef1092a8c656",
+    "payments.csv": "e62eec323a4526b65e441930ae1157f89e767cb3f6b472ac675e5d982288121c",
+    "platform_stats.ndjson": "94dbe2d8f90ce9bfa9c407d60004cbd85cd9961112146fa58acb7e43d854e9e2",
+    "product_specs.ndjson": "2ab91b5520ef435389b5c1ce34b4b54a11863e5026d5ee2eed21206e6bc7d13c",
+    "products.csv": "c17171505c9a76b24546c62e621d61beafa9fafb81c3cd39b51798ef522e8c11",
+    "refunds.csv": "d1be25e48d1d5326aafcea4f170d516ac14c79389a1ec8c5ca4ca0f0b195744d",
+    "reviews.ndjson": "79c09f4b73f15a561ef5eacbf872e6d8d34c7ffb315d4eae7e9e9796de99afdd",
+    "sellers.csv": "53f21480c02e2ac350e73c35c33ef11dcc0448c73ad78914881f533a79679ea1",
+    "users.csv": "96a0c38251eeaa679992011adf65ef6a38236351bc9af5a62b4b44577d52ca41"
+  },
+  "final": true,
+  "fixed_b3_buyers": 50,
+  "golden_checksums": {
+    "B1_boolean.csv": "fd7eb1dc6b5b4cbe174ad2d9f11ffe679e668db0db0e6db97b2a364c25cb04f5",
+    "B1_broad.csv": "d5071e37fc0caceb54e6162ef9d334a05f85111bca00748b7e01795d06cf0ac0",
+    "B1_range.csv": "233f368c7ff4c415ebfaaa9f5dbfb7100b362d0dda815f3d19247af3b8daf1b7",
+    "B1_selective.csv": "62c558e32ef5c4970ccf24c3cc0fdd1c8b91a2113c157c1cc727dfa5e29c679e",
+    "B1_three.csv": "c2adcb7ed47ed4e547de8856e40822b378163e17962c7bf70f2ea9eedd240fc1",
+    "B1_two.csv": "203e75fc11c54eedc8195ede0f7323cdbb50ecf187499f5ae130df59145a76f0",
+    "B2a.csv": "57da886463a280c40d0d7d76143d686ed73745e73887779c41242b03bd2b9d4f",
+    "B2b.csv": "7545ba5de5a24eb19b99040654c3329232f95ad9f84d47c7a344548d6ce548e4",
+    "B2c.csv": "c70eb88de48f0f4bd6d2a85b887e8c037f6755fd70bbecb140c3b7655abf917f",
+    "B2c_index.csv": "9c66362d920fe37ae8a23e790957df103fbeca045859a0761d156a5d5df123be",
+    "B2d.csv": "8591bc51c181ee4595a1884c19ac0a07b5da79784ca8dc1501c1994fb9f85a4e",
+    "parameters.json": "73169689847e2cf56b1438677d2a00367405450d282ecb10d782c61d2d87148b",
+    "source.json": "bdda45bba3a95f8586fafbc68c38bd8e3fa8c2cf5e47f3e1e2c7ef3b3c232043"
+  },
+  "host": {
+    "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+    "container_events": [],
+    "container_state_before": {
+      "mercer-bench-overnight-bench-db-1": {
+        "exit_code": 0,
+        "oom_killed": false,
+        "restarts": 0,
+        "status": "running"
+      },
+      "mercer-bench-overnight-bench-mongo-1": {
+        "exit_code": 0,
+        "oom_killed": false,
+        "restarts": 0,
+        "status": "running"
+      }
+    },
+    "containers": [
+      {
+        "image": "postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+        "image_digests": [
+          "postgres@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8"
+        ],
+        "limits": {
+          "CpusetCpus": "0-3",
+          "Memory": 3221225472,
+          "MemorySwap": 3221225472,
+          "NanoCpus": 4000000000,
+          "ShmSize": 536870912
+        },
+        "name": "/mercer-bench-overnight-bench-db-1"
+      },
+      {
+        "image": "mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+        "image_digests": [
+          "mongo@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8"
+        ],
+        "limits": {
+          "CpusetCpus": "4-7",
+          "Memory": 3221225472,
+          "MemorySwap": 3221225472,
+          "NanoCpus": 4000000000,
+          "ShmSize": 67108864
+        },
+        "name": "/mercer-bench-overnight-bench-mongo-1"
+      }
+    ],
+    "docker_version": {
+      "Client": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "Thu Sep  3 21:53:38 2026",
+        "Context": "desktop-linux",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "88096ef",
+        "GoVersion": "go1.26.8",
+        "Os": "windows",
+        "Version": "29.8.0"
+      },
+      "Server": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "2026-09-03T21:51:20.000000000+00:00",
+        "Components": [
+          {
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "amd64",
+              "BuildTime": "Thu Sep  3 21:51:20 2026",
+              "Experimental": "false",
+              "GitCommit": "3ce5872",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            },
+            "Name": "Engine",
+            "Version": "29.8.0"
+          },
+          {
+            "Details": {
+              "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+            },
+            "Name": "containerd",
+            "Version": "v2.3.5"
+          },
+          {
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            },
+            "Name": "runc",
+            "Version": "1.5.1"
+          },
+          {
+            "Details": {
+              "GitCommit": "de40ad0"
+            },
+            "Name": "docker-init",
+            "Version": "0.19.0"
+          }
+        ],
+        "GitCommit": "3ce5872",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Platform": {
+          "Name": "Docker Desktop 4.92.0 (240144)"
+        },
+        "Version": "29.8.0"
+      }
+    },
+    "docker_vm": {
+      "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+      "MemTotal": 10429972480,
+      "NCPU": 12,
+      "OperatingSystem": "Docker Desktop (containerized)",
+      "SwapTotal": null
+    },
+    "duration_seconds": 10338.719631500004,
+    "exit_code": 0,
+    "final": true,
+    "hardware": {
+      "cpu": {
+        "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+        "NumberOfCores": 6,
+        "NumberOfLogicalProcessors": 12
+      },
+      "ram": 17084600320
+    },
+    "machine_notes": {
+      "allocation": "existing WSL 10GB; 12 vCPUs; 16GiB physical; no global change",
+      "background": "Steam gracefully closed at user request during session1; no background projects stopped",
+      "boundary_reclaim": "user requested lower RAM; WSL file cache released after engines stopped and before fresh load; database warmups unchanged",
+      "cpusets": "actual Compose limits recorded; resource override supplied via COMPOSE_FILE",
+      "engine_resources": "4 CPUs and 3GiB each; runner 2 CPUs 2GiB; shared_buffers512MB and WiredTiger0.75GiB unchanged",
+      "power": "Balanced retained; no power/update/security changes",
+      "protocol": "amendments l and m; 50 default and 10 B2 operations; B7 excluded",
+      "provenance": "Ryzen 5 5600X and physical RAM match 2-Nov host.json; same-machine supported"
+    },
+    "mongo_server_readback": {
+      "cache_bytes": 805306368,
+      "default_write_concern": {
+        "$clusterTime": {
+          "clusterTime": {
+            "$timestamp": "7706748398065418438"
+          },
+          "signature": {
+            "hash": "mUpdiZ0rS3kJWmElGlGMDK0PGVk=",
+            "keyId": {
+              "high": 1794367138,
+              "low": 9,
+              "unsigned": false
+            }
+          }
+        },
+        "defaultReadConcern": {
+          "level": "local"
+        },
+        "defaultReadConcernSource": "implicit",
+        "defaultWriteConcern": {
+          "w": "majority",
+          "wtimeout": 0
+        },
+        "defaultWriteConcernSource": "implicit",
+        "localUpdateWallClockTime": "2026-11-11T03:20:07.598Z",
+        "ok": 1,
+        "operationTime": {
+          "$timestamp": "7706748398065418438"
+        }
+      },
+      "majority_journal_default": true,
+      "options": {
+        "net": {
+          "bindIp": "*"
+        },
+        "replication": {
+          "replSet": "rs0"
+        },
+        "security": {
+          "keyFile": "/keyfile/mongo.key"
+        },
+        "storage": {
+          "syncPeriodSecs": 60,
+          "wiredTiger": {
+            "engineConfig": {
+              "cacheSizeGB": 0.75
+            }
+          }
+        }
+      }
+    },
+    "os": "Windows-10-10.0.19045-SP0",
+    "pinned": false,
+    "project": "mercer-bench-overnight",
+    "resource_sample_count": 31009,
+    "runner_actual_limits": {
+      "CpusetCpus": "8-9",
+      "Memory": 2147483648,
+      "MemorySwap": 2147483648,
+      "NanoCpus": 2000000000,
+      "ShmSize": 67108864
+    },
+    "runner_limits": {
+      "cpus": 2,
+      "memory_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648
+    },
+    "sampled_containers": [
+      "mercer-bench-overnight-bench-db-1",
+      "mercer-bench-overnight-bench-mongo-1",
+      "mercer-bench-overnight-load-client"
+    ],
+    "started_at": "2026-11-11T11:20:07.970528+08:00",
+    "vm_meets_plan": true
+  },
+  "label": "overnight-session-2",
+  "libraries": {
+    "Django": "5.2.17",
+    "psycopg": "3.3.5",
+    "pymongo": "4.19.0"
+  },
+  "manifest_sha256": "24efcc82c2f70ab53d8b9d6459f06dd71fdf6f822d3c664684505b85dfe659c4",
+  "measured_runs": 5,
+  "mode": "measure",
+  "mongo_storage_settle_seconds": 65,
+  "operations_by_clients": {
+    "1": 50,
+    "10": 500,
+    "50": 2500
+  },
+  "operations_per_client": 50,
+  "output_schema_sha256": "a8f14575b1fa26ced33e2084aa89c184871e8ec8c223ba7f0b0feda983c37b2b",
+  "raw_sha256": "fb60fc504f153ba58041a4c9a06461813c49c64b5daff7129c2c9e4f290bb934",
+  "restores_since_load": 0,
+  "restores_since_load_after_run": 60,
+  "seed": 82,
+  "settings": {
+    "mongo_transaction_read_concern": {
+      "level": "snapshot"
+    },
+    "mongo_version": "9.0.4",
+    "mongo_write_concern": {
+      "j": true,
+      "w": "majority"
+    },
+    "postgres": {
+      "fsync": "on",
+      "full_page_writes": "on",
+      "server_version": "18.6 (Debian 18.6-1.pgdg12+2)",
+      "shared_buffers": "512MB",
+      "synchronous_commit": "on"
+    }
+  },
+  "source": "/app/data/derived/olist/clean",
+  "storage_tolerance": {
+    "minimum_bytes": 65536,
+    "relative": 0.1
+  },
+  "telemetry": {
+    "mongodb_ftdc": "server default (local diagnostic files only, not sent anywhere)",
+    "mongosh": "off (MONGOSH_DISABLE_TELEMETRY=1 in bench-mongo)",
+    "postgresql": "none (the server sends no telemetry)"
+  },
+  "throughput_includes": "operation loops and plain row equality; excludes connection setup, initial canonicalisation and teardown",
+  "timing": "all connections primed and first results canonicalised before shared barrier; later fetched rows checked by equality",
+  "trigger_policy": "B3 PostgreSQL USER off headline and USER on separate; internal FK triggers always enabled",
+  "validation_operations_per_client": 1,
+  "workload_matrix": {
+    "B2": {
+      "clients": [
+        1,
+        10
+      ],
+      "operations_per_client": 10
+    },
+    "B2refresh": {
+      "clients": [
+        1
+      ],
+      "operations_per_client": 10
+    },
+    "B4": {
+      "clients": [
+        1
+      ],
+      "operations_per_client": 50,
+      "operations_per_client_by_case": {
+        "B4_bench_eav_bool": 50,
+        "B4_bench_eav_text": 50,
+        "B4_bench_jsonb_age_months": 50,
+        "B4_bench_jsonb_gin": 50,
+        "B4_bench_product_visible": 10,
+        "B4_review_product_date": 10,
+        "B4_spec_attributes": 50
+      }
+    },
+    "default": {
+      "clients": [
+        1,
+        10,
+        50
+      ],
+      "operations_per_client": 50
+    }
+  }
+}

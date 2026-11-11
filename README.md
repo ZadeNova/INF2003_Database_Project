@@ -9,8 +9,8 @@ simulated and no personal data is used.
 
 ## Status
 
-The Tier 1 application is complete; designated-machine benchmark evidence is recorded in the
-[benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026). Deliverables remain.
+The Tier 1 application is complete; current benchmark evidence is recorded in the
+[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides). Deliverables remain.
 The authoritative schedule and workstream statuses are in [PLAN.md section 13](PLAN.md#13-phases) and
 [section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record).
 Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in
@@ -387,15 +387,23 @@ in the existing JSON request line. Counters use request-local state and never lo
 
 ### Final-run checklist (next session)
 
-The completed designated-machine evidence and the owner's source-selection rule are recorded in the
-[benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026).
+Current report sources, actual experiment limits and historical exclusions are recorded in the
+[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides).
 This checklist remains the reproduction procedure.
 
 The fresh run on Chee Long's machine, on the head of `main` after `improvements/backlog` is merged (record the commit hash and use `--require-clean`), follows [amendment l](docs/plans/benchmark.md#decisions): one clean commit after
 the last code batch, a pilot, then three sessions, each of steps 4 to 5 below with 50 operations per client (B2: 10); the
-baselines run at the start and end of every session, and the headline is the median across sessions. Set the Docker VM to
-12 CPUs, 24 GB of memory and no swap first, and check the usable memory against the gate in step 1. Steps 6 onward (the
-per-request timing and the Redis experiment) run only after every benchmark engine is stopped.
+baselines run at the start and end of every session, and the headline is the median across sessions. Record the actual
+host and VM resources, leave Windows headroom, and check usable memory against the gate in step 1. The older
+12-CPU/24-GB allocation belonged to a teammate's PC; the owner's actual-resource amendment and the measured overrides
+are recorded in the [11 November close-out](docs/plans/benchmark.md#fresh-driver-evidence-and-collector-blockers-11-november-2026).
+Steps 6 onward (the per-request timing and Redis experiment) run only after every benchmark engine is stopped.
+The driver sessions, stampede/limiter, PR #41 page timing and PR #43 Redis conditions have valid evidence. The Redis
+run retains legitimate refusals and reduced paired coverage; every required comparison is available with those limits.
+Use the [authoritative evidence index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)
+for source revisions, generated figures, historical exclusions and acceptance qualifications. The supplied fresh Opus
+evidence review confirms measurement completeness; its documentation corrections await fresh verification before
+repository delivery. No measurement rerun is required.
 
 Run on reviewed, committed, clean `main` after both preparation PRs are merged. Follow amendment k in the
 [benchmark plan](docs/plans/benchmark.md#decisions): designated machine plugged in, other heavy apps stopped, Docker

@@ -1,0 +1,10 @@
+output,layer,clients,postgres_variant,mongo_variant,status,postgres_p50_ms,mongo_p50_ms,mongo_over_postgres,headline
+B2a,live,1,idiomatic,idiomatic,"postgres no timing, mongo no timing",,,,False
+B2a,maintained,1,summary,summary,"postgres no timing, mongo no timing",,,,False
+B2b,live,1,idiomatic,idiomatic,"postgres no timing, mongo no timing",,,,False
+B2b,maintained,1,summary,summary,"postgres no timing, mongo no timing",,,,False
+B2c,live,1,live,idiomatic,"postgres no timing, mongo no timing",,,,False
+B2d,live,1,idiomatic,idiomatic,"postgres no timing, mongo no timing",,,,False
+B2d,maintained,1,summary,summary,"postgres no timing, mongo no timing",,,,False
+B2refresh,refresh: daily product sales,1,refresh,refresh,"postgres no timing, mongo no timing",,,,False
+B2refresh,refresh: delivery scores,1,refresh_scores,refresh_scores,"postgres no timing, mongo no timing",,,,False

@@ -1,0 +1,225 @@
+{
+  "diagnostic_schema": 1,
+  "digest_version": 2,
+  "groups": [
+    {
+      "round": 1,
+      "condition": "warm",
+      "page": "search",
+      "reason": "cache status 'miss' in a warm condition",
+      "samples": 1,
+      "first_received_at": "2026-11-11T14:06:45.961891+00:00",
+      "first_condition_elapsed_ms": 14519.88330000313,
+      "confirmed_observation": "cache miss in measured warm request",
+      "mechanism_status": "TTL expiry is consistent with timing; key creation/TTL/eviction was not directly recorded",
+      "seconds_since_latest_cold_search_response": 60.091475,
+      "priming_cache_states": [
+        {
+          "received_at": "2026-11-11T14:06:31.586547+00:00",
+          "cache": "hit",
+          "condition_elapsed_ms": 144.53859999775887
+        },
+        {
+          "received_at": "2026-11-11T14:06:32.077923+00:00",
+          "cache": "hit",
+          "condition_elapsed_ms": 635.9138000116218
+        },
+        {
+          "received_at": "2026-11-11T14:06:32.585064+00:00",
+          "cache": "hit",
+          "condition_elapsed_ms": 1143.0579000007128
+        },
+        {
+          "received_at": "2026-11-11T14:06:33.138126+00:00",
+          "cache": "hit",
+          "condition_elapsed_ms": 1696.1164000094868
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "condition": "down",
+      "page": "search",
+      "reason": "data differs from the off condition's in the same round",
+      "samples": 150,
+      "first_received_at": "2026-11-11T14:12:47.214626+00:00",
+      "first_condition_elapsed_ms": 25804.35690000013,
+      "confirmed_observation": "ordered public product links differ from same-round off reference",
+      "mechanism_status": "link reordering confirmed; rolling-window event expiry is a hypothesis, not directly established",
+      "link_differences": [
+        {
+          "operation": "insert",
+          "expected_ids": [],
+          "observed_ids": [
+            "8914",
+            "8914"
+          ],
+          "expected_positions": [
+            56,
+            56
+          ],
+          "observed_positions": [
+            56,
+            58
+          ]
+        },
+        {
+          "operation": "delete",
+          "expected_ids": [
+            "8914",
+            "8914"
+          ],
+          "observed_ids": [],
+          "expected_positions": [
+            58,
+            60
+          ],
+          "observed_positions": [
+            60,
+            60
+          ]
+        }
+      ],
+      "same_multiset_of_ids": true
+    },
+    {
+      "round": 2,
+      "condition": "down",
+      "page": "shop",
+      "reason": "data differs from the off condition's in the same round",
+      "samples": 147,
+      "first_received_at": "2026-11-11T14:12:24.986749+00:00",
+      "first_condition_elapsed_ms": 3576.4760000020033,
+      "confirmed_observation": "ordered public product links differ from same-round off reference",
+      "mechanism_status": "link reordering confirmed; rolling-window event expiry is a hypothesis, not directly established",
+      "link_differences": [
+        {
+          "operation": "insert",
+          "expected_ids": [],
+          "observed_ids": [
+            "8914",
+            "8914"
+          ],
+          "expected_positions": [
+            56,
+            56
+          ],
+          "observed_positions": [
+            56,
+            58
+          ]
+        },
+        {
+          "operation": "delete",
+          "expected_ids": [
+            "8914",
+            "8914"
+          ],
+          "observed_ids": [],
+          "expected_positions": [
+            58,
+            60
+          ],
+          "observed_positions": [
+            60,
+            60
+          ]
+        }
+      ],
+      "same_multiset_of_ids": true
+    },
+    {
+      "round": 2,
+      "condition": "warm",
+      "page": "search",
+      "reason": "data differs from the off condition's in the same round",
+      "samples": 150,
+      "first_received_at": "2026-11-11T14:14:10.105969+00:00",
+      "first_condition_elapsed_ms": 10262.447899993276,
+      "confirmed_observation": "ordered public product links differ from same-round off reference",
+      "mechanism_status": "link reordering confirmed; rolling-window event expiry is a hypothesis, not directly established",
+      "link_differences": [
+        {
+          "operation": "insert",
+          "expected_ids": [],
+          "observed_ids": [
+            "8914",
+            "8914"
+          ],
+          "expected_positions": [
+            56,
+            56
+          ],
+          "observed_positions": [
+            56,
+            58
+          ]
+        },
+        {
+          "operation": "delete",
+          "expected_ids": [
+            "8914",
+            "8914"
+          ],
+          "observed_ids": [],
+          "expected_positions": [
+            58,
+            60
+          ],
+          "observed_positions": [
+            60,
+            60
+          ]
+        }
+      ],
+      "same_multiset_of_ids": true
+    },
+    {
+      "round": 2,
+      "condition": "warm",
+      "page": "shop",
+      "reason": "data differs from the off condition's in the same round",
+      "samples": 150,
+      "first_received_at": "2026-11-11T14:14:02.127644+00:00",
+      "first_condition_elapsed_ms": 2284.123699995689,
+      "confirmed_observation": "ordered public product links differ from same-round off reference",
+      "mechanism_status": "link reordering confirmed; rolling-window event expiry is a hypothesis, not directly established",
+      "link_differences": [
+        {
+          "operation": "insert",
+          "expected_ids": [],
+          "observed_ids": [
+            "8914",
+            "8914"
+          ],
+          "expected_positions": [
+            56,
+            56
+          ],
+          "observed_positions": [
+            56,
+            58
+          ]
+        },
+        {
+          "operation": "delete",
+          "expected_ids": [
+            "8914",
+            "8914"
+          ],
+          "observed_ids": [],
+          "expected_positions": [
+            58,
+            60
+          ],
+          "observed_positions": [
+            60,
+            60
+          ]
+        }
+      ],
+      "same_multiset_of_ids": true
+    }
+  ],
+  "no_old_sample_reinterpretation": true
+}

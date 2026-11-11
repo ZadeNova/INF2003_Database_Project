@@ -1,0 +1,16 @@
+page,pair,usable_rounds,usable_round_count,complete_four_round_comparison,ratio_median,status
+shop,off/warm,1;3;4,3,False,2.8104528792716095,accepted subset only
+shop,cold/off,1;2;3;4,4,True,0.999454411410557,complete
+shop,down/off,1;2;3;4,4,True,0.9958110928218571,complete
+search,off/warm,1;3;4,3,False,1.9916167664670659,accepted subset only
+search,cold/off,1;2;3;4,4,True,1.000136783070053,complete
+search,down/off,1;3;4,3,False,0.9937529230974811,accepted subset only
+dashboard,off/warm,,0,False,,unavailable; all warm samples rejected
+dashboard,cold/off,1;2;3;4,4,True,1.015929075974285,complete
+dashboard,down/off,1;2;3;4,4,True,0.9958479312922655,complete
+product_detail,off/warm,1;2;3;4,4,True,1.0196849736041766,complete
+product_detail,cold/off,1;2;3;4,4,True,0.9604506284941245,complete
+product_detail,down/off,1;2;3;4,4,True,0.9631539823965177,complete
+category_trending,off/warm,1;2;3;4,4,True,0.9910266715801663,complete
+category_trending,cold/off,1;2;3;4,4,True,1.0065460861814732,complete
+category_trending,down/off,1;2;3;4,4,True,1.0072112470218744,complete
