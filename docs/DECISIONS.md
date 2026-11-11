@@ -92,6 +92,13 @@ runner versions, timeouts and artifact retention. The [CI plan](plans/ci.md#revi
 | ci-i22 | Run `python -m ruff format --check .` immediately after Ruff lint in the existing required `quality` job, preserving its display name | The existing required check includes formatting without a ruleset change; stage 3 closes after its green main run |
 | ci-i23 | Record the full formatting commit hash in root `.git-blame-ignore-revs`, and document the per-clone `blame.ignoreRevsFile` setting beside hooksPath | GitHub and configured local blame skip mechanical reflow so authorship remains useful |
 
+## CI browser installation DNS recovery (11 November 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| ci-i24 | Within the hosted browser install step's twenty-minute limit, probe DNS for the active runner mirror hosts, allow any resolving mirror, and retry the unchanged pinned install at most three times with short waits. Preserve runner APT sources/settings/signatures and all CI gates | The [CI fix-round record](plans/ci.md#browser-installation-dns-recovery-11-november-2026) records that Azure and both official fallbacks failed. Fresh Opus review rejected the mirror-only candidate. Bounded DNS diagnostics and install retries allow transient recovery without assuming Azure alone failed; persistent failures still fail the check. Fresh Opus fix-round review approved; its suggested longer step limit allows more time for slow fallback installs within the unchanged job limit. Hosted verification remains pending. **Superseded by ci-i25 before merge:** the hosted PR run failed every DNS round |
+| ci-i25 | Install only the pinned Chromium builds in the hosted browser job (`playwright install chromium`, no `--with-deps`); drop the DNS probe, retries and step limit. Keep `--with-deps` in the README for Linux machines without the libraries | The observed failures affected the three Ubuntu mirror names while PyPI, Docker Hub and `packages.microsoft.com` stayed reachable in the same jobs; an identical tree and runner image passed hours earlier. The cause remains unproved. All 22 Chromium libraries Playwright 1.63 lists for Ubuntu 22.04 were already on the image; the failed runs asked the archive only for optional fonts, which no journey asserts on, but the passing run also upgraded `libglib2.0-0`, so no run has yet passed on the image's own libraries. Playwright's launch-time validation still fails on a missing library. Hosted verification pending |
+
 ## Benchmark and CI planning documents (22 October 2026)
 
 | ID | Decision | Why |
