@@ -260,6 +260,12 @@ precommitted expectations remain unchanged.
 |---|---|---|
 | benchmark-i22 | Amendment k1/k3 (approved by Chee Long, 30 October 2026) supersedes benchmark-i16's counts for final measurements: default 100 operations per client at 1/10/50, falling back to 50 if the baseline/B1/B2 pilot projects beyond one sitting; B2 uses 1/10 clients with 20 operations per client, falling back to 10. B2refresh uses the B2 count at one client. B3 retains fifty buyers. B4 uses one client; its B2-derived cases use the B2 count and its other cases use the default count, recorded per case in workload_matrix. Keep the legacy provenance keys; correctness query passes stay at one client/one operation | Longer windows improve p95 and CPU attribution, while B2 is operator analytics and the fifty-client full-data pipelines risk timeout and excessive duration. Its B4 index experiments are outside the pilot and also need the smaller count. The pilot, final flags and report disclose the chosen limit |
 
+## Benchmark collector source selection (11 November 2026)
+
+| ID | Decision | Why |
+|---|---|---|
+| benchmark-visible-source-product | For the owner-authorised collector defect repair, both HTTP collectors select the first visible product with non-empty attributes in the supplied source specifications, preserving page order; detail, category and facet use that same product. No qualifying product or an invalid source category still refuses collection | `seed_demo` includes showcase products whose IDs are absent from Olist files. Selecting only the first link blocked both collectors; source-file order would choose a different visible control. This repairs collection without changing application or driver workloads, or rewriting existing evidence |
+
 ## Benchmark designated-machine final and close-out (2 November 2026)
 
 Chee Long approved these final-run and close-out decisions. The underlying measurements identify clean commit
