@@ -492,6 +492,12 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    `bootstrap.csv`, `refusals.csv` and `chart.svg`. The second fires simultaneous cold dashboard requests with Redis on and
    off and times the limiter. Smaller `--requests` and `--dashboard-requests` make a pilot, which is marked as such in its
    provenance and is not evidence. Regenerate the tables with `python -m benchmarks.redis_report <folder>`.
+   Diagnostic schema 1 also writes `data-signatures.json` (public product-ID strings in exact digest order) and
+   `warm-up.csv` (the existing untimed priming responses with exact request-log joins; missing or duplicate priming logs
+   stop the whole run before any samples are written). Both priming and timed responses record UTC receipt time and monotonic milliseconds since the first untimed
+   request of their condition. Priming is excluded from measured samples and gates; no HTML or session data is saved.
+   Provenance records digest version 2. Link changes and warm misses remain refusals, including legitimate rolling-window
+   changes or expiry; the diagnostics provide evidence for investigation, not a cause or an acceptance override.
 
 7. **Regenerate tables if needed.** `benchmarks.run` already runs `benchmarks.report` for each benchmark run. Use
    this command only to regenerate its tables and charts; the k2 directory has its own CSVs and does not use the

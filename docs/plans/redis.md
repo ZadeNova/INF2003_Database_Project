@@ -146,8 +146,15 @@ runs the rounds, [redis_stampede.py](../../benchmarks/redis_stampede.py) the sta
   application's own Redis client (one round trip per clear); the trending ranking is deleted and the dashboard moved to a
   version nobody has cached.
 - The data gate compares the product links in order for the shop and search pages, and the dashboard page without its CSRF
-  token and cache note, with the off condition of the same round. A sample whose cache status does not match its
+  token and cache note (including only the note's conditional trailing newline/indentation), with the off condition of the same round. A sample whose cache status does not match its
   condition (for example a warm entry that expired after 60 seconds) is refused and listed in `refusals.csv`, never hidden.
+- The [acceptance repair](benchmark.md#redis-acceptance-repair-11-november-2026) records digest version 2 and diagnostic
+  schema 1. `data-signatures.json` preserves each distinct shop/search digest's ordered public product IDs;
+  `samples.csv` adds UTC receipt time and monotonic time since the condition's first untimed request. `warm-up.csv`
+  contains the existing untimed priming responses, joined to exact request logs (missing or duplicate logs stop the whole run before any samples are written).
+  Those responses never enter samples or gates. No response bodies, session data or visitor identities are saved.
+  These records explain future link changes and cache timing; they do not establish the causes of historical refusals
+  or guarantee that a future rolling-window/expiry comparison will pass.
 - The product-detail control records view events, so events are counted at the start and end of every round.
 - Each round orders the conditions by a seeded Williams design instead of a plain Latin square: every condition still holds
   every position once, and each also follows every other condition exactly once, so what one condition leaves behind (a warm

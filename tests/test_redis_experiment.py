@@ -5,10 +5,14 @@ Run on the host, like test_request_timing:
 """
 
 import csv
+import hashlib
 import json
+from datetime import datetime
+from pathlib import Path
 from urllib.request import HTTPCookieProcessor
 
 import pytest
+from django.template import Context, Engine
 
 pytest.importorskip("benchmarks.redis_stats")  # the benchmarks package is on the host, not in the test container
 
@@ -196,6 +200,139 @@ def test_the_dashboard_digest_ignores_the_csrf_token_and_the_cache_note():
     assert digest("dashboard", plain) == digest("dashboard", cached)
     assert digest("dashboard", plain) != digest("dashboard", plain.replace("numbers", "other numbers"))
     assert digest("product_detail", plain) is None
+
+
+@pytest.fixture
+def dashboard_header():
+    """Render the real conditional, including the indentation inside it; no settings or databases are needed."""
+    source = (Path(__file__).parents[1] / "src/templates/dashboard/dashboard.html").read_text(encoding="utf-8")
+    header = source[source.index('<div class="page__header">') : source.index('<form method="post"')]
+    template = Engine().from_string(header)
+
+    def render(status):
+        return template.render(Context({"cache_status": status, "computed_at": ""}, use_l10n=False, use_tz=False))
+
+    return render
+
+
+@pytest.mark.parametrize("status", ["hit", "wait"])
+def test_the_real_dashboard_conditional_has_the_same_digest_as_off(dashboard_header, status):
+    off, cached = dashboard_header("off"), dashboard_header(status)
+    assert "served from cache" not in off and "served from cache" in cached
+    assert digest("dashboard", off) == digest("dashboard", cached)
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        '<tr><td><a href="/products/17/">Soft</a> <span>white</span></td><td>12.31</td></tr>',
+        '<tr><td><a href="/products/18/">Soft</a> <span>white</span></td><td>12.30</td></tr>',
+        '<tr><td><a href="/products/17/">Soft</a><span>white</span></td><td>12.30</td></tr>',
+        "",
+    ],
+    ids=["value", "link", "inline-space", "missing-row"],
+)
+def test_dashboard_normalisation_still_rejects_business_data_changes(dashboard_header, changed):
+    row = '<tr><td><a href="/products/17/">Soft</a> <span>white</span></td><td>12.30</td></tr>'
+    plain = dashboard_header("off") + f"<table>{row}</table>"
+    cached = dashboard_header("hit") + f"<table>{changed}</table>"
+    assert digest("dashboard", plain) != digest("dashboard", cached)
+
+
+def test_dashboard_normalisation_preserves_row_order_and_other_inter_tag_whitespace(dashboard_header):
+    first, second = "<tr><td>first</td></tr>", "<tr><td>second</td></tr>"
+    plain = dashboard_header("off") + f"<table>{first}\n{second}</table>"
+    assert digest("dashboard", plain) != digest(
+        "dashboard", plain.replace(first + "\n" + second, second + "\n" + first)
+    )
+    assert digest("dashboard", plain) != digest("dashboard", plain.replace("</tr>\n<tr>", "</tr><tr>"))
+
+
+# ------------------------------------------------------------------------------------------------ diagnostics
+@pytest.mark.parametrize("warm_up_logs", ["complete", "missing", "duplicate"])
+def test_diagnostics_preserve_exact_hashed_links_and_priming_without_changing_samples(tmp_path, warm_up_logs):
+    """Only HTTP/Docker transport is replaced; exercise collection, log joins, files and gates together."""
+    pages = {
+        "shop": "/products/",
+        "search": "/products/?q=Soft",
+        "dashboard": "/operator/dashboard/",
+        "product_detail": "/products/17/",
+        "category_trending": "/products/category/soft/",
+    }
+    links = '<a href="/products/001/">one</a><a href="/products/2/">two</a><a href="/products/001/">one</a>'
+    changed = '<a href="/products/2/">two</a><a href="/products/001/">one</a>'
+    private = "private-cookie-csrf-username"
+
+    class Transport:
+        def __init__(self):
+            self.calls, self.log_lines, self.recreated = [], [], []
+            self.anonymous, self.operator = object(), object()
+
+        def recreate_web(self, enabled):
+            self.recreated.append(enabled)
+
+        def openers(self):
+            return self.anonymous, self.operator
+
+        def timed_get(self, opener, page, path):
+            assert opener is (self.operator if page == "dashboard" else self.anonymous)
+            self.calls.append(page)
+            count = self.calls.count(page)
+            identity = f"request-{len(self.calls)}"
+            cache = "miss" if len(self.calls) == 1 or (page == "search" and count == 5) else "hit"
+            commands = 2
+            if page not in ("shop", "search", "dashboard"):
+                cache, commands = "", 0
+            self.log_lines.append(log_line(identity, path=path.split("?")[0], cache=cache, redis_commands=commands))
+            body = (changed if page == "shop" and count == 6 else links) + f"<p>{private}</p>"
+            return {"request_id": identity, "path": path, "status": 200}, body, {"Set-Cookie": private}, 17.0
+
+        def logs(self, since, identities):
+            assert len(identities) == len(self.calls)
+            lines = self.log_lines if warm_up_logs != "missing" else self.log_lines[1:]
+            if warm_up_logs == "duplicate":
+                lines = [*lines, self.log_lines[0]]
+            return parse_logs("\n".join(lines), identities)
+
+    stack, diagnostics = Transport(), redis_experiment.Diagnostics()
+    if warm_up_logs != "complete":
+        error = "Missing request log" if warm_up_logs == "missing" else "Duplicate request log ID"
+        with pytest.raises(ExperimentError, match=error):
+            redis_experiment.measure(stack, "warm", 2, pages, cheap=2, dashboard=1, diagnostics=diagnostics)
+        return
+    samples = redis_experiment.measure(stack, "warm", 2, pages, cheap=2, dashboard=1, diagnostics=diagnostics)
+    assert stack.recreated == [True]
+    assert stack.calls == list(redis_experiment.PAGE_ORDER) * 4 + [
+        "shop", "shop", "search", "search", "dashboard", "product_detail", "product_detail",
+        "category_trending", "category_trending",
+    ]  # fmt: skip
+    assert len(samples) == 9 and len(diagnostics.warm_up) == 20
+    assert diagnostics.warm_up[0]["cache"] == "miss"  # the untimed cache prime is explainable
+    assert all(s["client_ms"] == 17.0 and s["round"] == 2 and s["condition"] == "warm" for s in samples)
+    elapsed = [s["condition_elapsed_ms"] for s in [*diagnostics.warm_up, *samples]]
+    assert elapsed == sorted(elapsed) and elapsed[0] > 0
+    assert all(datetime.fromisoformat(s["received_at"]).utcoffset().total_seconds() == 0 for s in samples)
+
+    diagnostics.write(tmp_path)
+    payload = json.loads((tmp_path / "data-signatures.json").read_text())
+    assert payload["schema_version"] == redis_experiment.DIAGNOSTICS_SCHEMA_VERSION == 1
+    assert len(payload["signatures"]) == 3  # one per page/digest, including the changed shop order
+    for signature in payload["signatures"]:
+        assert hashlib.sha256("|".join(signature["product_ids"]).encode()).hexdigest() == signature["digest"]
+        assert signature["digest"] in {s["digest"] for s in [*samples, *diagnostics.warm_up]}
+    assert any(s["product_ids"] == ["001", "2", "001"] for s in payload["signatures"])
+    with (tmp_path / "warm-up.csv").open(newline="", encoding="utf-8") as stream:
+        assert len(list(csv.DictReader(stream))) == 20
+    assert private not in "".join(path.read_text() for path in tmp_path.iterdir())
+
+    off = [{**s, "condition": "off", "cache": "off", "redis_commands": 0} for s in samples if s["page"] != "shop"]
+    off.append({**samples[0], "condition": "off", "cache": "off", "redis_commands": 0})
+    _, refused = apply_gates([*off, *samples])
+    assert len(refused) == 2
+    assert {r["refusal"] for r in refused} == {
+        "data differs from the off condition's in the same round",
+        "cache status 'miss' in a warm condition",
+    }
 
 
 # ------------------------------------------------------------------------------------------------ logs

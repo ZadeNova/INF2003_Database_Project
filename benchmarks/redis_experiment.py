@@ -25,11 +25,13 @@ from benchmarks.redis_stack import ColdHelper, Stack, now_iso, redis_restored
 from benchmarks.redis_stats import (
     CACHED_PAGES,
     CONDITIONS,
+    DATA_DIGEST_VERSION,
     REQUEST_FIELDS,
     ExperimentError,
     digest,
     join_responses,
     latin_square,
+    product_links,
     settle,
     trending_leader,
 )
@@ -38,24 +40,69 @@ from benchmarks.request_timing import ROOT, TimingError, write_csv
 PAGE_ORDER = ("shop", "search", "dashboard", "product_detail", "category_trending")
 WORKERS = 2  # gunicorn --workers in src/Dockerfile
 DEFAULT_CHEAP, DEFAULT_DASHBOARD = 150, 15
-FIELDS = ("round", "condition", "page", "request_id", "path", "status", "client_ms", "x_cache", "digest", "cache")
+FIELDS = (
+    "round", "condition", "page", "request_id", "path", "status", "client_ms", "x_cache", "digest", "cache",
+    "received_at", "condition_elapsed_ms",
+)  # fmt: skip
+DIAGNOSTICS_SCHEMA_VERSION = 1
 
 
-def measure(stack, condition, round_index, pages, cheap, dashboard):
+class Diagnostics:
+    """Retain public link signatures and priming metadata, never HTML, cookies or visitor identities."""
+
+    def __init__(self):
+        self.signatures = {}
+        self.warm_up = []
+
+    def signature(self, page, body):
+        value = digest(page, body) or ""
+        if page in ("shop", "search") and (page, value) not in self.signatures:
+            self.signatures[page, value] = product_links(body)
+        return value
+
+    def write(self, output):
+        payload = {
+            "schema_version": DIAGNOSTICS_SCHEMA_VERSION,
+            "signatures": [
+                {"page": page, "digest": value, "product_ids": ids}
+                for (page, value), ids in sorted(self.signatures.items())
+            ],
+        }
+        (output / "data-signatures.json").write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
+        )
+        write_csv(output / "warm-up.csv", self.warm_up)
+
+
+def measure(stack, condition, round_index, pages, cheap, dashboard, diagnostics):
     if condition == "down":
         stack.unpause_redis()
     stack.recreate_web(condition != "off")
     anonymous, operator = stack.openers()
     opener = {"dashboard": operator}
+    started = now_iso()
+    condition_started = time.perf_counter()
 
     def get(page):
-        return stack.timed_get(opener.get(page, anonymous), page, pages[page])
+        row, body, headers, elapsed = stack.timed_get(opener.get(page, anonymous), page, pages[page])
+        # Capture receipt time before digest/diagnostic work, outside the existing client and server timing boundaries.
+        received_at = now_iso()
+        condition_elapsed_ms = (time.perf_counter() - condition_started) * 1000
+        return {
+            **row,
+            "page": page,
+            "client_ms": elapsed,
+            "x_cache": headers.get("X-Cache") or "",
+            "digest": diagnostics.signature(page, body),
+            "received_at": received_at,
+            "condition_elapsed_ms": condition_elapsed_ms,
+        }
 
+    warm_up = []
     for _ in range(2 * WORKERS):  # untimed: both workers and both databases warm, the cache primed where it is on
         for page in PAGE_ORDER:
-            get(page)
+            warm_up.append(get(page))
     helper = ColdHelper(stack) if condition == "cold" else None
-    started = now_iso()
     if condition == "down":
         stack.pause_redis()
     responses = []
@@ -66,22 +113,14 @@ def measure(stack, condition, round_index, pages, cheap, dashboard):
                     helper.clear("trending")
                 elif helper and page == "dashboard":
                     helper.clear("dashboard")
-                row, body, headers, elapsed = get(page)
-                responses.append(
-                    {
-                        **row,
-                        "page": page,
-                        "client_ms": elapsed,
-                        "x_cache": headers.get("X-Cache") or "",
-                        "digest": digest(page, body) or "",
-                    }
-                )
+                responses.append(get(page))
     finally:
         if helper:
             helper.close()
         if condition == "down":
             stack.unpause_redis()
-    logs = stack.logs(started, {r["request_id"] for r in responses})
+    logs = stack.logs(started, {r["request_id"] for r in [*warm_up, *responses]})
+    diagnostics.warm_up += [{**r, "condition": condition, "round": round_index} for r in join_responses(warm_up, logs)]
     return [{**r, "condition": condition, "round": round_index} for r in join_responses(responses, logs)]
 
 
@@ -120,6 +159,7 @@ def run(args):
     output.mkdir(parents=True, exist_ok=False)
     started_at = now_iso()
     samples, rounds = [], []
+    diagnostics = Diagnostics()
     with redis_restored(stack):
         stack.recreate_web(True)
         anonymous, _ = stack.openers()
@@ -129,7 +169,7 @@ def run(args):
             events_start = stack.events()
             for condition in order:
                 print(f"round {index} {condition}", flush=True)
-                samples += measure(stack, condition, index, pages, args.requests, args.dashboard_requests)
+                samples += measure(stack, condition, index, pages, args.requests, args.dashboard_requests, diagnostics)
             rounds.append(
                 {"round": index, "order": " ".join(order), "events_start": events_start, "events_end": stack.events()}
             )
@@ -140,6 +180,7 @@ def run(args):
         writer.writeheader()
         writer.writerows(samples)
     write_csv(output / "rounds.csv", rounds)
+    diagnostics.write(output)
     provenance = {
         "commit": commit + ("-dirty" if dirty else ""),
         "project": args.project,
@@ -157,6 +198,14 @@ def run(args):
         "burn_in_passes": burn_in,
         "burn_in_visitors": "a fresh anonymous cookie jar per untimed control-product view",
         "workers": WORKERS,
+        "data_digest_version": DATA_DIGEST_VERSION,
+        "diagnostics": {
+            "schema_version": DIAGNOSTICS_SCHEMA_VERSION,
+            "signatures": "data-signatures.json: public product ID strings in exact digest order, once per page/digest",
+            "warm_up": "warm-up.csv: untimed priming responses joined to request logs, excluded from samples and gates",
+            "received_at": "host UTC after the response, before digest/diagnostic work",
+            "condition_elapsed_ms": "host monotonic time since before the first untimed request of the condition",
+        },
         "pilot": pilot,
         "pilot_note": "sample sizes below the protocol's: set sizes only, not evidence" if pilot else "",
         "cold": "the cached entry is cleared before every timed request of a cached page (round trip inside the web container)",
