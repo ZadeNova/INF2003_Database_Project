@@ -230,7 +230,46 @@ B1–B6, page timing, stampede and limiter evidence remains valid. The scoped va
 real-database visitor/ranking tests and an untimed fresh-default-seeded burn-in rehearsal. Fresh Claude Code Opus review is
 required before commit; the complete final Redis experiment remains a separate post-review collection.
 
+### Redis acceptance repair (11 November 2026)
+
+Owner-authorised collector repair in Phase 5 after the completed Redis condition run retained acceptance gaps. The
+dashboard digest removed its conditional cache paragraph but retained a newline and indentation emitted inside the same
+conditional. Remove that specific trailing fragment before the closing `div`; retain all other whitespace, business
+values, links and rows. Digest version 2 is recorded in provenance. Existing samples and their stored digests are never
+rewritten or reinterpreted, and the same-round off-reference and cache-status gates remain binding.
+
+The separate shop/search link changes and warm miss are not explained by the retained historical evidence. Trending
+uses a rolling window and its cache expires, but those mechanisms alone do not prove the causes of the old refusals.
+Do not freeze the clock, edit seed events, change cache lifetimes or add measured-request priming to force acceptance.
+Future legitimate refusals remain possible. Add diagnostic schema 1: public numeric product-ID strings in their exact
+hashed order, catalogued once per page/digest; UTC receipt time and monotonic condition elapsed time; and the existing
+untimed priming responses joined to their request logs. Missing or duplicate priming logs now stop the whole run, with no samples written. Priming stays outside measured samples and gates; HTTP timing boundaries and traffic counts are unchanged.
+No HTML, credentials, cookies, CSRF tokens or visitor identities are retained.
+
+Validation covers the real template conditional, rejected business-data mutations, exact diagnostic hash correspondence,
+priming-log failures, neighbouring host checks and a separate small-fixture real-stack rehearsal. No B1–B6, page timing,
+stampede, limiter or final Redis measurements are authorised by this repair. Fresh Claude Code Opus review is required
+before commit; final collection remains separate, on one reviewed clean revision with the default full-data protocol.
+
 ## Review notes
+
+11 November 2026, Redis acceptance repair (Codex implementation; fresh Claude Code Opus review passed).
+The real-template HIT and WAIT cases reproduced the old conditional-whitespace defect before implementation.
+Host collector rules and neighbours, documentation checks, Ruff formatting/lint and the real activity, dashboard and
+Redis-store modules pass. A diagnostic-only small-fixture rehearsal exercised one round of off, cold, warm and down;
+all its measured responses passed the unchanged gates, including full dashboard equality. The exact ordered public
+link signatures reproduce their hashes; untimed priming responses remain outside the measured samples. Regression
+coverage rejects changed values, links, rows and inline gaps, and missing/duplicate priming logs.
+The independent reviewer reran host and real-database neighbour tests, documentation checks, lint and formatting,
+performed mutation checks, and verified real-template OFF/HIT/WAIT equality with LF and CRLF line endings. Historical
+report compatibility and diagnostic privacy/hash correspondence were checked. The minor finding was corrected: a
+priming-log failure stops the whole experiment before samples are written. No blocking findings remained. The final
+Redis run and its comparison coverage remain unvalidated; genuine shop/search drift or cache misses may still be refused.
+The normal fixture CLI attempt refused page selection before any condition: the visible showcase products had no
+matching source specification. That failed attempt is preserved. The bounded rehearsal discovered public fixture page
+paths and called `measure()` directly; it does not validate full CLI orchestration, default source selection, seeded
+rolling-window stability or full-data acceptance. Neither fixture data nor the selector was changed. No final measurement
+was rerun. Historical refusals remain unchanged, and fresh Claude Code Opus review is still required before commit.
 
 11 November 2026, Redis burn-in correction (Codex implementation; fresh Claude Code Opus review passed).
 The host regression checks separate anonymous cookie jars for the control views, the retained ranking session, cache

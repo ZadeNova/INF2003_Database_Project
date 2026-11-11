@@ -38,6 +38,7 @@ REQUEST_FIELDS = (
     "redis_commands",
 )
 BOOTSTRAP_RESAMPLES = 2000
+DATA_DIGEST_VERSION = 2
 
 
 class ExperimentError(ValueError):
@@ -72,14 +73,21 @@ def latin_square(seed, conditions=CONDITIONS):
 
 
 # ------------------------------------------------------------------------------------------------ evidence
+def product_links(body):
+    """Public product IDs in the exact link order hashed for shop/search, retaining duplicates and decimal spelling."""
+    return re.findall(r'href="/products/(\d+)/"', body)
+
+
 def digest(page, body):
     """What 'the same data' means for a page: the product links in order for the shop and search lists, the page without volatile parts
     (the CSRF token and the cache note, which differ by condition by design) for the dashboard. Controls have none."""
     if page in ("shop", "search"):
-        text = "|".join(re.findall(r'href="/products/(\d+)/"', body))
+        text = "|".join(product_links(body))
     elif page == "dashboard":
         text = re.sub(r'name="csrfmiddlewaretoken" value="[^"]*"', "", body)
-        text = re.sub(r'<p class="page__lead">Delivery, category[^<]*</p>', "", text)
+        # The real template emits a newline/indentation inside the cache-note conditional, before its closing div.
+        # Remove that fragment only; global whitespace folding could hide a changed gap between inline values.
+        text = re.sub(r'<p class="page__lead">Delivery, category[^<]*</p>(?:\r?\n[ \t]*(?=</div>))?', "", text)
     else:
         return None
     return hashlib.sha256(text.encode()).hexdigest()
