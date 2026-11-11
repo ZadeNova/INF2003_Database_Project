@@ -265,6 +265,7 @@ precommitted expectations remain unchanged.
 | ID | Decision | Why |
 |---|---|---|
 | benchmark-visible-source-product | For the owner-authorised collector defect repair, both HTTP collectors select the first visible product with non-empty attributes in the supplied source specifications, preserving page order; detail, category and facet use that same product. No qualifying product or an invalid source category still refuses collection | `seed_demo` includes showcase products whose IDs are absent from Olist files. Selecting only the first link blocked both collectors; source-file order would choose a different visible control. This repairs collection without changing application or driver workloads, or rewriting existing evidence |
+| redis-burn-in-visitors | The Redis collector gives every untimed control-product view its own anonymous opener and cookie jar; ranking probes keep their session, and measured conditions retain their existing sessions. The control must still lead and the ranking must hold still within the same pass limit; provenance records the visitor policy | Trending counts distinct visitors, so repeated burn-in requests from one session count once and cannot overtake the seeded leader. Distinct untimed visitors correct the collector's assumption without changing application counting, seeding, correctness gates or sample counts; see the [repair contract](plans/benchmark.md#redis-burn-in-correction-11-november-2026) |
 
 ## Benchmark designated-machine final and close-out (2 November 2026)
 

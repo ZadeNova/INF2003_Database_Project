@@ -219,7 +219,32 @@ from that one specification. Refuse selection when no visible product qualifies,
 The selected paths remain in each collector's provenance. Existing evidence is preserved; this repair authorises
 targeted regression tests and an untimed page-selection rehearsal, with final collection left to a separate run.
 
+### Redis burn-in correction (11 November 2026)
+
+Owner-authorised defect repair in the existing Phase 5 collector contract. Trending counts distinct visitors, so repeatedly
+viewing the control with one anonymous cookie jar cannot overtake a seeded leader. Give each untimed control-product view
+a fresh anonymous opener. Keep the ranking probe's session, cache clearing, leading-control requirement and stable-ranking
+check, the existing pass size/limit, and all measured traffic and sample counts. Record the visitor policy in provenance.
+Application counting and seeded data stay unchanged. This repairs the remaining Redis condition collector only; existing
+B1–B6, page timing, stampede and limiter evidence remains valid. The scoped validation is host orchestration/gate tests,
+real-database visitor/ranking tests and an untimed fresh-default-seeded burn-in rehearsal. Fresh Claude Code Opus review is
+required before commit; the complete final Redis experiment remains a separate post-review collection.
+
 ## Review notes
+
+11 November 2026, Redis burn-in correction (Codex implementation; fresh Claude Code Opus review passed).
+The host regression checks separate anonymous cookie jars for the control views, the retained ranking session, cache
+clears and helper cleanup. Real PostgreSQL/MongoDB/Redis tests verify that one anonymous visitor's reloads count once and
+distinct anonymous visitors can overtake a generated leader. The collector still requires the control to lead and the
+ranking to hold still before any measured condition begins. An isolated fresh full-data import with default seeding passed
+the actual burn-in; database snapshots verified the control's leadership, distinct visitors and unchanged generated events.
+The host regression also rejected the previous single-visitor behaviour. No final experiment or other valid workload is
+rerun here.
+The independent reviewer reran host and documentation tests, lint and formatting, and performed additional mutation
+checks. A separate fresh full-data/default-seeded rehearsal reproduced successful settling and verified source hashes,
+control leadership, distinct visitors and unchanged generated events. No actionable findings remained. Removing the
+unchanged leader callback survived the new host regression; the reviewer disclosed this coverage limitation, while the
+live rehearsal verified leadership directly. The complete final Redis condition experiment still awaits its own run.
 
 11 November 2026, collector source selection correction (Codex implementation; fresh Claude Code Opus review passed).
 Host request-timing, Redis experiment and neighbouring benchmark-tooling checks pass. Regression cases cover an absent

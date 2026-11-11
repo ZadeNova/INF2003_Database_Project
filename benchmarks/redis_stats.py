@@ -143,12 +143,11 @@ BURN_IN_LIMIT = 50
 def settle(view, ranking, leader=None, views=BURN_IN_VIEWS, limit=BURN_IN_LIMIT):
     """Untimed warm-up of the trending ranking before round 1.
 
-    The product-detail control records a view event on every request, and view events reorder the trending ranking the
-    shop and search pages show, so the first condition would serve different products than the later ones (the pilot
-    showed it). Viewing the control product until it leads the ranking, and the ranking then holds still for a further
-    pass, means that the views of the timed rounds cannot move it again: the most viewed product stays first however many
-    more views it gets. Without `leader` only the second condition applies. Returns the number of passes, or raises if the
-    ranking never settles."""
+    The product-detail control records a view event on every request, but trending counts distinct visitors. Each `view`
+    must therefore use a fresh visitor: repeated views in one session count only once. Bringing the control to the lead,
+    then requiring the ranking to hold still for a further pass, keeps later views from moving it: the most viewed product
+    stays first however many more visitors it gets. Without `leader` only the second condition applies. Returns the number
+    of passes, or raises if the ranking never settles."""
     previous = None
     for attempt in range(1, limit + 1):
         for _ in range(views):

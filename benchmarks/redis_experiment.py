@@ -86,7 +86,7 @@ def measure(stack, condition, round_index, pages, cheap, dashboard):
 
 
 def settle_ranking(stack, pages, anonymous):
-    """Untimed: view the control product until it leads the trending ranking and the ranking stops moving (redis_stats.settle)."""
+    """Untimed: distinct anonymous visitors make the control lead, then its ranking must hold still (redis_stats.settle)."""
     helper = ColdHelper(stack)
     control = int(re.search(r"/products/(\d+)/", pages["product_detail"])[1])
     latest = {}
@@ -99,7 +99,9 @@ def settle_ranking(stack, pages, anonymous):
             return digest("shop", body)
 
         def view():
-            stack.timed_get(anonymous, "product_detail", pages["product_detail"])
+            # Trending counts distinct visitors, so one cookie jar's repeated views would count only once. Keep this
+            # traffic separate from the ranking probe and the measured conditions, which retain their own sessions.
+            stack.timed_get(stack.anonymous_opener(), "product_detail", pages["product_detail"])
 
         return settle(view, ranking, leader=lambda: latest.get("leader") == control)
     finally:
@@ -153,6 +155,7 @@ def run(args):
         "requests_dashboard": args.dashboard_requests,
         "untimed_requests_per_page": 2 * WORKERS,
         "burn_in_passes": burn_in,
+        "burn_in_visitors": "a fresh anonymous cookie jar per untimed control-product view",
         "workers": WORKERS,
         "pilot": pilot,
         "pilot_note": "sample sizes below the protocol's: set sizes only, not evidence" if pilot else "",

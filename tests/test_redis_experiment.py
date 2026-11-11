@@ -6,14 +6,17 @@ Run on the host, like test_request_timing:
 
 import csv
 import json
+from urllib.request import HTTPCookieProcessor
 
 import pytest
 
 pytest.importorskip("benchmarks.redis_stats")  # the benchmarks package is on the host, not in the test container
 
+from benchmarks import redis_experiment  # noqa: E402
 from benchmarks.redis_report import write_reports  # noqa: E402
-from benchmarks.redis_stack import redis_restored  # noqa: E402
+from benchmarks.redis_stack import Stack, redis_restored  # noqa: E402
 from benchmarks.redis_stats import (  # noqa: E402
+    BURN_IN_VIEWS,
     CONDITIONS,
     ExperimentError,
     analyse,
@@ -292,6 +295,50 @@ def test_the_report_writes_every_table_and_the_chart(tmp_path):
 
 
 # ------------------------------------------------------------------------------------------------ burn-in
+def test_the_collector_uses_a_fresh_cookie_jar_per_burn_in_view_and_keeps_the_ranking_session(monkeypatch):
+    """Exercise the real opener factory; a reused visitor cannot overtake the pre-existing leader."""
+    views, probes, clears = [], [], []
+    closed = []
+
+    class Helper:
+        def __init__(self, stack):
+            pass
+
+        def clear(self, kind):
+            clears.append(kind)
+
+        def close(self):
+            closed.append(True)
+
+    class VisitorStack:
+        anonymous_opener = staticmethod(Stack.anonymous_opener)
+
+        def timed_get(self, opener, page, path):
+            if page == "product_detail":
+                views.append(opener)
+                return {}, "", {}, 0
+            assert page == "shop"
+            probes.append(opener)
+            ids = (17, 12) if len({id(visitor) for visitor in views}) > 36 else (12, 17)
+            body = f'<p>Rank 1 · views</p><a href="/products/{ids[0]}/">lead</a><a href="/products/{ids[1]}/">other</a>'
+            return {}, body, {}, 0
+
+    monkeypatch.setattr(redis_experiment, "ColdHelper", Helper)  # Docker cache control only; no database is replaced.
+    stack = VisitorStack()
+    anonymous = stack.anonymous_opener()
+    passes = redis_experiment.settle_ranking(
+        stack, {"product_detail": "/products/17/", "shop": "/products/"}, anonymous
+    )
+    jars = [
+        next(handler.cookiejar for handler in opener.handlers if isinstance(handler, HTTPCookieProcessor))
+        for opener in views
+    ]
+    assert passes == 3 and len(views) == passes * BURN_IN_VIEWS
+    assert len({id(jar) for jar in jars}) == len(jars)
+    assert all(probe is anonymous for probe in probes) and anonymous not in views
+    assert clears == ["trending"] * passes and closed == [True]
+
+
 def test_the_burn_in_stops_once_the_ranking_holds_still():
     views, rankings = [], iter(["A", "B", "C", "C", "C"])
     passes = settle(lambda: views.append(1), lambda: next(rankings), views=3)
