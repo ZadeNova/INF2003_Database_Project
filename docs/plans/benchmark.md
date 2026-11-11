@@ -210,7 +210,29 @@ clients, so some queueing delay is hidden; the Olist volume fits in memory (B5's
 single-node replica set; a processor with a large cache; no second machine for the load generator (the clients run in a capped
 container, are checked for saturation and are bracketed by the baselines).
 
+**Collector source selection correction (11 November 2026, owner-authorised defect repair).** This scoped repair
+follows the completed Phase 3B contract during Phase 5; application code and B1–B6 stay frozen. `seed_demo` now calls
+`seed_showcase`, so the first product link can belong to a showcase product absent from the supplied Olist specifications.
+Both HTTP collectors share `pages_for_product`: choose the first visible product with non-empty source attributes in
+page order, rather than the first product link or first row in the source file. Derive its detail, category and facet
+from that one specification. Refuse selection when no visible product qualifies, and keep source-category validation.
+The selected paths remain in each collector's provenance. Existing evidence is preserved; this repair authorises
+targeted regression tests and an untimed page-selection rehearsal, with final collection left to a separate run.
+
 ## Review notes
+
+11 November 2026, collector source selection correction (Codex implementation; fresh Claude Code Opus review passed).
+Host request-timing, Redis experiment and neighbouring benchmark-tooling checks pass. Regression cases cover an absent
+showcase ID before source-backed products, source order differing from page order, duplicate links, empty attributes and
+refusal when no visible source product qualifies. Final timing collectors were not rerun for this correction.
+An untimed GET rehearsal against the existing isolated full-data request stack reproduced the showcase-first input;
+the timing helper and Redis stack both chose the first eligible Olist product. Its detail, category, facet and Redis
+search pages returned 200, and the listings contained the selected product. No dashboard or final experiment was run.
+The independent reviewer reran the host checks, documentation validation, Ruff lint and formatting, and checked the new
+regressions against the old helper to demonstrate that they detect the defect. A separate GET-only rehearsal reproduced
+the old helper's failure and verified both corrected callers against the full-data stack. No actionable findings remained.
+Redis trending burn-in was inspected but not run; the final Redis experiment must still verify it during its targeted
+rerun. B1–B6 and the existing Redis stampede/limiter evidence are unaffected by this collector-only change.
 
 22 October 2026, independent plan review (fresh Claude Code session; planning only, nothing implemented or timed).
 Checked against PLAN.md sections 7, 12 to 14, AGENTS.md, the completed olist-import plan, `compose.yaml`,

@@ -177,14 +177,18 @@ def login_operator(opener, cookies, base_url, env_file):
 
 
 def pages_for_product(body, source):
-    match = re.search(r'href="/products/(\d+)/"', body)
-    if not match:
+    """Use the first visible product backed by source attributes, skipping showcase-only products."""
+    product_ids = dict.fromkeys(int(value) for value in re.findall(r'href="/products/(\d+)/"', body))
+    if not product_ids:
         raise TimingError("The product list has no visible product")
-    product_id = int(match[1])
     with (source / "product_specs.ndjson").open(encoding="utf-8") as stream:
-        spec = next((row for line in stream if (row := json.loads(line))["_id"] == product_id), None)
-    if not spec or not spec["attributes"]:
-        raise TimingError("Visible product does not match the source specifications")
+        specs = {
+            row["_id"]: row for line in stream if (row := json.loads(line))["_id"] in product_ids and row["attributes"]
+        }
+    spec = next((specs[product_id] for product_id in product_ids if product_id in specs), None)
+    if not spec:
+        raise TimingError("No visible product matches source specifications with attributes")
+    product_id = spec["_id"]
     with (source / "categories.csv").open(encoding="utf-8", newline="") as stream:
         category = next((row for row in csv.DictReader(stream) if int(row["id"]) == spec["category_id"]), None)
     if not category or not re.fullmatch(r"[a-z0-9_-]+", category["slug"]):
@@ -307,7 +311,7 @@ def collect(args):
         "sequential": True,
         "p95_method": "nearest rank",
         "median_method": "arithmetic midpoint for even sample counts",
-        "page_selection": "category, facet and detail use the same visible product and source files",
+        "page_selection": "category, facet and detail use the first visible product with source attributes, in page order",
         "db_share": "100 * (db_pg_ms + db_mongo_ms) / duration_ms; zero when both are zero",
     }
     (output / "provenance.json").write_text(

@@ -466,7 +466,8 @@ VM settings checked. The commands below use dedicated projects; leave existing a
    The script uses anonymous shopping requests and a separate in-memory operator session, one warm-up pass and
    twenty sequential requests per page. It joins response IDs to this project's JSON web logs and saves
    `requests.csv`, one aggregate CSV per page and `provenance.json`. The category page, facet and detail use the
-   same visible product and its source category/attributes, with the chosen paths recorded. It retains no
+   first visible product with attributes in the supplied source files, skipping showcase-only products;
+   the Redis experiment uses the same selector for its controls. The chosen paths are recorded. It retains no
    credentials, cookies or response bodies.
    A fixture rehearsal uses `--source tests/fixtures/olist/clean` on a separately loaded fixture app project.
 

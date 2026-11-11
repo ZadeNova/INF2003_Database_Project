@@ -154,3 +154,45 @@ def test_pages_use_a_visible_product_its_category_and_a_real_attribute_facet(tmp
     (tmp_path / "categories.csv").write_text("id,slug\n44,electronics\n")
     with pytest.raises(ValueError, match="source category"):
         request_timing.pages_for_product('<a href="/products/12/">Item</a>', tmp_path)
+
+
+@pytest.mark.parametrize("product_ids", [(34223, 18, 12), (34223, 18, 18, 12), (18, 34223, 12)])
+def test_pages_skip_showcase_only_products_and_choose_in_visible_order(tmp_path, product_ids):
+    # Source-file order differs from the shop; the selected category/facet must belong to the chosen visible product.
+    specs = [
+        {"_id": 12, "category_id": 45, "attributes": {"wireless": True}},
+        {"_id": 18, "category_id": 44, "attributes": {"material": "cotton"}},
+    ]
+    (tmp_path / "product_specs.ndjson").write_text("\n".join(json.dumps(row) for row in specs))
+    (tmp_path / "categories.csv").write_text("id,slug\n44,home-and-linen\n45,computers-accessories\n")
+    body = "".join(f'<a href="/products/{product_id}/">Item</a>' for product_id in product_ids)
+    assert request_timing.pages_for_product(body, tmp_path) == {
+        "category": "/products/category/home-and-linen/",
+        "product_list": "/products/",
+        "faceted_search": "/products/?category=44&attr_material=cotton",
+        "product_detail": "/products/18/",
+        "operator_dashboard": "/operator/dashboard/",
+    }
+
+
+def test_pages_skip_source_products_without_attributes(tmp_path):
+    specs = [
+        {"_id": 12, "category_id": 45, "attributes": {}},
+        {"_id": 18, "category_id": 45, "attributes": {"wireless": False}},
+    ]
+    (tmp_path / "product_specs.ndjson").write_text("\n".join(json.dumps(row) for row in specs))
+    (tmp_path / "categories.csv").write_text("id,slug\n45,computers-accessories\n")
+    pages = request_timing.pages_for_product(
+        '<a href="/products/12/">Empty</a><a href="/products/18/">Item</a>', tmp_path
+    )
+    assert pages["product_detail"] == "/products/18/"
+    assert pages["faceted_search"] == "/products/?category=45&attr_wireless=false"
+
+
+@pytest.mark.parametrize("spec", [{"_id": 18, "attributes": {"wireless": True}}, {"_id": 12, "attributes": {}}])
+def test_pages_refuse_when_no_visible_product_has_source_attributes(tmp_path, spec):
+    (tmp_path / "product_specs.ndjson").write_text(json.dumps(spec))
+    with pytest.raises(request_timing.TimingError, match="No visible product matches source specifications"):
+        request_timing.pages_for_product(
+            '<a href="/products/34223/">Showcase</a><a href="/products/12/">Item</a>', tmp_path
+        )
