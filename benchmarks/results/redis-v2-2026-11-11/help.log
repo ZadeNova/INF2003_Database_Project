@@ -1,0 +1,28 @@
+usage: redis_experiment.py [-h] --project PROJECT --base-url BASE_URL
+                           [--env-file ENV_FILE] [--source SOURCE]
+                           [--requests REQUESTS]
+                           [--dashboard-requests DASHBOARD_REQUESTS]
+                           [--seed SEED] [--require-clean]
+
+Measure what Redis does for the shop: off, cold, warm and down, in a seeded Latin-square order (docs/plans/redis.md).
+
+Run it alone (never beside a benchmark), after the full benchmark, against an isolated app stack that has the Olist data,
+`seed_demo` and `seed_activity` loaded (see the README):
+
+    python -m benchmarks.redis_experiment --project mercer-redis-final --base-url http://127.0.0.1:18083 --require-clean
+
+Each condition recreates the web container (so its workers and connections start clean), runs an untimed pass of twice the
+worker count per page, then times sequential requests. cold clears the cached entry before every timed request of a
+cached page, warm is primed once, down pauses the Redis container, off runs with REDIS_ENABLED=false. Requests are joined
+to the server's own request log by ID, and benchmarks/redis_stats.py decides which samples count.
+
+options:
+  -h, --help            show this help message and exit
+  --project PROJECT
+  --base-url BASE_URL
+  --env-file ENV_FILE
+  --source SOURCE
+  --requests REQUESTS   timed requests per cheap page per condition
+  --dashboard-requests DASHBOARD_REQUESTS
+  --seed SEED
+  --require-clean

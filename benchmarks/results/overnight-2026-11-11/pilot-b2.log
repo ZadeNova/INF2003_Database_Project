@@ -1,0 +1,98 @@
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T022529_505222f4_pilot-b2", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "state": "started"}
+ Container mercer-bench-overnight-bench-mongo-1 Running 
+ Container mercer-bench-overnight-bench-db-1 Running 
+ Container mercer-bench-overnight-bench-db-1 Waiting 
+ Container mercer-bench-overnight-bench-mongo-1 Waiting 
+ Container mercer-bench-overnight-bench-db-1 Healthy 
+ Container mercer-bench-overnight-bench-mongo-1 Healthy 
+ Container mercer-bench-overnight-load-client Creating 
+ Container mercer-bench-overnight-load-client Created 
+B2a postgres/live clients=1 run=0 warmup: passed
+B2a postgres/live clients=1 run=1 measured: passed
+B2a postgres/live clients=1 run=2 measured: passed
+B2a postgres/live clients=1 run=3 measured: passed
+B2a postgres/live clients=1 run=4 measured: passed
+B2a postgres/live clients=1 run=5 measured: passed
+B2a postgres/live clients=10 run=0 warmup: passed
+B2a postgres/live clients=10 run=1 measured: passed
+B2a postgres/live clients=10 run=2 measured: passed
+B2a postgres/live clients=10 run=3 measured: passed
+B2a postgres/live clients=10 run=4 measured: passed
+B2a postgres/live clients=10 run=5 measured: passed
+B2a postgres/view clients=1 run=0 warmup: passed
+B2a postgres/view clients=1 run=1 measured: passed
+B2a postgres/view clients=1 run=2 measured: passed
+B2a postgres/view clients=1 run=3 measured: passed
+B2a postgres/view clients=1 run=4 measured: passed
+B2a postgres/view clients=1 run=5 measured: passed
+B2a postgres/view clients=10 run=0 warmup: passed
+B2a postgres/view clients=10 run=1 measured: passed
+B2a postgres/view clients=10 run=2 measured: passed
+B2a postgres/view clients=10 run=3 measured: passed
+B2a postgres/view clients=10 run=4 measured: passed
+B2a postgres/view clients=10 run=5 measured: passed
+B2b postgres/live clients=1 run=0 warmup: passed
+B2b postgres/live clients=1 run=1 measured: passed
+B2b postgres/live clients=1 run=2 measured: passed
+B2b postgres/live clients=1 run=3 measured: passed
+B2b postgres/live clients=1 run=4 measured: passed
+B2b postgres/live clients=1 run=5 measured: passed
+B2b postgres/live clients=10 run=0 warmup: passed
+B2b postgres/live clients=10 run=1 measured: passed
+B2b postgres/live clients=10 run=2 measured: passed
+B2b postgres/live clients=10 run=3 measured: passed
+B2b postgres/live clients=10 run=4 measured: passed
+B2b postgres/live clients=10 run=5 measured: passed
+B2b postgres/view clients=1 run=0 warmup: passed
+B2b postgres/view clients=1 run=1 measured: passed
+B2b postgres/view clients=1 run=2 measured: passed
+B2b postgres/view clients=1 run=3 measured: passed
+B2b postgres/view clients=1 run=4 measured: passed
+B2b postgres/view clients=1 run=5 measured: passed
+B2b postgres/view clients=10 run=0 warmup: passed
+B2b postgres/view clients=10 run=1 measured: passed
+B2b postgres/view clients=10 run=2 measured: passed
+B2b postgres/view clients=10 run=3 measured: passed
+B2b postgres/view clients=10 run=4 measured: passed
+B2b postgres/view clients=10 run=5 measured: passed
+B2c postgres/live clients=1 run=0 warmup: passed
+B2c postgres/live clients=1 run=1 measured: passed
+B2c postgres/live clients=1 run=2 measured: passed
+B2c postgres/live clients=1 run=3 measured: passed
+B2c postgres/live clients=1 run=4 measured: passed
+B2c postgres/live clients=1 run=5 measured: passed
+B2c postgres/live clients=10 run=0 warmup: passed
+B2c postgres/live clients=10 run=1 measured: passed
+B2c postgres/live clients=10 run=2 measured: passed
+B2c postgres/live clients=10 run=3 measured: passed
+B2c postgres/live clients=10 run=4 measured: passed
+B2c postgres/live clients=10 run=5 measured: passed
+B2d postgres/live clients=1 run=0 warmup: passed
+B2d postgres/live clients=1 run=1 measured: passed
+B2d postgres/live clients=1 run=2 measured: passed
+B2d postgres/live clients=1 run=3 measured: passed
+B2d postgres/live clients=1 run=4 measured: passed
+B2d postgres/live clients=1 run=5 measured: passed
+B2d postgres/live clients=10 run=0 warmup: passed
+B2d postgres/live clients=10 run=1 measured: passed
+B2d postgres/live clients=10 run=2 measured: passed
+B2d postgres/live clients=10 run=3 measured: passed
+B2d postgres/live clients=10 run=4 measured: passed
+B2d postgres/live clients=10 run=5 measured: passed
+B2refresh postgres/refresh clients=1 run=0 warmup: passed
+B2refresh postgres/refresh clients=1 run=1 measured: passed
+B2refresh postgres/refresh clients=1 run=2 measured: passed
+B2refresh postgres/refresh clients=1 run=3 measured: passed
+B2refresh postgres/refresh clients=1 run=4 measured: passed
+B2refresh postgres/refresh clients=1 run=5 measured: passed
+B2b postgres/app clients=1 run=0 warmup: passed
+B2b postgres/app clients=1 run=1 measured: passed
+B2b postgres/app clients=1 run=2 measured: passed
+B2b postgres/app clients=1 run=3 measured: passed
+B2b postgres/app clients=1 run=4 measured: passed
+B2b postgres/app clients=1 run=5 measured: passed
+B2b postgres/app clients=10 run=0 warmup: failed
+B2b postgres/app clients=10 run=1 measured: failed
+
+{"amendment_j": [], "outputs": ["B2a", "B2b", "B2c", "B2d", "B2refresh"], "report": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T022529_505222f4_pilot-b2\\report"}
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T022529_505222f4_pilot-b2", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "exit_code": 137, "duration_seconds": 1849.052874299996}

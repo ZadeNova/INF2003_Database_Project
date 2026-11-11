@@ -1,0 +1,7 @@
+{"step": "help", "exit_code": 0, "duration_seconds": 0.3846747875213623, "args": ["C:\\Users\\limch\\AppData\\Local\\Programs\\Python\\Python313\\python.exe", "-m", "benchmarks.redis_experiment", "--help"]}
+{"step": "up", "exit_code": 0, "duration_seconds": 19.54585862159729, "args": ["docker", "compose", "-p", "mercer-redis-digest2-final", "up", "--build", "--detach", "--wait"]}
+{"step": "import", "exit_code": 0, "duration_seconds": 30.414646863937378, "args": ["docker", "compose", "-p", "mercer-redis-digest2-final", "run", "--rm", "migrate", "python", "manage.py", "import_olist", "--source", "/app/data/derived/olist/clean"]}
+{"step": "seed-demo", "exit_code": 0, "duration_seconds": 7.016165733337402, "args": ["docker", "compose", "-p", "mercer-redis-digest2-final", "run", "--rm", "migrate", "python", "manage.py", "seed_demo"]}
+{"step": "seed-activity", "exit_code": 0, "duration_seconds": 37.06333804130554, "args": ["docker", "compose", "-p", "mercer-redis-digest2-final", "run", "--rm", "migrate", "python", "manage.py", "seed_activity"]}
+{"step": "redis-measurement", "exit_code": 0, "duration_seconds": 1401.3094441890717, "args": ["C:\\Users\\limch\\AppData\\Local\\Programs\\Python\\Python313\\python.exe", "-u", "-m", "benchmarks.redis_experiment", "--project", "mercer-redis-digest2-final", "--base-url", "http://127.0.0.1:18087", "--seed", "82", "--require-clean"]}
+{"step": "stop", "exit_code": 0, "duration_seconds": 0.9440619945526123, "args": ["docker", "compose", "-p", "mercer-redis-digest2-final", "stop"]}

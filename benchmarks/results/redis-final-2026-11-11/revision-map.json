@@ -1,0 +1,102 @@
+{
+  "groups": [
+    {
+      "group": "B1",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "B2",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/b2-headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "B3",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "B4",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "B5",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "B6",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T083148_505222f4_overnight-session-1;2026-11-11T112007_505222f4_overnight-session-2;2026-11-11T141404_505222f4_overnight-session-3",
+      "primary_table": "overnight-2026-11-11/sessions/headline.csv",
+      "raw_evidence": "2026-11-11T083148_505222f4_overnight-session-1/raw.jsonl.gz;2026-11-11T112007_505222f4_overnight-session-2/raw.jsonl.gz;2026-11-11T141404_505222f4_overnight-session-3/raw.jsonl.gz",
+      "status": "valid; use every session and predeclared headline flags"
+    },
+    {
+      "group": "application page timing",
+      "commit": "df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e",
+      "directories": "2026-11-11T181223_df03cb33_request-timing",
+      "primary_table": "collectors-2026-11-11/page-summary.csv",
+      "raw_evidence": "2026-11-11T181223_df03cb33_request-timing/requests.csv",
+      "status": "valid; complete sequential page collector"
+    },
+    {
+      "group": "Redis conditions",
+      "commit": "eb9b39ebd296ed309dffc4ecf91a4b4a8cf08a78",
+      "directories": "2026-11-11T190658_eb9b39eb_redis",
+      "primary_table": "2026-11-11T190658_eb9b39eb_redis/ratios.csv",
+      "raw_evidence": "2026-11-11T190658_eb9b39eb_redis/samples.csv",
+      "status": "partial accepted evidence; warm dashboard unavailable; consult comparison-usability.csv"
+    },
+    {
+      "group": "Redis stampede",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T171256_505222f4_redis-stampede",
+      "primary_table": "overnight-2026-11-11/stampede-summary.csv",
+      "raw_evidence": "2026-11-11T171256_505222f4_redis-stampede/stampede.csv",
+      "status": "valid standalone experiment; aggregates retained"
+    },
+    {
+      "group": "Redis limiter",
+      "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+      "directories": "2026-11-11T171256_505222f4_redis-stampede",
+      "primary_table": "2026-11-11T171256_505222f4_redis-stampede/limiter.csv",
+      "raw_evidence": "2026-11-11T171256_505222f4_redis-stampede/limiter.csv",
+      "status": "valid aggregate measurements; per-call raw latencies not retained by existing tool"
+    }
+  ],
+  "changes_from_driver_commit": [
+    "PLAN.md",
+    "README.md",
+    "benchmarks/redis_experiment.py",
+    "benchmarks/redis_stack.py",
+    "benchmarks/redis_stats.py",
+    "benchmarks/request_timing.py",
+    "docs/AI_USE.md",
+    "docs/DECISIONS.md",
+    "docs/plans/benchmark.md",
+    "docs/plans/redis.md",
+    "tests/test_activity.py",
+    "tests/test_redis_experiment.py",
+    "tests/test_request_timing.py"
+  ],
+  "application_data_compose_unchanged": true,
+  "reason_for_revisions": "Reviewed collector source-selection and distinct-visitor repairs only; historical groups are never relabelled",
+  "overall_closeout_complete": false
+}

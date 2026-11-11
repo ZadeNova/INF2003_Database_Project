@@ -1,0 +1,11 @@
+mode,repetition,simultaneous,requests,computed,waited,hit,median_ms,max_ms
+redis_on,1,8,8,1,1,6,273.74,1365.53
+redis_on,2,8,8,1,1,6,301.875,1395.15
+redis_on,3,8,8,1,1,6,286.56,1274.2
+redis_on,4,8,8,1,1,6,248.92,1247.36
+redis_on,5,8,8,1,1,6,242.665,1253.97
+redis_off,1,8,8,8,0,0,1336.795,1562.87
+redis_off,2,8,8,8,0,0,1412.165,1475.33
+redis_off,3,8,8,8,0,0,1517.1,1646.21
+redis_off,4,8,8,8,0,0,1368.45,1424.34
+redis_off,5,8,8,8,0,0,1433.795,1624.93

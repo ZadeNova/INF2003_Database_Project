@@ -1,0 +1,4 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,runner_cpu_median_percent,runner_cpu_median_percent_min,runner_cpu_median_percent_max,client_saturated_runs,client_saturated,headline,not_headline_reason,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B4_bench_jsonb_gin,postgres,after,1,passed,5,0,0,0,2.39,2.39,2.39,0,False,True,,0.376717,0.356917,0.378618,0.507623,0.474522,0.568626,2509.8360474700353,2443.154513153822,2535.3669748472835,10.251937130525036,before/variant
+B4_bench_jsonb_gin,postgres,before,1,passed,5,0,0,0,25.08,18.24,25.08,0,False,True,,3.862079,3.848478,3.995485,4.411804,4.244096,4.849924,249.6070573380209,242.19158232833232,254.6548785429414,1.0,before/variant
+B4_bench_jsonb_gin,postgres,restore,1,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,before/variant

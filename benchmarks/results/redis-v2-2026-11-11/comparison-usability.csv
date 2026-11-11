@@ -1,0 +1,16 @@
+page,pair,usable_rounds,usable_paired_rounds,four_paired_rounds,min_accepted_samples_in_paired_cell,ratio_median,claim,protocol_status
+shop,off/warm,1;3;4,3,False,150,2.727316836487142,yes,available; reduced paired coverage disclosed
+shop,cold/off,1;2;3;4,4,True,150,1.0011520826957787,no: not distinguishable from the noise floor,available
+shop,down/off,1;2;3;4,4,True,3,0.9993639274944427,no: not distinguishable from the noise floor,available
+search,off/warm,1;3;4,3,False,149,1.9584002140181913,yes,available; reduced paired coverage disclosed
+search,cold/off,1;2;3;4,4,True,150,1.0145554092928526,no: not distinguishable from the noise floor,available
+search,down/off,1;3;4,3,False,150,0.9813878833413019,no: not distinguishable from the noise floor,available; reduced paired coverage disclosed
+dashboard,off/warm,1;2;3;4,4,True,15,5.493166708938346,yes,available
+dashboard,cold/off,1;2;3;4,4,True,15,1.0029775569200208,no: not distinguishable from the noise floor,available
+dashboard,down/off,1;2;3;4,4,True,15,0.9850557789383887,no: not distinguishable from the noise floor,available
+product_detail,off/warm,1;2;3;4,4,True,150,1.0325985306191052,negative control,available
+product_detail,cold/off,1;2;3;4,4,True,150,0.9897224160601508,negative control,available
+product_detail,down/off,1;2;3;4,4,True,150,0.9790863506485231,negative control,available
+category_trending,off/warm,1;2;3;4,4,True,150,1.0335112964444741,negative control,available
+category_trending,cold/off,1;2;3;4,4,True,150,1.0082240250034746,negative control,available
+category_trending,down/off,1;2;3;4,4,True,150,0.9641152119191825,negative control,available

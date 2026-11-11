@@ -1,0 +1,29 @@
+{
+  "ram": 17084600320,
+  "time": "2026-11-11T18:09:16.9917169+08:00",
+  "disks": [
+    {
+      "Name": "C",
+      "Free": 497689690112
+    },
+    {
+      "Name": "D",
+      "Free": 985167032320
+    },
+    {
+      "Name": "Temp",
+      "Free": 497689690112
+    }
+  ],
+  "prior_measurement": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "source": "df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e",
+  "running": null,
+  "free_kib": 2829636,
+  "status": null,
+  "cpu": {
+    "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+    "NumberOfCores": 6,
+    "NumberOfLogicalProcessors": 12
+  },
+  "docker": "12 10429972480"
+}

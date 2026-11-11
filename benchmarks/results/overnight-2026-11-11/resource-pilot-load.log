@@ -1,0 +1,95 @@
+ Container mercer-bench-overnight-bench-db-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Waiting 
+ Container mercer-bench-overnight-bench-db-1 Waiting 
+ Container mercer-bench-overnight-bench-mongo-1 Healthy 
+ Container mercer-bench-overnight-bench-db-1 Healthy 
+ Container mercer-bench-overnight-bench-runner-run-7e9a7e84ae37 Creating 
+ Container mercer-bench-overnight-bench-runner-run-7e9a7e84ae37 Created 
+Operations to perform:
+  Apply all migrations: accounts, auth, catalogue, contenttypes, dashboard, orders, reviews, sessions, wishlist
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying accounts.0002_audit_log... OK
+  Applying accounts.0003_audit_log_row_history... OK
+  Applying accounts.0004_user_username_ci_unique... OK
+  Applying catalogue.0001_initial... OK
+  Applying catalogue.0002_product_search_audit... OK
+  Applying catalogue.0003_product_stock_cap... OK
+  Applying catalogue.0004_product_insert_audit... OK
+  Applying catalogue.0005_purchasable_product_columns... OK
+  Applying catalogue.0006_product_lead_time_cap... OK
+  Applying orders.0001_initial... OK
+  Applying orders.0002_checkout... OK
+  Applying orders.0003_protect_money_deletes... OK
+  Applying orders.0004_order_timestamp_guard... OK
+  Applying dashboard.0001_daily_product_sales... OK
+  Applying dashboard.0002_order_delivery_summary... OK
+  Applying orders.0005_seller_row_security... OK
+  Applying orders.0006_order_key_guard... OK
+  Applying reviews.0001_moderation_audit... OK
+  Applying sessions.0001_initial... OK
+  Applying wishlist.0001_wishlist_restock... OK
+Checksums and CSV headers verified.
+MongoDB collections, validators and indexes ready.
+PostgreSQL users: 99191 rows
+PostgreSQL customers: 96096 rows
+PostgreSQL sellers: 3095 rows
+PostgreSQL categories: 74 rows
+PostgreSQL products: 34211 rows
+PostgreSQL checkouts: 98074 rows
+PostgreSQL orders: 99295 rows
+PostgreSQL order_lines: 101547 rows
+PostgreSQL payments: 102436 rows
+PostgreSQL refunds: 460 rows
+PostgreSQL geolocation: 19015 rows
+PostgreSQL money, refunds, totals, roles and ownership invariants: no diagnostic rows.
+MongoDB reviews: 5000 documents loaded
+MongoDB reviews: 10000 documents loaded
+MongoDB reviews: 15000 documents loaded
+MongoDB reviews: 20000 documents loaded
+MongoDB reviews: 25000 documents loaded
+MongoDB reviews: 30000 documents loaded
+MongoDB reviews: 35000 documents loaded
+MongoDB reviews: 40000 documents loaded
+MongoDB reviews: 45000 documents loaded
+MongoDB reviews: 50000 documents loaded
+MongoDB reviews: 55000 documents loaded
+MongoDB reviews: 60000 documents loaded
+MongoDB reviews: 65000 documents loaded
+MongoDB reviews: 70000 documents loaded
+MongoDB reviews: 75000 documents loaded
+MongoDB reviews: 80000 documents loaded
+MongoDB reviews: 85000 documents loaded
+MongoDB reviews: 90000 documents loaded
+MongoDB reviews: 95000 documents loaded
+MongoDB reviews: 100000 documents loaded
+MongoDB reviews: 100758 documents
+MongoDB product_specs: 5000 documents loaded
+MongoDB product_specs: 10000 documents loaded
+MongoDB product_specs: 15000 documents loaded
+MongoDB product_specs: 20000 documents loaded
+MongoDB product_specs: 25000 documents loaded
+MongoDB product_specs: 30000 documents loaded
+MongoDB product_specs: 34211 documents
+MongoDB platform_stats: 1 documents
+MongoDB category_templates: 74 documents
+Cross-store references and ledger row counts reconciled.
+Daily product sales, delivery summary and review score summary refreshed.
+Olist import complete in 25.289 seconds.
+Import metrics: {"duration_seconds": 25.289, "output_counts": {"categories": 74, "category_templates": 74, "checkouts": 98074, "customers": 96096, "geolocation": 19015, "order_lines": 101547, "orders": 99295, "payments": 102436, "platform_stats": 1, "product_specs": 34211, "products": 34211, "refunds": 460, "reviews": 100758, "sellers": 3095, "users": 99191}, "process_peak_rss_kib": 247824, "source": "/app/data/derived/olist/clean"}
+{"files": {"categories.csv": "3c821fc000be3c767a673b56a2156d43a21a5712ab900eefdf880b84fe5055a0", "category_templates.ndjson": "7b73dbc6c64c0092d5ddd3060540fa33177abc7cca4096f2604c64b6ce3ba004", "checkouts.csv": "48e86b62531cf69907e7745b02ff2ad5519e6c6e41926c1ca000696a22e0deb2", "cleaning_ledger.json": "52733029c95ddb5189b27fc12628a89b2b7ad72d820a2749744046f28b10c675", "customers.csv": "5d481d647417666250993642f62637229be18dfb0e003bab504d81b296f0243a", "geolocation.csv": "d0ddab332c325e8d174fcf8ddd7a43eae18a78ad46e019e0da3d9e74e2ca5312", "order_lines.csv": "8f3dbc63071491a1f1f123d3dd40994303bf74c99ee0fb03501a1b8ef17815fc", "orders.csv": "8d5fd925e8722c43dbbc23b5d1c7158642cef8ca797b6a20e28fef1092a8c656", "payments.csv": "e62eec323a4526b65e441930ae1157f89e767cb3f6b472ac675e5d982288121c", "platform_stats.ndjson": "94dbe2d8f90ce9bfa9c407d60004cbd85cd9961112146fa58acb7e43d854e9e2", "product_specs.ndjson": "2ab91b5520ef435389b5c1ce34b4b54a11863e5026d5ee2eed21206e6bc7d13c", "products.csv": "c17171505c9a76b24546c62e621d61beafa9fafb81c3cd39b51798ef522e8c11", "refunds.csv": "d1be25e48d1d5326aafcea4f170d516ac14c79389a1ec8c5ca4ca0f0b195744d", "reviews.ndjson": "79c09f4b73f15a561ef5eacbf872e6d8d34c7ffb315d4eae7e9e9796de99afdd", "sellers.csv": "53f21480c02e2ac350e73c35c33ef11dcc0448c73ad78914881f533a79679ea1", "users.csv": "96a0c38251eeaa679992011adf65ef6a38236351bc9af5a62b4b44577d52ca41"}, "load": "passed", "manifest_sha256": "24efcc82c2f70ab53d8b9d6459f06dd71fdf6f822d3c664684505b85dfe659c4", "source": "/app/data/derived/olist/clean"}

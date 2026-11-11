@@ -1,0 +1,10 @@
+round,condition,page,reason,samples
+1,warm,dashboard,data differs from the off condition's in the same round,15
+1,warm,search,cache status 'miss' in a warm condition,1
+2,down,search,data differs from the off condition's in the same round,150
+2,down,shop,data differs from the off condition's in the same round,87
+2,warm,dashboard,data differs from the off condition's in the same round,15
+2,warm,search,data differs from the off condition's in the same round,150
+2,warm,shop,data differs from the off condition's in the same round,150
+3,warm,dashboard,data differs from the off condition's in the same round,15
+4,warm,dashboard,data differs from the off condition's in the same round,15

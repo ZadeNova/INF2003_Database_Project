@@ -1,0 +1,13 @@
+{
+  "first_visible_product_id": 34223,
+  "in_olist_spec_source": false,
+  "first_source_attributes": null,
+  "cause": "seed_demo invokes seed_showcase; featured products sort by descending id; collector selects first product but only searches Olist product_specs.ndjson",
+  "affected": [
+    "benchmarks.request_timing",
+    "benchmarks.redis_experiment"
+  ],
+  "unaffected": "Redis stampede/limiter uses operator dashboard directly and completed",
+  "code_changed": false,
+  "resolution_required": "reviewed collector/source-selection fix; not authorized in this measurement task"
+}

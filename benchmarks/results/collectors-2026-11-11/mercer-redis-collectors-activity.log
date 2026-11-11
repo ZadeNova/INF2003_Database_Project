@@ -1,0 +1,13 @@
+ Container mercer-redis-collectors-mongo-1 Running 
+ Container mercer-redis-collectors-db-1 Running 
+ Container mercer-redis-collectors-redis-1 Running 
+ Container mercer-redis-collectors-mongo-1 Waiting 
+ Container mercer-redis-collectors-redis-1 Waiting 
+ Container mercer-redis-collectors-db-1 Waiting 
+ Container mercer-redis-collectors-mongo-1 Healthy 
+ Container mercer-redis-collectors-redis-1 Healthy 
+ Container mercer-redis-collectors-db-1 Healthy 
+ Container mercer-redis-collectors-migrate-run-d7b2baabffec Creating 
+ Container mercer-redis-collectors-migrate-run-d7b2baabffec Created 
+MongoDB collections, validators and indexes ready.
+{"seed_activity": "complete", "events_written": 200000, "is_generated": true, "window_end": "2026-11-11T10:13:20.231096+00:00", "seed": 82}

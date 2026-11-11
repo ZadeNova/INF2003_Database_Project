@@ -1,0 +1,15 @@
+{
+  "time": "2026-11-11T10:59:41.6139824+08:00",
+  "reason": "User requested lower RAM usage; approved graceful Steam shutdown. File-cache reclaim deferred to session boundaries to preserve active measured windows.",
+  "wsl_memory": [
+    "MemTotal:       10185520 kB",
+    "MemFree:          311060 kB",
+    "MemAvailable:    6211104 kB",
+    "Buffers:          434840 kB",
+    "Cached:          6028012 kB",
+    "SwapCached:           36 kB",
+    "Active:          2103392 kB",
+    "Inactive:        7061992 kB"
+  ],
+  "before_free_kib": 657444
+}

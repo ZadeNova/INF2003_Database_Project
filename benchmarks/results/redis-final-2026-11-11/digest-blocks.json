@@ -1,0 +1,586 @@
+{
+  "observations": [
+    {
+      "round": 1,
+      "page": "shop",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "shop",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "shop",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "shop",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "search",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "search",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "search",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "search",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "dashboard",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "dashboard",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "dashboard",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "940bd4c7fad4182222df8629e9659395fec89c541ee391da056dccc289e3d100",
+          "samples": 15,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "page": "dashboard",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "shop",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "shop",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "shop",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "a5991d363e7abeb6a7d3d3dd3f16f07fab2665660e3530e277ac65174093ffbf",
+          "samples": 63,
+          "matches_off_reference": true
+        },
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 87,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "shop",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "search",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "search",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "34ffff6752bae78bb213ad0890a6b9145942af554e554742b97e401a2a5cfeea",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "search",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "search",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "dashboard",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "dashboard",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "dashboard",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "page": "dashboard",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "940bd4c7fad4182222df8629e9659395fec89c541ee391da056dccc289e3d100",
+          "samples": 15,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "shop",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "shop",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "shop",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "shop",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "search",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "search",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "search",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "search",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "dashboard",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "dashboard",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "940bd4c7fad4182222df8629e9659395fec89c541ee391da056dccc289e3d100",
+          "samples": 15,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "dashboard",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "page": "dashboard",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "shop",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "shop",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "shop",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "shop",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "85de08f843d69c969e3b77806cd059c42a42d35c48ec88e5e5e4de1c95cd3710",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "search",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "search",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "search",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "search",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "fa796ab3dc73a10bd61a05da90258869cb1a887adc2a3b2ca59a6f4e6d7728f6",
+          "samples": 150,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "dashboard",
+      "condition": "warm",
+      "digest_blocks": [
+        {
+          "digest": "940bd4c7fad4182222df8629e9659395fec89c541ee391da056dccc289e3d100",
+          "samples": 15,
+          "matches_off_reference": false
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "dashboard",
+      "condition": "down",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "dashboard",
+      "condition": "off",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "page": "dashboard",
+      "condition": "cold",
+      "digest_blocks": [
+        {
+          "digest": "63b2618db0e1f08b1a1654071a488457a7e8d027c4655ed06c305791fcfca6ac",
+          "samples": 15,
+          "matches_off_reference": true
+        }
+      ]
+    }
+  ],
+  "limitation": "Bodies and changed link identities were not retained by the collector. Round-2 shop/search digests drifted during down and stayed changed for warm; the exact changed business-data links cannot be reconstructed. Do not waive those rejections."
+}

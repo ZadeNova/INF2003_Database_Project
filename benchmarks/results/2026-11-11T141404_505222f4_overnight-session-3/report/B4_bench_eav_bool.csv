@@ -1,0 +1,4 @@
+output,engine,variant,clients,status,accepted_runs,failed_runs,retries,errors,runner_cpu_median_percent,runner_cpu_median_percent_min,runner_cpu_median_percent_max,client_saturated_runs,client_saturated,headline,not_headline_reason,p50_ms,p50_ms_min,p50_ms_max,p95_ms,p95_ms_min,p95_ms_max,throughput_ops_s,throughput_ops_s_min,throughput_ops_s_max,ratio,ratio_basis
+B4_bench_eav_bool,postgres,after,1,passed,5,0,0,0,18.76,12.04,18.76,0,False,True,,1.862786,1.845385,1.928189,2.418211,2.089997,2.660023,493.9673057266598,481.7137045968937,509.2373983578703,2.8739463362941313,before/variant
+B4_bench_eav_bool,postgres,before,1,passed,5,0,0,0,23.785,14.704999999999998,26.9,0,False,True,,5.353547,5.231842,8.305584,7.14043,6.217487,11.316823,174.94623211249566,114.78636281259409,182.25634728506643,1.0,before/variant
+B4_bench_eav_bool,postgres,restore,1,passed,0,0,0,0,,,,0,False,False,no_accepted_timing,,,,,,,,,,,before/variant

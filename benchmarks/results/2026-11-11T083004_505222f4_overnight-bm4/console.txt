@@ -1,0 +1,11 @@
+ Container mercer-bench-overnight-bench-db-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Waiting 
+ Container mercer-bench-overnight-bench-db-1 Waiting 
+ Container mercer-bench-overnight-bench-mongo-1 Healthy 
+ Container mercer-bench-overnight-bench-db-1 Healthy 
+ Container mercer-bench-overnight-load-client Creating 
+ Container mercer-bench-overnight-load-client Created 
+BM4_corrupted_result postgres/expected_failure clients=1 run=1 measured: failed
+BM4_violated_invariant mongo/expected_failure clients=10 run=1 measured: failed
+

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="388" viewBox="0 0 1050 388">
+<rect width="100%" height="100%" fill="#fff"/>
+<g font-family="Arial,sans-serif" fill="#152536">
+<text x="20" y="30" font-size="18">B2a ratios (see CSV for ranges and absolute ms)</text>
+<text x="20" y="77" font-size="12">mongo/idiomatic c=1</text>
+<rect x="475" y="60" width="196.79" height="23" fill="#357b89"/>
+<text x="681.79" y="77" font-size="12">0.468539 x</text>
+<text x="20" y="113" font-size="12">mongo/idiomatic c=10</text>
+<rect x="475" y="96" width="192.54" height="23" fill="#357b89"/>
+<text x="677.54" y="113" font-size="12">0.458439 x</text>
+<text x="20" y="149" font-size="12">mongo/summary c=1</text>
+<rect x="475" y="132" width="207.69" height="23" fill="#357b89"/>
+<text x="692.69" y="149" font-size="12">0.494508 x</text>
+<text x="20" y="185" font-size="12">mongo/summary c=10</text>
+<rect x="475" y="168" width="202.32" height="23" fill="#357b89"/>
+<text x="687.32" y="185" font-size="12">0.481719 x</text>
+<text x="20" y="221" font-size="12">postgres/idiomatic c=1</text>
+<rect x="475" y="204" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="221" font-size="12">1 x</text>
+<text x="20" y="257" font-size="12">postgres/idiomatic c=10</text>
+<rect x="475" y="240" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="257" font-size="12">1 x</text>
+<text x="20" y="293" font-size="12">postgres/summary c=1</text>
+<rect x="475" y="276" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="293" font-size="12">1 x</text>
+<text x="20" y="329" font-size="12">postgres/summary c=10</text>
+<rect x="475" y="312" width="420.00" height="23" fill="#357b89"/>
+<text x="905.00" y="329" font-size="12">1 x</text>
+</g></svg>

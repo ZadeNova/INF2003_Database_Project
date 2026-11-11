@@ -1,0 +1,11 @@
+directory,exit_code,final,failed_check_records,container_events,classification
+2026-11-11T022529_505222f4_pilot-b2,137,False,2,,excluded failed pilot
+2026-11-11T025810_505222f4_pilot-resource-b2,1,False,6,mercer-bench-overnight-bench-mongo-1 was killed for exceeding its memory limit; mercer-bench-overnight-bench-mongo-1 is exited,excluded failed pilot
+2026-11-11T053250_505222f4_pilot-memory-b2,0,False,0,,pilot only
+2026-11-11T080502_505222f4_pilot-memory-unpinned,0,False,0,,pilot only
+2026-11-11T081553_505222f4_pilot-memory-pinned,0,False,0,,pilot only
+2026-11-11T081736_505222f4_overnight-correctness,0,False,0,,correctness only
+2026-11-11T083004_505222f4_overnight-bm4,1,False,2,,negative control; expected rejection
+2026-11-11T083148_505222f4_overnight-session-1,0,True,0,,recorded session
+2026-11-11T112007_505222f4_overnight-session-2,0,True,0,,recorded session
+2026-11-11T141404_505222f4_overnight-session-3,0,True,0,,recorded session

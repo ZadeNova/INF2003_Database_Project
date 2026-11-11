@@ -1,0 +1,15 @@
+output,engine,variant,clients,samples,p50_ms,p95_ms,p99_ms,min_ms,max_ms,p95_label,p99_label
+B2a,postgres,live,1,50,304.632003,,,278.130598,392.900314,not enough data,not enough data
+B2a,postgres,live,10,500,2591.763931,2806.856144,2898.671337,1336.071726,3087.905362,,
+B2a,postgres,view,1,50,94.455046,,,86.147625,162.099487,not enough data,not enough data
+B2a,postgres,view,10,500,800.45779,982.077293,1012.789035,429.644775,1090.91643,,
+B2b,postgres,app,1,50,141.567813,,,127.094811,23833.147304,not enough data,not enough data
+B2b,postgres,live,1,50,882.523737,,,624.446618,1128.592228,not enough data,not enough data
+B2b,postgres,live,10,500,6897.561785,7493.819587,7784.967024,1124.371855,8148.470055,,
+B2b,postgres,view,1,50,370.691852,,,343.469305,466.418618,not enough data,not enough data
+B2b,postgres,view,10,500,2893.147721,3192.151247,3291.313041,2246.285043,3430.382847,,
+B2c,postgres,live,1,50,143.567262,,,124.969409,200.215034,not enough data,not enough data
+B2c,postgres,live,10,500,758.286405,1060.316982,1366.292741,191.847761,1595.579927,,
+B2d,postgres,live,1,50,236.408172,,,191.463752,402.874012,not enough data,not enough data
+B2d,postgres,live,10,500,2504.251367,3001.074541,3189.707831,371.537646,3599.326113,,
+B2refresh,postgres,refresh,1,50,981.847629,,,936.265864,1192.805084,not enough data,not enough data

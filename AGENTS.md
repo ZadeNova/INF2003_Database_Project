@@ -13,8 +13,8 @@ Django with HTMX serves the pages. The target is an A.
 - [DESIGN.md](DESIGN.md) for anything visual; `src/static/css/site.css` is its single implementation.
 
 **Current state:** The Tier 1 application is frozen. The
-[benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026) records the
-designated-machine evidence; [PLAN.md section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record)
+[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides) records the
+current report evidence and historical exclusions; [PLAN.md section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record)
 is the progress index. Deliverables remain.
 
 ## Phase check (before starting and before merging)

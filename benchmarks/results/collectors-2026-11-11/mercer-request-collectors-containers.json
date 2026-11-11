@@ -1,0 +1,79 @@
+[
+  {
+    "name": "/mercer-request-collectors-db-1",
+    "image_id": "sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+    "image_tag": "postgres:18-bookworm@sha256:ed9475dab2438f7a8ee063fa29a0740e7fbf7185e5549db1866eb722f12b49f8",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "restarts": 0
+    },
+    "environment": {
+      "POSTGRES_DB": "postgres"
+    }
+  },
+  {
+    "name": "/mercer-request-collectors-mongo-1",
+    "image_id": "sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+    "image_tag": "mongo:9.0@sha256:dc28ed5a9d0fc616903c3f463bb1e53b92b49f441721b91926e87d90bf957ce8",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "restarts": 0
+    },
+    "environment": {
+      "MONGO_DB": "mercer"
+    }
+  },
+  {
+    "name": "/mercer-request-collectors-redis-1",
+    "image_id": "sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d",
+    "image_tag": "redis:8-bookworm@sha256:b0b01167ff47bc3868e56a967895a26be4230891a1f42a78ab61cdd227accc8d",
+    "limits": {
+      "NanoCpus": 1000000000,
+      "Memory": 268435456,
+      "MemorySwap": 536870912,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "restarts": 0
+    },
+    "environment": {}
+  },
+  {
+    "name": "/mercer-request-collectors-web-1",
+    "image_id": "sha256:35d8c75f227abb311c1311568e7ead755c9eed51e03c962bd83e2784212cb0f8",
+    "image_tag": "mercer-request-collectors-app",
+    "limits": {
+      "NanoCpus": 0,
+      "Memory": 0,
+      "MemorySwap": 0,
+      "CpusetCpus": ""
+    },
+    "state": {
+      "status": "running",
+      "oom": false,
+      "restarts": 0
+    },
+    "environment": {
+      "MONGO_DB": "mercer",
+      "DJANGO_DEBUG": "false",
+      "REDIS_ENABLED": "false",
+      "POSTGRES_DB": "mercer"
+    }
+  }
+]

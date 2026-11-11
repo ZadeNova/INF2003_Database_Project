@@ -1,0 +1,14 @@
+{
+  "head": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "windows_free_kib": 3389456,
+  "branch": "benchmark/overnight-evidence-2026-11-11",
+  "time": "2026-11-11T17:23:11.5853119+08:00",
+  "modified": [
+    "PLAN.md",
+    "README.md",
+    "docs/AI_USE.md",
+    "docs/DECISIONS.md",
+    "docs/plans/benchmark.md"
+  ],
+  "running_containers": null
+}

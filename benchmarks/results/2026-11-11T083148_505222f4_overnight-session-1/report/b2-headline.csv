@@ -1,0 +1,17 @@
+output,layer,clients,postgres_variant,mongo_variant,status,postgres_p50_ms,mongo_p50_ms,mongo_over_postgres,headline
+B2a,live,1,idiomatic,idiomatic,ok,121.607644,250.87345,2.06297434723758,True
+B2a,live,10,idiomatic,idiomatic,ok,372.650617,822.958589,2.2083918594451166,True
+B2a,maintained,1,summary,summary,ok,67.966308,142.547806,2.0973304302478812,True
+B2a,maintained,10,summary,summary,ok,203.006621,441.751812,2.17604632708014,True
+B2b,live,1,idiomatic,idiomatic,ok,41.629664,134.34819,3.2272225401579027,True
+B2b,live,10,idiomatic,idiomatic,ok,215.460752,414.828653,1.9253095942039595,True
+B2b,maintained,1,summary,summary,ok,35.858651,115.493252,3.2207918808769462,True
+B2b,maintained,10,summary,summary,ok,209.786629,392.162098,1.869337907136112,True
+B2c,live,1,live,idiomatic,ok,139.713121,531.258784,3.8024974332940427,True
+B2c,live,10,live,idiomatic,ok,633.504397,1783.291124,2.8149625045143924,True
+B2d,live,1,idiomatic,idiomatic,ok,193.471451,795.117863,4.109742594528844,True
+B2d,live,10,idiomatic,idiomatic,ok,573.444422,2566.654058,4.475854955652529,True
+B2d,maintained,1,summary,summary,ok,21.937867,85.279877,3.88733676797293,True
+B2d,maintained,10,summary,summary,ok,66.683545,253.62398,3.803396775021484,True
+B2refresh,refresh: daily product sales,1,refresh,refresh,ok,975.235538,979.086337,1.0039485835472086,True
+B2refresh,refresh: delivery scores,1,refresh_scores,refresh_scores,ok,479.907553,973.520616,2.0285586461690883,True

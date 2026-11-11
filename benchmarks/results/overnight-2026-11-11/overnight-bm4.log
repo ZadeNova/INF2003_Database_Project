@@ -1,0 +1,14 @@
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T083004_505222f4_overnight-bm4", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "state": "started"}
+ Container mercer-bench-overnight-bench-db-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Running 
+ Container mercer-bench-overnight-bench-mongo-1 Waiting 
+ Container mercer-bench-overnight-bench-db-1 Waiting 
+ Container mercer-bench-overnight-bench-mongo-1 Healthy 
+ Container mercer-bench-overnight-bench-db-1 Healthy 
+ Container mercer-bench-overnight-load-client Creating 
+ Container mercer-bench-overnight-load-client Created 
+BM4_corrupted_result postgres/expected_failure clients=1 run=1 measured: failed
+BM4_violated_invariant mongo/expected_failure clients=10 run=1 measured: failed
+
+{"amendment_j": [], "outputs": ["BM4_corrupted_result", "BM4_violated_invariant"], "report": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T083004_505222f4_overnight-bm4\\report"}
+{"results": "C:\\Github repos\\INF2003_Database_Project\\benchmarks\\results\\2026-11-11T083004_505222f4_overnight-bm4", "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757", "exit_code": 1, "duration_seconds": 32.299477799999295}

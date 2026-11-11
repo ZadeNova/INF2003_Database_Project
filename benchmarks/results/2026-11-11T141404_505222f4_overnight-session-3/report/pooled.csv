@@ -1,0 +1,153 @@
+output,engine,variant,clients,samples,p50_ms,p95_ms,p99_ms,min_ms,max_ms,p95_label,p99_label
+B1_boolean,mongo,documents,1,250,3.117057,3.733588,,2.891846,4.607632,,not enough data
+B1_boolean,mongo,documents,10,2500,13.654882,23.05116,27.834402,3.114757,39.418085,,
+B1_boolean,mongo,documents,50,12500,67.664676,126.879429,163.170641,3.349968,284.938741,,
+B1_boolean,postgres,eav,1,250,1.828592,2.213611,,1.712185,3.058153,,not enough data
+B1_boolean,postgres,eav,10,2500,8.657233,17.320566,22.519426,1.79129,38.78354,,
+B1_boolean,postgres,eav,50,12500,43.386382,96.58887,127.698088,1.849993,222.402287,,
+B1_boolean,postgres,jsonb,1,250,1.359569,1.617082,,1.277265,1.912997,,not enough data
+B1_boolean,postgres,jsonb,10,2500,8.585129,17.533184,24.927457,1.367769,49.625981,,
+B1_boolean,postgres,jsonb,50,12500,42.091103,93.709082,123.868689,1.310566,218.529506,,
+B1_broad,mongo,documents,1,250,26.579418,34.266498,,25.000239,59.018227,,not enough data
+B1_broad,mongo,documents,10,2500,78.485488,119.245912,137.227489,25.570132,192.227191,,
+B1_broad,mongo,documents,50,12500,407.876403,558.651949,683.720541,26.652928,1042.750401,,
+B1_broad,mongo,documents_hinted,1,250,5.542068,8.48751,,4.98794,9.94768,,not enough data
+B1_broad,mongo,documents_hinted,10,2500,23.357161,39.526664,50.485009,5.491573,69.584557,,
+B1_broad,mongo,documents_hinted,50,12500,107.259124,207.12222,257.380288,5.465276,460.960162,,
+B1_broad,postgres,eav,1,250,3.492572,4.742334,,3.162456,5.68648,,not enough data
+B1_broad,postgres,eav,10,2500,17.011041,35.318646,44.314491,3.177557,61.333933,,
+B1_broad,postgres,eav,50,12500,76.130953,181.592776,247.646494,3.278559,520.441791,,
+B1_broad,postgres,jsonb,1,250,2.417418,2.958945,,2.253611,3.365965,,not enough data
+B1_broad,postgres,jsonb,10,2500,17.197445,36.135681,46.073763,2.42962,67.133198,,
+B1_broad,postgres,jsonb,50,12500,70.57716,161.52939,213.307659,2.316514,391.164251,,
+B1_range,mongo,documents,1,250,1.742887,2.177708,,1.59898,2.605129,,not enough data
+B1_range,mongo,documents,10,2500,8.727934,14.948943,18.051697,1.837192,25.381361,,
+B1_range,mongo,documents,50,12500,43.205045,77.900484,99.043617,1.805489,160.91809,,
+B1_range,postgres,eav,1,250,1.017351,1.223461,,0.913345,1.431071,,not enough data
+B1_range,postgres,eav,10,2500,4.235311,8.555527,10.972948,0.950847,15.375568,,
+B1_range,postgres,eav,50,12500,22.692534,52.127404,70.590625,1.060953,154.948038,,
+B1_range,postgres,jsonb,1,250,0.644532,0.863043,,0.574929,1.20746,,not enough data
+B1_range,postgres,jsonb,10,2500,4.447721,9.657979,12.844238,0.658232,21.025944,,
+B1_range,postgres,jsonb,50,12500,21.591673,48.676617,63.594057,0.648233,100.416291,,
+B1_selective,mongo,documents,1,250,0.974152,1.249567,,0.835145,1.551283,,not enough data
+B1_selective,mongo,documents,10,2500,6.468046,12.455164,16.885001,0.995653,32.005908,,
+B1_selective,mongo,documents,50,12500,32.627511,62.18167,80.018742,1.118756,137.493187,,
+B1_selective,postgres,eav,1,250,0.500822,0.714933,,0.432319,0.90924,,not enough data
+B1_selective,postgres,eav,10,2500,2.367906,4.913821,6.836507,0.45002,10.43607,,
+B1_selective,postgres,eav,50,12500,12.471745,27.862541,36.53919,0.544624,82.694276,,
+B1_selective,postgres,jsonb,1,250,0.459323,0.641433,,0.337718,1.179261,,not enough data
+B1_selective,postgres,jsonb,10,2500,2.473828,5.487884,7.293077,0.38872,18.623663,,
+B1_selective,postgres,jsonb,50,12500,12.804583,28.768635,39.689418,0.418522,85.188845,,
+B1_three,mongo,documents,1,250,1.789589,3.031752,,1.501375,7.647981,,not enough data
+B1_three,mongo,documents,10,2500,5.762381,9.44306,11.672082,1.603778,18.88652,,
+B1_three,mongo,documents,50,12500,30.739597,57.788311,76.251545,1.78008,152.330182,,
+B1_three,postgres,eav,1,250,1.035951,1.727986,,0.961648,2.324014,,not enough data
+B1_three,postgres,eav,10,2500,2.903243,6.711732,10.925939,0.994949,29.563059,,
+B1_three,postgres,eav,50,12500,12.23721,43.778382,56.498316,0.996649,171.627955,,
+B1_three,postgres,jsonb,1,250,0.462523,0.60103,,0.39342,0.745637,,not enough data
+B1_three,postgres,jsonb,10,2500,2.170308,4.717035,6.044401,0.445622,11.068352,,
+B1_three,postgres,jsonb,50,12500,10.932445,24.396516,32.026697,0.450822,56.712528,,
+B1_two,mongo,documents,1,250,1.880394,2.850243,,1.640783,7.876695,,not enough data
+B1_two,mongo,documents,10,2500,6.559228,10.429323,12.77644,1.674684,16.75034,,
+B1_two,mongo,documents,50,12500,35.457667,63.425231,78.926501,1.720085,114.240493,,
+B1_two,postgres,eav,1,250,0.737635,1.26156,,0.646531,1.839088,,not enough data
+B1_two,postgres,eav,10,2500,3.583071,7.753169,10.174484,0.699933,15.859755,,
+B1_two,postgres,eav,50,12500,15.439534,34.944662,47.431465,0.725535,90.245293,,
+B1_two,postgres,jsonb,1,250,0.532726,0.728336,,0.469223,0.914446,,not enough data
+B1_two,postgres,jsonb,10,2500,2.950047,6.046102,7.661982,0.532527,11.947896,,
+B1_two,postgres,jsonb,50,12500,14.981351,33.08605,44.451228,0.517626,114.454905,,
+B2a,mongo,idiomatic,1,50,263.778173,,,235.640385,465.316477,not enough data,not enough data
+B2a,mongo,idiomatic,10,500,806.06695,1087.979891,1217.278377,247.869902,1365.974703,,
+B2a,mongo,live,1,50,1252.389633,,,1193.126938,1485.032791,not enough data,not enough data
+B2a,mongo,live,10,500,4458.213137,5104.773763,5326.731861,2127.465886,5483.658412,,
+B2a,mongo,summary,1,50,151.062448,,,133.709703,270.26921,not enough data,not enough data
+B2a,mongo,summary,10,500,457.551216,638.617831,715.816427,138.359231,825.05274,,
+B2a,postgres,idiomatic,1,50,126.09005,,,108.513707,157.372951,not enough data,not enough data
+B2a,postgres,idiomatic,10,500,436.728999,595.120315,694.725332,117.067014,747.203759,,
+B2a,postgres,live,1,50,314.458346,,,286.136814,449.032684,not enough data,not enough data
+B2a,postgres,live,10,500,825.241364,1487.62698,1656.07304,339.094007,1775.688595,,
+B2a,postgres,summary,1,50,72.115105,,,62.846706,148.581615,not enough data,not enough data
+B2a,postgres,summary,10,500,234.58991,315.846069,355.770598,72.839418,389.429172,,
+B2a,postgres,view,1,50,99.831007,,,86.909471,154.010669,not enough data,not enough data
+B2a,postgres,view,10,500,305.705895,502.252501,552.988579,95.689425,616.904753,,
+B2b,mongo,idiomatic,1,50,156.247745,,,126.145492,318.984347,not enough data,not enough data
+B2b,mongo,idiomatic,10,500,438.970049,664.458836,813.697697,142.714992,871.347681,,
+B2b,mongo,live,1,50,3451.986123,,,3332.664809,3854.074796,not enough data,not enough data
+B2b,mongo,live,10,500,10880.840822,12176.778278,12456.062218,6857.304083,12720.33994,,
+B2b,mongo,summary,1,50,114.626695,,,97.464026,168.68406,not enough data,not enough data
+B2b,mongo,summary,10,500,415.645939,621.418013,745.389584,106.371964,924.27843,,
+B2b,postgres,app,1,50,147.589008,,,133.219444,24015.036777,not enough data,not enough data
+B2b,postgres,app,10,500,424.155557,73182.155938,76641.363374,212.275461,77649.945627,,
+B2b,postgres,app_summary,1,50,54.522574,,,49.182659,13251.068693,not enough data,not enough data
+B2b,postgres,app_summary,10,500,349.672889,39288.887839,42988.571492,70.520799,43324.467181,,
+B2b,postgres,idiomatic,1,50,44.067464,,,36.048693,86.338895,not enough data,not enough data
+B2b,postgres,idiomatic,10,500,217.13138,443.222246,560.480233,35.871198,637.78192,,
+B2b,postgres,live,1,50,868.171567,,,667.373783,1025.020743,not enough data,not enough data
+B2b,postgres,live,10,500,2661.142152,3491.366504,3724.049214,694.908507,3896.639307,,
+B2b,postgres,summary,1,50,31.727218,,,29.006789,50.594821,not enough data,not enough data
+B2b,postgres,summary,10,500,213.42833,423.588607,501.894488,30.00924,729.356613,,
+B2b,postgres,view,1,50,375.309363,,,348.247291,515.062501,not enough data,not enough data
+B2b,postgres,view,10,500,1084.337966,1449.684822,1747.256278,368.706579,1851.829131,,
+B2c,mongo,idiomatic,1,50,533.746502,,,488.052601,760.497291,not enough data,not enough data
+B2c,mongo,idiomatic,10,500,1834.016875,2655.623912,3083.585656,627.462028,3284.001998,,
+B2c,mongo,live,1,50,3595.742825,,,3458.104114,3809.599827,not enough data,not enough data
+B2c,mongo,live,10,500,11049.438868,12626.325009,13579.243655,8123.441631,13790.207013,,
+B2c,postgres,live,1,50,147.597827,,,119.231173,308.936206,not enough data,not enough data
+B2c,postgres,live,10,500,676.962246,1237.726551,1686.575958,126.61049,1872.835242,,
+B2d,mongo,idiomatic,1,50,800.307114,,,753.602292,1400.494704,not enough data,not enough data
+B2d,mongo,idiomatic,10,500,2631.697925,3148.558737,3344.791988,948.970468,3577.366864,,
+B2d,mongo,live,1,50,9400.532433,,,9184.264187,10056.948653,not enough data,not enough data
+B2d,mongo,live,10,500,28094.237256,29897.452499,30622.077128,23359.421437,31002.286438,,
+B2d,mongo,summary,1,50,87.87852,,,78.221078,102.498288,not enough data,not enough data
+B2d,mongo,summary,10,500,276.685069,395.889727,451.386068,94.200713,490.315546,,
+B2d,postgres,idiomatic,1,50,200.248492,,,180.195322,287.689911,not enough data,not enough data
+B2d,postgres,idiomatic,10,500,614.053384,889.61814,997.033899,208.46911,1046.750043,,
+B2d,postgres,live,1,50,249.692808,,,209.252818,466.691242,not enough data,not enough data
+B2d,postgres,live,10,500,1031.273799,1350.913475,1478.79102,235.961366,1534.469722,,
+B2d,postgres,summary,1,50,22.036612,,,21.35368,33.793652,not enough data,not enough data
+B2d,postgres,summary,10,500,67.217781,104.08538,121.903298,21.809401,145.740793,,
+B2refresh,mongo,refresh,1,50,1040.084728,,,958.87742,1281.503192,not enough data,not enough data
+B2refresh,mongo,refresh_scores,1,50,999.040249,,,951.597064,1329.44116,not enough data,not enough data
+B2refresh,postgres,refresh,1,50,1011.574857,,,964.564749,1380.287123,not enough data,not enough data
+B2refresh,postgres,refresh_scores,1,50,485.632567,,,459.663048,709.521751,not enough data,not enough data
+B3,mongo,snapshot,1,250,1.460266,2.978787,,1.231756,7.432047,,not enough data
+B3,mongo,snapshot,10,250,5.724163,61.383497,,1.33846,77.31906,,not enough data
+B3,mongo,snapshot,50,250,282.11875,365.397382,,33.994597,372.547626,,not enough data
+B3,postgres,triggers_off,1,250,0.309214,2.410108,,0.287713,6.161177,,not enough data
+B3,postgres,triggers_off,10,250,0.88544,38.872738,,0.358513,50.958694,,not enough data
+B3,postgres,triggers_off,50,250,83.872334,138.297295,,18.948821,155.777553,,not enough data
+B3,postgres,triggers_on,1,250,0.348015,3.828964,,0.288414,10.323866,,not enough data
+B3,postgres,triggers_on,10,250,0.923843,79.521078,,0.356216,167.679561,,not enough data
+B3,postgres,triggers_on,50,250,126.507376,171.651635,,19.055485,181.161136,,not enough data
+B4_bench_eav_bool,postgres,after,1,250,1.881787,2.437512,,1.73168,2.895933,,not enough data
+B4_bench_eav_bool,postgres,before,1,250,5.40315,9.771351,,4.805722,11.673139,,not enough data
+B4_bench_eav_text,postgres,after,1,250,0.468722,0.610628,,0.42972,0.799837,,not enough data
+B4_bench_eav_text,postgres,before,1,250,3.842775,4.406901,,3.684068,6.532198,,not enough data
+B4_bench_jsonb_age_months,postgres,after,1,250,0.65223,0.874939,,0.570526,1.616374,,not enough data
+B4_bench_jsonb_age_months,postgres,before,1,250,4.267695,6.041076,,3.925079,8.868404,,not enough data
+B4_bench_jsonb_gin,postgres,after,1,250,0.375918,0.503623,,0.333615,0.608628,,not enough data
+B4_bench_jsonb_gin,postgres,before,1,250,3.90838,4.411804,,3.739173,6.253288,,not enough data
+B4_bench_product_visible,mongo,after,1,50,3444.774815,,,3357.048728,3727.991659,not enough data,not enough data
+B4_bench_product_visible,mongo,before,1,50,3470.968512,,,3364.629427,3623.183004,not enough data,not enough data
+B4_review_product_date,mongo,after,1,50,0.660129,,,0.567625,1.122649,not enough data,not enough data
+B4_review_product_date,mongo,before,1,50,155.096988,,,138.494762,276.1008,not enough data,not enough data
+B4_spec_attributes,mongo,after,1,250,0.925042,1.09905,,0.831438,1.32496,,not enough data
+B4_spec_attributes,mongo,before,1,250,22.62233,35.007283,,20.893751,40.281063,,not enough data
+baseline,python,noop,1,250,0.0001,0.0002,,0.0001,0.0004,,not enough data
+baseline,python,noop,10,2500,0.0001,0.0002,0.0003,0.0,0.0121,,
+baseline,python,noop,50,12500,0.0001,0.0002,0.0003,0.0,0.017501,,
+baseline_end,python,noop,1,250,0.0001,0.0002,,0.0,0.0004,,not enough data
+baseline_end,python,noop,10,2500,0.0001,0.0002,0.0003,0.0,0.0064,,
+baseline_end,python,noop,50,12500,0.0001,0.0002,0.0003,0.0,0.017301,,
+baseline_roundtrip,mongo,ping,1,250,0.164508,0.233712,,0.154908,0.328516,,not enough data
+baseline_roundtrip,mongo,ping,10,2500,2.041901,4.509523,5.920892,0.161508,9.233756,,
+baseline_roundtrip,mongo,ping,50,12500,9.401923,21.270258,27.55574,0.182408,45.916665,,
+baseline_roundtrip,postgres,select1,1,250,0.108306,0.163308,,0.103305,0.290314,,not enough data
+baseline_roundtrip,postgres,select1,10,2500,1.42017,3.283762,4.304612,0.117806,6.0782,,
+baseline_roundtrip,postgres,select1,50,12500,6.708131,16.660822,23.228846,0.119906,45.340936,,
+baseline_roundtrip_end,mongo,ping,1,250,0.164408,0.236311,,0.156107,0.406419,,not enough data
+baseline_roundtrip_end,mongo,ping,10,2500,1.976991,4.341099,5.692462,0.195409,7.493945,,
+baseline_roundtrip_end,mongo,ping,50,12500,9.506038,22.050617,28.61422,0.193009,54.040592,,
+baseline_roundtrip_end,postgres,select1,1,250,0.128306,0.174808,,0.103705,0.363617,,not enough data
+baseline_roundtrip_end,postgres,select1,10,2500,1.31096,3.120144,4.13829,0.105305,5.788466,,
+baseline_roundtrip_end,postgres,select1,50,12500,6.473398,15.600118,20.903762,0.110005,33.767153,,

@@ -1,0 +1,3 @@
+mode,repetitions,requests,computed,waited,hit,median_of_round_medians_ms,min_round_median_ms,max_round_median_ms
+redis_off,5,40,40,0,0,1412.165,1336.795,1517.1
+redis_on,5,40,5,5,30,273.74,242.665,301.875

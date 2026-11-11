@@ -1,0 +1,62 @@
+{
+  "pin": true,
+  "metric": "median relative range of per-cell run p50 across all start/end baseline cells",
+  "unpinned": {
+    "('baseline', 'python', 'noop', '1')": 0.0,
+    "('baseline', 'python', 'noop', '10')": 0.0,
+    "('baseline', 'python', 'noop', '50')": 1.0,
+    "('baseline_roundtrip', 'postgres', 'select1', '1')": 0.08712373962040339,
+    "('baseline_roundtrip', 'postgres', 'select1', '10')": 0.1764683660266521,
+    "('baseline_roundtrip', 'postgres', 'select1', '50')": 0.06731382608673503,
+    "('baseline_roundtrip', 'mongo', 'ping', '1')": 0.18213098030627,
+    "('baseline_roundtrip', 'mongo', 'ping', '10')": 0.08725132763781572,
+    "('baseline_roundtrip', 'mongo', 'ping', '50')": 0.16042732151324618,
+    "('baseline_end', 'python', 'noop', '1')": 1.0,
+    "('baseline_end', 'python', 'noop', '10')": 0.0,
+    "('baseline_end', 'python', 'noop', '50')": 0.0,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '1')": 0.16726512431253124,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '10')": 0.24124820697967012,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '50')": 0.16459134742785203,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '1')": 0.2032830622151406,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '10')": 0.09241831027979268,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '50')": 0.10489837257829004
+  },
+  "pinned": {
+    "('baseline', 'python', 'noop', '1')": 0.0,
+    "('baseline', 'python', 'noop', '10')": 0.0,
+    "('baseline', 'python', 'noop', '50')": 0.0,
+    "('baseline_roundtrip', 'postgres', 'select1', '1')": 0.013304211575898575,
+    "('baseline_roundtrip', 'postgres', 'select1', '10')": 0.22209506852851948,
+    "('baseline_roundtrip', 'postgres', 'select1', '50')": 0.1397212615202636,
+    "('baseline_roundtrip', 'mongo', 'ping', '1')": 0.047411457563666895,
+    "('baseline_roundtrip', 'mongo', 'ping', '10')": 0.19639162597673523,
+    "('baseline_roundtrip', 'mongo', 'ping', '50')": 0.27223376126374216,
+    "('baseline_end', 'python', 'noop', '1')": 0.0,
+    "('baseline_end', 'python', 'noop', '10')": 0.0,
+    "('baseline_end', 'python', 'noop', '50')": 0.0,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '1')": 0.31593377923248406,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '10')": 0.2269170543027995,
+    "('baseline_roundtrip_end', 'postgres', 'select1', '50')": 0.15209558481859645,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '1')": 0.3342984047253616,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '10')": 0.22818638010606537,
+    "('baseline_roundtrip_end', 'mongo', 'ping', '50')": 0.09609004588730283
+  },
+  "unpinned_score": 0.1326628470457681,
+  "pinned_score": 0.11790565370378321,
+  "counts": {
+    "default": 50,
+    "b2": 10
+  },
+  "original_variants": "retained in all sessions",
+  "engine_limits": "4 CPUs and 3 GiB per engine; shared_buffers 512MB and WiredTiger cache 0.75GiB unchanged; runner 2 CPUs and 2 GiB",
+  "vm": "existing 10GB WSL limit; 12 vCPUs; no global setting changes",
+  "resource_overrides": [
+    "compose.resources-3g.yaml",
+    "compose.resources-pinned.yaml if pin true"
+  ],
+  "pilot_durations_seconds": {
+    "amendments l and m; 50 default and 10 B2 operations; B7 excluded 0": 9125.414820599995,
+    "amendments l and m; 50 default and 10 B2 operations; B7 excluded 1": 628.5745748000045,
+    "amendments l and m; 50 default and 10 B2 operations; B7 excluded 2": 29.493496899987804
+  }
+}

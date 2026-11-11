@@ -1,0 +1,6 @@
+{
+  "preserved_benchmark_process": 15176,
+  "stopped_process": 33484,
+  "reason": "User requested lower RAM. Replace orchestration only to reclaim WSL file cache between sessions; active benchmark driver and engines continue unchanged.",
+  "time": "2026-11-11T11:00:13.1687059+08:00"
+}

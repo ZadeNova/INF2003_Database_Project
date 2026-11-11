@@ -1,0 +1,255 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "attributes.collection": {
+              "$eq": "everyday"
+            }
+          },
+          "indexFilterSet": false,
+          "queryHash": "50F4D1AE",
+          "planCacheShapeHash": "50F4D1AE",
+          "planCacheKey": "6702AF01",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 131,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.collection": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.collection": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.collection\", \"attributes.collection\"]"
+                    ],
+                    "attributes.collection": [
+                      "[\"everyday\", \"everyday\"]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 2879,
+          "executionTimeMillis": 4,
+          "executionTimeMicros": 4356,
+          "totalKeysExamined": 2879,
+          "totalDocsExamined": 2879,
+          "executionStages": {
+            "isCached": false,
+            "stage": "SORT",
+            "nReturned": 2879,
+            "executionTimeMillisEstimate": 2,
+            "works": 5760,
+            "advanced": 2879,
+            "needTime": 2880,
+            "needYield": 0,
+            "saveState": 8,
+            "restoreState": 7,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 132434,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 132434,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 2879,
+              "executionTimeMillisEstimate": 2,
+              "works": 2880,
+              "advanced": 2879,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 8,
+              "restoreState": 7,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nReturned": 2879,
+                "executionTimeMillisEstimate": 2,
+                "works": 2880,
+                "advanced": 2879,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 8,
+                "restoreState": 7,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 2879,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 2879,
+                  "executionTimeMillisEstimate": 2,
+                  "works": 2880,
+                  "advanced": 2879,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 8,
+                  "restoreState": 7,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.collection": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.collection": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.collection\", \"attributes.collection\"]"
+                    ],
+                    "attributes.collection": [
+                      "[\"everyday\", \"everyday\"]"
+                    ]
+                  },
+                  "keysExamined": 2879,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 2879,
+      "executionTimeMillisEstimate": 4
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 2879,
+      "executionTimeMillisEstimate": 4,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "633D6B94B44728316AC862632A38C1FF177CA47014E5F005C6A2D2CE18F43983",
+  "peakTrackedMemBytes": 132434,
+  "serverInfo": {
+    "host": "b9c6316df9b7",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.collection": "everyday"
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "hint": "spec_attributes",
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794357430,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "rqgy0WIk/mZcJcvXKr6gzzyoz3E=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706704804147363849
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794357430,
+      "i": 1
+    }
+  }
+}

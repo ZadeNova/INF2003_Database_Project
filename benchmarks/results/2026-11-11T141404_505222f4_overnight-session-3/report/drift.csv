@@ -1,0 +1,10 @@
+baseline,engine,clients,start_p50_ms,end_p50_ms,shift_ms,noise_band_ms,drift
+baseline,python,1,0.0001,0.0001,0.0,0.0001,no
+baseline,python,10,0.0001,0.0001,0.0,0.0001,no
+baseline,python,50,0.0001,0.0001,0.0,0.0001,no
+baseline_roundtrip,mongo,1,0.164508,0.163208,-0.0012999999999999956,0.071802,no
+baseline_roundtrip,mongo,10,2.031701,1.926489,-0.10521200000000008,2.44862,no
+baseline_roundtrip,mongo,50,9.369122,9.53704,0.16791799999999846,11.906835999999998,no
+baseline_roundtrip,postgres,1,0.107905,0.126006,0.018101000000000006,0.05000299999999999,no
+baseline_roundtrip,postgres,10,1.42107,1.30756,-0.11351,1.8150899999999999,no
+baseline_roundtrip,postgres,50,6.563824,6.5317,-0.032124000000000485,9.409433,no

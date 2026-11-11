@@ -1,0 +1,292 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.products",
+          "parsedQuery": {
+            "attributes.age_months": {
+              "$gte": 6
+            }
+          },
+          "indexFilterSet": false,
+          "queryHash": "75847A0C",
+          "planCacheShapeHash": "75847A0C",
+          "planCacheKey": "AC843874",
+          "optimizationTimeMillis": 1,
+          "optimizationTimeMicros": 1797,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": true,
+            "stage": "SORT",
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.age_months": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.age_months": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.age_months\", \"attributes.age_months\"]"
+                    ],
+                    "attributes.age_months": [
+                      "[6, inf]"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "rejectedPlans": [
+            {
+              "isCached": false,
+              "stage": "PROJECTION_SIMPLE",
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "filter": {
+                  "attributes.age_months": {
+                    "$gte": 6
+                  }
+                },
+                "nss": "bench.products",
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "_id": 1
+                  },
+                  "indexName": "_id_",
+                  "isMultiKey": false,
+                  "isUnique": true,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "_id": [
+                      "[MinKey, MaxKey]"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 636,
+          "executionTimeMillis": 2,
+          "executionTimeMicros": 2327,
+          "totalKeysExamined": 636,
+          "totalDocsExamined": 636,
+          "executionStages": {
+            "isCached": true,
+            "stage": "SORT",
+            "nReturned": 636,
+            "executionTimeMillisEstimate": 1,
+            "works": 1274,
+            "advanced": 636,
+            "needTime": 637,
+            "needYield": 0,
+            "saveState": 7,
+            "restoreState": 6,
+            "isEOF": 1,
+            "sortPattern": {
+              "_id": 1
+            },
+            "memLimit": 104857600,
+            "type": "simple",
+            "totalDataSizeSorted": 29256,
+            "usedDisk": false,
+            "spills": 0,
+            "spilledRecords": 0,
+            "spilledBytes": 0,
+            "spilledDataStorageSize": 0,
+            "peakTrackedMemBytes": 29256,
+            "inputStage": {
+              "stage": "PROJECTION_SIMPLE",
+              "nReturned": 636,
+              "executionTimeMillisEstimate": 1,
+              "works": 637,
+              "advanced": 636,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 7,
+              "restoreState": 6,
+              "isEOF": 1,
+              "transformBy": {
+                "_id": 1
+              },
+              "inputStage": {
+                "stage": "FETCH",
+                "nReturned": 636,
+                "executionTimeMillisEstimate": 1,
+                "works": 637,
+                "advanced": 636,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 7,
+                "restoreState": 6,
+                "isEOF": 1,
+                "nss": "bench.products",
+                "docsExamined": 636,
+                "alreadyHasObj": 0,
+                "inputStage": {
+                  "stage": "IXSCAN",
+                  "nReturned": 636,
+                  "executionTimeMillisEstimate": 0,
+                  "works": 637,
+                  "advanced": 636,
+                  "needTime": 0,
+                  "needYield": 0,
+                  "saveState": 7,
+                  "restoreState": 6,
+                  "isEOF": 1,
+                  "nss": "bench.products",
+                  "keyPattern": {
+                    "$_path": 1,
+                    "attributes.age_months": 1
+                  },
+                  "indexName": "spec_attributes",
+                  "isMultiKey": false,
+                  "multiKeyPaths": {
+                    "$_path": [],
+                    "attributes.age_months": []
+                  },
+                  "isUnique": false,
+                  "isSparse": false,
+                  "isPartial": false,
+                  "indexVersion": 2,
+                  "direction": "forward",
+                  "indexBounds": {
+                    "$_path": [
+                      "[\"attributes.age_months\", \"attributes.age_months\"]"
+                    ],
+                    "attributes.age_months": [
+                      "[6, inf]"
+                    ]
+                  },
+                  "keysExamined": 636,
+                  "seeks": 1,
+                  "dupsTested": 0,
+                  "dupsDropped": 0,
+                  "peakTrackedMemBytes": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "nReturned": 636,
+      "executionTimeMillisEstimate": 1
+    },
+    {
+      "$project": {
+        "product_id": "$_id",
+        "_id": false
+      },
+      "nReturned": 636,
+      "executionTimeMillisEstimate": 1,
+      "expressionEvaluationPeakMemoryBytes": 0
+    }
+  ],
+  "queryShapeHash": "83DA44BFE561DDB350ED0A554033E1F29B9AB2A19D1268B642F05CAFFCCDFA3D",
+  "peakTrackedMemBytes": 29256,
+  "serverInfo": {
+    "host": "b9c6316df9b7",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "products",
+    "pipeline": [
+      {
+        "$match": {
+          "attributes.age_months": {
+            "$gte": 6
+          }
+        }
+      },
+      {
+        "$sort": {
+          "_id": 1
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "product_id": "$_id"
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794357570,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "h5EuQdCrI3Mg7btI9qERmFtlXIE=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706704804147363849
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794357570,
+      "i": 1
+    }
+  }
+}

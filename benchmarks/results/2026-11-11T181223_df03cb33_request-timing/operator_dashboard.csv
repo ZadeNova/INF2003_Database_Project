@@ -1,0 +1,2 @@
+page,path,requests,duration_ms_median,duration_ms_p95,db_pg_ms_median,db_pg_ms_p95,db_pg_queries_median,db_pg_queries_p95,db_mongo_ms_median,db_mongo_ms_p95,db_mongo_commands_median,db_mongo_commands_p95,db_share_percent_median,db_share_percent_p95,db_pg_queries_total,db_mongo_commands_total,db_share_percent_total
+operator_dashboard,/operator/dashboard/,20,1210.12,1293.66,317.724,381.841,12.0,12,378.6,442.224,4.0,4,57.85353611436386,59.91567161815475,240,80,57.82393684263287

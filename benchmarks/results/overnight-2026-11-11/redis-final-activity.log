@@ -1,0 +1,13 @@
+ Container mercer-redis-overnight-db-1 Running 
+ Container mercer-redis-overnight-mongo-1 Running 
+ Container mercer-redis-overnight-redis-1 Running 
+ Container mercer-redis-overnight-db-1 Waiting 
+ Container mercer-redis-overnight-mongo-1 Waiting 
+ Container mercer-redis-overnight-redis-1 Waiting 
+ Container mercer-redis-overnight-db-1 Healthy 
+ Container mercer-redis-overnight-redis-1 Healthy 
+ Container mercer-redis-overnight-mongo-1 Healthy 
+ Container mercer-redis-overnight-migrate-run-3a6c3e2583f5 Creating 
+ Container mercer-redis-overnight-migrate-run-3a6c3e2583f5 Created 
+MongoDB collections, validators and indexes ready.
+{"seed_activity": "complete", "events_written": 200000, "is_generated": true, "window_end": "2026-11-11T09:12:01.687912+00:00", "seed": 82}

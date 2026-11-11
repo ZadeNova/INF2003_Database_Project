@@ -1,0 +1,29 @@
+{
+  "measured_commit": "b82ac876e9ff0fa4d3f530d81d70fa2b434c8e43",
+  "branch": "benchmark/overnight-evidence-2026-11-11",
+  "command_exit_statuses": {
+    "docs": 0,
+    "docs-staged": 0,
+    "diff": 0,
+    "diff-staged": 0
+  },
+  "host_tests": {
+    "tests": 116,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "source_code_changes": false,
+  "all_required_comparisons_available": true,
+  "all_comparisons_have_four_usable_pairs": false,
+  "private_secret_scan": "passed over staged blobs and decompressed gzip, no secret values displayed",
+  "prior_evidence_blobs_unchanged": 1947,
+  "collector_index_unchanged": true,
+  "linked_evidence_staged": true,
+  "containers_running": 0,
+  "volumes_preserved": true,
+  "independent_review": "pending; Claude Code CLI unavailable",
+  "commit_push_PR": "not performed",
+  "repository_closeout": "pending fresh review, CI and merge",
+  "hash_manifest_scope": "all intended staged blobs except this checks record and hash manifest itself; canonical staged bytes"
+}

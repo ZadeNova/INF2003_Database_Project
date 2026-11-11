@@ -1,0 +1,17 @@
+Mercer Redis burn-in fix handoff (11 November 2026)
+
+Do not rerun B1–B6, Redis stampede or the limiter. Page timing on df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e passed and remains valid. The full Redis condition experiment is the remaining failed measurement.
+
+Start a separate fix branch from clean main. Do not disturb the staged evidence branch benchmark/collector-evidence-2026-11-11 in .cache/collectors-final, or the original dirty benchmark/overnight-evidence-2026-11-11 checkout.
+
+Read AGENTS.md, benchmark/redis contracts and the collector continuation close-out. PR #41 fixed source-backed product selection and is merged; do not undo it.
+
+Exact failure: benchmarks.redis_experiment exits 1 with "The trending ranking did not settle during the burn-in", before any timed condition or samples. A fresh full-data stack was imported, seed_demo and default seed_activity (seed 82) ran, default counts were retained and --require-clean was used. No gate was bypassed.
+
+Cause: benchmarks/redis_experiment.py:settle_ranking.view reuses the same anonymous opener/cookie jar from benchmarks/redis_stack.py:Stack.openers. src/activity/services.py:views_per_visitor counts one visit per product and visitor. Therefore the burn-in's repeated requests do not increase ranked views. Read-only retained database evidence shows control product 34118 had 1001 view events from one session but one counted view, while the seeded leader had 36 counted views. The 50 passes of 20 views were exhausted. Activity was present in the valid 24-hour window with the 30-day TTL.
+
+Evidence: benchmarks/results/2026-11-11T181359_df03cb33_redis/failure.json and benchmarks/results/collectors-2026-11-11/redis-failure-diagnosis.json. Logs, source revisions, successful page output and test evidence are linked from docs/plans/benchmark.md.
+
+Fix the collector's untimed traffic/settling assumption to respect distinct-visitor semantics. Consider genuinely distinct anonymous visitors for burn-in, while retaining the required leading control product and stable ranking check; choose and review the exact method before measurement. Do not change application counting, remove the leader requirement, inflate/change the seeded data just to pass, lower sample counts, or accept pilot/partial output. Add meaningful regression coverage for distinct-visitor ranking, and verify the complete fresh-seeded default experiment rather than only a mocked stable digest. Obtain a fresh Claude Code Opus review before committing the fix, per AGENTS.md.
+
+After reviewed fix is committed/merged, use a clean source worktree, record the new full hash and retain all historical hashes. Follow README import, seed_demo and seed_activity on a dedicated isolated project. Run the full benchmarks.redis_experiment with default requests, default dashboard requests, seed and --require-clean. Benchmark engines and the request stack must be stopped. Do not rerun the valid workloads above. Validate all four conditions and rounds, settling success, data/cache gates, refusals, reports and provenance. Preserve failures and do not mix partial attempts. Integrate evidence into the prepared close-out; only call it complete when Redis has valid final evidence.

@@ -1,0 +1,12 @@
+step,exit_code,duration_seconds
+mercer-request-collectors-up,0,43.434165954589844
+mercer-request-collectors-import,0,30.435665130615234
+mercer-request-collectors-seed,0,7.199125289916992
+request-timing,0,51.3545708656311
+mercer-request-collectors-stop,0,1.9837613105773926
+mercer-redis-collectors-up,0,15.664238214492798
+mercer-redis-collectors-import,0,29.7163507938385
+mercer-redis-collectors-seed,0,6.873128414154053
+mercer-redis-collectors-activity,0,40.135831117630005
+redis-experiment,1,59.65469145774841
+mercer-redis-collectors-stop,0,1.7340657711029053

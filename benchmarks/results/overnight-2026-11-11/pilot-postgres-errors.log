@@ -1,0 +1,45 @@
+bench-db-1  | 	     CROSS JOIN cutoff
+bench-db-1  | 	  WHERE (o.placed_at AT TIME ZONE 'Asia/Singapore'::text)::date <= cutoff.as_of AND (o.status::text <> 'cancelled'::text OR (o.cancelled_at AT TIME ZONE 'Asia/Singapore'::text)::date > cutoff.as_of)
+bench-db-1  | 	  GROUP BY l.product_id, ((o.placed_at AT TIME ZONE 'Asia/Singapore'::text)::date)) SELECT p.id AS product_id, p.name, p.stock, p.lead_time_days, p.seller_id, c.name_en AS category,
+bench-db-1  | 	       s.shop_name, COALESCE(demand.units_28, 0)::numeric / 28 AS daily_demand,
+bench-db-1  | 	       p.stock::numeric * 28 / NULLIF(demand.units_28, 0) AS days_cover,
+bench-db-1  | 	       (COALESCE(demand.units_28, 0) > 0
+bench-db-1  | 	        AND p.stock::numeric * 28 < p.lead_time_days::numeric * COALESCE(demand.units_28, 0)) AS replenish
+bench-db-1  | 	FROM purchasable_product p
+bench-db-1  | 	JOIN catalogue_category c ON c.id = p.category_id
+bench-db-1  | 	JOIN accounts_seller s ON s.id = p.seller_id
+bench-db-1  | 	LEFT JOIN (
+bench-db-1  | 	    SELECT product_id, sum(units) AS units_28 FROM daily_product_sales
+bench-db-1  | 	    WHERE day BETWEEN $1::date - 27 AND $1::date GROUP BY product_id
+bench-db-1  | 	) demand ON demand.product_id = p.id
+bench-db-1  | 	WHERE ($2::bigint IS NULL OR p.category_id = $2::bigint)
+bench-db-1  | 	  AND ($3::bigint IS NULL OR p.seller_id = $3::bigint)
+bench-db-1  | 	ORDER BY replenish DESC, days_cover ASC NULLS LAST, p.id
+bench-db-1  | 2026-11-10 18:54:49.289 UTC [5371] ERROR:  canceling statement due to statement timeout
+bench-db-1  | 2026-11-10 18:54:49.289 UTC [5371] STATEMENT:  WITH daily_product_sales AS ( WITH cutoff AS MATERIALIZED (
+bench-db-1  | 	         SELECT dashboard_as_of() AS as_of
+bench-db-1  | 	        )
+bench-db-1  | 	 SELECT l.product_id,
+bench-db-1  | 	    (o.placed_at AT TIME ZONE 'Asia/Singapore'::text)::date AS day,
+bench-db-1  | 	    sum(l.quantity) AS units,
+bench-db-1  | 	    sum(l.quantity::numeric * l.unit_price)::numeric(12,2) AS revenue
+bench-db-1  | 	   FROM orders_orderline l
+bench-db-1  | 	     JOIN orders_order o ON o.id = l.order_id
+bench-db-1  | 	     CROSS JOIN cutoff
+bench-db-1  | 	  WHERE (o.placed_at AT TIME ZONE 'Asia/Singapore'::text)::date <= cutoff.as_of AND (o.status::text <> 'cancelled'::text OR (o.cancelled_at AT TIME ZONE 'Asia/Singapore'::text)::date > cutoff.as_of)
+bench-db-1  | 	  GROUP BY l.product_id, ((o.placed_at AT TIME ZONE 'Asia/Singapore'::text)::date)) SELECT p.id AS product_id, p.name, p.stock, p.lead_time_days, p.seller_id, c.name_en AS category,
+bench-db-1  | 	       s.shop_name, COALESCE(demand.units_28, 0)::numeric / 28 AS daily_demand,
+bench-db-1  | 	       p.stock::numeric * 28 / NULLIF(demand.units_28, 0) AS days_cover,
+bench-db-1  | 	       (COALESCE(demand.units_28, 0) > 0
+bench-db-1  | 	        AND p.stock::numeric * 28 < p.lead_time_days::numeric * COALESCE(demand.units_28, 0)) AS replenish
+bench-db-1  | 	FROM purchasable_product p
+bench-db-1  | 	JOIN catalogue_category c ON c.id = p.category_id
+bench-db-1  | 	JOIN accounts_seller s ON s.id = p.seller_id
+bench-db-1  | 	LEFT JOIN (
+bench-db-1  | 	    SELECT product_id, sum(units) AS units_28 FROM daily_product_sales
+bench-db-1  | 	    WHERE day BETWEEN $1::date - 27 AND $1::date GROUP BY product_id
+bench-db-1  | 	) demand ON demand.product_id = p.id
+bench-db-1  | 	WHERE ($2::bigint IS NULL OR p.category_id = $2::bigint)
+bench-db-1  | 	  AND ($3::bigint IS NULL OR p.seller_id = $3::bigint)
+bench-db-1  | 	ORDER BY replenish DESC, days_cover ASC NULLS LAST, p.id
+bench-db-1  | 2026-11-10 18:54:56.892 UTC [5729] FATAL:  database "bench_run" does not exist

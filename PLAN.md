@@ -265,7 +265,11 @@ and measurement decisions. Every run starts from verified baseline data and rese
 Tier 1 measures base Olist; generated rows/flags stay in bench databases and scaled runs stay in Tier 2 `durability`.
 
 **Method.**
-- Identical Docker limits: 2 CPUs and 2 GB per engine; cache/client/VM settings are fixed in the benchmark plan.
+- Identical Docker limits were planned at 2 CPUs and 2 GB per engine; cache/client/VM settings are fixed in the benchmark plan.
+  For report methods, use the [11 November actual limits](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides):
+  B1–B6 used equal 4-CPU/3-GiB engine caps, a 2-CPU/2-GiB runner and pinned cpusets in the existing 10-GB/12-vCPU
+  WSL VM with Balanced power; page timing and Redis used the default uncapped database/web services, with Redis alone
+  capped at 1 CPU/256 MiB. These experiment groups have separate configurations and data states.
 - All final runs on one designated machine; CPU model, cores, RAM, OS and Docker version recorded with every result.
 - Timed driver workloads: 1/10/50 clients (B2 1/10, [benchmark](docs/plans/benchmark.md) amendment k3), one untimed
   warm-up, five fixed-operation measured runs; report median per-run p50/p95/throughput and ranges, errors and
@@ -417,6 +421,8 @@ before merge, not in fresh sessions ([CI](docs/plans/ci.md#review-notes) and [ch
 review notes). Phase 3B stayed open for the designated-machine final measurements, which do not change the application.
 
 **2 November 2026: Phase 3B exit check passed on the designated machine, in the contingency window.**
+This is a historical checkpoint; the [authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)
+supersedes its figures for the current report and slides.
 The [item-by-item benchmark close-out](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026)
 links the repeated final measurements, the fresh B3/B6 retry after an unexpected OOM, plans, storage, resources,
 [BM4 negative controls](benchmarks/results/2026-11-02T110623_b53e5d0a_final-bm4/bm4-verification.json) and
@@ -451,12 +457,12 @@ The workstream name is also the branch prefix (`checkout/payment-trigger`) and t
 | `reviews` | Per-item reviews, Bayesian average rating | `catalogue`, `checkout`, `accounts` | 1 | done |
 | `wishlist` | Wishlist and restock alerts | `catalogue`, `checkout` | 1 | done |
 | `dashboard` | Stock-planning dashboard on Olist, demand forecast, delivery delay against review score | `checkout`, `accounts` | 1 | done |
-| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | done (historical Phase 3B); Redis condition run retained acceptance gaps; scoped repair passed fresh Opus review; separate final rerun pending ([scope](docs/plans/benchmark.md#redis-acceptance-repair-11-november-2026)) |
+| `benchmark` | Benchmark harness (B1 to B6), per-request timing, protocol (generator deferred by amendment j); build incrementally during the sprint | `olist-import` for harness/loaders; `catalogue`, `checkout`, `reviews`, `dashboard` for full acceptance | 1 | done (historical Phase 3B); November measurement complete, confirmed by supplied fresh Opus evidence review; fresh Opus corrections approved; repository delivery authorised, PR checks/merge pending ([index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)) |
 | `ci` | CI and correctness gates, Playwright end-to-end tests of the demo story, `ruff`, coverage threshold, `pip-audit` (E4, E5); start 25 Oct and extend as features land | `foundation` | 1 | done |
 | `deliverables` | Report (outline with a page budget; figures; theory map appendix), slides, video following the scripted demo story, user manual, packaging; report/slides/video follow the accelerated sprint | all for final acceptance; setup instructions maintained with code | 1 | ready |
 | `improvements` | Prioritised backlog from the 2 and 8 November full-stack reviews (Erfan, sole approver while Chee Long is away); settled and built in batches on the current branch, see [the plan](docs/plans/improvements.md) | the frozen Tier 1 application | 1 | in progress (batches 1 to 3, 5 and 6 built; 7 and 8 open) |
 | `product_photos` | Photos for 30 Olist products and a teammate's merchant with up to 12 new products, loaded from committed files by `seed_showcase`; optional 3D models as a stretch; see [the plan](docs/plans/product_photos.md) | the frozen Tier 1 application | 1 | loader built; data lane open |
-| `redis` | Redis sliding-window rate limiting and two cache-aside reads (dashboard history, trending), measured off, cold, warm and down; see [the plan](docs/plans/redis.md) | `dashboard`, `activity` | 2 | done 8 Nov (application); condition run retained acceptance gaps; scoped repair passed fresh Opus review; separate final rerun pending ([scope](docs/plans/benchmark.md#redis-acceptance-repair-11-november-2026)) |
+| `redis` | Redis sliding-window rate limiting and two cache-aside reads (dashboard history, trending), measured off, cold, warm and down; see [the plan](docs/plans/redis.md) | `dashboard`, `activity` | 2 | done (application); measurement complete with disclosed refusals/reduced coverage, confirmed by supplied fresh Opus evidence review; fresh Opus corrections approved; repository delivery authorised, PR checks/merge pending ([index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides)) |
 | `dashboard_summaries` | A PostgreSQL materialized view of per-order delivery delays beside a MongoDB `$out` summary of per-order review scores, with the live path as fallback; see [the plan](docs/plans/dashboard_summaries.md) | `dashboard`, `reviews` | 1 | done 9 Nov (Batch 6, first; one Opus review, one fix round, full suite green) |
 | `observability` | Observability (`grafana/otel-lgtm`) | `foundation` | 2 | not started |
 | `seller-rls` | Row-level security for sellers, seller-scoped dashboard; see [the plan](docs/plans/seller-rls.md) | `checkout` | 2 | in progress (plan approved 10 Nov; built 10 Nov including browser journeys, the speed check and the Opus 5.5 review with its fix round; go decided 11 Nov: kept) |

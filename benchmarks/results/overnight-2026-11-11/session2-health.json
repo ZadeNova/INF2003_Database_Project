@@ -1,0 +1,13 @@
+{
+  "time": "2026-11-11T13:14:31.5365012+08:00",
+  "engines": [
+    "/mercer-bench-overnight-bench-db-1 oom=false restarts=0 cpu=4000000000 mem=3221225472 cpuset=0-3",
+    "/mercer-bench-overnight-bench-mongo-1 oom=false restarts=0 cpu=4000000000 mem=3221225472 cpuset=4-7"
+  ],
+  "stats": [
+    "mercer-bench-overnight-load-client 0.28% 446.4MiB / 2GiB",
+    "mercer-bench-overnight-bench-db-1 0.00% 694.4MiB / 3GiB",
+    "mercer-bench-overnight-bench-mongo-1 396.37% 1.513GiB / 3GiB"
+  ],
+  "windows_free_kib": 2401892
+}

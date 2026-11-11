@@ -1,0 +1,293 @@
+{
+  "explainVersion": "1",
+  "stages": [
+    {
+      "$cursor": {
+        "queryPlanner": {
+          "namespace": "bench.order_delivery_scores",
+          "parsedQuery": {},
+          "indexFilterSet": false,
+          "queryHash": "76B28602",
+          "planCacheShapeHash": "76B28602",
+          "planCacheKey": "0FE107F2",
+          "optimizationTimeMillis": 0,
+          "optimizationTimeMicros": 92,
+          "cursorType": "regular",
+          "maxIndexedOrSolutionsReached": false,
+          "maxIndexedAndSolutionsReached": false,
+          "maxScansToExplodeReached": false,
+          "prunedSimilarIndexes": false,
+          "winningPlan": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "transformBy": {
+              "bucket": 1,
+              "count": 1,
+              "total": 1,
+              "_id": 0
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "nss": "bench.order_delivery_scores",
+              "direction": "forward"
+            }
+          },
+          "rejectedPlans": []
+        },
+        "executionStats": {
+          "executionSuccess": true,
+          "nReturned": 96665,
+          "executionTimeMillis": 83,
+          "executionTimeMicros": 83274,
+          "totalKeysExamined": 0,
+          "totalDocsExamined": 96665,
+          "executionStages": {
+            "isCached": false,
+            "stage": "PROJECTION_SIMPLE",
+            "nReturned": 96665,
+            "executionTimeMillisEstimate": 17,
+            "works": 96666,
+            "advanced": 96665,
+            "needTime": 0,
+            "needYield": 0,
+            "saveState": 17,
+            "restoreState": 16,
+            "isEOF": 1,
+            "transformBy": {
+              "bucket": 1,
+              "count": 1,
+              "total": 1,
+              "_id": 0
+            },
+            "inputStage": {
+              "stage": "COLLSCAN",
+              "nReturned": 96665,
+              "executionTimeMillisEstimate": 10,
+              "works": 96666,
+              "advanced": 96665,
+              "needTime": 0,
+              "needYield": 0,
+              "saveState": 17,
+              "restoreState": 16,
+              "isEOF": 1,
+              "nss": "bench.order_delivery_scores",
+              "direction": "forward",
+              "docsExamined": 96665,
+              "seeks": 0
+            }
+          }
+        }
+      },
+      "nReturned": 96665,
+      "executionTimeMillisEstimate": 38
+    },
+    {
+      "$group": {
+        "_id": "$bucket",
+        "orders": {
+          "$sum": {
+            "$const": 1
+          }
+        },
+        "reviewed_orders": {
+          "$sum": {
+            "$cond": [
+              {
+                "$gt": [
+                  "$count",
+                  {
+                    "$const": 0
+                  }
+                ]
+              },
+              {
+                "$const": 1
+              },
+              {
+                "$const": 0
+              }
+            ]
+          }
+        },
+        "average_score": {
+          "$avg": {
+            "$cond": [
+              {
+                "$gt": [
+                  "$count",
+                  {
+                    "$const": 0
+                  }
+                ]
+              },
+              {
+                "$divide": [
+                  {
+                    "$convert": {
+                      "input": "$total",
+                      "to": {
+                        "$const": "decimal"
+                      }
+                    }
+                  },
+                  "$count"
+                ]
+              },
+              {
+                "$const": null
+              }
+            ]
+          }
+        },
+        "$willBeMerged": false
+      },
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 75,
+      "maxAccumulatorMemoryUsageBytes": {
+        "orders": 1000,
+        "reviewed_orders": 1000,
+        "average_score": 880
+      },
+      "totalOutputDataSizeBytes": 1713,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledDataStorageSize": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "peakTrackedMemBytes": 3008
+    },
+    {
+      "$project": {
+        "orders": true,
+        "reviewed_orders": true,
+        "average_score": true,
+        "bucket": "$_id",
+        "_id": false
+      },
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 75,
+      "expressionEvaluationPeakMemoryBytes": 0
+    },
+    {
+      "$sort": {
+        "sortKey": {
+          "bucket": 1
+        }
+      },
+      "totalDataSizeSortedBytesEstimate": 1801,
+      "usedDisk": false,
+      "spills": 0,
+      "spilledBytes": 0,
+      "spilledRecords": 0,
+      "spilledDataStorageSize": 0,
+      "nReturned": 5,
+      "executionTimeMillisEstimate": 75,
+      "peakTrackedMemBytes": 1801
+    }
+  ],
+  "queryShapeHash": "76BD721DB6309DE33FC91889835561B456A57211EDAEED4A4F80825F576B14E8",
+  "peakTrackedMemBytes": 4809,
+  "serverInfo": {
+    "host": "33c803018bed",
+    "port": 27017,
+    "version": "9.0.4",
+    "gitVersion": "64ade602b836c9adeffba7fa038c887ffab56196"
+  },
+  "serverParameters": {
+    "internalQueryFacetMaxOutputDocSizeBytes": 104857600,
+    "internalLookupStageIntermediateDocumentMaxSizeBytes": 104857600,
+    "internalQueryProhibitBlockingMergeOnMongoS": 0,
+    "internalQueryFrameworkControl": "trySbeRestricted",
+    "internalQueryPlannerIgnoreIndexWithCollationForRegex": 1
+  },
+  "command": {
+    "aggregate": "order_delivery_scores",
+    "pipeline": [
+      {
+        "$group": {
+          "_id": "$bucket",
+          "orders": {
+            "$sum": 1
+          },
+          "reviewed_orders": {
+            "$sum": {
+              "$cond": [
+                {
+                  "$gt": [
+                    "$count",
+                    0
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          },
+          "average_score": {
+            "$avg": {
+              "$cond": [
+                {
+                  "$gt": [
+                    "$count",
+                    0
+                  ]
+                },
+                {
+                  "$divide": [
+                    {
+                      "$toDecimal": "$total"
+                    },
+                    "$count"
+                  ]
+                },
+                null
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "bucket": "$_id",
+          "orders": 1,
+          "reviewed_orders": 1,
+          "average_score": 1
+        }
+      },
+      {
+        "$sort": {
+          "bucket": 1
+        }
+      }
+    ],
+    "cursor": {},
+    "allowDiskUse": true,
+    "maxTimeMS": 120000,
+    "$db": "bench"
+  },
+  "ok": 1.0,
+  "$clusterTime": {
+    "clusterTime": {
+      "$timestamp": {
+        "t": 1794375059,
+        "i": 1
+      }
+    },
+    "signature": {
+      "hash": {
+        "$binary": {
+          "base64": "B9A3QKWDnVDUa8uGzRmJ6v+EUMM=",
+          "subType": "00"
+        }
+      },
+      "keyId": 7706748174727118857
+    }
+  },
+  "operationTime": {
+    "$timestamp": {
+      "t": 1794375059,
+      "i": 1
+    }
+  }
+}

@@ -1,0 +1,17 @@
+output,layer,clients,postgres_variant,mongo_variant,status,postgres_p50_ms,mongo_p50_ms,mongo_over_postgres,headline
+B2a,live,1,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2a,live,10,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2a,maintained,1,summary,summary,"postgres missing, mongo missing",,,,False
+B2a,maintained,10,summary,summary,"postgres missing, mongo missing",,,,False
+B2b,live,1,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2b,live,10,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2b,maintained,1,summary,summary,"postgres missing, mongo missing",,,,False
+B2b,maintained,10,summary,summary,"postgres missing, mongo missing",,,,False
+B2c,live,1,live,idiomatic,"postgres ok, mongo missing",140.578535,,,False
+B2c,live,10,live,idiomatic,"postgres ok, mongo missing",758.358721,,,False
+B2d,live,1,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2d,live,10,idiomatic,idiomatic,"postgres missing, mongo missing",,,,False
+B2d,maintained,1,summary,summary,"postgres missing, mongo missing",,,,False
+B2d,maintained,10,summary,summary,"postgres missing, mongo missing",,,,False
+B2refresh,refresh: daily product sales,1,refresh,refresh,"postgres ok, mongo missing",981.847629,,,False
+B2refresh,refresh: delivery scores,1,refresh_scores,refresh_scores,"postgres missing, mongo missing",,,,False

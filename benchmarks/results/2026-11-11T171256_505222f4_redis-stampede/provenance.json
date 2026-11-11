@@ -1,0 +1,100 @@
+{
+  "commit": "505222f41b7473260ed9f40bb3bbaf8eafa46757",
+  "finished_at": "2026-11-11T09:14:21.454173+00:00",
+  "host": {
+    "cpu": "AMD64 Family 25 Model 33 Stepping 0, AuthenticAMD",
+    "docker_version": {
+      "Client": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "Thu Sep  3 21:53:38 2026",
+        "Context": "desktop-linux",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "88096ef",
+        "GoVersion": "go1.26.8",
+        "Os": "windows",
+        "Version": "29.8.0"
+      },
+      "Server": {
+        "ApiVersion": "1.56",
+        "Arch": "amd64",
+        "BuildTime": "2026-09-03T21:51:20.000000000+00:00",
+        "Components": [
+          {
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "amd64",
+              "BuildTime": "Thu Sep  3 21:51:20 2026",
+              "Experimental": "false",
+              "GitCommit": "3ce5872",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            },
+            "Name": "Engine",
+            "Version": "29.8.0"
+          },
+          {
+            "Details": {
+              "GitCommit": "1294c24a7da8e5a793ed378161673abe94118892"
+            },
+            "Name": "containerd",
+            "Version": "v2.3.5"
+          },
+          {
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            },
+            "Name": "runc",
+            "Version": "1.5.1"
+          },
+          {
+            "Details": {
+              "GitCommit": "de40ad0"
+            },
+            "Name": "docker-init",
+            "Version": "0.19.0"
+          }
+        ],
+        "GitCommit": "3ce5872",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Platform": {
+          "Name": "Docker Desktop 4.92.0 (240144)"
+        },
+        "Version": "29.8.0"
+      }
+    },
+    "docker_vm": {
+      "KernelVersion": "6.18.54.1-microsoft-standard-WSL2",
+      "MemTotal": 10429972480,
+      "NCPU": 12,
+      "OperatingSystem": "Docker Desktop (containerized)"
+    },
+    "hardware": {
+      "cpu": {
+        "Name": "AMD Ryzen 5 5600X 6-Core Processor             ",
+        "NumberOfCores": 6,
+        "NumberOfLogicalProcessors": 12
+      },
+      "ram": 17084600320
+    },
+    "logical_cpus": 12,
+    "os": "Windows-10-10.0.19045-SP0",
+    "python": "3.13.7"
+  },
+  "limiter_calls": 2000,
+  "metric": "computed = requests whose cache status is miss, off or down (they ran the history computation)",
+  "note": "the web server has 2 workers, which bounds how many requests truly run in parallel",
+  "pilot": false,
+  "project": "mercer-redis-overnight",
+  "repetitions": 5,
+  "simultaneous": 8,
+  "started_at": "2026-11-11T09:12:56.608757+00:00",
+  "workers": 2
+}

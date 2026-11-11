@@ -1,0 +1,14 @@
+ PLAN.md                        |  4 ++--
+ README.md                      |  6 ++++--
+ benchmarks/redis_experiment.py |  7 ++++--
+ benchmarks/redis_stack.py      |  7 +++++-
+ benchmarks/redis_stats.py      | 11 +++++-----
+ benchmarks/request_timing.py   | 18 ++++++++++------
+ docs/AI_USE.md                 |  2 ++
+ docs/DECISIONS.md              |  7 ++++++
+ docs/plans/benchmark.md        | 47 ++++++++++++++++++++++++++++++++++++++++
+ docs/plans/redis.md            |  8 ++++---
+ tests/test_activity.py         | 21 ++++++++++++++++++
+ tests/test_redis_experiment.py | 49 +++++++++++++++++++++++++++++++++++++++++-
+ tests/test_request_timing.py   | 42 ++++++++++++++++++++++++++++++++++++
+ 13 files changed, 205 insertions(+), 24 deletions(-)
