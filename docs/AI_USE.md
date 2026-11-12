@@ -78,3 +78,8 @@ One line per workstream, added at close-out.
   them and reran the affected checks. The authoring session metadata identifies
   `gpt-6.1-sol` with `max` effort. Google Docs, application code and benchmark results were not changed in this pass;
   the earlier five-file approval is kept separate from the new seven-file approval.
+
+- 12 November 2026, approved attribution: Codex recorded the owner's explicit confirmation and approved new-project
+  framing in DECISIONS.md, resolved the current deliverables admin item and updated the Google Doc's attribution
+  paragraph while retaining the concrete reused components and AI disclosure. Fresh Claude Code (Opus 5.5) review of
+  this three-file amendment: APPROVE, 12 November 2026, with no corrections required.

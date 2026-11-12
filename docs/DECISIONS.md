@@ -489,3 +489,16 @@ identification of that snapshot, not a requirement to submit those exact bytes o
 before close-out. Administrative changes may require a later export. The eventual submission revision must include
 the report close-out documentation commit; the earlier `d23011e` source archive does not contain these uncommitted
 records. Slides, video, package validation and submission remain separate.
+
+### Approved project framing and reuse attribution (12 November 2026)
+
+Chee Long confirmed that some components were reused and explicitly approved this framing:
+
+> We developed Mercer as a new project for INF2003, building on selected Django components from our earlier work.
+> Our work for this project focused on its relational and document database design, marketplace functionality,
+> analytics and comparative benchmark programme.
+
+The selected reused foundations are the Django application shell, account/cart/order foundations and request logging,
+consistent with the reviewed history and report disclosure. “New project” describes Mercer's project purpose and work;
+it does not mean every component was written from scratch. This resolves the previously outstanding attribution decision
+without erasing historical records. The report retains the concrete reused-component list and its AI-assistance disclosure.
