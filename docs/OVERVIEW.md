@@ -45,8 +45,8 @@ the slide deck's speaker notes.
    app's own database role is refused a dropped table, a deleted order, an edited audit log, an illegal status change,
    a back-dated delivery and payments that do not add up, and then sees only one seller's orders under row-level
    security. A customer buys from three sellers and pays once (one checkout, three orders, stock reduced exactly); two
-   terminals race for the last unit and one is refused. The operator dashboard shows that late deliveries cause bad
-   reviews.
+   terminals race for the last unit and one is refused. The operator dashboard shows that late delivery is associated
+   with lower ratings.
 3. **NoSQL and the comparison.** The document design; a typo search ("garden tols") that still finds the products,
    with a count for every filter value; the operator adding a category attribute live; the customer's review updating
    the product's rating and latest reviews at once; trending and seller insights from the activity stream; MongoDB
@@ -87,8 +87,9 @@ Portuguese kept. Prices are converted to SGD at one fixed rate. All dates are mo
 the shop feels current. Products sold only once in two years are delisted (kept in the data, hidden from the shop).
 **Everything generated is labelled as generated**, in the app and in the report.
 
-**A finding already in the data:** late deliveries drive bad reviews. Orders delivered more than a week late average
-under 2 stars, against over 4 for orders delivered on time. The dashboard and the report build on this.
+**A finding already in the data:** late delivery is associated with lower ratings (an association, not proof of
+cause). Orders delivered more than a week late average under 2 stars, against over 4 for orders delivered on time. The
+dashboard and the report build on this.
 
 ## 6. Scope: three tiers
 
@@ -101,7 +102,7 @@ added.
 
 | # | Feature | What a user sees | Database techniques it shows | Workstream |
 |---|---|---|---|---|
-| T1 | **Olist import** | The shop full of real orders, sellers and reviews | Cleaning ledger, ER design normalised to 3NF, foreign keys checked at import, the deliberate denormalisation in MongoDB explained | `olist-import` |
+| T1 | **Olist import** | The shop full of real orders, sellers and reviews | Cleaning ledger, ER design with the core relations decomposed and deliberate, checked redundancy, foreign keys checked at import, the deliberate denormalisation in MongoDB explained | `olist-import` |
 | T1b | **Roles and accounts** | Separate customer, seller and operator areas; seller approval | Role-based access; a trigger enforcing the seller status workflow; an audit log written by triggers | `accounts` |
 | T2 | **Catalogue and search** | Category and seller pages, typo-tolerant search, filters with live counts | Trigram index (PostgreSQL), `$facet` aggregation with live counts (MongoDB), schema validation, multikey index | `catalogue` |
 | T2b | **Seller product management** | Sellers add and edit products and photos; the operator takes products down | CRUD on both databases; photos in GridFS; adding a category attribute live with no migration; an audit trigger on price and stock | `catalogue` |

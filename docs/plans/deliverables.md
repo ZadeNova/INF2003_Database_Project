@@ -141,8 +141,8 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 Added 12 November 2026. The video follows the brief's order (i background, ii relational, iii NoSQL with the
 comparison, iv performance, close). The spoken script is the speaker notes of the team's slide deck: every slide's
 notes start with its presenter placeholder and time slot, and carry the demo-clip cues below. Presenters are
-placeholders until the team assigns names: **[Presenter 1]** slides 1–6 and 26–27, **[Presenter 2]** 7–10 and 25,
-**[Presenter 3]** 11–12 and 22–24, **[Presenter 4]** 13–16, **[Presenter 5]** 17–21. Every figure on a slide names its
+placeholders until the team assigns names: **[Presenter 1]** slides 1–5 and 23–24, **[Presenter 2]** 6–8 and 22,
+**[Presenter 3]** 9–11 and 19–21, **[Presenter 4]** 12–14, **[Presenter 5]** 15–18. These are the final 24-slide numbers: the four section-divider slides are deleted by hand in Canva (the editing tools cannot delete a page) and the page numbers already skip them. Every figure on a slide names its
 source file; the benchmark figures come from the [authoritative November index](benchmark.md#authoritative-november-evidence-for-report-and-slides).
 
 **Before filming** (once, on the full-data stack from the [README](../../README.md#load-olist-and-demo-accounts)):
@@ -153,17 +153,18 @@ safe to use.
 
 | Clip | Slot | Who | What to show |
 |---|---|---|---|
-| R1 | after slide 9 | terminal | `database_says_no.sql` ([README](../../README.md#database-demonstrations-psql-and-mongosh)): DDL, `TRUNCATE`, money `DELETE`, audit edit, illegal status, back-dated delivery and the payment change refused at `COMMIT`; then row-level security showing only `demo-seller`'s orders and no checkouts |
-| R2 | after slide 10 | a demo customer | Add one product each from Paulista Watch & Gift House (`demo-seller`), Ibitinga Linen & Home (`demo-seller-2`) and Santo Andre Beauty Studio (`demo-seller-3`), open `/cart/`, check out: one checkout, three orders; open one product to show its stock went down |
+| R1 | after slide 7 | terminal | `database_says_no.sql` ([README](../../README.md#database-demonstrations-psql-and-mongosh)): DDL, `TRUNCATE`, money `DELETE`, audit edit, illegal status, back-dated delivery and the payment change refused at `COMMIT`; then row-level security showing only `demo-seller`'s orders and no checkouts |
+| R2 | after slide 8 | a demo customer | Add one product each from Paulista Watch & Gift House (`demo-seller`), Ibitinga Linen & Home (`demo-seller-2`) and Santo Andre Beauty Studio (`demo-seller-3`), open `/cart/`, check out: one checkout, three orders; open one product to show its stock went down |
 | R3 | after R2 | two terminals | `last_unit_setup.sql`, the two-terminal race (B waits, then sees stock 0, `UPDATE 0`, CHECK refusal), `last_unit_restore.sql` with its audit rows |
 | — | off camera | the three sellers, `demo-operator` | Each seller ships its order from R2 (`/seller/orders/`); the operator marks them delivered (`/operator/orders/`). Needed for N3: demo customers have no imported orders |
-| R4 | after slide 11 | `demo-operator` | `/operator/dashboard/`: stock-out list and seller-risk table. Do not claim the purchase changed it (sales history stops at the reporting date) |
-| N1 | after slide 15 | logged out | Search `garden tols` (garden-tool products despite the typo), then pick a Tool type filter and show the counts |
+| R4 | after slide 9 | `demo-operator` | `/operator/dashboard/`: stock-out list and seller-risk table. Do not claim the purchase changed it (sales history stops at the reporting date) |
+| N1 | after slide 13 | logged out | Search `garden tols` (garden-tool products despite the typo), then pick a Tool type filter and show the counts |
 | N2 | after N1 | `demo-operator`, then a garden-tools seller | `/products/operator/categories/` → Garden tools → add `water_resistant`, type Yes or no; then the seller's product form shows the field |
-| N3 | after slide 16 | the R2 customer | Review the delivered line from `/orders/`; open the product: rating and latest reviews updated |
+| N2b | right after N2, about 5 s, optional | logged out | Open the shop, choose Garden tools: the new attribute is now a filter field (`attribute_definitions` and `SearchForm` in `src/catalogue` build the filters from the category template). Existing products have no value for it yet, so its counts are zero until a seller sets one; do not claim otherwise |
+| N3 | after slide 14 | the R2 customer | Review the delivered line from `/orders/`; open the product: rating and latest reviews updated |
 | N4 | after N3 | logged out, then `demo-seller` | Home page Recently viewed and Trending now; `/seller/insights/` views-to-sales |
 | N5 | after N4 | terminal | `database_says_no.js` (validator, score 6, duplicate review, sixth embedded review, `admin` refused), then `check_specs` |
-| Q1 | slide 25, optional | browser | The latest green CI run on `main` (add its link to the slide 25 notes) |
+| Q1 | slide 22, optional | browser | The green CI run on `main` linked in the slide 22 notes |
 
 All terminal clips were rehearsed on 12 November 2026 against a full-data stack built from a `git archive` zip of
 `main`; each statement was refused as described, the MongoDB script wrote nothing, and the restore put the stock
