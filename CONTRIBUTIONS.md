@@ -17,7 +17,7 @@ section 12; write what you did, not what you were assigned.
 |---|---|---|
 | Erfan | `foundation`: repository management, roles, MongoDB in Compose, docs check | `docs/plans/foundation.md`, pull request |
 | All members | Ran the README set-up (`foundation` exit check 6), as confirmed by Erfan | `docs/plans/foundation.md` |
-| Others | Further work not yet recorded | |
+| Others | See the member-confirmed summary below for subsequently reported work | |
 
 ## Olist import close-out (22 October 2026)
 
@@ -48,3 +48,17 @@ section 12; write what you did, not what you were assigned.
 | Member | Work | Evidence |
 |---|---|---|
 | Chee Long | Directed the designated-machine benchmark and trimmed pilot, approved the scoped B3/B6 retry and source rule after the unexpected OOM, and requested the Codex close-out, reviewed by Claude Code before commit | [Benchmark close-out and exit checks](docs/plans/benchmark.md#designated-machine-final-and-close-out-2-november-2026); [owner decisions and resource observation](docs/DECISIONS.md#benchmark-designated-machine-final-and-close-out-2-november-2026) |
+
+## Member-confirmed summary (12 November 2026)
+
+Chee Long supplied the following summary as confirmed by each member. This records work contributed as of this
+checkpoint, not approval of final submission artifacts. Individual work dates and finer task allocations were not
+provided and are not inferred; no video contribution is assigned here.
+
+| Member | Confirmed work | Basis |
+|---|---|---|
+| Chee Long | Implementation, benchmark testing and report work | Member confirmation relayed by Chee Long, 12 November 2026 |
+| Erfan | Planning, implementation and reviewing | Member confirmation relayed by Chee Long, 12 November 2026 |
+| Joash | Slides and report work | Member confirmation relayed by Chee Long, 12 November 2026 |
+| Syahfariz | Reviewing and code implementation | Member confirmation relayed by Chee Long, 12 November 2026 |
+| Jun Keat | Reviewing, code implementation and adding photos | Member confirmation relayed by Chee Long, 12 November 2026 |

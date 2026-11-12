@@ -1,16 +1,17 @@
 # deliverables: Report, slides, video, user manual and packaging
 
-status: approved
+status: in-progress
 plan owner: Chee Long · implementers: all five members, working together · reviewer: a fresh session · phase 5
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: every Tier 1 workstream for final acceptance;
 `benchmark` final measurements for report section 6 and video part iv
 
-**Assumes:** the application is frozen (Phase 4 closed 30 October 2026); the XSite final report template is
-downloaded; the demo story in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine. The
-`benchmark` final measurements target 1 November with 2 to 4 November as contingency. If they slip, section 6 is
-drafted from two 28 October fix-round runs: the [full-data correctness run](../../benchmarks/results/2026-10-28T225445_d6fc7e44_fix-full/summary.csv)
-and the [trial measure run](../../benchmarks/results/2026-10-28T230836_d6fc7e44_fix-trial/summary.csv) for draft
-ratios, labelled as a trial not run on the designated machine, and regenerated from the final run.
+**Current report boundary (12 November 2026):** the application and required November benchmark programme are
+complete within scope. The [authoritative November index](benchmark.md#authoritative-november-evidence-for-report-and-slides)
+supplies report figures and preserves their measured revisions; the former October trial fallback is historical.
+The [reviewed report snapshot record](#report-freeze-12-november-2026) covers the restored XSite template, all ten supplied
+lecture PDFs and the checked exports. Report reviewed; final submission export follows administrative completion.
+Slides, video and submission acceptance remain separate. The demo story
+in [OVERVIEW.md section 3](../OVERVIEW.md#3-the-demo-story) stays the video's spine.
 
 ## Contract
 
@@ -23,7 +24,7 @@ band for presentation (25%) and report (25%) and shows the project-quality work 
 | Area | Deliverable |
 |---|---|
 | Report | PDF from the XSite template; at most 10 pages in Calibri (Body) 12, body tables included, excluding cover, references and appendix; outline and page budget below |
-| Theory map | Appendix A: each module concept, where Mercer shows it, and the file or test that proves it |
+| Theory map | Appendix: relevant module concepts, where Mercer uses them, and source/test evidence; distinguish theoretical reasoning, engine-provided behaviour and topics outside scope |
 | Slides | `.pptx` that stands on its own (the brief: "informative enough about the project details"): architecture, core ER diagram, MongoDB data model, the comparison table, benchmark tables and demo screenshots; each presenter's name bottom-left on the slides they present |
 | Video | `.mp4`, target 9:30, hard limit 10:00 at normal speed; parts i to iv in the brief's order; all five members present, with a name overlay during demo footage as well as on slides; generated content keeps its visible labels (AGENTS.md rule 9) |
 | User manual | README.md reordered so a marker reads setup, data load and demo logins in sequence near the top, with a note for starting from the extracted source zip; developer, CI and benchmark material after the user sections |
@@ -101,10 +102,10 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
    generated source (benchmark report, cleaning ledger, CI run).
 2. The video plays in at most 10:00 at normal speed, in the order i to iv, with every member presenting and named on
    screen.
-3. The theory map rows are checked against the module's lecture list, and each proof path exists.
-4. README.md is followed on a machine other than the one the app was developed on, from an extracted `git archive`
-   zip of `main` (what the packager ships), to working demo logins by 15 November; any manual fix is merged. The
-   check is repeated from the final submission zip by 27 November.
+3. The theory map rows are checked against the module's lecture list, and each evidence path exists; tests are not formal proofs of normal forms or other theoretical properties.
+4. The submission includes runnable source code and data, plus README.md instructions for environment setup,
+   configuration and running the application, as required by RUBRICS.md. No separate other-machine or clean-machine
+   installation acceptance is required (owner amendment, 12 November 2026). This does not claim such a test occurred.
 5. `scripts/package_submission.py` builds the zip from the submitted commit; `--check-only` reports no FAIL, and every
    WARN has been looked at.
 6. CONTRIBUTIONS.md has every student ID and each member's work; docs/AI_USE.md has a deliverables line.
@@ -117,13 +118,13 @@ and data modelling, each compared across PostgreSQL and MongoDB. Placement follo
 | Date | Milestone |
 |---|---|
 | 30 Oct | This plan approved |
-| 4 Nov | `benchmark` final measurements closed (target 1 November); if they slip, section 6 is drafted from the fallback runs under **Assumes** |
+| 4 Nov | Historical benchmark target and October fallback; superseded for report figures by the authoritative November evidence linked above |
 | 7 Nov | Report sections 1 to 5 drafted; slide skeleton; material for the check-in |
 | 8 Nov | Professor check-in; Tier 2 decision |
-| 15 Nov | Full report draft; script frozen; first clean-machine run done |
+| 15 Nov | Full report draft; script frozen; user manual ready |
 | 18 Nov | Demo footage captured (decisions c and d) |
 | 21 Nov | Voice-overs recorded (24 November is the hard limit) |
-| 25 to 27 Nov | Video edit, report and video review, final pass, repeat clean-machine run, packaging |
+| 25 to 27 Nov | Video edit, report and video review, final pass, user manual and packaging |
 | 28 Nov | Submit |
 
 ### Recording-day checklist
@@ -248,3 +249,131 @@ iv, as benchmark amendment i does.
 31 October 2026, Claude Code (the session that wrote the brief; not a fresh session): re-checked the fix round and
 approved both preparation worktrees. The documentation check passed; Chee Long authorised committing, pushing and
 opening the two PRs after this approval.
+
+### Report freeze, 12 November 2026
+
+**Report status:** report reviewed; final submission export follows administrative completion. The checks, named freeze version and hashes below identify the historical 12 November snapshot. They do not make it an immutable final submission artifact or require a shared copy of that exact PDF before close-out. Administrative changes may require a later export, under the [owner's snapshot-status decision](../DECISIONS.md#report-terminology-and-snapshot-status-12-november-2026). The overall deliverables workstream remains in progress. The earlier five-file documentation approval and subsequent fresh Opus 5.5 seven-file approval are recorded separately below; the listed minor follow-ups were applied under the latter approval.
+
+**Report review history and fix rounds.** The owner supplied independent Claude Code Opus report reviews: the earlier fifteen-finding review, followed by wording/layout rechecks and the report/close-out checklist. Codex applied those report corrections in the live Google Doc. That supplied report checklist accepted the B2d denominators, Redis wording and qualifications, reflection and readable repeated-header Table 3 split; it reported the two discussion headings as orphaned and the template/lecture/freeze checks as not evidenced. The Codex authoring pass refreshed the live document, explicitly checked the heading chain and verified the exports recorded below. It was the fix/check pass, not an independent review of its own edits. The repository-only housekeeping pass does not edit Google Docs.
+
+Supplied review-text identifiers (recorded here on 12 November; not new review-execution claims):
+
+- Attachment `44390e40-5a28-4606-bc8b-96c31f6199c6/Pasted text.txt`, SHA-256 `c3bc8c12f6880cf774ac546fac5b6632b9a871fca96270aa638c9314b110cec4`.
+- Attachment `2947f129-bf35-4888-98be-f0187b6bf941/Pasted text.txt`, SHA-256 `abddf6a6dd4dc788f549d1f13364bfb87d1e8804a5e905bebcdbb931d3dee622`.
+
+**Official template.** Inspected the actual restored `[GroupID 00x] INF2003 Projec Final Report - Template.docx`, not the presentation template; SHA-256 `9b29a3f5813aa9d3b08bbfaa07616831162fe075f945551f62a1596c25361d72`. Its five main sections, their intended content, cover fields, source-code appendix and references are covered. The report matches its A4 geometry: 1-inch left/right margins, 1 1/12-inch top/bottom margins and 0.491667-inch header/footer distances. The SIT header, footer wording/page fields, cover title and “Submitted as part of the requirement for INF2003 Database Systems” remain. Added an explicit pinned source-code link in Appendix I and restored the centred “END OF REPORT” marker. The illustrative prose, example bibliography, sample page count and placeholder labels are not report content. Calibri 12 follows RUBRICS.md rather than the template’s default Arial/example-reference styles. All five names/IDs were checked against CONTRIBUTIONS.md; actual work was not assigned or confirmed on anyone’s behalf. The template’s `<Date and Time>` placeholder does not define a deadline or freeze date, so the inherited labelled “Report date: 13 November 2026” was retained; no preparation time was invented. The named freeze below records its own actual date.
+
+**Lecture inventory and reading.** Codex read every PDF page in the owner-supplied set: 10 readable files, 274 PDF pages, no byte-identical duplicate files. Repeated introductory/summary slides are not duplicate decks. Page references below are PDF page numbers starting at 1, not inferred calendar dates or slide labels. Diagrams and image-based examples were rendered where extraction was insufficient. The course PDFs are reference material, not redistributed source-archive contents.
+
+| ID | Exact supplied PDF | Pages read | SHA-256 | Additional rendered diagram pages |
+|---|---|---|---|---|
+| L01 | INF2003 Lec01.pdf | 1–35 | `ed0e41cfd360d845c75aa906d9cec973eb1e46dc385d3a7350e2d39a3e3e1d0f` | 14, 15 |
+| L02 | INF2003 Lec02.pdf | 1–46 | `7d10b00d434257bb75ada443d55e525abd5671748fd70b11a6dbac2c2b467791` | 6, 7, 12, 13, 15, 16, 17, 19, 20 |
+| L03 | INF2003 Lec03.pdf | 1–43 | `05dd18eec484d07788d9c3050b0ca763a4a879380d273ab7dd1d8cb78ab5d95c` | 23, 24, 25 |
+| L04 | INF2003 Lec04.pdf | 1–41 | `20ccac6420a26708c9b82ea55c6b34a4c4e286df485767f1f38fc1c1a6a155bb` | 26, 27, 28, 30, 32 |
+| L05 | INF2003 Lec05.pdf | 1–36 | `5db1cc18726f1c3f82fed5be8eedddd6d76a0aeb12b73c2a7535d7bbdfabd8b5` | 7, 19, 20, 25 |
+| L06 | INF2003 AY2627 T1 Lec 06 261016.pdf | 1–16 | `d20ea0e80a1f45574b1462b69f164aa3f92d3f40a0d52cac74cc9f0367a29f1e` | 6, 8, 9, 10, 11, 12, 13, 14, 15, 16 |
+| L07 | INF2003 AY2627 T1 Lec 07 261021.pdf | 1–14 | `61547def2a70578d38919ab89ad6f7ca0d6cba3ca3599233d3d0dac336c15a61` | 6 |
+| L08 | INF2003 AY2627 T1 Lec 08 261102.pdf | 1–14 | `e4cd29a9d6237153cd54e1db21866d95fca50105f2e6653d3507e49ffbed56ab` | 5, 6, 12, 13 |
+| L09 | INF2003 AY2627 T1 Lec 09 261102.pdf | 1–14 | `913cd4c0d2aa2f254625b4a7ce2ba8de285075ebadc11dcaef1d268592e342a2` | 3, 7, 8, 12 |
+| L10 | INF2003 AY2627 T1 Lec 10 261109.pdf | 1–15 | `568314f70870bdb74742bc7a1ac63814bbf19476bb9bddd9761cca4f08d24640` | 5, 7, 9, 11 |
+
+**Traceable lecture map.** This record and report Appendix II/Table A1b connect lecture/PDF page → concept → report location → source/test evidence at `d23011e5613779bf4735884f568409d7de14e0cf`. A file’s presence is not an executed check; the cited main CI supplies revision-specific execution evidence. Normalisation uses stated functional dependencies and intentional redundancy, without a whole-schema 3NF/BCNF proof. Features that merely share vocabulary with a topic are not counted as implementations.
+
+| Lecture / PDF pages | Concept | Report section | Verified source/test paths | Scope and interpretation |
+|---|---|---|---|---|
+| L01 pp. 7–16, 18–24, 26–31 | DBMS layers, schemas, keys and ACID | 2.1, 3.1–3.2 | `src/catalogue/models.py`; `src/config/privileges.py`; `tests/test_schema.py`; `tests/test_audit_privileges.py` | Database layers and enforced keys/privileges; no claim that tests prove all ACID properties. |
+| L02 pp. 5–26, 33–44 | ER relationships, participation, keys, types and constraints | 3.1; Figures 2, A1–A2; Appendix I | `src/orders/models.py`; `src/catalogue/models.py`; `tests/test_schema.py` | Business cardinality is distinguished from FK enforcement; weak-entity/ISA examples are not claimed as implemented features. |
+| L03 pp. 3–6, 12, 19–30, 32–41 | CRUD, joins, aggregates, NULL, views and SQL functions | 3.2; Table A1 analytical SQL row | `src/orders/services.py`; `src/dashboard/queries.py`; `src/catalogue/migrations/0001_initial.py`; `src/dashboard/migrations/0001_daily_product_sales.py`; `tests/test_dashboard.py` | Ordinary visibility view versus stored materialized summaries; RANK/LAG are extensions, not claimed as lecture examples. |
+| L04 pp. 4–36 | Functional dependencies, normal forms and decomposition | 3.1; Table A1 caption | `src/catalogue/models.py`; `docs/DATA_MODEL.md`; `tests/test_schema.py` | Category separation illustrates normalisation reasoning. No complete FD closure, whole-schema 3NF/BCNF proof or decomposition algorithm is claimed; tests verify constraints only. |
+| L05 pp. 6–22, 24–35 | Relational algebra, equivalent queries and execution plans | 3.2, 4.1; Appendix III plans | `src/dashboard/queries.py`; `tests/test_dashboard.py`; `benchmarks/workloads/b1.py`; `benchmarks/workloads/b4.py` | Fast/window query equivalence and retained plans illustrate less work for the same result; optimizer internals are engine-provided. Hints remain diagnostic. |
+| L06 pp. 4–16 | File organisation, hash versus tree access, B+ tree operations | 3.1, 4.1; Appendix III plans | `src/config/mongo_schema.py`; `benchmarks/workloads/b4.py`; `tests/test_mongo_schema.py`; `tests/test_schema.py` | Indexes are configured and measured; tree splits/merges are engine internals. No custom B+ tree/hash-index implementation or universal index speedup is claimed. |
+| L07 pp. 3–13 | Transactions, scheduling, ACID, locks, retries and recovery | 3.2–3.3, 4.1, 4.3, 5 | `src/orders/services.py`; `src/reviews/services.py`; `benchmarks/workloads/b6.py`; `tests/test_checkout_concurrency.py`; `tests/test_order_scores_maintenance.py` | Atomic checkout and MongoDB transactions have separate store boundaries. B6 is a correctness demonstration. Timed restore/failover remains optional future work; no production recovery guarantee. |
+| L08 pp. 3–14 | Key-value/document models, migration choices; other NoSQL families | 3.3–3.4, 4.3 | `src/config/mongo_schema.py`; `src/config/redis_store.py`; `tests/test_mongo_schema.py`; `tests/test_dashboard_cache.py` | Validated flexible documents and disposable Redis support are implemented. Columnar/graph stores and sharding are outside scope; an ER diagram is not a graph database. |
+| L09 pp. 3–14 | Hash chains, consensus, proof of work and forks | Outside scope; distinguish 2.2 checksums and 3.1 audit | `scripts/clean_olist.py`; `docs/DATA_MODEL.md`; `tests/test_audit_privileges.py` | Checksums and audit records do not implement a blockchain, consensus ledger or mining. No new feature requirement follows from this lecture. |
+| L10 pp. 2–15 | ETL, OLTP/OLAP, dimensional schemas and cubes | 2.2, 3.2; 4.1 refresh/read comparison | `scripts/clean_olist.py`; `src/config/management/commands/import_olist.py`; `src/dashboard/queries.py`; `tests/test_import.py`; `tests/test_dashboard.py` | Cleaning/import is ETL and historical aggregates support analysis. A dedicated star/snowflake warehouse, OLAP cube, pivot or interactive drill-down is outside scope. |
+
+**Artifact and verification.**
+
+- Live report: [Google Doc](https://docs.google.com/document/d/1pjyGPMGeqvIRNAg3s2MFc5tN-PKb1Qh5RAlJWqiU27I/edit).
+- Historical named Google Docs version: **Report freeze 2026-11-12 — template + 10 lectures — d23011e**; the authoring UI confirmed “Named in version history” and “Saved to Drive”. The existing version name is retained as provenance, not current final-submission status.
+- Reviewed PDF snapshot (local authoring artifact, outside Git; historical filename retained): `C:/Users/limch/.codex/visualizations/2026/11/12/01a1cdc1-8a19-7a03-a867-8c1f5a8ed22b/report-template-lecture-closeout/Team82_Report_Frozen_2026-11-12.pdf`.
+- PDF SHA-256: `d9a646d212320b2368e56946103e9bf4ed6d7ab103a2d9261ad60517dae0cd89`.
+- Reviewed DOCX snapshot: `C:/Users/limch/.codex/visualizations/2026/11/12/01a1cdc1-8a19-7a03-a867-8c1f5a8ed22b/report-template-lecture-closeout/Team82_Report_Frozen_2026-11-12.docx`; SHA-256 `f43cc219d8a142ef7331df5f67bac4b17497d1a3b3f4b7acd7cc8328739487a7`.
+- Checked 12 November 2026: 9 body pages (physical pages 2–10), 21 total. Cover, references and appendices excluded; body prose, tables and captions are Calibri 12. Every rendered PDF page and page boundary was inspected. Post-version exports rendered pixel-identically to the reviewed export.
+- Exported DOCX has `keepNext=1` on “4. Discussions”, “4.1 Performance method and retained findings” and “B1 and B4 plan interpretation”. Both discussion headings and their following body open page 7; the appendix heading shares page 21 with its first source. Table 3’s existing split and repeated header remain readable.
+- Literal SQL/PyMongo and all original report numerical tables are unchanged; zero accidental equation objects. The only main-body wording change explains functional-dependency design choices instead of asserting blanket 3NF. Source/test paths and named tests were checked against the pinned tree; existing diagrams and links were preserved.
+- Implementation/evidence snapshot: `d23011e5613779bf4735884f568409d7de14e0cf`; [CI 43078190939](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43078190939) completed successfully there. B1–B6 measured at `505222f41b7473260ed9f40bb3bbaf8eafa46757`; page timing at `df03cb33c12deffceb6a1d298e7a2bbbc3e0a97e`; Redis v2 at `b82ac876e9ff0fa4d3f530d81d70fa2b434c8e43`. No experiment was rerun or relabelled.
+- Documentation record at the original authoring checkpoint: uncommitted work on `deliverables/report-template-lecture-closeout`, based on the snapshot above; no new commit SHA or hosted CI was claimed at that point. A final submission revision has not been selected.
+
+**Packaging readiness, not final-package acceptance.** Inspected `scripts/package_submission.py`: the outer archive takes a report PDF, slides PPTX and video MP4 plus root-relative `source_code.zip` generated by `git archive` from an explicit committed ref. A temporary complete source archive of the report snapshot contained every one of the 65 report-cited implementation/evidence paths at its expected root-relative location. Retained benchmark/golden/data evidence bytes matched Git blobs; 44 source/documentation files had only Git’s configured CRLF conversion. The source safety checks passed for README, Compose, src and the secret-file/token checks. No excluded report evidence was found. Archive size: 192146116 bytes. The eventual submission revision must include the report close-out documentation commit, including this inventory and review record cited by Appendix II. The earlier `d23011e` archive predates these uncommitted records and does not certify their inclusion or the final submission ref.
+
+No approved final slides PPTX, final presentation MP4 or explicitly selected submission revision was provided/found among the relevant local deliverables. Therefore no final outer submission archive was built and no final `--check-only` result is claimed. When those inputs exist, compare source/tests/benchmarks/data/scripts/analytics/Compose against the pinned report boundary, require CI on the selected ref, build the outer archive, check its nested citations and run `--check-only`. Offline source paths avoid depending on private GitHub links for evidence; final size/access arrangements still belong to submission acceptance. No permissions were changed.
+
+**Supplied fresh documentation review.** The owner supplied a fresh Claude Code / Opus review in attachment `f93f3b7e-6ff0-41db-89d8-0a317cc0b76f/Pasted text.txt` (SHA-256 `e8cb0c14f386d89dc4c82c8e47d414f0a8359cb0f4c5770652f3de15afd5e696`), verdict **APPROVE WITH NON-BLOCKING NOTES**, with no commit blockers. It reviewed the earlier five-file uncommitted diff at `d23011e`: PLAN.md, docs/AI_USE.md, docs/plans/benchmark.md, docs/plans/deliverables.md and docs/plans/seller-rls.md. It independently checked the snapshot hashes/rendering, heading flags, font/code evidence, template/lecture inventory, cited paths, merge/CI facts and temporary archive, and ran the documentation/packaging host checks. It did not reread all lecture pages or verify the two earlier review-attachment hashes, the Google Docs named-version UI confirmation or pixel-identical export claim. These limits do not become new completed checks here.
+
+The review required recording its outcome before commit and suggested non-blocking follow-ups. The housekeeping pass recorded the earlier approval, required the eventual submission ref to include these documentation records, repaired the seller-RLS decision link/spacing, added its documented AI-use history, recorded the owner's accepted terminology and identified the report-editing model from session metadata. The owner's later amendments confirm contributions, remove the internal installation acceptance and designate the PDF as a reviewed snapshot. The older recommendation to share that exact PDF is superseded by this snapshot-status direction. These later amendments were outside the earlier five-file approval; the resulting seven-file diff subsequently received the fresh Opus 5.5 approval recorded below.
+
+**Separate administration:** subsequent contribution updates if needed (initial member-confirmed summaries are recorded in CONTRIBUTIONS.md); the group's unresolved repository attribution decision; final report export after administration, submission ref/archive and rubric-required runnable source/data with setup/configuration/run instructions; slides/video completion and review; peer-review surveys; submission and receipt retention. There is no active other-machine installation acceptance or exact-historical-PDF sharing requirement.
+
+**Unresolved attribution, outside this housekeeping PR.** Earlier reviewed history records reused components; commits `41cb698` and `57f98f5` removed earlier-project disclosure wording from repository records, while the report retains its supported disclosure. The owner's requested “completely new project” wording does not establish that everything was written from scratch. This inconsistency remains an unresolved matter for the group outside this PR: no attribution is erased, no from-scratch claim or group acceptance is inferred, and the Google Doc is unchanged.
+
+**Prior authoring-pass checks (12 November 2026, Codex; historical):** `scripts/check_docs.py`, `git diff --check` and the host documentation/packaging tests passed for the earlier five-file diff. The supplied Opus review independently reran them, using a writable scratch directory for pytest. Later housekeeping checks and fresh review are recorded separately below.
+
+### Owner amendment: installation acceptance (12 November 2026)
+
+The owner explicitly removed the internal other-machine installation requirement and its pending admin task.
+Exit check 4 now retains the rubric requirement for runnable source/data and setup/configuration/run instructions.
+Earlier review notes mentioning clean-machine deadlines are historical and superseded by this amendment.
+No other-machine test is claimed. See [the decision record](../DECISIONS.md#installation-acceptance-scope-12-november-2026).
+
+### Owner confirmation: contributions and evidence terminology (12 November 2026)
+
+Chee Long supplied the five member-confirmed contribution summaries, now recorded in CONTRIBUTIONS.md without
+invented dates, finer allocations or final-artifact acceptance. As plan owner, he explicitly accepted “evidence paths”
+and the clarification that tests are not formal proofs of normalisation. This accepts the corresponding theory-map
+contract and exit-check wording; it adds no new test or technical deliverable.
+
+### Repository housekeeping review gate (12 November 2026)
+
+Branch: `deliverables/report-template-lecture-closeout`; reviewed base:
+`d23011e5613779bf4735884f568409d7de14e0cf`. The reviewed uncommitted diff's SHA-256 is
+`b929b5e529a96f5f29705446c74f80075a2a1eccbe0467cc5a4a6cd5e93f5306`; Codex verified an exact match before
+applying the approved minor follow-ups. Its seven-file scope is CONTRIBUTIONS.md, PLAN.md, docs/AI_USE.md,
+docs/DECISIONS.md, docs/plans/benchmark.md, docs/plans/deliverables.md and docs/plans/seller-rls.md. The pre-existing
+member summaries are preserved. GitHub main and the recorded merged PR/CI facts were checked at the pre-review
+checkpoint; the pre-commit fetch still found main at the reviewed base with no divergence or remote branch to integrate.
+
+**Fresh Claude Code Opus 5.5 review: APPROVE WITH NON-BLOCKING NOTES; no commit blockers. The documented minor
+follow-ups were applied and affected checks rerun.** The owner relayed this completed review and its delivery
+permission in the final fix-round request (attachment `04f8e6a0-adcc-490e-be30-b01bffcdc245/Pasted text.txt`). This
+seven-file approval includes the owner amendments and housekeeping that were outside the earlier five-file review.
+The approved follow-ups remove the unsupported user-manual planning-role assignment, restore the closed Phase 4
+criterion while preserving the later installation-scope amendment, restore the two 11 November decision paragraphs
+with separately dated status updates, specify the SECURITY DEFINER money-check trigger functions and checkout
+locking in the seller-RLS AI record, and record this review's outcome. The confirmed contribution summaries,
+numerical evidence, measured revisions and snapshot hashes are unchanged.
+
+The review explicitly permits these narrow follow-ups and the documentation commit, push and draft PR without
+another broad review cycle. The owner has authorised delivery with the required AI co-author trailer, safe fetch
+and divergence checks, and staged documentation checks. Google Docs, application code, benchmark results,
+slides/video, final packaging/submission and the unresolved reuse decision remain outside this pass. Do not merge
+or force-push; a substantive integration conflict would require stopping rather than overwriting work.
+
+**Pre-review housekeeping checks (12 November 2026, Codex; historical):** `python scripts/check_docs.py` and
+`git diff --check` passed. Host `python -m pytest --noconftest -q -p no:cacheprovider --basetemp <writable-scratch>
+tests/test_check_docs.py tests/test_package_submission.py` passed with no failures or skips. The scratch directory
+was under the authorised local report-housekeeping output folder. These are new executions for this pass, not copied
+authoring/reviewer results. The final scope check contains only the seven Markdown files above; application, tests,
+benchmark/data artifacts, scripts, analytics and Compose are unchanged. The earlier contribution diff and generated
+evidence records are preserved. At that checkpoint nothing was staged, committed, pushed or merged, and no draft PR
+or final package was claimed. Final fix-round and staged validation are recorded below.
+
+**Approved minor fix round (12 November 2026, Codex):** applied only the listed follow-ups under the supplied
+seven-file Opus approval. `python scripts/check_docs.py`, `git diff --check` and the affected host
+documentation/packaging tests passed with a writable `--basetemp` and no failures or skips. Repository-pinned Ruff
+0.17.0 ran from the authorised scratch installation: the formatting check passed and the formatter left all files
+unchanged. `python scripts/check_docs.py --staged` and `git diff --cached --check` passed. The staged scope is exactly
+the seven authorised Markdown files; contribution summaries, lecture rows, numerical evidence, measured revisions
+and snapshot hashes are preserved. No application, test, benchmark, data or configuration file changed. These
+fix-round results are separate from the historical authoring checks and do not claim final-package acceptance.
