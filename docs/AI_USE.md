@@ -83,3 +83,12 @@ One line per workstream, added at close-out.
   framing in DECISIONS.md, resolved the current deliverables admin item and updated the Google Doc's attribution
   paragraph while retaining the concrete reused components and AI disclosure. Fresh Claude Code (Opus 5.5) review of
   this three-file amendment: APPROVE, 12 November 2026, with no corrections required.
+- 12 November 2026, slide claims review (Batch 9, #40, slides and script only): Claude Code (Opus 5.5) for Joash checked
+  a review's findings against the code and committed results, then reworded the slides and speaker notes in Canva:
+  registered B2 pairs only, the B1 broad-filter exception, warm-buffer limits, qualified Redis results, the non-causal
+  delivery finding with a regenerated chart, and smaller wording fixes; OVERVIEW.md follows. It then cut the
+  speaker notes from about 15 to 9.3 minutes of speech to fit the 10-minute limit, then added a Complex queries
+  slide with real query output, app screenshots, ER column types and shorter slides. Review: pending.
+- 12 November 2026, 24-slide deck plan (slides, notes and runbook numbers only): Claude Code (Sonnet 5.5) for Joash redrew
+  the diagrams, added range bars and the Implications and reflection boxes, retimed the notes and renumbered the pages;
+  CI figures left as TODOs. Review: pending.

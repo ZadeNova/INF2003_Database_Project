@@ -207,10 +207,10 @@ what those show. These items present existing work rather than add features.
 | 15 | P1 | The README flow works from a clean clone, but the data import sits after the benchmark section; deliverables exit check 4 (run from the extracted zip on another machine) is still open. Reorder the README; run from the zip by 15 Nov ★ | Markers must run the app from the manual | S–M | done 12 Nov, awaiting review: README reordered; a clean run from a `git archive` zip of `main` on Joash's machine reached working demo logins |
 | 41 | P1 | **Diagrams as images**: the ER diagram rendered from [DATA_MODEL.md](../DATA_MODEL.md); a MongoDB model diagram (embedded against referenced, time series, GridFS); one architecture diagram of which store owns what ★ | The brief requires an ER diagram and a NoSQL data model. Reused in the report and slides | M | in progress: architecture, ER and MongoDB model are on slides 6, 8 and 14; image exports for the report open |
 | 6 | P0 | MongoDB's justification is not written, and the timed workloads favour PostgreSQL. Evidence exists: storage ([B5](../../benchmarks/results/2026-11-02T004351_b53e5d0a_final/report/B5.csv)), atomic single-document update ([B6](../../benchmarks/results/2026-11-02T095518_b53e5d0a_final-b3-b6/report/B6-states.csv)), embedding, migration-free schema change, GridFS, time-series TTL. Write the report and slide section ★ | Risks "implementations are not justified" | M | slides done 12 Nov (slides 14–18 and 21–24); report section open |
-| 43 | P2 | **Quality evidence in one place**: a link to a green CI run, the coverage report, tool-printed test counts, and the injection, isolation and concurrency tests named ★ | Turns "well tested" into evidence; supplies report section 8 | S | slide 25 done 12 Nov; the green CI run link still to add |
+| 43 | P2 | **Quality evidence in one place**: a link to a green CI run, the coverage report, tool-printed test counts, and the injection, isolation and concurrency tests named ★ | Turns "well tested" into evidence; supplies report section 8 | S | slide 25 done 12 Nov, with the green CI run on `main` (run 43058123048) in its speaker notes |
 | 44 | P2 | **Analytics depth on the delivery-delay finding**: rank correlation with a confidence interval, and distance checked as a confounder, from committed data ★ | Extra credit names "data analytics algorithms" | M | open |
 | 26 | P2 | PostgreSQL-first writes log, rather than repair, a MongoDB failure. No code change: show `check_specs` in the demo; write it up as a reflection | Cross-store honesty | S | done 12 Nov: `check_specs` in clip N5 and the [README demonstrations](../../README.md#database-demonstrations-psql-and-mongosh) |
-| 40 | P1 | **Claims audit before submission**: check every claim in the report, slides and script against the code or a committed result file ★ | The rubric rewards "accurate" | M | open |
+| 40 | P1 | **Claims audit before submission**: check every claim in the report, slides and script against the code or a committed result file ★ | The rubric rewards "accurate" | M | in progress: slides and speaker-notes script audited 12 Nov against a review's findings (see the review note); report open |
 | 14 | QA | Reviews, wishlist, dashboard, activity and benchmark were reviewed only by the session that wrote the brief ([AI_USE.md](../AI_USE.md)). The 8 Nov Opus review covers much of this; close it after the final review | The AGENTS.md review rule | M | open |
 | 3 | P0 | [CONTRIBUTIONS.md](../../CONTRIBUTIONS.md) records almost only Chee Long; Joash's student ID is missing; others are "not yet recorded". Every member records their actual work. Deferred to last by Erfan ★ | The final mark is weighted by peer review | S | open |
 
@@ -334,3 +334,44 @@ with a recording runbook (#70), and updated the team's slide deck to the authori
 (charts regenerated from the committed CSVs, query-plan evidence on the index slide, speaker-notes script, presenter
 placeholders). Nothing was committed or pushed; a fresh review is still due.
 
+12 November 2026, slide claims review (#40, slides and script only), applied by Claude Code (Opus 5.5) for Joash. A review
+of the deck found claims stronger than the evidence; each was checked against the code or a committed result file and
+reworded in the slides and speaker notes. Slide 11: the delivery chart now names the five delay buckets with their review
+counts (from `profile.json`), the finding says late delivery is associated with lower ratings (not that it causes them),
+the stock forecast is described as the grouped 28-day sum the dashboard runs (the AVG window is kept for B2), and the
+Bayesian rating "reduces small-sample overconfidence". Slide 21: MongoDB was about 2 to 4 times slower on most B1 filters
+and 11 times on the broad one; the hinted-index run is labelled diagnostic. Slide 22: only registered B2 pairs (2.1 to
+4.1 times at one client; category revenue 120 to 72 ms in PostgreSQL, 252 to 144 ms in MongoDB; refresh about 1 s on
+both), replacing a ratio built from a display variant. Slides 20 and 24: B1 and B2 are warm-buffer runs; the claim that
+all data fits in cache was removed, and footprints are said to reflect different payloads, representations and indexes.
+Slide 26: Redis made warm dashboard reads 5.5 times faster; cold and outage runs showed no consistent effect beyond the
+noise floor, with limited outage evidence. Smaller fixes: one authoritative owner per value instead of "no data is stored
+twice" (slide 6), decomposed relations with deliberate, checked redundancy instead of a whole-schema 3NF claim (slides 8
+and 17), an audit log the runtime role cannot alter instead of "tamper-proof" (slide 12), and validators on the document
+collections only (slide 14). [OVERVIEW](../OVERVIEW.md) follows. The speaker-notes script was then about 2,270 spoken
+words (about 15 minutes at 150 words a minute), so each slide's notes were cut to its time slot: about 1,390 words,
+9.3 minutes, keeping the figures and qualifications above. The full-data demo stack was rebuilt and every terminal
+clip (R1, R3, N5 and `check_specs`) and the browser suite (8 passed) were rerun before filming.
+
+12 November 2026, presentation-quality additions, by Claude Code (Opus 5.5 and Sonnet 5.5) for Joash, aimed at the
+Presentation quality criterion (slides only, no application change). A new slide 12, Complex queries, shows the real
+`CATEGORY_PERFORMANCE` query (a CTE with `rank()` and `lag()`) beside the catalogue `$facet` pipeline, each with output
+taken from the running full-data stack. Screenshots of the live app were added to slide 4 (customer, seller and operator)
+and slide 17 (reviews and views-to-sales). Slide 8's entities now show key columns and types, matching the database, and
+slides 4, 9, 10, 13 and 17 were cut to short points. Slide 19 gained the B3 throughput at 50 clients (500 against 160 ops/s
+from `headline.csv`) and lost "fastest" for atomic `$inc`, whose B6 timing is not an accepted one; slide 24's index
+sentence now agrees with its 1.0 times exception. Slide numbers after 11 moved up by one, so the slide numbers quoted in
+the review note above are those before this change, and the speaker notes were retimed to keep the video at 9:30. The
+slide numbers in both notes are from the 28-slide deck, before the four divider slides were removed (final numbering is in
+the next note). Still open: the benchmark plan's "fits in memory" limit wording, left for the plan owner.
+
+12 November 2026, 24-slide plan applied to the Canva deck (slides and notes only), by Claude Code (Sonnet 5.5) for Joash.
+Done: a crow's-foot ER redraw (#41, with key columns and types), an architecture diagram, a MongoDB document-model
+diagram, readable app screenshots, the dataset-count explanation (32,951 to 34,448 to 34,211 products; 100,758 review
+rows), the query slide's SQL with the `NULLIF` guard and real top-3 output, range bars from the three sessions on the B1 and
+B2 charts, a Redis panel, an Implications box, a reflection on PostgreSQL-first cross-store writes, and page numbers for
+the final 24 slides (the four divider slides were deleted by hand, as the editing tools cannot delete a page). Each slide
+footer shows a `Presenter: [Presenter N]` placeholder. The CI figures on slide 22 (#43) were read from the CI log on 12
+November 2026: 974 tests passed (11 skipped), 93.83% line coverage against the 80% gate, 8 browser journeys passed. The
+plan's N2b clip is in the runbook, supported by the code: the shop's attribute filters are built from the category
+template. Still open: the real presenter names, and the recording and video checks (the team's own).
