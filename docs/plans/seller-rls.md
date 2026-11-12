@@ -1,7 +1,7 @@
 # seller-rls: Row-level security for sellers
 
-status: in-progress
-plan owner: Erfan · implementer: Claude Code · reviewer: Opus 5.5 (plan reviewed 10 Nov; the build gets its own review) ·
+status: done
+plan owner: Erfan · implementer: Claude Code · reviewer: Opus 5.5 (plan reviewed 10 Nov; build review and fix round recorded below) ·
 phase 5 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `checkout`, `accounts` (done) · backlog item #48
 ([improvements](improvements.md#batch-8-row-level-security-settled-last))
 
@@ -9,7 +9,7 @@ phase 5 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: `checkout
 
 **Goal.** While a seller-centre page runs, PostgreSQL itself confines the database session to that seller's rows, so a
 missing `WHERE seller_id = …` in the application can no longer leak another seller's orders or edit another seller's
-products. Today AGENTS.md rule 6 is kept by application filters and tests only; no policy exists. The honest wording for the
+products. Before this work, AGENTS.md rule 6 was kept by application filters and tests only; no policy existed. The honest wording for the
 report: **tenant isolation for sellers, a second layer under the seller pages**, not "the database enforces all isolation".
 
 **Demo.** Connected as the runtime role with a seller's setting, `SELECT * FROM orders_order` returns only that seller's
@@ -170,3 +170,5 @@ the seller mixin), the test plan could not run the real service under the polici
 found worse than stated.
 
 10 November 2026, step 5 checks run by the implementer. The eight Chromium journeys pass against the runtime web service on a fresh fixture-loaded project (migration 0005 applied, policies active). Speed check on the full dev data, read-only, as the runtime role with the setting unset: the policy filters change the plan of a bulk scan (an `orders_order` join `orders_orderline` loses its parallel hash join and becomes a nested loop, several times slower than for the owner), so any bulk scan of those tables by the runtime role pays this. The application's dashboard paths read the maintained summaries, whose refresh functions are SECURITY DEFINER, so none of them is affected, apart from the operator orders page found by the first Batch 7 review round (it reads the orders joined to their checkouts as the runtime role with the setting unset, and the planner misjudges the policy, so that page is slower than for the owner; disclosed as improvements #74, no redesign); the live delay-bucket fallback joins customer profiles and stayed in the millisecond range. The benchmark connects as the owner and is unaffected (D5). No numbers are recorded here; rerun `EXPLAIN (ANALYZE)` after `SET ROLE` to reproduce. The independent Opus 5.5 build review found no blocker and no major defect: no route leaked another seller's rows and the setting never survived a request (660 mixed requests against the real gunicorn service, 18 deliberately broken variants of the code). Its minors were all fixed in one round: tests for the order hand-over, order-line writes, the audit seller-row clause and render-before-release; a lock-function test that reaches the NULL branch; the failed-release test rewritten on a real connection; the corrected `save()` rule; the fuller list of unrestricted tables.
+
+12 November 2026, report metadata close-out (Codex, not a new build review): the implementation and recorded Opus build/fix round are included in merged [PR #40](https://github.com/ZadeNova/INF2003_Database_Project/pull/40), at `505222f41b7473260ed9f40bb3bbaf8eafa46757`, and retained by the 11 November `seller-rls-go` decision in [docs/DECISIONS.md](../DECISIONS.md). Current main `d23011e` and its [successful CI 43078190939](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43078190939) were verified. Corrected the stale in-progress metadata and framed the original no-policy statement as the pre-implementation baseline; seller-centre scope and limitations are unchanged.

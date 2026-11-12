@@ -450,6 +450,9 @@ rolling-window expiry and key expiry mechanisms remain qualified hypotheses. All
 the supplied fresh Opus review confirms measurement completeness. Its documentation corrections await fresh verification
 before repository delivery. No application/protocol changes were made.
 
+**Status, 12 November 2026:** the subsequent fresh approval, PR #45 merge and passing merge CI are recorded in the
+authoritative index. The paragraph above preserves the original 11 November acceptance checkpoint.
+
 ### Report citation corrections after the supplied Opus review (11 November 2026)
 
 The supplied fresh Opus evidence review confirms complete measurements with no required rerun and requests
@@ -460,3 +463,29 @@ and the page collector's initial unseeded-activity store split cannot be general
 The [review notes](plans/benchmark.md#review-notes) record the correction round and pending fresh verification.
 Historical validation/check records remain snapshots of their original runs, rather than being rewritten to imply
 approval of later documentation. No commit, push, PR or merge is covered by this correction round.
+
+**Status, 12 November 2026:** subsequent fresh verification and evidence delivery completed through merged PR #45
+with passing merge CI, as linked in the authoritative index. The original correction-round scope above remains
+historical; approval of later report-housekeeping documentation is recorded separately in the deliverables plan.
+
+### Installation acceptance scope (12 November 2026)
+
+The owner explicitly removed the internal requirement to install on another/clean machine from the project plan
+and pending administration. Retain the rubric requirement: include runnable source code and data, with a user manual
+covering environment setup, configuration and how to run the application. No other-machine installation is claimed.
+This supersedes the former deliverables exit check 4 and its 15/27 November installation deadlines; historical review
+notes remain historical. Packaging checks and submission contents are unchanged.
+
+### Report terminology and snapshot status (12 November 2026)
+
+Chee Long accepted “evidence paths” and the clarification that tests are not formal proofs of normalisation or other
+theoretical properties. The theory-map contract, evidence-path exit check and current November evidence boundary
+are accepted wording; they introduce no new test requirement. The [deliverables review notes](plans/deliverables.md#owner-confirmation-contributions-and-evidence-terminology-12-november-2026)
+record the corresponding amendment.
+
+The owner designated the checked PDF as a reviewed snapshot: report reviewed; final submission export follows
+administrative completion. The named 12 November freeze version, hashes and verification remain historical
+identification of that snapshot, not a requirement to submit those exact bytes or to share that exact historical PDF
+before close-out. Administrative changes may require a later export. The eventual submission revision must include
+the report close-out documentation commit; the earlier `d23011e` source archive does not contain these uncommitted
+records. Slides, video, package validation and submission remain separate.

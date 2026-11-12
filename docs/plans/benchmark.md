@@ -453,7 +453,7 @@ the pilot and full-data runs remain for the next session.
 Use this index, not the historical pending-status snapshots or fix handoffs in earlier result directories. Collection
 and repository delivery are separate: PR #43 Redis measurement now has usable evidence for every required comparison,
 with disclosed refusals and reduced coverage. The supplied fresh Opus evidence review confirms measurement completeness
-and requires documentation corrections only; see [review notes](#review-notes). Fresh Opus re-review verified all six corrections; its two wording follow-ups have been applied. Fresh Opus follow-up approved the corrections. Repository delivery is authorised; PR checks and merge remain required.
+and required documentation corrections only; see [review notes](#review-notes). Fresh Opus re-review verified all six corrections; its two wording follow-ups were applied and approved. Evidence delivery is complete: [PR #45](https://github.com/ZadeNova/INF2003_Database_Project/pull/45) merged into `31c1b0cbd823e3a60fff5fd47dba3d58688351dc`, and [merge CI 43058123048](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43058123048) passed (verified 12 November 2026). Historical delivery-status snapshots below do not reopen the completed measurements.
 
 | Evidence group | Measured revision | Actual limits | Authoritative outputs and status |
 |---|---|---|---|
@@ -546,8 +546,9 @@ status. The supplied fresh Opus review confirms complete measurement and request
 Fresh Opus re-review verified all six corrections; its two wording follow-ups have been applied.
 No measurement rerun is required. The earlier
 [review prompt](../../benchmarks/results/redis-v2-2026-11-11/opus-review-prompt.txt) is retained as history.
-Fresh Opus follow-up approved both wording fixes and report readiness. Repository delivery is authorised;
-overall repository close-out still requires successful PR checks and merge.
+Fresh Opus follow-up approved both wording fixes and report readiness. The subsequent PR #45 merge and passing
+merge CI, linked in the authoritative index above, complete this evidence delivery. Final submission-package
+validation is a separate deliverables acceptance check.
 
 #### Historical superseded Redis execution and acceptance gaps after PR #42
 
