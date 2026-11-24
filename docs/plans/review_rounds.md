@@ -1,6 +1,6 @@
 # review_rounds: Independent review rounds F and G, run by teammates
 
-status: approved
+status: done
 plan owner: Erfan · reviewers: teammates (one fresh Claude Code session per round) · analysis of the reports and every fix:
 Claude Code, on Erfan's decision · phase 5 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: the first three
 review rounds of Batch 7 in [improvements](improvements.md#batch-7-code-quality-pass-then-the-full-codebase-review)
@@ -353,3 +353,6 @@ Erfan's approval, the same session fixed G1 to G7 on `improvements/review-g-fixe
 - G7 the README documents the submission packager.
 - G8 (a teammate's Windows path in a shipped benchmark log) and G9 (the dashboard stops at its reporting date, so a demo
   purchase never shows there) need no code change; G9 is carried in [deliverables](deliverables.md).
+
+The agreed round G fixes merged in [PR #37](https://github.com/ZadeNova/INF2003_Database_Project/pull/37)
+as `899633e`, completing the two review rounds.

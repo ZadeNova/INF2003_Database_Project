@@ -529,5 +529,7 @@ before merge.
 
 Host-only checks are listed in the PR handoff. Fresh Codex review found no Major issue. It raised one Medium and
 two Minor documentation findings: the passing run's library upgrade, root-cause exclusions stated too strongly, and
-cached rather than per-launch validation. All three are corrected above. A passing hosted browser job is still
-pending; neither local checks nor logs show that the hosted install succeeds.
+cached rather than per-launch validation. All three are corrected above. At that review, hosted verification was pending.
+
+24 November 2026 verification: the Chromium job passed with the browser-only install on the PR #44 merge,
+`4a48fbe` ([hosted run](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43051609674)).
