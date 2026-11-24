@@ -92,3 +92,6 @@ One line per workstream, added at close-out.
 - 12 November 2026, 24-slide deck plan (slides, notes and runbook numbers only): Claude Code (Sonnet 5.5) for Joash redrew
   the diagrams, added range bars and the Implications and reflection boxes, retimed the notes and renumbered the pages;
   CI figures left as TODOs. Review: pending.
+- 24 November 2026, deliverables: Codex revised and exported the report in response to Claude Code's review of the
+  earlier PDF, checked its layout and evidence, and reconciled repository statuses against the workstream records
+  and hosted CI. Fresh Claude Code (Opus 5.5) review approved the seven documentation files after the fix round.

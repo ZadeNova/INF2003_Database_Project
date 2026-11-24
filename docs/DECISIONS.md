@@ -490,6 +490,8 @@ before close-out. Administrative changes may require a later export. The eventua
 the report close-out documentation commit; the earlier `d23011e` source archive does not contain these uncommitted
 records. Slides, video, package validation and submission remain separate.
 
+**24 November 2026 update.** The final report explains our core table design through the functional dependencies in the illustrative Product and Category decomposition. It distinguishes the historical sale price, composite seller foreign keys and deferred total checks. The normal-form conclusion applies to the two projected relations under their stated dependencies.
+
 ### Approved project framing and reuse attribution (12 November 2026)
 
 Chee Long confirmed that some components were reused and explicitly approved this framing:

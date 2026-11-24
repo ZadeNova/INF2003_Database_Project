@@ -10,7 +10,8 @@ simulated and no personal data is used.
 ## Status
 
 The Tier 1 application is complete; current benchmark evidence is recorded in the
-[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides). Deliverables remain.
+[authoritative November index](docs/plans/benchmark.md#authoritative-november-evidence-for-report-and-slides). The final report covers the implementation and benchmark findings. Slides, video and submission remain open.
+The [submission package](#submission-package) section explains how to assemble and validate the hand-in.
 The authoritative schedule and workstream statuses are in [PLAN.md section 13](PLAN.md#13-phases) and
 [section 14](PLAN.md#14-workstreams-one-plan-file-each-in-docsplansnamemd-contract-first-kept-after-close-out-as-the-record).
 Contributor rules are in [AGENTS.md](AGENTS.md), the graded outcome in [RUBRICS.md](RUBRICS.md), and the schema in

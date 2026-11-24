@@ -5,7 +5,7 @@ plan owner: Chee Long · implementers: all five members, working together · rev
 ([PLAN.md section 13](../../PLAN.md#13-phases)) · depends on: every Tier 1 workstream for final acceptance;
 `benchmark` final measurements for report section 6 and video part iv
 
-**Current report boundary (12 November 2026):** the application and required November benchmark programme are
+**Report snapshot (12 November 2026).** For the latest export, see the [final report clarity pass](#final-report-clarity-pass-24-november-2026). At this checkpoint, the application and required November benchmark programme are
 complete within scope. The [authoritative November index](benchmark.md#authoritative-november-evidence-for-report-and-slides)
 supplies report figures and preserves their measured revisions; the former October trial fallback is historical.
 The [reviewed report snapshot record](#report-freeze-12-november-2026) covers the restored XSite template, all ten supplied
@@ -382,3 +382,21 @@ unchanged. `python scripts/check_docs.py --staged` and `git diff --cached --chec
 the seven authorised Markdown files; contribution summaries, lecture rows, numerical evidence, measured revisions
 and snapshot hashes are preserved. No application, test, benchmark, data or configuration file changed. These
 fix-round results are separate from the historical authoring checks and do not claim final-package acceptance.
+
+### Final report clarity pass (24 November 2026)
+
+The team revised the report in our own voice, added three application screenshots in Appendix IV and described the
+Category decomposition using its functional dependencies. Following Claude Code's review of the earlier 24 November
+PDF, we explained the delivery association and its possible confounders, the concurrency correctness test, the
+storage comparison and the CI outcome for the documented application. We moved the screenshot reference to the
+architecture section, simplified the Redis exclusion and removed the review-edit aside.
+
+The revised Google Docs PDF has 24 pages. The body occupies pages 2–11 in Calibri 12, references start on page 12
+and Appendix IV remains on page 24. Six arrow or comparison glyphs use 12-point fallback fonts. All numerical
+values, cited paths and hyperlink destinations were preserved in this follow-up. The appendix pages render
+identically to the reviewed PDF.
+
+PDF SHA-256: `a1e8e318d236126781f3c042c308f126177951a4ba1861f827d3e0c423c787ae`.
+The report cites the [passing CI run for the documented application](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43078190939).
+The [latest main run checked for this pass](https://github.com/ZadeNova/INF2003_Database_Project/actions/runs/43224151629) also passed.
+Final slides, video, archive checks and submission remain separate deliverables.
